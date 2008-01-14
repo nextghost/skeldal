@@ -1,1 +1,0 @@
-void install_wizard();
