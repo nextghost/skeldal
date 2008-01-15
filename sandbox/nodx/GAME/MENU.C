@@ -326,7 +326,7 @@ static void klavesnice(EVENT_MSG *msg,void **unused)
      }
   }
 
-int enter_menu(char open)
+int enter_menu(char _open)
   {
   char c;
   char *d;
@@ -334,7 +334,7 @@ int enter_menu(char open)
   add_task(2048,preload_anim);
   load_ok=0;
   while(!load_ok) task_sleep(NULL);
-  if (!open)
+  if (!_open)
     {
     play_next_music(&d);
     change_music(d);
@@ -345,7 +345,7 @@ int enter_menu(char open)
   put_picture(0,0,ablock(H_MENU_BAR));
   put_picture(0,56,ablock(H_ANIM));
   ukaz_mysku();
-  if (open) effect_show(NULL);else showview(0,0,0,0);
+  if (_open) effect_show(NULL);else showview(0,0,0,0);
   change_click_map(clk_main_menu,CLK_MAIN_MENU);
   send_message(E_ADD,E_TIMER,prehraj_animaci_v_menu);
   send_message(E_ADD,E_KEYBOARD,klavesnice);
@@ -408,7 +408,7 @@ static int insert_next_line(int ztrata)
      if (title_mode!=TITLE_KONEC) c=get_next_title(0,NULL);else c[0]=0;
      if (c[0]=='*')
         {
-        strupr(c);
+        _strupr(c);
         if (!strcmp(c+1,"HEAD"))
            {
            title_mode=TITLE_HEAD;

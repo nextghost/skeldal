@@ -759,7 +759,7 @@ void start_check()
   struct meminfo memory;
   get_mem_info(&memory);
   concat(c,pathtable[SR_TEMP],TEMP_FILE);
-//  if (!access(c,F_OK))
+//  if (!_access(c,F_OK))
 //     if (ask_test("Skeldal nebyl spr vnˆ ukon‡en. Mˆl bys provest kontrolu disku\n\rMam spustit SCANDISK?",'A'))
 //        system("SCANDISK /NOSUMMARY");
   if (pathtable[SR_TEMP][1]==':') drv=pathtable[SR_TEMP][0];else
@@ -910,13 +910,13 @@ void check_number_1phase(char *exename) //check serial number!
   t=add_to_timer(TM_HACKER,3000,1,crash_event2);
   t->userdata[0]=*(long *)error_hack;
   t->userdata[1]=(long)buffer[0]-'@';
-  h=open(exename,O_RDONLY);
+  h=_open(exename,O_RDONLY);
   _dos_getftime(h,&date,&time);
   serial=(date<<16) | time;
   t=add_to_timer(TM_HACKER,4000,1,crash_event3);
   t->userdata[0]=~serial;
   t->userdata[1]=(long)buffer[0]-'@';
-  close(h);
+  _close(h);
   }
 
 */
@@ -1324,7 +1324,7 @@ char *find_map_path(char *filename)
 	if (pathtable[SR_MAP2]!=NULL)
 		{
 		concat(p1,pathtable[SR_MAP2],filename);
-		if (!access(p1,0)) goto found;
+		if (!_access(p1,0)) goto found;
 		}
 	concat(p1,pathtable[SR_MAP],filename);
 	found:

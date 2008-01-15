@@ -1691,7 +1691,7 @@ void prekodovat(char *c);
 
 
 //menu
-int enter_menu(char open); //task!
+int enter_menu(char _open); //task!
 void titles(va_list args); //task!
 void run_titles(va_list args); //task!
 void effect_show(va_list args); //effektni zobrazeni // task!

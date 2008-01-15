@@ -580,9 +580,9 @@ main(int argc,char *argv[])
   puts("");
   puts("Prob¡h  kompilace:");
   puts("   Spouçt¡m program LEX_LIB.EXE\n");
-  putenv("DOS4G=QUIET");
+//  _putenv("DOS4G=QUIET");
   create_include_list(argv[1]);
-  if (spawnlp(P_WAIT,GetLexLibPath(),"lex_lib.exe",TEMP_NAME1,"temp.$$$",NULL))
+  if (_spawnlp(P_WAIT,GetLexLibPath(),"lex_lib.exe",TEMP_NAME1,"temp.$$$",NULL))
      exit(1);
   if (errno || init("temp.$$$"))
      {

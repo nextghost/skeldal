@@ -111,7 +111,7 @@ static word vypocet_crc(char *data,long delka)
   }
 static unable_open_temp(char *c)
   {
-  char d[]="Unable to open the file : ",*e;
+  char d[]="Unable to _open the file : ",*e;
 
   concat(e,d,c);
   closemode();
@@ -592,14 +592,14 @@ int pack_status_file(FILE *f,char *status_name)
   if (fullnam==NULL) return 2;
   strcpy(fullnam,pathtable[SR_TEMP]);
   strcat(fullnam,status_name);
-  stt=open(fullnam,O_RDONLY | O_BINARY);
-  fsz=filelength(stt);
+  stt=_open(fullnam,O_RDONLY | O_BINARY);
+  fsz=_filelength(stt);
   c=buffer=getmem(fsz+12+4+2);
   strcpy(c,status_name);c+=12;
   *(long *)c=fsz+2;
   c+=sizeof(long);
-  read(stt,c,fsz);
-  close(stt);
+  _read(stt,c,fsz);
+  _close(stt);
   crc=vypocet_crc(c,fsz);
   c+=fsz;
   memcpy(c,&crc,sizeof(crc));
@@ -638,15 +638,15 @@ int unpack_status_file(FILE *f)
      free(buffer);
      return 3;
      }
-  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
+  stt=_open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
   if (stt==-1)
      {
      free(buffer);
      return 1;
      }
-  rcheck=(write(stt,buffer,fsz)!=fsz) ;
+  rcheck=(_write(stt,buffer,fsz)!=fsz) ;
   free(buffer);
-  close(stt);
+  _close(stt);
   return rcheck;
   }
 

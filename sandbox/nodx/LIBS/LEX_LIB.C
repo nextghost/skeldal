@@ -74,7 +74,7 @@ void error_extend(char *file,int seek)
 void error(char *text,int seek)
   {
   printf("CHYBA: %s \n",text);
-  fcloseall();
+  _fcloseall();
   error_extend(cur_include,seek);
   exit(1);
   }

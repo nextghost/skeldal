@@ -173,10 +173,10 @@ main(int argc,char *argv[])
   puts("");
   puts("Prob¡h  kompilace:");
   puts("   Spouçt¡m program LEX_LIB.EXE\n");
-  putenv("DOS4G=QUIET");
+//  putenv("DOS4G=QUIET");
   z=(char *)malloc(strlen(argv[1])+10);
   sprintf(z,"\"%s\"",argv[1]);
-  if (spawnlp(P_WAIT,GetLexLibPath(),"lex_lib.exe",z,"temp.$$$",NULL))
+  if (_spawnlp(P_WAIT,GetLexLibPath(),"lex_lib.exe",z,"temp.$$$",NULL))
      exit(1);
   free(z);
   if (errno)

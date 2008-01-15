@@ -493,7 +493,7 @@ void item_sound_call(TITEM *it)
      char s[200];
      int z;
      get_value(0,20,s);
-     strupr(s);
+     _strupr(s);
      z=it->sound;
      if (s[0])it->sound=add_sound_to_table(s);else it->sound=0;
      delete_unused_sound(z);
@@ -585,7 +585,7 @@ void adjust_enter(EVENT_MSG *msg,OBJREC *o)
      if (save)
      {
       char buff[256];
-      set_value(0,o_aktual->id,itoa(s,buff,10));
+      set_value(0,o_aktual->id,_itoa(s,buff,10));
       update=1;
      }
   }

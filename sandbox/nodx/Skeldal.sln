@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual C++ Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapEdit", "mapedit\MapEdit.vcproj", "{F2CA5BB1-C021-4708-AED7-7290F7255537}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Skeldal", "Skeldal.vcproj", "{AE3E864A-642C-4280-93EC-77A551CF495C}"

@@ -325,8 +325,8 @@ static char read_set(FILE *txt,char *var,char *set)
         }
      }
   *cc=0;
-  strupr(set);
-  strupr(var);
+  _strupr(set);
+  _strupr(var);
   return c;
   }
 
@@ -392,7 +392,7 @@ static char read_tag(FILE *txt)
   i=fscanf(txt,"%[^> ] %c",var,&c);
   while(c<33 && i!=EOF) c=i=fgetc(txt);
   if (c!='>') ungetc(c,txt);
-  strupr(var);
+  _strupr(var);
   if (!strcmp(var,PARAGRAPH))
      {
      break_line();

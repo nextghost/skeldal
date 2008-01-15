@@ -128,12 +128,12 @@ void *load_file(char *filename)
 
   if (mman_action!=NULL) mman_action(MMA_READ);
   SEND_LOG("(LOAD) Loading file '%s'",filename,0);
-  f=open(filename,O_BINARY | O_RDONLY);
+  f=_open(filename,O_BINARY | O_RDONLY);
   if (f==-1) load_error(filename);
-  size=filelength(f);
+  size=_filelength(f);
   p=(void *)getmem(size);
-  if (read(f,p,size)!=size) load_error(filename);
-  close(f);
+  if (_read(f,p,size)!=size) load_error(filename);
+  _close(f);
   last_load_size=size;
   return p;
   }
@@ -179,7 +179,7 @@ static int test_file_exist_DOS(int group,char *filename)
      f=alloca(strlen(mman_pathlist[group])+strlen(filename)+1);
      strcpy(f,mman_pathlist[group]);
      strcat(f,filename);
-     if (access(f,0)) return 0;
+     if (_access(f,0)) return 0;
      return 1;
   }
 
@@ -189,11 +189,11 @@ void load_grp_table()
   long i;
 
   SEND_LOG("(LOAD) Loading Group Table",0,0);
-  lseek(bmf,4,SEEK_SET);
-  read(bmf,&i,4);
+  _lseek(bmf,4,SEEK_SET);
+  _read(bmf,&i,4);
   grptable=(long *)getmem(i+4);
-  lseek(bmf,0,SEEK_SET);
-  read(bmf,grptable,i);
+  _lseek(bmf,0,SEEK_SET);
+  _read(bmf,grptable,i);
   grptabsiz=i;
   for(i=0;i<(grptabsiz>>3);i++) grptable[i*2+1]=(grptable[i*2+1]-grptabsiz)>>4;
   SEND_LOG("(LOAD) Group Table Loaded",0,0);
@@ -205,13 +205,13 @@ void load_file_table()
   void *p;
 
   SEND_LOG("(LOAD) Loading File Table",0,0);
-  lseek(bmf,grptabsiz,SEEK_SET);
-  lseek(bmf,12,SEEK_CUR);
-  read(bmf,&strsize,4);
+  _lseek(bmf,grptabsiz,SEEK_SET);
+  _lseek(bmf,12,SEEK_CUR);
+  _read(bmf,&strsize,4);
   strsize-=grptabsiz;
-  lseek(bmf,grptabsiz,SEEK_SET);
+  _lseek(bmf,grptabsiz,SEEK_SET);
   p=getmem(strsize);memcpy(&nametable,&p,4);
-  read(bmf,nametable,strsize);
+  _read(bmf,nametable,strsize);
   nmtab_size=strsize/sizeof(*nametable);
   SEND_LOG("(LOAD) File Table Loaded",0,0);
   }
@@ -251,12 +251,12 @@ int swap_block(THANDLE_DATA *h)
   if (mman_action!=NULL) mman_action(MMA_SWAP);
   if (swap==-1) return -1;
   if (h->flags & BK_HSWAP) pos=h->seekpos; else pos=swap_add_block(h->size);
-  lseek(swap,0,SEEK_END);
-  wsize=tell(swap);
-  if (wsize<pos) write(swap,NULL,pos-wsize);
-  lseek(swap,pos,SEEK_SET);
+  _lseek(swap,0,SEEK_END);
+  wsize=_tell(swap);
+  if (wsize<pos) _write(swap,NULL,pos-wsize);
+  _lseek(swap,pos,SEEK_SET);
   SEND_LOG("(SWAP) Swaping block '%-.12hs'",h->src_file,0);
-  wsize=write(swap,h->blockdata,h->size);
+  wsize=_write(swap,h->blockdata,h->size);
   swap_status=1;
   if ((unsigned)wsize==h->size)
      {
@@ -406,7 +406,7 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
   memset(_handles,0,sizeof(_handles));
   if (filename!=NULL)
      {
-     bmf=open(filename,O_BINARY | O_RDONLY);
+     bmf=_open(filename,O_BINARY | O_RDONLY);
      if (bmf!=-1)
         {
         main_file_name=(char *)getmem(strlen(filename)+1);
@@ -422,7 +422,7 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
   mem_error=heap_error;
   if (swp!=NULL)
      {
-     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
+     swap=_open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
      swap_init();
      }
   else
@@ -436,8 +436,8 @@ void *load_swaped_block(THANDLE_DATA *h)
   if (mman_action!=NULL) mman_action(MMA_SWAP_READ);
   i=getmem(h->size);
   SEND_LOG("(LOAD)(SWAP) Loading block from swap named '%-.12hs'",h->src_file,0);
-  lseek(swap,h->seekpos,SEEK_SET);
-  read(swap,i,h->size);
+  _lseek(swap,h->seekpos,SEEK_SET);
+  _read(swap,i,h->size);
   h->status=BK_PRESENT;
   return i;
   }
@@ -492,7 +492,7 @@ THANDLE_DATA *def_handle(int handle,char *filename,void *decompress,char path)
      }
   memcpy(h->src_file,filename,12);
   h->seekpos=0;
-  strupr(h->src_file);
+  _strupr(h->src_file);
   h->loadproc=decompress;
   if (filename[0])
       h->seekpos=get_file_entry(path,h->src_file);
@@ -513,7 +513,7 @@ void *afile(char *filename,int group,long *blocksize)
 
   d=alloca(strlen(filename)+1);
   strcpy(d,filename);
-  strupr(d);
+  _strupr(d);
   if (mman_patch && test_file_exist_DOS(group,d)) entr=0;
   else entr=get_file_entry(group,d);
   if (entr!=0)
@@ -521,10 +521,10 @@ void *afile(char *filename,int group,long *blocksize)
 		 int hnd;
 		 SEND_LOG("(LOAD) Afile is loading file '%s' from group %d",d,group);
 		 if (entr<0) entr=-entr,hnd=patch;else hnd=bmf;
-     lseek(hnd,entr,SEEK_SET);
-     read(hnd,blocksize,4);
+     _lseek(hnd,entr,SEEK_SET);
+     _read(hnd,blocksize,4);
      p=getmem(*blocksize);
-     read(hnd,p,*blocksize);
+     _read(hnd,p,*blocksize);
      }
   else if (mman_pathlist!=NULL)
      {
@@ -588,10 +588,10 @@ void *ablock(int handle)
 					 int entr=h->seekpos,hnd;
            if (mman_action!=NULL) mman_action(MMA_READ);
 					 if (entr<0) entr=-entr,hnd=patch;else hnd=bmf;
-           lseek(hnd,entr,SEEK_SET);
-           read(hnd,&s,4);
+           _lseek(hnd,entr,SEEK_SET);
+           _read(hnd,&s,4);
            p=getmem(s);
-           read(hnd,p,s);
+           _read(hnd,p,s);
            if (h->loadproc!=NULL) h->loadproc(&p,&s);
            h->blockdata=p;
            h->status=BK_PRESENT;
@@ -750,8 +750,8 @@ void close_manager()
      free(_handles[i]);
      }
   free(main_file_name);
-  close(bmf);
-  if (swap!=-1) close(swap);
+  _close(bmf);
+  if (swap!=-1) _close(swap);
 //  fclose(log);
   free(grptable); grptable=NULL;
   free(nametable); nametable=NULL;
@@ -876,18 +876,18 @@ char add_patch_file(char *filename)
 	SEND_LOG("Adding patch: %s",filename,0);
 	if (patch!=-1) return 2;
 	if (bmf==-1) return 3;
-	patch=open(filename,O_BINARY|O_RDONLY);
+	patch=_open(filename,O_BINARY|O_RDONLY);
 	if (patch==-1) return 1;
-	lseek(patch,4,SEEK_SET);
-	read(patch,&l,4);
-	lseek(patch,l,SEEK_SET);
-	read(patch,&p,sizeof(p));
+	_lseek(patch,4,SEEK_SET);
+	_read(patch,&l,4);
+	_lseek(patch,l,SEEK_SET);
+	_read(patch,&p,sizeof(p));
 	poc=(p.seek-l)/sizeof(p);
-	lseek(patch,l,SEEK_SET);
+	_lseek(patch,l,SEEK_SET);
 	for(i=0;i<poc;i++)
 		{
 		int j;
-		read(patch,&p,sizeof(p));
+		_read(patch,&p,sizeof(p));
 		j=find_name(read_group(0),p.name);
 		if (j==-1)
 			{

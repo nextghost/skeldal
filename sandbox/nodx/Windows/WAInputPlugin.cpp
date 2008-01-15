@@ -411,7 +411,7 @@ WAInputPlugin::PluginError WAInputPlugin::CanPlayFile(const char *filename)
   int extlen=strlen(ext);
   while (*fext)
   {
-	if (strnicmp(fext,ext,extlen)==0 && (fext[extlen]==';' || fext[extlen]==0))
+	if (_strnicmp(fext,ext,extlen)==0 && (fext[extlen]==';' || fext[extlen]==0))
 	  return errOk;
 	char *c=strchr(fext,';');
 	if (c==0) 

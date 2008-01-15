@@ -111,7 +111,7 @@ static LRESULT EditorProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_INITDIALOG:
 	  {
-	  editorfile=strdup((const char *)lParam);
+	  editorfile=_strdup((const char *)lParam);
 	  SetWindowLong(hDlg,GWL_USERDATA,(LONG)editorfile);
 	  SendMessage(GetDlgItem(hDlg,IDC_EDIT),EM_SETLIMITTEXT,0,0);
 	  char *text=LoadSkeldalFile(editorfile);
@@ -221,7 +221,7 @@ static LRESULT EditorProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 	  case MSG_FINDANDPOPUP:
 		{
 		  const char *name=(const char *)lParam;
-		  if (stricmp(name,editorfile)==0)
+		  if (_stricmp(name,editorfile)==0)
 		  {
 			SetActiveWindow(hDlg);
 			SetForegroundWindow(hDlg);

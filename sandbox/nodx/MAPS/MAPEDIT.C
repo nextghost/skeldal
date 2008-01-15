@@ -252,7 +252,7 @@ static word *p=NULL;
      }
 	 */
 //  report_mode(1);
-int er=initmode_dx(windowed,2,0);
+int er=initmode_dx(windowed,2,0,0);
 
 }
 

@@ -406,7 +406,7 @@ do not use :)
 /* (requires Winamp 2.05+)
 ** SendMessage(hwnd_winamp,WM_WA_IPC,0,IPC_MBOPEN);
 ** SendMessage(hwnd_winamp,WM_WA_IPC,(WPARAM)url,IPC_MBOPEN);
-** IPC_MBOPEN will open a new URL in the minibrowser. if url is NULL, it will open the Minibrowser window.
+** IPC_MBOPEN will _open a new URL in the minibrowser. if url is NULL, it will _open the Minibrowser window.
 */
 
 
@@ -557,7 +557,7 @@ typedef struct {
 ** but you shouldn't really ever have to.
 **
 */
-#define IPC_OPENPREFSTOPAGE 380 // pass an id of a builtin page, or a &prefsDlgRec of prefs page to open
+#define IPC_OPENPREFSTOPAGE 380 // pass an id of a builtin page, or a &prefsDlgRec of prefs page to _open
 
 typedef struct _prefsDlgRec {
   HINSTANCE hInst;
@@ -813,9 +813,9 @@ class IVideoOutput
 {
   public:
     virtual ~IVideoOutput() { }
-    virtual int open(int w, int h, int vflip, double aspectratio, unsigned int fmt)=0;
+    virtual int _open(int w, int h, int vflip, double aspectratio, unsigned int fmt)=0;
     virtual void setcallback(LRESULT (*msgcallback)(void *token, HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam), void *token) { }
-    virtual void close()=0;
+    virtual void _close()=0;
     virtual void draw(void *frame)=0;
     virtual void drawSubtitle(SubsItem *item) { }
     virtual void showStatusMsg(const char *text) { }

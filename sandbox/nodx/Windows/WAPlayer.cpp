@@ -69,7 +69,7 @@ void WAPlayer::LoadPlugins(const char *path)
   _pluginList=new WAInputPlugin[_nPlugins];
   int pos=0;
   h=FindFirstFile(wildcards,&fnd);
-  if (h) do
+  if (h && h != INVALID_HANDLE_VALUE) { do
   {
     strcpy(fname,fnd.cFileName);
     if (_pluginList[pos].LoadPlugin(pathname)!=WAInputPlugin::errOk)
@@ -78,8 +78,9 @@ void WAPlayer::LoadPlugins(const char *path)
       pos++;
   }
   while (FindNextFile(h,&fnd));
-  _nPlugins=pos;
   FindClose(h);
+  }
+  _nPlugins=pos;
 }
 
 WAInputPlugin *WAPlayer::SelectBestPlugin(const char *songName)

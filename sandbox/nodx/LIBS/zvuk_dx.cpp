@@ -744,7 +744,7 @@ void change_music(const char *mus_filename)
     else
     {
       const char *c=strrchr(mus_filename,'.');
-      if (c!=0 && stricmp(c,".mus")==0)      
+      if (c!=0 && _stricmp(c,".mus")==0)      
         GCurrentDecoder=&GMusDecoder;
       else
         GCurrentDecoder=&GWinAmpPlayer;

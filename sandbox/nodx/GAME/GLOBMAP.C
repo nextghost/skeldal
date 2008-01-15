@@ -272,7 +272,7 @@ static char test_kriterii(void)
                 {
                 char c[200];
                 sprintf(c,"%s%s.TMP",pathtable[SR_TEMP],text);
-                hodn=!access(c,0);
+                hodn=!_access(c,0);
                 }
               break;
         }

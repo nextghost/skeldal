@@ -409,7 +409,7 @@ void create_playlist(char *playlist)
   c=playlist;
   while (*c && *c==32) c++;
   sscanf(c,"%s",mode);
-  strupr(mode);
+  _strupr(mode);
   shift=1;
   if (!strcmp(mode,"RANDOM")) play_list_mode=PL_RANDOM;
   else if (!strcmp(mode,"FORWARD")) play_list_mode=PL_FORWARD;
@@ -428,7 +428,7 @@ void create_playlist(char *playlist)
      char *e;
      char d[14]="!";
      strncat(d,c+j,12);d[13]=0;j=1;
-     strupr(d);
+     _strupr(d);
      if ((e=strchr(d,32))!=NULL) *e=0;
      str_add(&cur_playlist,d);
      }

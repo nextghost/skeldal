@@ -386,9 +386,9 @@ static char purge_map()
   _dos_findclose(&rc);*/
   wzprintf("\r\n Zadej jmeno tempu (all - vse):");gets(buffer);
   if (buffer[0]==0) return 0;
-  strupr(buffer);
+  _strupr(buffer);
   concat(c,pathtable[SR_TEMP],buffer);
-  if (strcmp(buffer,ALL) && access(c,0))
+  if (strcmp(buffer,ALL) && _access(c,0))
      {
      wzputs("Soubor nenalezen!");
      return 0;
