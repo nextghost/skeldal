@@ -828,7 +828,7 @@ void open_wiz_tool(void)
   memcpy(f_default,flat_color(0x0000),sizeof(charcolors));
   memcpy(&f_sel,flat_color(RGB555(0,0,23)),sizeof(charcolors));
   wiz_tool_numb=def_window(120,200,"Map Wizard");
-  waktual->y=2;waktual->x=640-120-3;
+  waktual->y=2;waktual->x=SCR_WIDTH_X-120-3;
   on_change(close_wiz_tool);
   define(10,10,25,100,19,0,button2,"Dve©e");on_change(create_door);
   define(10,10,45,100,19,0,button2,"Oblouky");on_change(crt_oblouky);
@@ -868,7 +868,17 @@ typedef struct __BrowserDlgDesc
 static void DirListbox(const char *mask, HWND listBox, int dots)
 {
   WIN32_FIND_DATA w32fnd;
-  HANDLE h=FindFirstFile(mask,&w32fnd);
+  HANDLE h;
+
+  if (strrchr(mask,'\\') == 0)
+  {
+      char *dirmask=(char *)alloca(strlen(mask)+5);
+      strcpy(dirmask,".\\");
+      strcat(dirmask,mask);
+      DirListbox(dirmask,listBox,dots);
+      return;
+  }
+  h=FindFirstFile(mask,&w32fnd);
   ComboBox_ResetContent(listBox);
   if (h!=INVALID_HANDLE_VALUE) do
   {
@@ -987,9 +997,11 @@ LRESULT WINAPI BrowserDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
               char *b;
               strcpy(c,dlgnfo->path);
               a=strrchr(c,'\\');
+              if (a == 0) a = c; else a++;
               b=a+strlen(name)+1;
               memmove(b,a,strlen(a)+1);
-              memcpy(a+1,name,strlen(name));
+              a[strlen(name)] = '\\';
+              memcpy(a,name,strlen(name));
               dlgnfo->level++;
               free(dlgnfo->path);
               dlgnfo->path=c;
@@ -2890,7 +2902,7 @@ void open_multiaction_window()
      b1=def_border(1,0);
      for (i=1;i<maplen;i++) if (minfo[i].flags & 1) break;
      if (i==maplen) i=0;
-     multiaction_win=def_window(120,300,"Multiakce");
+     multiaction_win=def_window(120,SCR_WIDTH_Y - 180,"Multiakce");
      waktual->minsizx=120;
      waktual->minsizy=150;
      define(-1,5,20,1,1,0,label,"Sektor");

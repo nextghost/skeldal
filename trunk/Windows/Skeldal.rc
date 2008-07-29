@@ -167,10 +167,10 @@ BEGIN
                     BS_FLAT
     LISTBOX         IDC_PLUGLIST,7,130,200,45,LBS_SORT | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Vlastnosti",IDC_PLUGVLASTNOSTI,125,177,39,11
-    PUSHBUTTON      "Nápovìda",IDC_PLUGINYNAPOVEDA,168,177,39,11
-    LTEXT           "Pozor: Nastavení pluginù se mùže projevit i v pøehravaèi WinAmp",
-                    IDC_STATIC,7,176,114,16
+    PUSHBUTTON      "Vlastnosti",IDC_PLUGVLASTNOSTI,168,177,39,11
+/*    PUSHBUTTON      "Nápovìda",IDC_PLUGINYNAPOVEDA,168,177,39,11*/
+    LTEXT           "Pozor: Vyžaduje pluginy z WinAmp 2.95 !!!\r\nLze získat na http://skeldal.jinak.cz",
+                    IDC_STATIC,7,176,158,16
 END
 
 IDD_CFGVIDEO DIALOG  0, 0, 152, 76

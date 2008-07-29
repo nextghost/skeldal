@@ -60,6 +60,10 @@ void setvesa_displaystart(int x,int y);
 extern long scr_linelen;
 extern long scr_linelen2;
 
+void DxSetInitResolution(int x, int y);
+int DxGetResX();
+int DxGetResY();
+
 void DXMouseTransform(unsigned short *x, unsigned short *y);
 
 HWND GetGameWindow();

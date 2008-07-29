@@ -58,6 +58,8 @@
 #define SAVE_SLOT_E (34+203)
 #define LOAD_SLOT_E (372+34+203)
 
+#define SSAVE_VERSION 0
+
 static FILE *story=NULL;
 static char load_another;
 char reset_mobiles=0;
@@ -65,7 +67,9 @@ char reset_mobiles=0;
 typedef struct s_save
   {
   int viewsector;
-  int viewdir;
+  char viewdir;
+  short version;
+  char not_used;
   int gold;
   short cur_group;
   char autosave;
@@ -701,6 +705,8 @@ int save_basic_info()
   if (f==NULL) return 1;
   s.viewsector=viewsector;
   s.viewdir=viewdir;
+  s.version=SSAVE_VERSION;
+  s.not_used=0;
   s.gold=money;
   s.cur_group=cur_group;
   s.shownames=show_names;

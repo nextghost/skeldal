@@ -498,6 +498,7 @@ void spell_throw(int cil,int what)
   fly->hit_bonus=0;
   fly->damage=0;
   fly->lives=glob_items[what].user_value;
+  fly->counter = 0;
   add_fly(fly);
   }
 

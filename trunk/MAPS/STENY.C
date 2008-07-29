@@ -250,7 +250,7 @@ int string_list(char *c,int akt)
   x1=o_aktual->locx;
   y1=o_aktual->locy+o_aktual->ys;
   if (y1+WLISTY>desktop_y_size) y1=desktop_y_size-WLISTY;
-  if (x1+WLISTX+4>MAX_X) x1=MAX_X-WLISTX-4;
+  if (x1+WLISTX+4>SCR_WIDTH_X) x1=SCR_WIDTH_X-WLISTX-4;
   def_window(WLISTX,WLISTY,"Vyber");
   waktual->x=x1;
   waktual->y=y1;

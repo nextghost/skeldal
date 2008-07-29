@@ -245,11 +245,11 @@ void draw_status_line(char *c)
   ctl.ctldef=0;
   curcolor=backgr;
   memcpy(&charcolors,&color,sizeof(charcolors));
-  y=MAX_Y-ysize-3;
+  y=SCR_WIDTH_Y-ysize-3;
   desktop_y_size=y-3;
-  bar(0,y,MAX_X-1,MAX_Y-1);
-  draw_border(2,y,MAX_X-5,ysize,&ctl);
-  while (text_width(c)>MAX_X)
+  bar(0,y,SCR_WIDTH_X-1,SCR_WIDTH_Y-1);
+  draw_border(2,y,SCR_WIDTH_X-5,ysize,&ctl);
+  while (text_width(c)>SCR_WIDTH_X)
      {
      char *p;
 
@@ -259,7 +259,7 @@ void draw_status_line(char *c)
      }
   position(5,y);outtext(c);
   ukaz_mysku();
-  showview(0,y-2,MAX_X-1,ysize+5);
+  showview(0,y-2,SCR_WIDTH_X-1,ysize+5);
   }
 
 void *status_mem_info(EVENT_MSG *msg)
@@ -376,8 +376,8 @@ void xor_rectangle(int x,int y,int xs,int ys)
   curcolor=RGB555(31,31,31);
   if (x<0) x=0;
   if (y<0) y=0;
-  if (x+xs>=MAX_X) xs=MAX_X-x-1;
-  if (y+ys>=MAX_Y) ys=MAX_Y-y-1;
+  if (x+xs>=SCR_WIDTH_X) xs=SCR_WIDTH_X-x-1;
+  if (y+ys>=SCR_WIDTH_Y) ys=SCR_WIDTH_Y-y-1;
   schovej_mysku();
   hor_line_xor(x,y,x+xs);
   ver_line_xor(x,y,y+ys);
@@ -1164,7 +1164,7 @@ void scroll_bar_h_event(EVENT_MSG *msg,OBJREC *o)
 
 
 
-#define MSG_SIZE (MAX_X*3/4)
+#define MSG_SIZE (SCR_WIDTH_X*3/4)
 #define MSG_L_MARGIN 10
 #define MSG_R_MARGIN 50
 #define MSG_A_MARGIN (MSG_L_MARGIN+MSG_R_MARGIN)
@@ -1221,8 +1221,8 @@ int msg_box(char *title, char icone, char *text, ... )
      winy+=txt_h;
      }
   winy+=40;
-  xp=(MAX_X>>1)-(winx>>1);
-  yp=(MAX_Y>>1)-(winy>>1);
+  xp=(SCR_WIDTH_X>>1)-(winx>>1);
+  yp=(SCR_WIDTH_Y>>1)-(winy>>1);
   waktual->x=xp;waktual->y=yp;waktual->xs=winx;waktual->ys=winy;
   define(0,1,1,winx-2,text_height(title)+2,0,win_label,title);
   ctl=def_border(5,MSG_COLOR);

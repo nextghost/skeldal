@@ -971,6 +971,7 @@ void create_map_win(int xp,...)
      xpp=&xp;
      xpp++;
      if (xp>=0) movesize_win(waktual,xp,*xpp,*(xpp+1),*(xpp+2));
+     else  movesize_win(waktual,3,3,SCR_WIDTH_X-130,SCR_WIDTH_Y-10);
      }
   else
      {
@@ -980,7 +981,7 @@ void create_map_win(int xp,...)
      {
      redraw_window();
      tool_bar=def_window(90,90,"Tools");
-     waktual->x=638-94;waktual->y=desktop_y_size-90-3;
+     waktual->x=SCR_WIDTH_X-1-94;waktual->y=desktop_y_size-90-3;
      define(20,1,55,40,34,0,toggle_button,"\xC");property(NULL,icones,&icone_color,WINCOLOR);
       on_change(tool_select);c_default(tool_sel==20);
      define(30,42,20,40,34,0,toggle_button,"\xD");property(NULL,icones,&icone_color,WINCOLOR);

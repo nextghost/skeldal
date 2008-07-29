@@ -428,13 +428,16 @@ void play_mob()
   int i;
   char s[12];
 
+  int mx =  DxGetResX() - 1;
+  int my =  DxGetResY() - 1;
+
   get_value(0,100,s);
   i=f_get_value(0,185);
   if (load_sequence(s,i)) return;
   update_mysky();
   schovej_mysku();
   curcolor=0;
-  bar(0,0,639,479);
+  bar(0,0,mx,my);
   send_message(E_ADD,E_TIMER,pohyb_moba);
   send_message(E_ADD,E_KEYBOARD,pohyb_moba);
   send_message(E_ADD,E_MOUSE,pohyb_moba);
@@ -852,7 +855,7 @@ void edit_mob(int i)
   define(670,300,400,100,10,0,check_box,"Reload mob");
   define(680,300,412,100,10,0,check_box,"Kouzl¡");
   define(700,0,0,0,0,0,value_store,4);c_default(moblist[i].vlastnosti[VLS_KOUZLA]);
-  movesize_win(waktual,0,0,640,480);
+  movesize_win(waktual,0,0,DxGetResX(),DxGetResY());
   check_mobs_name();
   fill_bit_fields(0,430,moblist[i].stay_strategy,8);
   fill_bit_fields(0,630,moblist[i].vlajky,6);
@@ -954,7 +957,7 @@ void enemy_window()
   {
   memcpy(f_default,flat_color(0x0000),sizeof(charcolors));
   tool_sel=30;
-  create_map_win(3,3,460,470);
+  create_map_win(3,3,SCR_WIDTH_X-200,SCR_WIDTH_Y-10);
   if (find_window(enemy_win)==NULL)
      {
      int i;
@@ -983,7 +986,7 @@ void enemy_window()
      define(50,5,30,60,20,3,button,"Um¡stit");property(b1,NULL,NULL,WINCOLOR);on_change(umistit_moba);
      define(60,70,5,60,20,3,button,"Novou");property(b1,NULL,NULL,WINCOLOR);on_change(new_mob);
      define(70,70,30,60,20,3,button,"Opravit");property(b1,NULL,NULL,WINCOLOR);on_change(edit_mob_event);
-     movesize_win(waktual,640,0,170,470);
+     movesize_win(waktual,SCR_WIDTH_X,0,170,SCR_WIDTH_Y-20);
      redraw_window();
      }
   else

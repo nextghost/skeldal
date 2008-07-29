@@ -69,6 +69,7 @@ char sample_path[]="samples\\";
 char font_path[]="font\\";
 char map_path[]="maps\\";
 char music_path[]="music\\";
+char org_music_path[]="music\\";
 char temp_path[]="?";
 char enemies_path[]="graphics\\enemies\\";
 char video_path[]="video\\";
@@ -78,7 +79,7 @@ char work_path[]="";
 char cd_path[]="";
 char map2_path[]="";
 char plugins_path[]="";
-char *pathtable[]={def_path,graph_path,sample_path,font_path,map_path,music_path,temp_path,basc_graph,item_graph,enemies_path,video_path,dialogs_path,saves_path,work_path,cd_path,map2_path,plugins_path};
+char *pathtable[]={def_path,graph_path,sample_path,font_path,map_path,music_path,temp_path,basc_graph,item_graph,enemies_path,video_path,dialogs_path,saves_path,work_path,cd_path,map2_path,plugins_path,org_music_path};
 
 /*
 char *pathtable[]=
@@ -323,6 +324,7 @@ INIS sinit[]=
   {"CESTA_CD",INI_TEXT},
   {"CESTA_MAPY2",INI_TEXT},
   {"CESTA_PLUGINS",INI_TEXT},
+  {"CESTA_ORIG_MUSIC",INI_TEXT}
   };
 
 
@@ -1288,7 +1290,6 @@ static void config_skeldal(char *line)
      strcpy(s,"Chyba v INI souboru: Neznama promenna - ");
      strncat(s,line,i);
      SEND_LOG("(ERROR) %s",s,NULL);
-     puts(s);getche();
      }
   else
      {
@@ -1298,8 +1299,6 @@ static void config_skeldal(char *line)
 
         sprintf(s,"Chyba v INI souboru: Ocekava se ciselna hodnota\n%s\n",line);
         SEND_LOG("(ERROR) %s",s,NULL);
-        puts(s);getche();
-        return;
         }
      do_config_skeldal(i,ndata,data);
      }
@@ -1720,6 +1719,10 @@ void main(int argc,char *argv[])
     {
 	char *adventure;
     char **config=cur_config;
+
+    const char *music = mman_pathlist[SR_MUSIC];
+    mman_pathlist[SR_ORGMUSIC]=(char *)getmem(strlen(music)+1);
+    strcpy(mman_pathlist[SR_ORGMUSIC],music);
 
 	if (argc<2) adventure=GetSelectedAdventure();
 	else adventure=argv[1];

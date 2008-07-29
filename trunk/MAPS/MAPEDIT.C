@@ -252,7 +252,22 @@ static word *p=NULL;
      }
 	 */
 //  report_mode(1);
-int er=initmode_dx(windowed,2,0);
+
+ const char *c=get_text_field(config_file,"MAPEDIT_WINDOW");
+ int scale = 1;
+ if (c != 0) 
+ {
+    int x,y;
+    if (sscanf(c,"%dx%d",&x,&y) == 2 && x>=640 && y>=480)
+        DxSetInitResolution(x,y);
+ }
+ ;
+ c=get_text_field(config_file,"MAPEDIT_SCALE");
+ if (c != 0)
+ {
+     sscanf(c,"%d",&scale);
+ }
+initmode_dx(windowed,scale,0,0);
 
 }
 
@@ -395,8 +410,8 @@ long def_window(word xs,word ys,char *name)
   x+=20;y+=20;
   memcpy(fc,flat_color(RGB555(31,31,0)),sizeof(FC_TABLE));
   fc[0]=0x0000;
-  if (x+xs>MAX_X-2) x=MAX_X-2-xs;
-  if (y+ys>MAX_Y-2) y=MAX_Y-2-ys;
+  if (x+xs>SCR_WIDTH_X-2) x=SCR_WIDTH_X-2-xs;
+  if (y+ys>SCR_WIDTH_Y-2) y=SCR_WIDTH_Y-2-ys;
      p=create_window(x,y,xs,ys,WINCOLOR,&ctl);
      q=desktop_add_window(p);
   define(0,2,2,xs-5-20*(xs>=70),14,0,win_label,name);
@@ -500,9 +515,12 @@ void close_app(void)
   WINDOW *w;
   CTL3D x={0,0,0,0};
 
+  int mx =  DxGetResX() - 1;
+  int my =  DxGetResY() - 1;
+
   w=create_window(0,0,1,1,0,&x);
   desktop_add_window(w);
-  define(-1,0,0,639,477,0,fog_bar);property(NULL,NULL,NULL,RGB555(16,0,0));
+  define(-1,0,0,mx,my,0,fog_bar);property(NULL,NULL,NULL,RGB555(16,0,0));
   redraw_desktop();
   if ((ask_exit_status=msg_box("Dotaz?",'\x2',"Chce¨ program ukon‡it, nebo nahr t jinou mapu?","Jinou mapu","Ukon‡it","Ne",NULL))!=3) terminate();
   close_window(w);

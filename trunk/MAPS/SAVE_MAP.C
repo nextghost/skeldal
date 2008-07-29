@@ -681,8 +681,10 @@ int save_all_map(void)
     FILE *f;
 
     f=fopen(txt,"w");
-    fputs("-1\n",f);
-    fclose(f);
+    if (f) {
+        fputs("-1\n",f);
+        fclose(f);
+    }
     }
   if (!mglob.local_monsters)
      {

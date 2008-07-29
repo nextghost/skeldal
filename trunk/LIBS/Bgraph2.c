@@ -443,12 +443,12 @@ static void showview_dx(word x,word y,word xs,word ys)
   {
 //  register longint a;
 
-  if (x>640 || y>480) return;
-  if (xs==0) xs=640;
-  if (ys==0) ys=480;
+  if (x>DxGetResX() || y>DxGetResY()) return;
+  if (xs==0) xs=DxGetResX();
+  if (ys==0) ys=DxGetResY();
   xs+=2;ys+=2;
-  if (x+xs>640) xs=640-x;
-  if (y+ys>480) ys=480-y;
+  if (x+xs>DxGetResX()) xs=DxGetResX()-x;
+  if (y+ys>DxGetResY()) ys=DxGetResY()-y;
   DXCopyRects64(x,y,xs,ys);  
   }
 /*
@@ -518,10 +518,13 @@ void show_ms_cursor(integer x,integer y)
   {
   integer xs,ys;
 
+  int mx =  DxGetResX() - 1;
+  int my =  DxGetResY() - 1;
+
   if (x<0) x=0;
-  if (x>639) x=639;
+  if (x>mx) mx=639;
   if (y<0) y=0;
-  if (y>479) y=479;
+  if (y>my) my=479;
   xs=*(integer *)mscursor;
   ys=*((integer *)mscursor+1);
   get_picture(x,y,xs,ys,mssavebuffer);
@@ -550,6 +553,8 @@ void *register_ms_cursor(void *cursor)
 void move_ms_cursor(integer newx,integer newy,char nodraw)
   {
   integer xs,ys;
+  int mx =  DxGetResX() - 1;
+  int my =  DxGetResY() - 1;
   static integer msshowx=0,msshowy=0;
 
   xs=*(integer *)mscursor;
@@ -563,8 +568,8 @@ void move_ms_cursor(integer newx,integer newy,char nodraw)
      }
   if (newx<0) newx=0;
   if (newy<0) newy=0;
-  if (newx>639) newx=639;
-  if (newy>479) newy=479;
+  if (newx>mx) newx=mx;
+  if (newy>my) newy=my;
   put_picture(mscuroldx,mscuroldy,mssavebuffer);
   show_ms_cursor(newx,newy);
   mscuroldx=newx;mscuroldy=newy;

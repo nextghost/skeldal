@@ -75,7 +75,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib comctl32.lib dsound.lib"
+				AdditionalDependencies="d3d9.lib dsound.lib comctl32.lib user32.lib gdi32.lib advapi32.lib comdlg32.lib ole32.lib shell32.lib"
 				OutputFile="$(OutDir)\SkeldalD.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -171,7 +171,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib dsound.lib comctl32.lib"
+				AdditionalDependencies="d3d9.lib dsound.lib comctl32.lib user32.lib gdi32.lib advapi32.lib comdlg32.lib ole32.lib shell32.lib"
 				OutputFile="$(OutDir)\Skeldal.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

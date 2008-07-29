@@ -37,8 +37,9 @@
 #define MINSIZX 60
 #define MINSIZY 40
 
-#define MAX_X 640
-#define MAX_Y 480
+
+#define SCR_WIDTH_X DxGetResX()
+#define SCR_WIDTH_Y DxGetResY()
 
 
 typedef struct ctl3d

@@ -20,6 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
+
 // WAInputPlugin.cpp: implementation of the WAInputPlugin class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -467,16 +468,8 @@ WAInputPlugin::PluginError WAInputPlugin::AttachOutput(IWAOutput *o)
 }
 
 #define WM_WA_MPEG_EOF WM_USER+2
+#define IPC_GET_API_SERVICE 3025
 
-static bool __stdcall Function3025( int res1, int &res2, int *&res3,int one,void *fakeThis)
-{
-  res2=0;
-  *res3=0;
-  return false;
-}
-
-static void *fakeFunction3025ptr=&Function3025;
-static void *fakeFunction3025ptrPtr=&fakeFunction3025ptr;
 
 static LRESULT NotifyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -500,7 +493,7 @@ static LRESULT NotifyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           return (LRESULT)(".\\");
         }
-      case 3025:return (LRESULT)&fakeFunction3025ptrPtr;
+      case IPC_GET_API_SERVICE: return 0;
       case IPC_GET_RANDFUNC: return (LRESULT)&rand;
       }
     }
@@ -524,7 +517,7 @@ static const char *RegisterWAPluginWnd()
 }
 
 WAInputPlugin::PluginError WAInputPlugin::LoadPlugin(const char *name)
-{
+{  
   UnloadPlugin();
   char *cwd=_getcwd(0,0);
   char *setcwd=strcpy((char *)alloca(strlen(name)+1),name);

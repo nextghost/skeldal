@@ -39,6 +39,9 @@ static IDirect3DDevice9 *DxDevice;
 static IDirect3DSurface9 *DxBackBuffer;
 static D3DPRESENT_PARAMETERS pparm;
 
+static int initSizeX = 640;
+static int initSizeY = 480;
+
 static unsigned short *mainBuffer=NULL;
 static unsigned short *secondBuffer=NULL;
 static unsigned short *curBuffer=NULL;
@@ -174,7 +177,7 @@ static void CreateSkeldalWindow()
   LoadString(GetModuleHandle(NULL),IDS_WINTITLE,buff,sizeof(buff));
 
 
-  RECT rc={0,0,640*dxWindowZoom/2,480*dxWindowZoom/2};
+  RECT rc={0,0,initSizeX*dxWindowZoom/2,initSizeY*dxWindowZoom/2};
   DWORD flags=(INWINDOW?(WS_OVERLAPPED|WS_SYSMENU|WS_MINIMIZEBOX|WS_CAPTION|WS_BORDER):(WS_POPUP|WS_SYSMENU))|WS_VISIBLE;
   AdjustWindowRect(&rc,flags,FALSE);
   hMainWnd=CreateWindow(SKELDALCLASSNAME,buff,flags,100,100,rc.right-rc.left,rc.bottom-rc.top,NULL,NULL,GetModuleHandle(NULL),NULL);
@@ -214,7 +217,7 @@ static bool ShowLogo()
   CheckResult(DxBackBuffer->GetDC(&hDC));
   HDC hBitmap=CreateCompatibleDC(hDC);
   HBITMAP old=(HBITMAP)SelectObject(hBitmap,logo);
-  BitBlt(hDC,0,0,640,480,hBitmap,0,0,SRCCOPY);
+  BitBlt(hDC,0,0,initSizeX,initSizeY,hBitmap,0,0,SRCCOPY);
   SelectObject(hBitmap,old);
   DeleteDC(hBitmap);
   DxBackBuffer->ReleaseDC(hDC);
@@ -250,8 +253,8 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
     SetWindowPos(hMainWnd,NULL,moninfo.rcWork.left,moninfo.rcWork.top,0,0,SWP_NOZORDER|SWP_NOSIZE);    
   }
 
-  pparm.BackBufferWidth=640;
-  pparm. BackBufferHeight=480;
+  pparm.BackBufferWidth=initSizeX;
+  pparm. BackBufferHeight=initSizeY;
   pparm.BackBufferFormat=D3DFMT_R5G6B5;
   pparm.BackBufferCount=1;
   pparm.MultiSampleType=D3DMULTISAMPLE_NONE;
@@ -260,7 +263,7 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
   pparm.Windowed=INWINDOW;
   pparm.EnableAutoDepthStencil=FALSE;
   pparm.Flags=D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
-  pparm.FullScreen_RefreshRateInHz=refresh;
+  pparm.FullScreen_RefreshRateInHz=INWINDOW?0:refresh;
   pparm.PresentationInterval=D3DPRESENT_INTERVAL_IMMEDIATE ;
   pparm.MultiSampleQuality=0;
 
@@ -297,7 +300,7 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
   scr_linelen2=scr_linelen/2;
   curBuffer=mainBuffer=(unsigned short *)lrc.pBits;
 
-  secondBuffer=(unsigned short *)malloc(lrc.Pitch*480);
+  secondBuffer=(unsigned short *)malloc(lrc.Pitch*initSizeY);
 
   if (logo)
 	{
@@ -321,6 +324,7 @@ void DXCloseMode()
 	free(secondBuffer);
 	if (runinwindow) DisplayMode(0);
 	DxDevice=NULL;
+    DxBackBuffer = NULL;
 	}
   }
 
@@ -401,7 +405,7 @@ static void LockBuffers()
     main_linelen=dx_linelen=scr_linelen=lrc.Pitch;
     scr_linelen2=scr_linelen/2;
     curBuffer=mainBuffer=(unsigned short *)lrc.pBits;
-    secondBuffer=(unsigned short *)malloc(lrc.Pitch*480);
+    secondBuffer=(unsigned short *)malloc(lrc.Pitch*initSizeY);
     }
   }
 
@@ -690,3 +694,13 @@ void StripBlt(void *data, unsigned int startline, unsigned long width)
 	start=start+scr_linelen2;
   }
 }
+
+void DxSetInitResolution(int x, int y)
+{
+    initSizeX = x;
+    initSizeY = y;
+
+}
+
+int DxGetResX() {return initSizeX;}
+int DxGetResY() {return initSizeY;}

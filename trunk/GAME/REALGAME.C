@@ -673,7 +673,7 @@ void calc_fly()
         else
            stop_fly(p,1);
         continue;
-        }
+        }     
      if (p->flags & FLY_IN_FLY && p->xpos>-16 && zasah_veci(p->sector,p))
            {
            interrupt_fly(p);
@@ -684,7 +684,7 @@ void calc_fly()
         p->flags|=FLY_IN_FLY;
         p->xpos-=127;
         ss=map_sectors[p->sector].step_next[p->smer];
-        if (!(map_sides[p->sector*4+p->smer].flags & SD_THING_IMPS))
+        if (p->sector != 0 && !(map_sides[p->sector*4+p->smer].flags & SD_THING_IMPS))
            {
            p->sector=ss;
 
@@ -708,7 +708,13 @@ void calc_fly()
            interrupt_fly(p);
            }
         }
+     else if (p->counter++ > 100) {
+           zasah_veci(p->sector,p);
+           interrupt_fly(p);
+           continue;
      }
+     }
+     
   }
 
 extern long sound_side_flags;

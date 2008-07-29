@@ -125,7 +125,7 @@ LRESULT GameMainWindowWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
       {
       PAINTSTRUCT ps;
       BeginPaint(hWnd,&ps);
-      DXCopyRects64(0,0,640,480);
+      DXCopyRects64(0,0,DxGetResX(),DxGetResY());
       EndPaint(hWnd,&ps);
       break;      
       }
@@ -212,17 +212,10 @@ void ShareCPU()
 
 char *AutodetectWinAmp()
 {
-  HKEY winAmpKey;
-  unsigned long sz;
-  char *buff;
-
-  if (RegOpenKeyEx(HKEY_CURRENT_USER,"Software\\WinAmp",0,KEY_READ,&winAmpKey)!=ERROR_SUCCESS) return 0;
-  if (RegQueryValueEx(winAmpKey,0,0,0,0,&sz)!=ERROR_SUCCESS) return 0;
-  sz+=50;
-  buff=(char *)malloc(sz);
-  RegQueryValueEx(winAmpKey,0,0,0,buff,&sz);
-  RegCloseKey(winAmpKey);
-  strcat(buff,"\\Plugins");
-  return buff;
+    char *cwd = getcwd(0);
+    char *fullpath = (char *)malloc(strlen(cwd)+50);
+    sprintf(fullpath,"%s\\Plugins",cwd);
+    free(cwd);
+    return fullpath;
 }
 

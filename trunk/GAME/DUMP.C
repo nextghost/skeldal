@@ -19,8 +19,7 @@
  *  Project home: https://sourceforge.net/projects/skeldal/
  *  
  *  Last commit made by: $Id$
- */
-#include <skeldal_win.h>
+ */#include <skeldal_win.h>
 #include <stdio.h>
 #include <bgraph.h>
 #include <dos.h>
@@ -64,16 +63,16 @@ void save_dump()
   SEND_LOG("(DUMP) Saving screen shot named '%s'",c,0);
   f=fopen(c,"wb");
   fputc('B',f);fputc('M',f);
-  i=640*480*3+0x36;
+  i=DxGetResX()*DxGetResY()*3+0x36;
   fwrite(&i,1,4,f);i=0;
   fwrite(&i,1,4,f);
   i=0x36;
   fwrite(&i,1,4,f);
   i=0x28;
   fwrite(&i,1,4,f);
-  i=640;
+  i=DxGetResX();
   fwrite(&i,1,4,f);
-  i=480;
+  i=DxGetResY();
   fwrite(&i,1,4,f);
   i=1;
   fwrite(&i,1,2,f);
@@ -81,14 +80,14 @@ void save_dump()
   fwrite(&i,1,2,f);
   i=0;
   fwrite(&i,1,4,f);
-  i=640*480*3;
+  i=DxGetResX()*DxGetResY()*3;
   fwrite(&i,1,4,f);
   for(i=4,r=0;i>0;i--) fwrite(&r,1,4,f);
-  for(y=480;y>0;y--)
+  for(y=DxGetResY();y>0;y--)
      {
      word *scr=GetScreenAdr();
      a=scr+(y-1)*scr_linelen2;
-     for(x=0;x<640;x++)
+     for(x=0;x<DxGetResX();x++)
         {
         i=a[x];
         b=(i & 0x1f)<<3;

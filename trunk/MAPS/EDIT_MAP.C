@@ -904,7 +904,7 @@ void open_sector_win(void)
      memcpy(f_default,flat_color(0x0000),sizeof(charcolors));
      memcpy(&f_sel,flat_color(0x0017),sizeof(charcolors));
      sektor_win=def_window(120,325,"Vlastnosti");
-     waktual->y=2;waktual->x=640-120-3;
+     waktual->y=2;waktual->x=SCR_WIDTH_X-120-3;
      on_change(close_sector_win);
      define(100,4,19,59,14,0,button2,"Sever:");on_change(run_edit_side);
      define(110,4,49,59,14,0,button2,"V˜chod:");on_change(run_edit_side);
@@ -1013,7 +1013,7 @@ void open_draw_win(void)
      memcpy(f_default,flat_color(0x0000),sizeof(charcolors));
      memcpy(&f_sel,flat_color(0x0017),sizeof(charcolors));
      draw_win=def_window(120,165,"Vlajky");
-     waktual->y=2;waktual->x=640-120-3;
+     waktual->y=2;waktual->x=SCR_WIDTH_X-120-3;
      define(10,5,30,100,10,0,check_box,"Rozdˆlit");c_default(1);
       on_change(draw_win_1);
      define(20,5,45,100,10,0,check_box,"!Hra‡");c_default(0);

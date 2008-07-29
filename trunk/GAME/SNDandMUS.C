@@ -33,6 +33,7 @@
 #include <math.h>
 //#include <i86.h>  //Sound and Nosound
 #include <strlite.h>
+#include <io.h>
 
 #define PL_RANDOM 1
 #define PL_FORWARD 2
@@ -426,9 +427,8 @@ void create_playlist(char *playlist)
   for (c=playlist;c!=NULL;c=strchr(c+1,' '))
      {
      char *e;
-     char d[14]="!";
-     strncat(d,c+j,12);d[13]=0;j=1;
-     strupr(d);
+     char d[MAX_PATH+2]="!";
+     strncat(d,c+j,MAX_PATH);d[MAX_PATH+1]=0;j=1;
      if ((e=strchr(d,32))!=NULL) *e=0;
      str_add(&cur_playlist,d);
      }
@@ -467,7 +467,9 @@ void play_next_music(char **c)
      }
   while (step);
   playing_track=i;
-  sprintf(d,"%s%s",pathtable[SR_MUSIC],cur_playlist[i]+1);
+  sprintf_s(d,sizeof(d),"%s%s",pathtable[SR_MUSIC],cur_playlist[i]+1);
+  if (_access(d,0) == -1)
+      sprintf_s(d,sizeof(d),"%s%s",pathtable[SR_ORGMUSIC],cur_playlist[i]+1);
   cur_playlist[i][0]=33;
   remain_play--;
   *c=d;

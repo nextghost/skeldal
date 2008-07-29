@@ -44,7 +44,7 @@ WINDOW *desktop={NULL},*waktual={NULL};;
 OBJREC *o_aktual={NULL},*o_end={NULL},*o_start={NULL};
 CTL3D noneborder={0,0,0,0};
 FC_TABLE f_default;
-word desktop_y_size=MAX_Y;
+word desktop_y_size;
 char force_redraw_desktop=0;
 static char change_flag=0,f_cancel_event=0;
 word *default_font;
@@ -94,7 +94,7 @@ void check_window(WINDOW *w)
   {
   if (w->x<=w->border3d.bsize) w->x=w->border3d.bsize;
   if (w->y<=w->border3d.bsize) w->y=w->border3d.bsize;
-  if (w->x>=MAX_X-w->border3d.bsize-w->xs) w->x=MAX_X-w->border3d.bsize-w->xs-1;
+  if (w->x>=SCR_WIDTH_X-w->border3d.bsize-w->xs) w->x=SCR_WIDTH_X-w->border3d.bsize-w->xs-1;
   if (w->y>=desktop_y_size-w->border3d.bsize-w->ys) w->y=desktop_y_size-w->border3d.bsize-w->ys-1;
   }
 
@@ -449,7 +449,7 @@ void redraw_desktop_call(EVENT_MSG *msg,void **data)
   if (gui_background==NULL)
      {
      curcolor=DESK_TOP_COLOR;
-     bar(0,0,639,MAX_Y-1);
+     bar(0,0,SCR_WIDTH_X,SCR_WIDTH_Y-1);
      }
   else
      put_picture(0,0,gui_background);
@@ -726,6 +726,7 @@ void do_it_events(EVENT_MSG *msg,void **user_data)
 
 void install_gui(void)
   {
+  desktop_y_size = SCR_WIDTH_Y;
   send_message(E_ADD,E_MOUSE,do_it_events);
   send_message(E_ADD,E_KEYBOARD,do_it_events);
   send_message(E_ADD,E_CHANGE,do_it_events);
@@ -933,7 +934,7 @@ void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys)
 
   if (newxs<w->minsizx) newxs=w->minsizx;
   if (newys<w->minsizy) newys=w->minsizy;
-  if (newxs>=(MAX_X-2*w->border3d.bsize)) newxs=(MAX_X-2*w->border3d.bsize)-1;
+  if (newxs>=(SCR_WIDTH_X-2*w->border3d.bsize)) newxs=(SCR_WIDTH_X-2*w->border3d.bsize)-1;
   if (newys+2>=(desktop_y_size-2*w->border3d.bsize)) newys=(desktop_y_size-2*w->border3d.bsize)-2;
   xsdif=newxs-w->xs;
   ysdif=newys-w->ys;

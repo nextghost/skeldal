@@ -368,7 +368,7 @@ void items_adjusting()
   TSTR_LIST pcxs=NULL;
   char *filename;
   int x1,y1,x2,y2,yy1,yy2;
-  word *vec;
+  word *vec = 0;
   WINDOW *w;
   char *c,*d;
   word *male,malexs,maleys;
@@ -391,6 +391,8 @@ void items_adjusting()
   free(male);
   read_side_list(ITEMS_SCRIPT,&pcxs,2,4);
   num=f_get_value(0,190);
+  if (num >= str_count(pcxs))
+      num = 0;
   concat(c,"",pcxs[num]);
   d=get_text_field(config_file,"CESTA_ITEMY");if (d==NULL) d="";
   concat(filename,d,c);
@@ -920,7 +922,7 @@ void open_item_win()
      memcpy(f_default,flat_color(0x0000),sizeof(charcolors));
      memcpy(&f_sel,flat_color(RGB555(0,0,24)),sizeof(charcolors));
      item_win=def_window(200,300,"P©edmˆty");
-     waktual->y=2;waktual->x=640-200-3;
+     waktual->y=2;waktual->x=SCR_WIDTH_X-20-160-3;
      waktual->minsizx=120;
      waktual->minsizy=100;
      on_change(close_current);
@@ -1056,7 +1058,7 @@ void editor_vzoru()
      property(&b2,NULL,&f_sel,WINCOLOR);on_enter(string_list_sup);on_change(change_grep);
      o_end->autoresizex=1;
      define(100,10,10,10,10,2,check_box,"");c_default(grep_num>-1);on_change(change_grep);
-     movesize_win(waktual,waktual->x,160,waktual->xs,460-160);
+     movesize_win(waktual,waktual->x,160,waktual->xs,SCR_WIDTH_Y-20-160);
      redraw_window();
      }
   else
@@ -1152,7 +1154,7 @@ void load_item_map(void *data,int size)
 void editor_veci()
   {
   tool_sel=50;
-  create_map_win(5,5,420,420);
+  create_map_win(5,5,SCR_WIDTH_X-220,SCR_WIDTH_Y-60);
   change_tools();
   open_item_win();
   editor_vzoru();

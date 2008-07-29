@@ -113,7 +113,7 @@ void macro_fireball(TMA_FIREBALL *z,int sector,int dir)
   fly->owner=0;
   fly->hit_bonus=0;
   fly->damage=0;
-  fly->counter=1000;
+  fly->counter=0;
   if (fly->flags & FLY_DESTROY)fly->lives=it->user_value;
   add_fly(fly);
   }

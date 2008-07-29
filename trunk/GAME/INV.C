@@ -2335,7 +2335,7 @@ LETICI_VEC *throw_fly(int x,int y, char rovne)
   p->sector=viewsector;
   p->smer=viewdir;
   p->items=picked_item;
-  p->counter=5;
+  p->counter=0;
   p->hit_bonus=0;
   p->damage=0;
   m=abs(celkova_vaha(picked_item));
