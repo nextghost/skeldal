@@ -60,57 +60,19 @@ void DXMouseTransform(unsigned short *x, unsigned short *y)
 	*y = *y*2/dxWindowZoom;
 }
 
-static const char *GetDXResult(HRESULT res)
-{
-	const char *text;
-	switch (res)
-	{
-		case D3DOK_NOAUTOGEN:text ="D3DOK_NOAUTOGEN\r\n\r\nThis is a success code. However, the autogeneration of mipmaps is not supported for this format. This means that resource creation will succeed but the mipmap levels will not be automatically generated.";break;
-		case D3DERR_CONFLICTINGRENDERSTATE:text ="D3DERR_CONFLICTINGRENDERSTATE\r\n\r\nThe currently set render states cannot be used together.";break;
-		case D3DERR_CONFLICTINGTEXTUREFILTER:text ="D3DERR_CONFLICTINGTEXTUREFILTER\r\n\r\nThe current texture filters cannot be used together.";break;
-		case D3DERR_CONFLICTINGTEXTUREPALETTE:text ="D3DERR_CONFLICTINGTEXTUREPALETTE\r\n\r\nThe current textures cannot be used simultaneously.";break;
-		case D3DERR_DEVICELOST:text ="D3DERR_DEVICELOST\r\n\r\nThe device has been lost but cannot be reset at this time. Therefore, rendering is not possible.";break;
-		case D3DERR_DEVICENOTRESET:text ="D3DERR_DEVICENOTRESET\r\n\r\nThe device has been lost but can be reset at this time.";break;
-		case D3DERR_DRIVERINTERNALERROR:text ="D3DERR_DRIVERINTERNALERROR\r\n\r\nInternal driver error. Applications should destroy and recreate the device when receiving this error. For hints on debugging this error, see Driver Internal Errors.";break;
-		case D3DERR_DRIVERINVALIDCALL:text ="D3DERR_DRIVERINVALIDCALL\r\n\r\nNot used.";break;
-		case D3DERR_INVALIDCALL:text ="D3DERR_INVALIDCALL\r\n\r\nThe method call is invalid. For example, a method's parameter may not be a valid pointer.";break;
-		case D3DERR_INVALIDDEVICE:text ="D3DERR_INVALIDDEVICE\r\n\r\nThe requested device type is not valid.";break;
-		case D3DERR_MOREDATA:text ="D3DERR_MOREDATA\r\n\r\nThere is more data available than the specified buffer size can hold.";break;
-		case D3DERR_NOTAVAILABLE:text ="D3DERR_NOTAVAILABLE\r\n\r\nZarizeni neni podporovano. Tato chyba vetsinou vznika pri problemu graficke karty a ovladacu. Prosim preinstalujte ovladace ke graficke karte. (\"This device does not support the queried technique.\")";break;
-		case D3DERR_NOTFOUND:text ="D3DERR_NOTFOUND\r\n\r\nThe requested item was not found.";break;
-		case D3DERR_OUTOFVIDEOMEMORY:text ="D3DERR_OUTOFVIDEOMEMORY\r\n\r\nDirect3D does not have enough display memory to perform the operation.";break;
-		case D3DERR_TOOMANYOPERATIONS:text ="D3DERR_TOOMANYOPERATIONS\r\n\r\nThe application is requesting more texture-filtering operations than the device supports.";break;
-		case D3DERR_UNSUPPORTEDALPHAARG:text ="D3DERR_UNSUPPORTEDALPHAARG\r\n\r\nThe device does not support a specified texture-blending argument for the alpha channel.";break;
-		case D3DERR_UNSUPPORTEDALPHAOPERATION:text ="D3DERR_UNSUPPORTEDALPHAOPERATION\r\n\r\nThe device does not support a specified texture-blending operation for the alpha channel.";break;
-		case D3DERR_UNSUPPORTEDCOLORARG:text ="D3DERR_UNSUPPORTEDCOLORARG\r\n\r\nThe device does not support a specified texture-blending argument for color values.";break;
-		case D3DERR_UNSUPPORTEDCOLOROPERATION:text ="D3DERR_UNSUPPORTEDCOLOROPERATION\r\n\r\nThe device does not support a specified texture-blending operation for color values.";break;
-		case D3DERR_UNSUPPORTEDFACTORVALUE:text ="D3DERR_UNSUPPORTEDFACTORVALUE\r\n\r\nThe device does not support the specified texture factor value. Not used; provided only to support older drivers.";break;
-		case D3DERR_UNSUPPORTEDTEXTUREFILTER:text ="D3DERR_UNSUPPORTEDTEXTUREFILTER\r\n\r\nThe device does not support the specified texture filter.";break;
-		case D3DERR_WASSTILLDRAWING:text ="D3DERR_WASSTILLDRAWING\r\n\r\nThe previous blit operation that is transferring information to or from this surface is incomplete.";break;
-		case D3DERR_WRONGTEXTUREFORMAT:text ="D3DERR_WRONGTEXTUREFORMAT\r\n\r\nThe pixel format of the texture surface is not valid.";break;
-		case E_FAIL:text ="E_FAIL\r\n\r\nAn undetermined error occurred inside the Direct3D subsystem.";break;
-		case E_INVALIDARG:text ="E_INVALIDARG\r\n\r\nAn invalid parameter was passed to the returning function.";break;
-				  //  case E_INVALIDCALL:text ="E_INVALIDCALL\r\n\r\nThe method call is invalid. For example, a method's parameter may have an invalid value.";break;
-		case E_NOINTERFACE:text ="E_NOINTERFACE\r\n\r\nNo object interface is available.";break;
-		case E_NOTIMPL:text ="E_NOTIMPL\r\n\r\nNot implemented.";break;
-		case E_OUTOFMEMORY:text ="E_OUTOFMEMORY\r\n\r\nDirect3D could not allocate sufficient memory to complete the call.";break;
-		default: text ="Neznama chyba DX";break;
-	}
-	return text;
-}
 
 static inline void CheckResult(HRESULT res)
 {
 	if (res == 0) return;
-	char buff[512];
-	sprintf(buff,"Chyba pri praci s DirectX: %s\r\nDxResult failed %8X (%d)",GetDXResult(res),res,res&0xFFFF);
-	MessageBox(NULL,buff,NULL,MB_OK);
 	ExitProcess(res);
 }
 
 extern "C" 
 {
-
+	/* 
+	 * Set window's coordinates when in restored or maximized position
+	 * Used for shake effect in chveni() 
+	 */
 	void setvesa_displaystart(int x,int y)
 	{
 		WINDOWPLACEMENT wp;
@@ -131,7 +93,7 @@ extern "C"
 #ifndef WINDOWCLASSFLAGS 
 #define WINDOWCLASSFLAGS 0
 #endif
-
+/* Registers a window class for subsequent use in call to CreateSkeldalWindow() */
 	static void RegisterWindowClass()
 	{
 		WNDCLASSEX cls;
@@ -154,21 +116,8 @@ extern "C"
 		}
 	}
 
-	static void ColCalc()
-	{
-		do
-		{
-			long val;
-			printf("number:");
-			scanf("%X",&val);
-			printf("RGB555(%d,%d,%d)\n",(val>>10),(val>>5) & 0x1F, val & 0x1F);
-		}
-		while (1);
-	}
-
 	static void CreateSkeldalWindow()
 	{
-		//ColCalc();
 		char buff[256];
 
 		LoadString(GetModuleHandle(NULL),IDS_WINTITLE,buff,sizeof(buff));
@@ -186,6 +135,10 @@ extern "C"
 		UpdateWindow(hMainWnd);  
 	}
 
+	/* 
+	 * retrieves information about one of the graphics modes for a display device 
+	 * and changes the the setting to it 
+	 */
 
 	static void DisplayMode(char init)
 	{
@@ -206,6 +159,7 @@ extern "C"
 			res = ChangeDisplaySettings(NULL,0);
 	} 
 
+	/* Shows logo.bmp */
 	static bool ShowLogo()
 	{
 		HBITMAP logo = (HBITMAP)LoadImage(GetModuleHandle(NULL),MAKEINTRESOURCE(IDB_INITLOGO),IMAGE_BITMAP,0,0,0);
@@ -224,6 +178,11 @@ extern "C"
 
 	void CheckMessageQueue();
 
+	 /*
+	 * Initializates and opens 640x480x16b mode in DX 
+	 * Returns 1 on success
+	 * inwindow - 1 = run in window/ 0 = fullscreen
+	 */ 
 	char DXInit64(char inwindow, int zoom, int monitor, int refresh)
 	{
 		runinwindow = inwindow != 0;
@@ -309,6 +268,10 @@ extern "C"
 		return 1;
 	}
 
+	/*
+	 * deactivates and removes focus,
+	 * closes main window
+	 */
 	void DXCloseMode()
 	{
 		if (DxDevice)
@@ -345,6 +308,9 @@ extern "C"
 		res = DxDevice->Present(NULL,NULL,hMainWnd,NULL);
 	}
 
+	/*
+	 * Presents the contents of the next buffer in the sequence of back buffers owned by the device.
+	 */
 	static void GlobalPresent(RECT *prc)
 	{
 		RECT rc = *prc;
