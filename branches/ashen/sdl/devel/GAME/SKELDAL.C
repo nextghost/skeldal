@@ -54,6 +54,7 @@
 #include "wizard.h"
 #include "version.h"
 #include <uvodni.h>
+#include <SDL/SDL.h>
 
 #define CONFIG_NAME SKELDALINI
 
@@ -1694,19 +1695,18 @@ void disable_intro()
 
 #include "crashdump.h"
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
-	char *c,rm;
-
+	char *c;
+	
 	InitCrashDump();
-
-	if (argc>= 3) rm =!strcmp(argv[1],"12345678");else rm = 0;
-	if (!rm) if (OtevriUvodniOkno() == 0) return;
+	
+	// if (!rm) if (OtevriUvodniOkno() == 0) return;
 
 	//OPEN_LOG("syslog");
 	OPEN_LOG("con");
 	SEND_LOG("START --------------------------",0,0);
-	argv;
+	if (SDL_Init(SDL_INIT_EVERYTHING) == -1) return -1;
 	c = getcwd(NULL,_MAX_PATH+1);
 	pathtable[SR_SAVES] = getmem(strlen(c)+2);
 	strcpy(pathtable[SR_SAVES],c);
@@ -1719,7 +1719,7 @@ void main(int argc,char *argv[])
 	turn_speed(1);
 	SetEnvironmentVariable("BSVER",VERSION);
 	configure(CONFIG_NAME);
-	if ((argc>= 2 || SelectAdventure()) && !rm )
+	if ((argc>= 2))
 	{
 		char *adventure;
 		char **config = cur_config;
@@ -1746,14 +1746,9 @@ void main(int argc,char *argv[])
 	init_skeldal();
 
 	//add_task(32768,check_number_1phase,argv[0]);
-	SEND_LOG("(INIT) Starting game thread.",0,0);
-	if (argc>= 3 && rm)
-	{
-		add_task(65536,start_from_mapedit,argc,argv);
-	}
-	else
-		add_task(65536,start);
-	SEND_LOG("(INIT) Main thread goes to sleep.",0,0);
+	//SEND_LOG("(INIT) Starting game thread.",0,0);
+	add_task(65536,start);
+	//SEND_LOG("(INIT) Main thread goes to sleep.",0,0);
 	/*  position(200,200);
 	    set_font(H_FBIG,RGB(200,200,200));
 	    outtext("Ahoj lidi");

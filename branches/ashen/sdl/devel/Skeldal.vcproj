@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\,LIBS\,WINDOWS\"
+				AdditionalIncludeDirectories="&quot;E:\Microsoft DirectX SDK (August 2008)\Include&quot;;.\;LIBS\;WINDOWS\"
 				PreprocessorDefinitions="_DEBUG;LOGFILE;WIN32;_CONSOLE;_WIN32_WINNT=0x500;_CRT_SECURE_NO_WARNINGS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -76,7 +76,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib comctl32.lib dsound.lib"
+				AdditionalDependencies="d3d9.lib comctl32.lib dsound.lib SDL.lib SDLmain.lib"
 				OutputFile="$(OutDir)\SkeldalD.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"

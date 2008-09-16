@@ -21,38 +21,37 @@
  *  Last commit made by: $Id: BGraph2Dx.cpp 7 2008-01-14 20:14:25Z bredysoft $
  */
 #include <windows.h>
+#include <stdio.h>
 #define DWORD_PTR DWORD *
-#include <d3d9.h>
+//#include <d3d9.h>
 #include <debug.h>
 #include "Skeldal_win.h"
 #include "resource.h"
-
+#include <SDL/SDL.h>
+#include <string>
 #define SKELDALCLASSNAME "BranySkeldalDXWindow"
-
 #define INWINDOW runinwindow
+#define SEND_LOG(format,parm2) fprintf(stderr,"%s "format"\n",parm2),fflush(stderr)
 
 static int dxWindowZoom = 1;
 
-static HWND hMainWnd;
-static IDirect3D9 *DxHandle;
-static IDirect3DDevice9 *DxDevice;
-static IDirect3DSurface9 *DxBackBuffer;
-static D3DPRESENT_PARAMETERS pparm;
+//static HWND hMainWnd;
+static SDL_Surface *hMainWnd;
+// static IDirect3D9 *DxHandle;
+
+//static IDirect3DDevice9 *DxDevice;
+//static IDirect3DSurface9 *DxBackBuffer;
+static SDL_Surface *DxBackBuffer;
+//static D3DPRESENT_PARAMETERS pparm;
 
 static unsigned short *mainBuffer = NULL;
 static unsigned short *secondBuffer = NULL;
 static unsigned short *curBuffer = NULL;
 static unsigned long main_linelen;
 
-#ifdef _DX_REF
-#define DXDEVICE_TYPE D3DDEVTYPE_REF
-#else 
-#define DXDEVICE_TYPE D3DDEVTYPE_HAL
-#endif
-
 static bool dialogs = false;
 static bool runinwindow = false;
-static int shiftscrx = 0,shiftscry = 0;
+static int shiftscrx = 0, shiftscry = 0;
 
 void DXMouseTransform(unsigned short *x, unsigned short *y)
 {
@@ -61,19 +60,15 @@ void DXMouseTransform(unsigned short *x, unsigned short *y)
 }
 
 
-static inline void CheckResult(HRESULT res)
-{
-	if (res == 0) return;
-	ExitProcess(res);
-}
-
 extern "C" 
 {
 	/* 
 	 * Set window's coordinates when in restored or maximized position
 	 * Used for shake effect in chveni() 
 	 */
-	void setvesa_displaystart(int x,int y)
+/*
+ * Disabled also in GAME/BUILDER.C !
+ * void setvesa_displaystart(int x,int y)
 	{
 		WINDOWPLACEMENT wp;
 		wp.length = sizeof(wp);
@@ -88,13 +83,13 @@ extern "C"
 		shiftscry = y;
 		SetWindowPlacement(hMainWnd,&wp);
 	}
-
+*/
 
 #ifndef WINDOWCLASSFLAGS 
 #define WINDOWCLASSFLAGS 0
 #endif
 /* Registers a window class for subsequent use in call to CreateSkeldalWindow() */
-	static void RegisterWindowClass()
+/*	static void RegisterWindowClass()
 	{
 		WNDCLASSEX cls;
 		cls.cbSize = sizeof(cls);
@@ -115,24 +110,28 @@ extern "C"
 			exit(0);
 		}
 	}
-
+*/
 	static void CreateSkeldalWindow()
 	{
-		char buff[256];
+		//char buff[256];
 
-		LoadString(GetModuleHandle(NULL),IDS_WINTITLE,buff,sizeof(buff));
+		//LoadString(GetModuleHandle(NULL),IDS_WINTITLE,buff,sizeof(buff));
+//		strcpy(buff, "Skeldal, SDL version");
 
-
-		RECT rc = {0,0,640*dxWindowZoom/2,480*dxWindowZoom/2};
-		DWORD flags = (INWINDOW?(WS_OVERLAPPED|WS_SYSMENU|WS_MINIMIZEBOX|WS_CAPTION|WS_BORDER):(WS_POPUP|WS_SYSMENU))|WS_VISIBLE;
-		AdjustWindowRect(&rc,flags,FALSE);
-		hMainWnd = CreateWindow(SKELDALCLASSNAME,buff,flags,100,100,rc.right-rc.left,rc.bottom-rc.top,NULL,NULL,GetModuleHandle(NULL),NULL);
+//		RECT rc = {0,0,640*dxWindowZoom/2,480*dxWindowZoom/2};
+//		DWORD flags = (INWINDOW?(WS_OVERLAPPED|WS_SYSMENU|WS_MINIMIZEBOX|WS_CAPTION|WS_BORDER):(WS_POPUP|WS_SYSMENU))|WS_VISIBLE;
+//		AdjustWindowRect(&rc,flags,FALSE);
+		//hMainWnd = CreateWindow(SKELDALCLASSNAME,buff,flags,100,100,rc.right-rc.left,rc.bottom-rc.top,NULL,NULL,GetModuleHandle(NULL),NULL);
+		hMainWnd = SDL_SetVideoMode(640, 480, 24, SDL_SWSURFACE);
 		if (hMainWnd == NULL)
 		{
-			MessageBox(NULL,"WindowCreationFailed",NULL,MB_OK);
+		//	MessageBox(NULL,"WindowCreationFailed",NULL,MB_OK);
 			exit(0);
 		}  
-		UpdateWindow(hMainWnd);  
+		SDL_WM_SetCaption("The Gates of Skeldal - SDL version", NULL);
+		//UpdateWindow(hMainWnd);  
+		//SDL_Flip(hMainWnd);
+		SDL_UpdateRect(hMainWnd, 0, 0, 0, 0);
 	}
 
 	/* 
@@ -140,31 +139,29 @@ extern "C"
 	 * and changes the the setting to it 
 	 */
 
-	static void DisplayMode(char init)
-	{
-		DEVMODE mode;
-		int res;
-
-		if (init)
-		{
-			EnumDisplaySettings(NULL,ENUM_REGISTRY_SETTINGS,&mode);
-
-			mode.dmSize = sizeof(mode);
-			mode.dmBitsPerPel = 16;
-			mode.dmFields = DM_BITSPERPEL|DM_DISPLAYFREQUENCY|DM_DISPLAYFLAGS|DM_PELSWIDTH|DM_PELSHEIGHT;
-
-			res = ChangeDisplaySettings(&mode,0);
-		}
-		else
-			res = ChangeDisplaySettings(NULL,0);
-	} 
 
 	/* Shows logo.bmp */
 	static bool ShowLogo()
 	{
-		HBITMAP logo = (HBITMAP)LoadImage(GetModuleHandle(NULL),MAKEINTRESOURCE(IDB_INITLOGO),IMAGE_BITMAP,0,0,0);
-		if (logo == NULL) return false;
-		HDC hDC;
+	//	HBITMAP logo = (HBITMAP)LoadImage(GetModuleHandle(NULL),MAKEINTRESOURCE(IDB_INITLOGO),IMAGE_BITMAP,0,0,0);
+		std::string filename = "logo.bmp";
+		SEND_LOG("Entering ShowLogo() function",0);
+		SDL_Surface *logo = NULL; 
+		logo = SDL_LoadBMP(filename.c_str());
+		SEND_LOG("Loading logo.bmp",0);
+		if (logo == NULL) {
+			SEND_LOG("logo.bmp NOT FOUND! ",0);
+			SDL_Delay(5000);
+		}
+		SEND_LOG("ShowLogo(): Logo successfully loaded. ",0);
+		SDL_Surface *optimized = SDL_DisplayFormat(logo);
+		SDL_FreeSurface(logo);
+		SDL_BlitSurface(optimized, NULL, hMainWnd, NULL);
+		SDL_FreeSurface(optimized);
+
+		//SDL_CreateRGBSurfaceF
+
+		/* HDC hDC;
 		CheckResult(DxBackBuffer->GetDC(&hDC));
 		HDC hBitmap = CreateCompatibleDC(hDC);
 		HBITMAP old = (HBITMAP)SelectObject(hBitmap,logo);
@@ -172,11 +169,9 @@ extern "C"
 		SelectObject(hBitmap,old);
 		DeleteDC(hBitmap);
 		DxBackBuffer->ReleaseDC(hDC);
-		DeleteObject(logo);
+		DeleteObject(logo); */
 		return true;
 	}
-
-	void CheckMessageQueue();
 
 	 /*
 	 * Initializates and opens 640x480x16b mode in DX 
@@ -187,19 +182,19 @@ extern "C"
 	{
 		runinwindow = inwindow != 0;
 		dxWindowZoom = inwindow?zoom+1:2;
-
-		RegisterWindowClass();
+		//SDL_Init();
+//		RegisterWindowClass();
 		CreateSkeldalWindow();  
 
-		DxHandle = Direct3DCreate9(D3D_SDK_VERSION);
-		if (DxHandle == NULL)
+		// DxHandle = Direct3DCreate9(D3D_SDK_VERSION);
+		/* if (DxHandle == NULL)
 		{
 			MessageBox(hMainWnd,"Nepodarilo se inicializovat DirectX. "
 					"Preinstalujte prosim DirectX ze stranek www.microsoft.com/directx. "
 					"Ke spusteni je potreba mit aspon verzi DirectX 9.0c",NULL,MB_OK|MB_ICONEXCLAMATION);
 			return 0;
-		}
-
+		}*/
+/*
 		HMONITOR mon = DxHandle->GetAdapterMonitor(monitor);
 		if (mon != NULL)
 		{
@@ -208,7 +203,8 @@ extern "C"
 			GetMonitorInfo(mon,&moninfo);
 			SetWindowPos(hMainWnd,NULL,moninfo.rcWork.left,moninfo.rcWork.top,0,0,SWP_NOZORDER|SWP_NOSIZE);    
 		}
-
+*/
+		/*
 		pparm.BackBufferWidth = 640;
 		pparm. BackBufferHeight = 480;
 		pparm.BackBufferFormat = D3DFMT_R5G6B5;
@@ -240,31 +236,57 @@ extern "C"
 			CheckResult(res);
 			return 0;
 		}
+*/
+		//res = DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);
 
-		res = DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);
-		CheckResult(res);
-
+//		CheckResult(res);
+		
 		bool logo;
 		logo = ShowLogo();
+		if(!logo)SEND_LOG("logo: %i", logo);
 
-		D3DLOCKED_RECT lrc;
+Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+		rmask = 0xff000000;
+		gmask = 0x00ff0000;
+		bmask = 0x0000ff00;
+		amask = 0x000000ff;
+#else
+		rmask = 0x000000ff;
+		gmask = 0x0000ff00;
+		bmask = 0x00ff0000;
+		amask = 0xff000000;
+#endif
 
-		res = DxBackBuffer->LockRect(&lrc,NULL,0);
-		CheckResult(res);
+		DxBackBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, 640 , 480 , 32, rmask, gmask, bmask, amask);
+		if (DxBackBuffer == NULL) {
+			SEND_LOG("SDL_CreateRGBSurface failed",0);
+			return -1;
+		}
 
-		main_linelen = dx_linelen = scr_linelen = lrc.Pitch;
+		SEND_LOG("SDL_CreateRGBSurface succeeded.",0);
+//		D3DLOCKED_RECT lrc;
+	
+//lrc.Pitch = 640/
+		main_linelen = dx_linelen = scr_linelen = 640;
 		scr_linelen2= scr_linelen/2;
-		curBuffer = mainBuffer = (unsigned short *)lrc.pBits;
 
-		secondBuffer = (unsigned short *)malloc(lrc.Pitch*480);
+		curBuffer = mainBuffer = (unsigned short *)DxBackBuffer->pixels;
+		SEND_LOG("secondBuffer: DxBackBuffer->pitch:" , 0);
+		// SEND_LOG("secondBuffer: DxBackBuffer->pitch: %d", DxBackBuffer->pitch);
+		secondBuffer = (unsigned short *)malloc(DxBackBuffer->pitch*480);
 
 		if (logo)
 		{
-			InvalidateRect(hMainWnd,NULL,TRUE);
+			//InvalidateRect(hMainWnd,NULL,TRUE);
+			SDL_UpdateRect(hMainWnd, 0, 0, 0, 0);
+			/*
 			DWORD tm = GetTickCount()+5000;
 			while (tm>GetTickCount()) {Sleep(100);CheckMessageQueue();}
+			*/
+			SDL_Delay(5000);
 		}
-
+		SEND_LOG("Logo showed", 0);
 		return 1;
 	}
 
@@ -274,49 +296,36 @@ extern "C"
 	 */
 	void DXCloseMode()
 	{
-		if (DxDevice)
-		{
-			if (DxBackBuffer) DxBackBuffer->Release();
-			DxDevice->Release();
-			DxHandle->Release();
-			DestroyWindow(hMainWnd);
-			UnregisterClass(SKELDALCLASSNAME,GetModuleHandle(NULL));
-			free(secondBuffer);
-			if (runinwindow) DisplayMode(0);
-			DxDevice = NULL;
-		}
+		if (DxBackBuffer != NULL) SDL_FreeSurface(DxBackBuffer);
+		SDL_FreeSurface(hMainWnd);
+		free(secondBuffer);
 	}
 
 
-	static void HandleDeviceLost()
+/*	static void HandleDeviceLost()
 	{
-		HRESULT res = D3DERR_DEVICELOST;
-		DxBackBuffer->Release();
+		//HRESULT res = D3DERR_DEVICELOST;
+		SDL_FreeSurface(DxBackBuffer);
+	//	DxBackBuffer->Release();
 		DxBackBuffer = NULL;
-		while (res == D3DERR_DEVICELOST)
-		{
-			while (DxDevice->TestCooperativeLevel() != D3DERR_DEVICENOTRESET) 
-			{
-				MSG msg;
-				GetMessage(&msg,0,0,0);
-				DispatchMessage(&msg);
-			}    
-			res = DxDevice->Reset(&pparm);
-		}
-		res = DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);    
-		CheckResult(res);
-		res = DxDevice->Present(NULL,NULL,hMainWnd,NULL);
+		
+		//res = DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);    
+		//CheckResult(res);
+//		res = DxDevice->Present(NULL,NULL,hMainWnd,NULL);
+		SDL_UpdateRect(hMainWnd, 0, 0, 0, 0);
 	}
-
+*/
 	/*
 	 * Presents the contents of the next buffer in the sequence of back buffers owned by the device.
+	 * Draw prc rectangle into hMainWnd
 	 */
-	static void GlobalPresent(RECT *prc)
+	static void GlobalPresent(SDL_Rect *prc)
 	{
-		RECT rc = *prc;
-		RECT winrc = rc;
-		int z = dxWindowZoom/2;
-		if (dxWindowZoom != 2)
+		SDL_Rect rc = *prc;
+		//SDL_Rect winrc = rc;
+
+		//int z = dxWindowZoom/2;
+		/*if (dxWindowZoom != 2)
 		{
 			rc.left -= z;
 			rc.top -= z;
@@ -335,11 +344,13 @@ extern "C"
 			winrc.top = winrc.top*dxWindowZoom/2;
 			winrc.right = winrc.right*dxWindowZoom/2;
 			winrc.bottom = winrc.bottom*dxWindowZoom/2;  
-		}
+		}*/
 		if (!dialogs)
 		{
-			LRESULT res = DxDevice->Present(&rc,&winrc,hMainWnd,NULL);
-			if (res == D3DERR_DEVICELOST) HandleDeviceLost();
+		// !!!!	
+		SDL_BlitSurface(hMainWnd, &rc, DxBackBuffer, &rc);
+		//	LRESULT res = DxDevice->Present(&rc,&winrc,hMainWnd,NULL);
+		//	if (res == D3DERR_DEVICELOST) HandleDeviceLost();
 		}
 	}
 
@@ -347,27 +358,29 @@ extern "C"
 	static bool UnLockBuffers()
 	{
 		if (DxBackBuffer == NULL) return false;
-		HRESULT res;
-		res = DxBackBuffer->UnlockRect();
-		CheckResult(res);
+		//HRESULT res;
+		SDL_UnlockSurface(DxBackBuffer);
+//		res = DxBackBuffer->UnlockRect();
+//		CheckResult(res);
 		return true;
 	}
 
 	static void LockBuffers()
 	{
-		D3DLOCKED_RECT lrc;
-		HRESULT res;
-		res = DxBackBuffer->LockRect(&lrc,NULL,0);
-		CheckResult(res);
+		//D3DLOCKED_RECT lrc;
+		//HRESULT res;
+		//res = DxBackBuffer->LockRect(&lrc,NULL,0);
+		SDL_LockSurface(DxBackBuffer);
+//		CheckResult(res);
 
-		curBuffer = mainBuffer = (unsigned short *)lrc.pBits;
-		if (dx_linelen != lrc.Pitch)
+		curBuffer = mainBuffer = (unsigned short *)DxBackBuffer->pixels;
+		if (dx_linelen != DxBackBuffer->pitch)
 		{
 			free(secondBuffer);
-			main_linelen = dx_linelen = scr_linelen = lrc.Pitch;
+			main_linelen = dx_linelen = scr_linelen = (long )DxBackBuffer->pixels;
 			scr_linelen2= scr_linelen/2;
-			curBuffer = mainBuffer = (unsigned short *)lrc.pBits;
-			secondBuffer = (unsigned short *)malloc(lrc.Pitch*480);
+			curBuffer = mainBuffer = (unsigned short *)DxBackBuffer->pixels;
+			secondBuffer = (unsigned short *) malloc(DxBackBuffer->pitch*480);
 		}
 	}
 
@@ -375,11 +388,11 @@ extern "C"
 	{
 		if (UnLockBuffers() == false) return;
 
-		RECT rc;
-		rc.left = x;
-		rc.top = y;
-		rc.right = x+xs;
-		rc.bottom = y+ys;
+		SDL_Rect rc;
+		rc.x = x;
+		rc.y = y;
+		rc.w= x+xs;
+		rc.h = y+ys;
 		GlobalPresent(&rc);
 		LockBuffers();
 
@@ -415,8 +428,9 @@ extern "C"
 	}
 
 
-	void DXCopyRects64zoom2(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys)
+/*	void DXCopyRects64zoom2(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys)
 	{
+
 		HRESULT res;
 		if (UnLockBuffers() == false) return;
 
@@ -438,21 +452,36 @@ extern "C"
 
 		LockBuffers();  
 	}
-
+*/
 
 	void *DxPrepareWalk(int ypos)
 	{
-		HRESULT res;
 
+//		IDirect3DSurface9 *tempbuff;
+Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+		rmask = 0xff000000;
+		gmask = 0x00ff0000;
+		bmask = 0x0000ff00;
+		amask = 0x000000ff;
+#else
+		rmask = 0x000000ff;
+		gmask = 0x0000ff00;
+		bmask = 0x00ff0000;
+		amask = 0xff000000;
+#endif
+		SDL_Surface *tempbuff = SDL_CreateRGBSurface(SDL_SWSURFACE, 640 , 360, 32, rmask, gmask, bmask, amask);
 
-		IDirect3DSurface9 *tempbuff;
-		res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,&tempbuff,NULL);
-		CheckResult(res);
+//		res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,&tempbuff,NULL);
+		//SDL_Rect = 
+		//CheckResult(res);
+
 		UnLockBuffers();
-		RECT src;src.left = 0;src.top = ypos;src.right = 640;src.bottom = ypos+360;
-		RECT trg;trg.left = 0;trg.top = 0;trg.right = 640;trg.bottom = 360;
-		res = DxDevice->StretchRect(DxBackBuffer,&src,tempbuff,&trg,D3DTEXF_NONE);
-		CheckResult(res);
+		SDL_Rect src;src.x = 0;src.y = ypos;src.w = 640;src.h = ypos+360;
+		SDL_Rect trg;trg.x = 0;trg.y = 0;trg.w = 640;trg.h = 360;
+		
+		//res = DxDevice->StretchRect(DxBackBuffer,&src,tempbuff,&trg,D3DTEXF_NONE);
+		SDL_BlitSurface(DxBackBuffer, &src, tempbuff, &trg);
 		LockBuffers();
 
 		return (void *)tempbuff;
@@ -463,16 +492,16 @@ extern "C"
 		if (phase>1.0) phase = 1.0f;
 		if (phase<0.0) phase = 0.0f;
 		UnLockBuffers();
-		IDirect3DSurface9 *surf = (IDirect3DSurface9 *)handle;
-		RECT rc1;rc1.left = 0;rc1.top = 0;rc1.right = 640;rc1.bottom = 360;
-		RECT rc2;rc2.left = points[0];rc2.top = points[1];rc2.right = points[2];rc2.bottom = points[3];
-		RECT rcx;
-		rcx.left = (int)(rc1.left+(rc2.left-rc1.left)*phase);
-		rcx.top = (int)(rc1.top+(rc2.top-rc1.top)*phase);
-		rcx.right = (int)(rc1.right+(rc2.right-rc1.right)*phase);
-		rcx.bottom = (int)(rc1.bottom+(rc2.bottom-rc1.bottom)*phase);
-		rc1.top += ypos;
-		rc1.bottom += ypos;
+		SDL_Surface *surf = (SDL_Surface *)handle;
+		SDL_Rect rc1;rc1.x = 0;rc1.y = 0;rc1.w = 640;rc1.h = 360;
+		SDL_Rect rc2;rc2.x = points[0];rc2.y = points[1];rc2.w = points[2];rc2.h = points[3];
+		SDL_Rect rcx;
+		rcx.x = (int)(rc1.x +(rc2.x-rc1.x)*phase);
+		rcx.y = (int)(rc1.y +(rc2.y -rc1.y )*phase);
+		rcx.w = (int)(rc1.w+(rc2.w-rc1.w)*phase);
+		rcx.h = (int)(rc1.h +(rc2.h-rc1.h)*phase);
+		rc1.y += ypos;
+		rc1.h += ypos;
 
 		/*  HDC srcdc;
 		    HDC trgdc;
@@ -487,9 +516,8 @@ extern "C"
 		    */
 
 
-		HRESULT res;
-		res = DxDevice->StretchRect(surf,&rcx,DxBackBuffer,&rc1,D3DTEXF_NONE);
-		CheckResult(res);
+//		res = DxDevice->StretchRect(surf,&rcx,DxBackBuffer,&rc1,D3DTEXF_NONE);
+		SDL_BlitSurface(surf, &rcx, DxBackBuffer, &rc1);
 
 		GlobalPresent(&rc1);
 		LockBuffers();
@@ -497,8 +525,8 @@ extern "C"
 
 	void DxDoneWalk(void *handle)
 	{
-		IDirect3DSurface9 *surf = (IDirect3DSurface9 *)handle;
-		if (surf) surf->Release();
+		SDL_Surface *surf = (SDL_Surface *)handle;
+		if (surf) SDL_FreeSurface(surf);
 	}
 
 
@@ -543,29 +571,45 @@ extern "C"
 
 	void *DxPrepareTurn(int ypos)
 	{
-		IDirect3DSurface9 **handle = new IDirect3DSurface9 *[2];
-		HRESULT res;
+		//IDirect3DSurface9 **handle = new IDirect3DSurface9 *[2];
+		SDL_Surface *handle[2];
 
-
-		res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,handle,NULL);
-		CheckResult(res);
+Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+		rmask = 0xff000000;
+		gmask = 0x00ff0000;
+		bmask = 0x0000ff00;
+		amask = 0x000000ff;
+#else
+		rmask = 0x000000ff;
+		gmask = 0x0000ff00;
+		bmask = 0x00ff0000;
+		amask = 0xff000000;
+#endif
+		handle[0] = SDL_CreateRGBSurface(SDL_SWSURFACE, 640 , 360, 32, rmask, gmask, bmask, amask);
+	//	res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,handle,NULL);
 		UnLockBuffers();
-		RECT src;src.left = 0;src.top = ypos;src.right = 640;src.bottom = ypos+360;
-		RECT trg;trg.left = 0;trg.top = 0;trg.right = 640;trg.bottom = 360;
-		res = DxDevice->StretchRect(DxBackBuffer,&src,handle[0],&trg,D3DTEXF_NONE);
-		CheckResult(res);
+		
+		SDL_Rect src;src.x = 0;src.y = ypos;src.w = 640;src.h = ypos+360;
+		SDL_Rect trg;trg.x = 0;trg.y = 0;trg.w = 640;trg.h = 360;
+	
+		//res = DxDevice->StretchRect(DxBackBuffer,&src,handle[0],&trg,D3DTEXF_NONE);
 
-		res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,handle+1,NULL);
-		CheckResult(res);
-		D3DLOCKED_RECT lrect;
-		res = handle[1]->LockRect(&lrect,NULL,0);
-		CheckResult(res);
+		SDL_BlitSurface(DxBackBuffer, &src, handle[0], &trg);
 
-		unsigned short *trgptr = (unsigned short *)lrect.pBits;
+
+		handle[1] = SDL_CreateRGBSurface(SDL_SWSURFACE, 640 , 360, 32, rmask, gmask, bmask, amask);
+//		res = DxDevice->CreateRenderTarget(640,360,D3DFMT_R5G6B5,D3DMULTISAMPLE_NONE,0,TRUE,handle+1,NULL);
+//		res = handle[1]->LockRect(&lrect,NULL,0);
+		SDL_LockSurface(handle[1]);
+
+
+		unsigned short *trgptr = (unsigned short *)handle[1]->pixels;
 		unsigned short *srcptr = secondBuffer+scr_linelen2*ypos;
-		for (int i = 0;i<360;i++,trgptr = (unsigned short *)((char *)trgptr+lrect.Pitch),srcptr += scr_linelen2)
+		for (int i = 0;i<360;i++,trgptr = (unsigned short *)((char *)trgptr+handle[1]->pitch),srcptr += scr_linelen2)
 			memcpy(trgptr,srcptr,640*2);
-		handle[1]->UnlockRect();
+//		handle[1]->UnlockRect();
+		SDL_UnlockSurface(handle[1]);
 
 		LockBuffers();
 
@@ -573,31 +617,33 @@ extern "C"
 	}
 
 
-	static inline void CopySurfaceAtPos(IDirect3DSurface9 *src, int width, int height, int xpos,int ypos, int border)
+	static inline void CopySurfaceAtPos(SDL_Surface *src, int width, int height, int xpos,int ypos, int border)
 	{
-		RECT trc;
-		trc.left = xpos;
-		trc.top = ypos;
-		trc.right = xpos+width;
-		trc.bottom = ypos+height;
-		RECT s_rc;
-		s_rc.left = 0;
-		s_rc.top = 0;
-		s_rc.right = width;
-		s_rc.bottom = height;
+		SDL_Rect trc;
+		trc.x = xpos;
+		trc.y = ypos;
+		trc.w = xpos+width;
+		trc.h = ypos+height;
+		SDL_Rect s_rc;
+		s_rc.x = 0;
+		s_rc.y = 0;
+		s_rc.w = width;
+		s_rc.h = height;
 		if (border<0) 
 		{
-			trc.left -= border;
-			s_rc.left -= border;
+			trc.x -= border;
+			s_rc.x -= border;
 		}
 		else
 		{
-			trc.right -= border;
-			s_rc.right -= border;
+			trc.w -= border;
+			s_rc.w -= border;
 		}
-		if (trc.left<0) {s_rc.left -= trc.left*0.7;trc.left = 0;}
-		if (trc.right>= 640) {s_rc.right -= (trc.right-640)*0.7;trc.right = 640;}
-		CheckResult(DxDevice->StretchRect(src,&s_rc,DxBackBuffer,&trc,D3DTEXF_NONE));
+		if (trc.x <0) {s_rc.x -= trc.x*0.7;trc.x = 0;}
+		if (trc.w >= 640) {s_rc.w -= (trc.w -640)*0.7;trc.w = 640;}
+		//CheckResult(DxDevice->StretchRect(src,&s_rc,DxBackBuffer,&trc,D3DTEXF_NONE));
+		SDL_BlitSurface(src, &s_rc, DxBackBuffer, &trc);
+
 	}
 
 	void DxTurn(void *handle, char right, int ypos,int border, float phase, void *lodka)
@@ -606,9 +652,9 @@ extern "C"
 		if (phase>1.0) phase = 1.0f;
 		if (phase<0.0) phase = 0.0f;
 		UnLockBuffers();
-		IDirect3DSurface9 **ihandle = (IDirect3DSurface9 **)handle;
-		IDirect3DSurface9 *sleft = ihandle[right?0:1];
-		IDirect3DSurface9 *sright = ihandle[right?1:0];
+		SDL_Surface **ihandle = (SDL_Surface **)handle;
+		SDL_Surface *sleft = ihandle[right?0:1];
+		SDL_Surface *sright = ihandle[right?1:0];
 		int width = 640-border*2;
 		int xpos = (int)border+width*phase;
 		if (right) xpos = 640-xpos;
@@ -616,7 +662,7 @@ extern "C"
 		CopySurfaceAtPos(sright,640,360,xpos-border,ypos,-border);
 
 
-		RECT rc = {0,ypos,640,ypos+360};
+		SDL_Rect rc = {0,ypos,640,ypos+360};
 
 		GlobalPresent(&rc);
 		LockBuffers();
@@ -625,9 +671,9 @@ extern "C"
 
 	void DxDoneTurn(void *handle)
 	{
-		IDirect3DSurface9 **ihandle = (IDirect3DSurface9 **)handle;
-		ihandle[0]->Release();
-		ihandle[1]->Release();
+		SDL_Surface **ihandle = (SDL_Surface **)handle;
+		SDL_FreeSurface(ihandle[0]);
+		SDL_FreeSurface(ihandle[1]);
 		delete [] ihandle;  
 	}
 
@@ -637,8 +683,6 @@ extern "C"
 	}
 
 }
-HWND GetGameWindow() 
-{return hMainWnd;}
 
 void DxLockBuffers(BOOL lock)
 {

@@ -25,7 +25,7 @@
 #include <commctrl.h>
 #include "uvodni.h"
 #include "resource.h"
-#include "konfig.h"
+//#include "konfig.h"
 #include "install.h"
 #include <io.h>
 #include <SHLOBJ.H>
@@ -188,7 +188,7 @@ static LRESULT UvodniWinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					{
 						case 2: exitstatus = 0; DestroyWindow(hWnd);break;
 						case 0: exitstatus = 1; DestroyWindow(hWnd);break;
-						case 1: OpenKonfig(hWnd);break;
+						case 1: break; // OpenKonfig(hWnd);break;
 							//          case 0: RunInstall(hWnd);break;
 					}        
 				}

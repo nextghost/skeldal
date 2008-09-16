@@ -41,7 +41,7 @@ extern "C" {
 
 	//void DXCopyRects32(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys);
 	void DXCopyRects64(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys);
-	void DXCopyRects64zoom2(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys);
+	//void DXCopyRects64zoom2(unsigned short x,unsigned short y,unsigned short xs,unsigned short ys);
 
 	void *DxPrepareWalk(int ypos);
 	void DxZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
@@ -55,14 +55,13 @@ extern "C" {
 
 	void DxDialogs(char enable);
 
-	void setvesa_displaystart(int x,int y);
+	//void setvesa_displaystart(int x,int y);
 
 	extern long scr_linelen;
 	extern long scr_linelen2;
 
 	void DXMouseTransform(unsigned short *x, unsigned short *y);
 
-	HWND GetGameWindow();
 	void DxLockBuffers(BOOL lock);
 
 	void StripBlt(void *data, unsigned int startline, unsigned long width);

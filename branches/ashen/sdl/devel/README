@@ -2,7 +2,7 @@
 Purpose of this branch is to provide platform independent port of Skeldal using SDL library. 
 
 == Roadmap ==
- - Rewrite functions that are using DirectX to SDL.
+ - Rewrite functions that are using DirectX to SDL. (Video subsystem - needs testing, impossible without audio disabling, Audio - IN PROGRESS)
  - Rewrite pieces of engine written in assembly to C.
  - Get rid of MS Visual C++ dependency for build, using gcc/mingw with autotools for building
  - Provide port for POSIX compliant systems(GNU/Linux, *BSD, ..)
