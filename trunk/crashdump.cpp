@@ -141,11 +141,11 @@ static DWORD WINAPI PostError(LPVOID p)
       "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1250\" />"
       "<title>Brány Skeldalu - formulář k odeslání chyby</title>"
       "<style type=\"text/css\">\n"
-      "@import url(\"http://skeldal.jinak.cz/style.css\");\n"
+      "@import url(\"http://skeldal.vyletnici.net/style.css\");\n"
       "</style>"
       "</head>"
       "<body>"
-      "<div style=\"float: left; width: 155px;\"><img src=\"http://skeldal.jinak.cz/logo.jpg\" alt=\"logo\" width=\"150\" height=\"82\"/></div>"
+      "<div style=\"float: left; width: 155px;\"><img src=\"http://skeldal.vyletnici.net/logo.jpg\" alt=\"logo\" width=\"150\" height=\"82\"/></div>"
       "<div style=\"margin-left: 180px;margin-right: 50px;\">"
       "<h1>Brány Skeldalu - formulář k odeslání chyby</h1>"
       "<p>Autor programu se omlouvá za chybu a prosí Vás, abyste pomohl při odhalování chyb.<br />"
@@ -154,7 +154,7 @@ static DWORD WINAPI PostError(LPVOID p)
       "<b>K formuláři je přiložen soubor obsahující záznam o chybě.</b><br /><br />"
       "Děkujeme za spolupráci</p>"
       "<hr />"
-      "<form enctype=\"multipart/form-data\" action=\"http://skeldal.jinak.cz/bugreport.php\" method=\"post\"><div>"
+      "<form enctype=\"multipart/form-data\" action=\"http://skeldal.vyletnici.net/bugreport.php\" method=\"post\"><div>"
       "<div>Váš e-mail pro případ, že bysme vás chtěli kontaktovat: (nepovinné)</div>"
       "<input type=\"text\" name=\"email\" value=\"\" size=\"50\"/>"
       "<div>Napište prosím další informace o tom, za jakých podmínek chyba vznikla, popřípadě jak chybu znovu vyvolat</div>"
@@ -164,7 +164,7 @@ static DWORD WINAPI PostError(LPVOID p)
       "<hr /><div>"
       "Pozor: Formulář také obsahuje informace o poslední chybě.<br />"
       "Nepoužívejte tento formulář k odeslání jiných chybových hlášení.</div>"
-      "<p><a href=\"http://skeldal.jinak.cz/main.php?page=soukromí\">Prohlášení o ochraně soukromých údajů</a></p>"
+      "<p><a href=\"http://skeldal.vyletnici.net/main.php?page=soukromí\">Prohlášení o ochraně soukromých údajů</a></p>"
       "<hr />"
       "<input type=\"submit\" value=\"Odeslat záznam o chybě\" /><br />"
       "<input type=\"hidden\" name=\"data\" value=\"";
@@ -232,8 +232,8 @@ static DWORD WINAPI CrashReportGenerateThread(LPVOID data)
 	hwnd=CreateWindowEx(WS_EX_TOPMOST,"STATIC","V programu nastala chyba\r\n\r\nSystem Windows nyni sbira informace o chybe a generuje potrebne soubory.\r\nProsim cekejte, tato operace muze trvat trochu dele...",WS_POPUP|
 	  WS_DLGFRAME|WS_VISIBLE|SS_CENTER,0,0,640,80,NULL,NULL,GetModuleHandle(NULL),NULL);
 	UpdateWindow(hwnd);
-    if (GenerateMinidump(ExceptionInfo,MiniDumpNormal,".short.dmp")==false) return 0;
-    GenerateMinidump(ExceptionInfo,MiniDumpWithDataSegs,".long.dmp");
+    if (GenerateMinidump(ExceptionInfo,MiniDumpWithIndirectlyReferencedMemory,".short.dmp")==false) return 0;
+//    GenerateMinidump(ExceptionInfo,MiniDumpWithDataSegs|MiniDumpWithIndirectlyReferencedMemory,".long.dmp");
     GenerateMinidump(ExceptionInfo,MiniDumpWithFullMemory,".full.dmp");
     PostError(0);
 	DestroyWindow(hwnd);
@@ -241,11 +241,11 @@ static DWORD WINAPI CrashReportGenerateThread(LPVOID data)
   else
   {
 	res=MessageBox(0,"V programu nastala chyba. Bohuzel neni pritomen soubor DbgHelp.dll v adresari hry, "
-				"neni tedy mozne vytvorit zaznam o chybe. Ze stranek http://skeldal.jinak.cz je mozne"
+				"neni tedy mozne vytvorit zaznam o chybe. Ze stranek http://skeldal.vyletnici.net je mozne"
 				"tento soubor stahnout a tim pomoci autorovi odhalit a opravit tyto zaludne pady.\r\n\r\n"
 				"Chcete prejit na stranky obsahujici posledni verze potrebnych souboru?",0,MB_YESNO|MB_SYSTEMMODAL);
 	if (res==IDYES)
-	  ShellExecute(0,0,"http://skeldal.jinak.cz/main.php?page=download",0,0,SW_NORMAL);
+	  ShellExecute(0,0,"http://skeldal.vyletnici.net/main.php?page=download",0,0,SW_NORMAL);
   }
   return 0;
 }

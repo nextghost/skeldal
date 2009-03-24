@@ -1361,6 +1361,7 @@ void add_fly(LETICI_VEC *p);
 void build_fly_map();
 void destroy_fly_map();
 void stop_fly(LETICI_VEC *p,char zvuk);
+void stop_all_fly();
 
 
 

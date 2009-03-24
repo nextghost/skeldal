@@ -464,9 +464,7 @@ void leave_current_map()
   regen_all_mobs();
   if (save_map) save_map_state(); //do tempu se zabali status mapy
   destroy_fly_map();
-  p=letici_veci;
-  while (p!=NULL) {stop_fly(p,0);p=p->next;}
-  calc_fly();
+  stop_all_fly();  
   save_map=1;
   free(map_sides);
   free(map_sectors);
@@ -563,6 +561,15 @@ void stop_fly(LETICI_VEC *p,char zvuk)
      }
   p->flags |= FLY_BURNT;
   }
+
+
+void stop_all_fly() {
+  LETICI_VEC *p=letici_veci;
+  while (p!=NULL) {stop_fly(p,0);p=p->next;}
+  p=letici_veci;
+  while (p!=NULL) {p->flags |= FLY_UNUSED;p=p->next;}
+  while (letici_veci) calc_fly();
+}
 
 void interrupt_fly(LETICI_VEC *p)
   {

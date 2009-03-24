@@ -490,7 +490,7 @@ THANDLE_DATA *def_handle(int handle,char *filename,void *decompress,char path)
      h->seekpos=i;
      return h;
      }
-  memcpy(h->src_file,filename,12);
+  strncpy(h->src_file,filename,12);
   h->seekpos=0;
   strupr(h->src_file);
   h->loadproc=decompress;

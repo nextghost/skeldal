@@ -345,8 +345,6 @@ void save_all_fly(FILE *fsta)
 int load_all_fly(FILE *fsta)
   {
   LETICI_VEC *f=NULL,*n,*p;
-  p=letici_veci;
-  while (p!=NULL) {stop_fly(letici_veci,0);p=p->next;}
   fread(&f,1,sizeof(f),fsta);
   p=letici_veci;
   while (f!=NULL)
