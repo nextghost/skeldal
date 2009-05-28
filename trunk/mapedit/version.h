@@ -20,5 +20,5 @@
  *  
  *  Last commit made by: $Id$
  */
-#define MAPEDIT_VERSION "0.95 build 2"
-#define MAPEDIT_NVERSION 95002
+#define MAPEDIT_VERSION "0.95 build 4"
+#define MAPEDIT_NVERSION 95004

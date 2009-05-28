@@ -522,9 +522,9 @@ void show_ms_cursor(integer x,integer y)
   int my =  DxGetResY() - 1;
 
   if (x<0) x=0;
-  if (x>mx) mx=639;
+  if (x>mx) x=mx;
   if (y<0) y=0;
-  if (y>my) my=479;
+  if (y>my) y=my;
   xs=*(integer *)mscursor;
   ys=*((integer *)mscursor+1);
   get_picture(x,y,xs,ys,mssavebuffer);

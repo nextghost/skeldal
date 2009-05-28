@@ -20,6 +20,8 @@
  *  
  *  Last commit made by: $Id$
  */
+#undef WINVER
+#define WINVER 0x0500
 #include <windows.h>
 #define DWORD_PTR DWORD *
 #include <d3d9.h>

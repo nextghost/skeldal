@@ -265,17 +265,18 @@ void draw_status_line(char *c)
 void *status_mem_info(EVENT_MSG *msg)
   {
   char *c;
-  long l;
+  unsigned long long l;
   static char memtext[]=MEMTEXT;
-  MEMORYSTATUS mem;
+  MEMORYSTATUSEX mem;
+  mem.dwLength = sizeof(mem);
 
   if (msg->msg==E_INIT) return &status_mem_info;
   c=(char *)msg->data;
   strcpy(c,memtext);
   c+=strlen(memtext);
-  get_mem_info(&mem);
-  l=mem.dwAvailPageFile;
-  sprintf(c,"%d KB ",l/1024);
+  GlobalMemoryStatusEx(&mem);
+  l=mem.ullAvailPhys;
+  sprintf(c,"%u KB ",l/1024);
   c=strchr(c,'\0');
   msg->data=(void *)c;
   return NULL;
