@@ -21,7 +21,9 @@
  *  Last commit made by: $Id$
  */
 #include <stdarg.h>
+#include <stdio.h>
 #include "libs/types.h"
+#include "libs/gui.h"
 #include "game/engine1.h"
 
 #define POCET_POSTAV 6
@@ -651,7 +653,7 @@ void pcx_8bit_nopal(void **p,long *s);
 void set_background(void **p,long *s);
 void wav_load(void **p,long *s);
 void wire_main_functs();
-void ukaz_kompas(char mode);
+void ukaz_kompas(unsigned char mode);
 void *timming(EVENT_MSG *msg,void **data);
 void do_timer();
 void hold_timer(int id,char hld);
@@ -908,7 +910,7 @@ typedef struct titem
   int cena;
   char weapon_attack;           //relativni handle k souboru s animaci utok
   char hitpos;                  //pozice zasahu animace
-  char shiftup;
+  unsigned char shiftup;
   char byteres;
   short rezerva[12];           //224 rezervovane
   }TITEM;
@@ -1392,7 +1394,7 @@ void user_setup();
 void setup_dialoge();
 char game_setup(int id,int xa,int ya,int xr,int yr);
 void GamePause();
-void show_textured_button(int x,int y,int xs,int ys,int texture,void *border3d);
+void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d);
 
 //sounder & music
 
@@ -1457,8 +1459,8 @@ typedef struct tmob
   short casting;
   short adjusting[6*16];     //volba stredu pro animace
   word sector,dir;        //pozice
-  char locx,locy;         //presna pozice
-  char headx,heady;        //pozice kam mob miri
+  unsigned char locx,locy;         //presna pozice
+  unsigned char headx,heady;        //pozice kam mob miri
   short anim_counter;        //citac animaci
   short vlastnosti[24];     //zakladni vlastnosti potvory
   short inv[MOBS_INV];      //batoh potvory
@@ -1468,7 +1470,7 @@ typedef struct tmob
   short dohled;            //kam dohl‚dne
   short dosah;             //okam‘ik za‡ tku souboje
   char stay_strategy;      //chovani moba ve statickem modu (nepronasleduje)
-  char walk_data;           //cislo potrebne pro pohyb moba v bludisti
+  unsigned char walk_data;           //cislo potrebne pro pohyb moba v bludisti
   word bonus;              //bonus za zabiti
   char flee_num;             //pravdepodobnost uteku
   char anim_counts[6];     //pocet animacnich policek pro kazdy pohyb
@@ -1489,7 +1491,7 @@ typedef struct tmob
   word money;             //penize
   word specproc;          //specproc
   word dostal;             //pocet zivotu, ktere mu byly ubrany poslednim zasahem
-  char user_data;         //data uzivatelem definovane - treba pro spec.
+  unsigned char user_data;         //data uzivatelem definovane - treba pro spec.
   }TMOB;
 
 
@@ -1591,7 +1593,7 @@ void kouzla_init();
 void test_play(int handle);
 void cast(int num,THUMAN *p,int owner,char backfire);
 int add_spell(int num,int cil,int owner,char noanim);
-void klicovani_anm(void *target,void *source,char mirror);
+void klicovani_anm(word *target,word *source,char mirror);
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
 int get_spell_color(THUMAN *p,int num);
 int get_spell_mana(int num);
@@ -1694,7 +1696,7 @@ void write_book(int page);
 int count_pages();
 void save_book();
 void load_book();
-void prekodovat(char *c);
+void prekodovat(unsigned char *c);
 
 
 //menu

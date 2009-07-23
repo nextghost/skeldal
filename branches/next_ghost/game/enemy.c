@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 //#include "libs/bios.h"
 //#include "libs/mem.h"
 #include "libs/types.h"

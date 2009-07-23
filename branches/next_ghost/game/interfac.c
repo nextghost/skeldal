@@ -106,11 +106,9 @@ void create_frame(int x,int y,int xs,int ys,char clear)
   }
 
 
-//void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
-void show_textured_button(int x,int y,int xs,int ys,int texture,void *border3d)
+void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
   {
-// FIXME: rewrite to platform independent code
-/*
+
   int i;i=0;
   if (texture) put_textured_bar(ablock(texture),x,y,xs,ys,border3d->light,border3d->shadow);
 
@@ -129,7 +127,7 @@ void show_textured_button(int x,int y,int xs,int ys,int texture,void *border3d)
         trans_line_y(x+i,y+i,ys-(i<<1),RGB555(31,31,31));
         trans_line_y(x+xs-i-1,y+i,ys-(i<<1),0);
         }
-*/
+
   }
 void show_textured_win(struct window *w)
   {
@@ -733,10 +731,9 @@ void radio_butts_gr(OBJREC *o)
   o->datasize=4;
   }
 
+/*
 char ask_test(char *text,char def)
   {
-// FIXME: rewrite
-/*
   char znak;
   SEND_LOG("(START CHECK) %s",text,0);
   cprintf("\n\r%s (A/N, Cokoliv=%c)\x7",text,def);
@@ -744,8 +741,8 @@ char ask_test(char *text,char def)
   if (znak>='a' && znak<='z') znak-='a'-'A';
   if (znak!='N' && znak!='A') znak=def;
   return znak=='A';
-*/
   }
+*/
 
 long get_disk_free(char disk)
   {
@@ -1646,8 +1643,8 @@ void show_jrc_logo(char *filename)
     ccc=cdiff;
     Sound_MixBack(0);
     }
-// FIXME: rewrite
 //  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));
+  while (cdiff<SHOWDELAY && !Input_Kbhit());
   while (cdiff<SHOWDELAY);
   curcolor=0;bar(0,0,639,479);
   showview(0,0,0,0);

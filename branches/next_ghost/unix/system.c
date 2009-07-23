@@ -42,6 +42,14 @@ void Mouse_MapWheel(char up, char down) {
 
 }
 
+int Input_Kbhit(void) {
+
+}
+
+int Input_ReadKey(void) {
+
+}
+
 void Sys_ErrorBox(const char *msg) {
 
 }
@@ -70,6 +78,22 @@ void Sys_Mkdir(const char *path) {
 
 }
 
+int Sys_LatestFile(char *mask, int offset) {
+	return 0;
+}
+
+void Sys_PurgeTemps(char z) {
+
+}
+
+int Sys_PackStatus(FILE *f) {
+	return 0;
+}
+
+char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
+	return 0;
+}
+
 int Screen_GetXSize(void) {
 	return 0;
 }
@@ -84,6 +108,10 @@ unsigned short *Screen_GetAddr(void) {
 
 unsigned short *Screen_GetBackAddr(void) {
 	return NULL;
+}
+
+long Screen_GetSize(void) {
+	return 0;
 }
 
 void Screen_SetAddr(unsigned short *addr) {

@@ -156,9 +156,9 @@ void *create_blw_palette16();
 void rel_position_x(word x);
 int init_empty_mode();
 
-void put_8bit_clipped(void *src,void *trg,int startline,int velx,int vely);
+void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely);
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
-void put_textured_bar_(void *src,void *trg,int xsiz,int ysiz,int xofs,int yofs);
+void put_textured_bar_(word *src,word *trg,int xsiz,int ysiz,int xofs,int yofs);
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
 void put_textured_bar(void *src,int x,int y,int xs,int ys,int xofs,int yofs);
 void trans_bar(int x,int y,int xs,int ys,int barva);

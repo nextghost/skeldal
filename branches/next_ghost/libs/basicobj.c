@@ -263,10 +263,9 @@ void draw_status_line(char *c)
   showview(0,y-2,Screen_GetXSize()-1,ysize+5);
   }
 
+/*
 void *status_mem_info(EVENT_MSG *msg)
   {
-// FIXME: rewrite
-/*
   char *c;
   unsigned long long l;
   static char memtext[]=MEMTEXT;
@@ -282,9 +281,9 @@ void *status_mem_info(EVENT_MSG *msg)
   sprintf(c,"%u KB ",l/1024);
   c=strchr(c,'\0');
   msg->data=(void *)c;
-*/
   return NULL;
   }
+*/
 
 void *status_idle(EVENT_MSG *msg)
   {

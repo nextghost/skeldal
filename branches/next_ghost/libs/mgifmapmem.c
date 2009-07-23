@@ -119,23 +119,22 @@ static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
 	  }
 	StretchImageHQ(picture, Screen_GetAddr()+ypos*scr_linelen2, scr_linelen2,full);
 	showview(0,ypos,0,360);
-// FIXME: rewrite
-/*
-	if (_bios_keybrd(_KEYBRD_READY)==0) Sound_MixBack(0);
+//	if (_bios_keybrd(_KEYBRD_READY)==0) Sound_MixBack(0);
+	if (!Input_Kbhit()) Sound_MixBack(0);
 	else 
 	  {
-	  _bios_keybrd(_KEYBRD_READ);
+//	  _bios_keybrd(_KEYBRD_READ);
+	  Input_ReadKey();
 	  break;
 	  }
-*/
 	}
   close_mgif();  
   DoneVideoSound(sound);
   free(picture);
   }
 
-void show_full_lfb12e(void *target,void *buff,void *paleta);
-void show_delta_lfb12e(void *target,void *buff,void *paleta);
+void show_full_lfb12e(word *target,byte *buff,word *paleta);
+void show_delta_lfb12e(word *target,byte *buff,word *paleta);
 void show_delta_lfb12e_dx(void *target,void *buff,void *paleta);
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta);
 

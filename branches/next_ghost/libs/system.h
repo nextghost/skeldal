@@ -24,6 +24,7 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
+#include <stdio.h>
 #include <stdarg.h>
 #include "libs/devices.h"
 
@@ -42,6 +43,9 @@ typedef void (*TaskerFunctionName)(va_list);
 void Mouse_GetEvent(MS_EVENT *event);
 void Mouse_MapWheel(char up, char down);
 
+int Input_Kbhit(void);
+int Input_ReadKey(void);
+
 void Sys_ErrorBox(const char *msg);
 void Sys_WarnBox(const char *msg);
 void Sys_InfoBox(const char *msg);
@@ -50,11 +54,16 @@ void Sys_Shutdown(void);
 void Sys_SetEnv(const char *name, const char *value);
 void Sys_Init(void);
 void Sys_Mkdir(const char *path);
+int Sys_LatestFile(char *mask, int offset);
+void Sys_PurgeTemps(char z);
+int Sys_PackStatus(FILE *f);
 
+char Screen_Init(char windowed, int zoom, int monitor, int refresh);
 int Screen_GetXSize(void);
 int Screen_GetYSize(void);
 unsigned short *Screen_GetAddr(void);
 unsigned short *Screen_GetBackAddr(void);
+long Screen_GetSize(void);
 void Screen_SetAddr(unsigned short *addr);
 void Screen_SetBackAddr();
 void Screen_Restore(void);

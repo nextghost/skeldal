@@ -100,7 +100,7 @@ void scroll_support_64(void *lbuf,void *src1,void *src2,int size1,void *xlat);
 //#pragma aux scroll_support_64 parm [EDI][ESI][EDX][ECX][EBX] modify [EAX];
 void scroll_support_64b(void *lbuf,void *src1,void *src2,int size1,void *xlat);
 //#pragma aux scroll_support_64b parm [EDI][ESI][EDX][ECX][EBX] modify [EAX];*/
-void fcdraw(void *source,void *target, void *table);
+void fcdraw(void *source,void *target, T_FLOOR_MAP *table);
 //#pragma aux fcdraw parm [EDX][EBX][EAX] modify [ECX ESI EDI];
 
 /*void lodka32(void *source,void *target,void *background,void *xlat,long xysize);
@@ -658,7 +658,7 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
   zoom.line_len=scr_linelen;
-// FIXME: what's this?
+// TODO: what's this?
 //  __try
 	{
 	if (rev) sikma_zprava(); else sikma_zleva();
@@ -913,9 +913,8 @@ void report_mode(int mode)
      }*/
   }
 
-__inline void clear_color(void *start,int _size,word _color)
+__inline void clear_color(word *start,int _size,word _color)
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -931,6 +930,12 @@ __inline void clear_color(void *start,int _size,word _color)
     rep  stosw      
     }
 */
+
+	// TODO: needs testing
+	int i;
+	for (i = 0; i < _size; i++) {
+		start[i] = _color;
+	}
   }
     
     //parm [EDI][ECX][EAX] modify [EBX];
@@ -1081,7 +1086,7 @@ void draw_item(int celx,int cely,int posx,int posy,short *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 
@@ -1117,8 +1122,8 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-     if (turn) enemy_draw_mirror(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
-     else enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     if (turn) enemy_draw_mirror((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     else enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 /*void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int posz,char turn)
@@ -1262,8 +1267,12 @@ void draw_enemy(DRW_ENEMY *drw)
   else clipl=0;
   clipr=rclip-x;
   if (clipr>0)
-  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
-else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+// TODO: argument 3 changed, needs testing
+//  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
+else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
+// TODO: argument 3 changed, needs testing
+//else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
   if (show_lives)
      {
      char s[25];
@@ -1299,7 +1308,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   if (show_names && name!=NULL)
      {
      sd=text_width(name)/2;
@@ -1328,19 +1337,19 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw_transp(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,(char *)txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
+  enemy_draw_transp((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
   }
 
+/*
 __inline void prumeruj(void *target,void *source1, void *source2)
 //#pragma aux prumeruj parm [edi][eax][edx]=
   {
-// FIXME: rewrite
-/*
+// this is obviously wrong but nobody uses it
   _asm
     {
     mov  edi,target
     mov  eax,source1
-    mov  ebx,source2
+    mov  ebx,source2	; mov edx, source2?
     mov  eax,[eax]
     mov  edx,[edx]
     and  eax,7bde7bdeh
@@ -1349,7 +1358,6 @@ __inline void prumeruj(void *target,void *source1, void *source2)
     shr  eax,1
     stos
     }
-*/
   }
 
 void double_zoom_xicht(word x,word y,word *source)
@@ -1381,6 +1389,7 @@ void double_zoom_xicht(word x,word y,word *source)
         }
      }
   }
+*/
 
 
 void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
@@ -1414,7 +1423,7 @@ void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
   }
 
 /*

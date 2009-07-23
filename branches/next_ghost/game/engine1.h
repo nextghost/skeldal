@@ -143,7 +143,7 @@ extern char show_names;
 extern char show_lives;
 extern char secnd_shade;
 
-typedef short palette_t[256];
+typedef word palette_t[256];
 
 typedef struct drw_enemy_struct
   {
@@ -157,13 +157,13 @@ typedef struct drw_enemy_struct
 
 
 
-void enemy_draw(void *src,void *trg,int shade,int scale,int maxspace,int clip);
+void enemy_draw(byte *src,word *trg,int shade,int scale,int maxspace,int clip);
 //#pragma aux enemy_draw parm[ESI][EDI][EBX][EDX][EAX][ECX]
-void enemy_draw_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip);
+void enemy_draw_transp(byte *src,word *trg,palette_t shade,int scale,int maxspace,int clip);
 //#pragma aux enemy_draw_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
-void enemy_draw_mirror_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip);
+void enemy_draw_mirror_transp(byte *src,word *trg,palette_t shade,int scale,int maxspace,int clip);
 //#pragma aux enemy_draw_mirror_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
-void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int clip);
+void enemy_draw_mirror(byte *src,word *trg,int shade,int scale,int maxspace,int clip);
 //#pragma aux enemy_draw_mirror parm[ESI][EDI][EBX][EDX][EAX][ECX]
 //clip je v poradi vpravo - vlevo (HiLo)
 
@@ -177,7 +177,7 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos);
 int turn_speed(int turnspeed); //oba je nutne volat na zacatku
 int zoom_speed(int zoomspeed);
 
-void scroll_and_copy(void *pic,void *slide, void *scr, int size,int shift, void *lineinfo);
+void scroll_and_copy(word *pic,word *slide, word *scr, int size,int shift, int lineinfo[][2]);
 //#pragma aux scroll_and_copy parm[esi][ebx][edi][ecx][edx][eax]
 
 void set_backgrnd_mode(int mode);

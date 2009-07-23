@@ -299,7 +299,7 @@ static void zobraz_perlu(void)
   word *perla;
   int x,y;
   word *scr,*sss;
-  char *p;
+  unsigned char *p;
   word *b;
   int xs,ys,xxs;
 

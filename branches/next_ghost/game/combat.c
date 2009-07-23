@@ -1941,8 +1941,8 @@ void programming_keyboard(EVENT_MSG *msg,void **unused)
   if (msg->msg==E_KEYBOARD)
      {
      c=(*(int *)msg->data)>>8;
-// FIXME: rewrite
 //     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
+     while (Input_Kbhit()) Input_ReadKey();
      switch (c)
         {
         case 1:konec(0,0,0,0,0);break;

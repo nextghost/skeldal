@@ -28,10 +28,9 @@
 
 
 
-void show_full_interl_lfb(void *source,void *target,void *palette, long linelen)
+void show_full_interl_lfb(byte *source,word *target,word *palette, long linelen)
   {  
   int sslinelen=2*linelen-1280;
-// FIXME: rewrite
 /*
   __asm
     {
@@ -61,13 +60,22 @@ shfif1: lodsb
         pop     ebp
     }
 */
+
+	// TODO: needs testing
+	int x, y;
+
+	for (y = 0; y < 180; y++) {
+		for (x = 0; x < 320; x++) {
+			target[2*x+y*linelen] = palette[source[x+y*320]];
+			target[2*x+1+y*linelen] = palette[source[x+y*320]];
+		}
+	}
   }
 //#pragma aux show_full_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
-void show_delta_interl_lfb(void *source,void *target,void *palette, long linelen)
+/*
+void show_delta_interl_lfb(byte *source,word *target,word *palette, long linelen)
   {  
   int sslinelen=2*linelen;
-// FIXME: rewrite
-/*
   __asm
     {
         mov     edi,target
@@ -128,13 +136,12 @@ shdif7: add     edi,[esp]       ;preskoc radek
 shdif5: pop     ebp
 konec:
     }
-*/
   }
+*/
 //#pragma aux show_delta_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
 
-void show_full_lfb12e(void *target,void *buff,void *paleta)
+void show_full_lfb12e(word *target,byte *buff,word *paleta)
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -162,11 +169,18 @@ shfl1:  lodsw
         pop     ebp
     }
 */
+
+	// TODO: needs testing
+	int i;
+
+	for (i = 0; i < 180*320; i++) {
+		*target++ = paleta[*buff++];
+	}
   }   
+// show_delta_lfb12e() is similar to small_anm_delta in game/engine2.c - merge?
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
-void show_delta_lfb12e(void *target,void *buff,void *paleta)
+void show_delta_lfb12e(word *target,byte *buff,word *paleta)
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -222,13 +236,33 @@ shdl5: pop     ebp
 konec:
     }
 */
+
+	// TODO: needs testing
+	int i, j, k;
+	byte *map = buff + 4;
+	word *tmp;
+	buff += 4 + *(int*)buff;
+
+	for (i = 0; i < 180; i += j) {
+		tmp = target;
+		for (j = *map++; j < 0xc0; j = *map++) {
+			target += 2 * j;
+			for (k = 0; k < *map; k++) {
+				*target++ = paleta[*buff++];
+				*target++ = paleta[*buff++];
+			}
+			map++;
+		}
+
+		j -= 0xbf;
+		target = tmp + j * 320;
+	}
   }
 //#pragma aux show_delta_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 
+/*
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta)
   {  
-// FIXME: rewrite
-/*
   __asm
     {
         mov     edi,target
@@ -262,13 +296,12 @@ shfl1:  lodsw
 		pop		eax
         pop     ebp
     }
-*/
   }   
+*/
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
+/*
 void show_delta_lfb12e_dx(void *target,void *buff,void *paleta,unsigned long Pitch)
   {
-// FIXME: rewrite
-/*
   __asm
     {
         mov     edi,target
@@ -327,8 +360,8 @@ shdl7: add     edi,scr_linelen  ;preskoc radek
 shdl5:	pop		eax		
 		pop     ebp
     }
-*/
   }
+*/
 
 char test_next_frame(void *bufpos,int size)
   {

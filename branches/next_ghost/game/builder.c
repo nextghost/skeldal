@@ -179,7 +179,7 @@ void init_spectxtrs(void)
   memset(spectxtr,0,sizeof(spectxtr));
   }
 
-void ukaz_kompas(char mode)
+void ukaz_kompas(unsigned char mode)
   {
   static int phase=0,speed=0;
   int direct;
@@ -329,8 +329,8 @@ static void bott_fletna_normal(void **pp,long *s)
      set_aligned_position(x,32,1,1,texty[180+i]);outtext(texty[180+i]);
      }
   *pp=Screen_GetAddr();
-// FIXME: rewrite
 //  *s=_msize(*pp);
+  *s = Screen_GetSize();
   Screen_Restore();
   }
 
@@ -426,8 +426,8 @@ static void bott_draw_normal(void **pp,long *s)
         }
  */
   *pp=Screen_GetAddr();
-// FIXME: rewrite
 //  *s=_msize(*pp);
+  *s = Screen_GetSize();
   Screen_Restore();
   }
 
@@ -465,8 +465,8 @@ void bott_disp_text_proc(void **pp,long *ss)
      }
   while (p[0]);
   *pp=Screen_GetAddr();
-// FIXME: rewrite
 //  *ss=_msize(*pp);
+  *ss = Screen_GetSize();
   Screen_Restore();
   }
 
@@ -525,8 +525,8 @@ void bott_draw_rune(void **pp,long *ss)
   outtext(buff);
   put_picture(70,30,ablock(glob_items[showruneitem].vzhled+face_arr[0]));
   *pp=Screen_GetAddr();
-// FIXME: rewrite
 //  *ss=_msize(*pp);
+  *ss = Screen_GetSize();
   Screen_Restore();  
   }
 
@@ -740,7 +740,7 @@ __inline int toInt( float fval )
 
 static void *check_autofade(void *image, char ceil, int dark)
 {
-  char *data=image;
+  unsigned char *data=image;
   if (data[5]==0x80) 
   {
     word *xy=(word *)image;

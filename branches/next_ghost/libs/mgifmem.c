@@ -120,9 +120,8 @@ void close_mgif()           //dealokuje buffery pro prehravani
   }
 
 
-int input_code(void *source,long *bitepos,int bitsize,int mask)
+int input_code(byte *source,long *bitepos,int bitsize,int mask)
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -141,6 +140,12 @@ int input_code(void *source,long *bitepos,int bitsize,int mask)
     add     [edi],ebx
     }
 */
+
+	// TODO: needs testing
+	int ret = *(int *)(source + (*bitepos >> 3));
+	ret >>= *bitepos & 0x7;
+	*bitepos += bitsize;
+	return ret & mask;
   }
 //#pragma aux input_code parm [esi][edi][ebx][edx]=\    value[eax] modify [ecx];
 
@@ -163,7 +168,6 @@ int de_add_code(int group,int chr,int mask)
 char fast_expand_code(int code,char **target)
 //#pragma aux fast_expand_code parm[eax][edi] modify [esi ecx] value [bl]
   {
-// FIXME: rewrite
 /*
   _asm
     {
@@ -208,6 +212,34 @@ end:
      movzx   eax,bl
     }
 */
+
+	// TODO: needs testing
+	if (code < 256) {
+		old_value = **target = (code + old_value) & 0xff;
+		++*target;
+		return code;
+	}
+
+	*target += compress_dic[code].first;
+	char ret, *ptr = *target;
+	int idx;
+
+	do {
+		*ptr-- = compress_dic[idx].chr;
+	} while ((idx = compress_dic[idx].group) >= 256);
+
+	ret = idx;
+	*ptr++ = (idx + old_value) & 0xff;
+	code = compress_dic[code].first;
+
+	do {
+		idx = (*ptr + idx) & 0xff;
+		*ptr++ = idx;
+	} while (--code);
+
+	old_value = idx;
+	++*target;
+	return ret;
   }
 
 

@@ -48,9 +48,10 @@ void keyboard(EVENT_MSG *msg,void *user_data)
   if (msg->msg==E_WATCH)
      {
      *otevri_zavoru=1;
-// FIXME: rewrite
 //     if (!_bios_keybrd(_KEYBRD_READY)) return;
 //     i=_bios_keybrd(_KEYBRD_READ);
+     if (!Input_Kbhit()) return;
+     i=Input_ReadKey();
      d=i>>8;
      c=i & 0xff;
      if (c=='+' && d<55 && !cz_mode) cz_mode=2;

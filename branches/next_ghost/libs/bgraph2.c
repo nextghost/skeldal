@@ -322,8 +322,8 @@ void switchvesabank(word bank)
 */
 int initmode_dx(char inwindow, char zoom, char monitor, int refresh)
   {
-// FIXME: rewrite
 //  if (!DXInit64(inwindow,zoom,monitor,refresh)) return -1;
+  if (!Screen_Init(inwindow,zoom,monitor,refresh)) return -1;
   showview=showview_dx;
   screenstate=1;
   scr_linelen2=scr_linelen/2;

@@ -117,10 +117,9 @@ T_CLK_MAP clk_main_menu[]=
   {-1,0,0,639,479,empty_clk,0xff,H_MS_DEFAULT},
   };
 
-void rozdily(void *orign,void *obr,void *hicolor,void *xtab,int pocet)
+void rozdily(byte *orign,byte *obr,word *hicolor,word *xtab,int pocet)
 //#pragma aux rozdily parm[EDX][ESI][EDI][EBX][ECX]=
 {
-// FIXME: rewrite
 /*
 __asm
   {
@@ -140,6 +139,12 @@ jp1:lodsb
   jnz  jp1
   }
 */
+
+	// TODO: needs testing
+	int i;
+	for (i = 0; i < pocet; i++) {
+		hicolor[i] = xtab[obr[i] ^ orign[i]];
+	}
 }
 
 static void nahraj_rozdilovy_pcx(void **pp,long *s)
@@ -193,10 +198,9 @@ static void init_menu_entries(void)
      }
   }
 
-void zobraz_podle_masky_asm(char barva,void *scr,void *data, void *maska,int xs,int ys)
+void zobraz_podle_masky_asm(byte barva,word *scr,word *data, byte *maska,int xs,int ys)
 //#pragma aux zobraz_podle_masky_asm parm[al][edi][esi][ebx][edx][ecx]=
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -226,6 +230,16 @@ jp2: inc  ebx
     pop  ebp
     }
 */
+
+	// TODO: needs testing
+	int x, y;
+	for (y = 0; y < ys; y++) {
+		for (x = 0; x < xs; x++) {
+			if (barva == maska[x+y*xs]) {
+				scr[x+y*scr_linelen2] = data[x+y*xs];
+			}
+		}
+	}
   }
 
 static void zobraz_podle_masky(char barva,char anim)

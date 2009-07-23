@@ -282,7 +282,6 @@ char if_lock(int side,int key_id,int level,TMA_LOCK *lk)
 void xchg_block(void *b1,void *b2,int leng)
 //#pragma aux xchg_block parm[edi][esi][ecx]=
 {
-// FIXME: rewrite
 /*
 __asm
   {
@@ -299,6 +298,15 @@ __asm
      jnz  lp1
   }
 */
+
+	// TODO: needs testing
+	int i;
+	unsigned char tmp, *p1 = b1, *p2 = b2;
+	for (i = 0; i < leng; i++) {
+		tmp = p1[i];
+		p1[i] = p2[i];
+		p2[i] = tmp;
+	}
 }
 
 static void propadnout(int sector)

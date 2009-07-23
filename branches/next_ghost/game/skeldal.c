@@ -378,24 +378,26 @@ int set_video(int mode)
   return er;
   }
 
+/*
 int ask_video()
   {
   int c;
   printf("\nJaky videomode?:\n"
          "  1) 640x480x256 \n"
          "  2) 640x480xHiColor \n");
-// FIXME: rewrite
-//  c=_bios_keybrd(_KEYBRD_READ)>>8;
+  c=_bios_keybrd(_KEYBRD_READ)>>8;
   if (c==1) exit(0);
   return c-1;
   }
+*/
 
 void pcx_fade_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_FADE_PAL,&buff,mglob.fade_r,mglob.fade_g,mglob.fade_b);
-// FIXME: rewrite
+// TODO: rewrite this properly
 //  *s=_msize(buff);
+  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 10*512 + 16;
   free(*p);
   *p=buff;
   }
@@ -404,8 +406,9 @@ void pcx_15bit_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
-// FIXME: rewrite
+// TODO: rewrite this properly
 //  *s=_msize(buff);
+  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
   free(*p);
   *p=buff;
   }
@@ -414,8 +417,9 @@ void pcx_15bit_autofade(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
-// FIXME: rewrite
+// TODO: rewrite this properly
 //  *s=_msize(buff);
+  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
   free(*p);
   *p=buff;
   buff[5]=0x80;
@@ -430,8 +434,9 @@ void pcx_15bit_backgrnd(void **p,long *s)
      {
      load_pcx(*p,*s,A_16BIT,&buff);
      z=(long *)buff;
-// FIXME: rewrite
+// TODO: rewrite this properly
 //     *s=_msize(buff);
+     *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
      for(i=*s;i>0;i-=4,z++) *z|=0x80008000;
      free(*p);
      *p=buff;
@@ -445,8 +450,9 @@ void pcx_8bit_nopal(void **p,long *s)
   if (*p!=NULL)
      {
      load_pcx(*p,*s,A_8BIT_NOPAL,&buff);
-// FIXME: rewrite
+// TODO: rewrite this properly
 //     *s=_msize(buff);
+     *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 16;
      free(*p);
      *p=buff;
      }
@@ -457,8 +463,9 @@ void pcx_8bit_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_8BIT,&buff);
-// FIXME: rewrite
+// TODO: rewrite this properly
 //  *s=_msize(buff);
+  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 512 + 16;
   free(*p);
   *p=buff;
   }
@@ -603,47 +610,6 @@ void clrscr()
   {
 
   }
-
-
-
-
-void purge_temps(char z)
-  {
-// FIXME: rewrite
-/*
-  HANDLE rc;
-  WIN32_FIND_DATA fi;
-  char c[200];
-
-
-     strcpy(c,SWAPPATH);
-     strcat(c,"*.TMP");
-     rc=FindFirstFile(c,&fi);
-     if (rc!=INVALID_HANDLE_VALUE)
-       do
-         {
-         strcpy(c,SWAPPATH);
-         strcat(c,fi.cFileName);
-         if (fi.cFileName[0]!='~')
-          {
-          SEND_LOG("(PURGE) Purging temp '%s'",c,0);
-          remove(c);
-          }
-         }
-       while (FindNextFile(rc,&fi));
-    FindClose(rc);
-
-    if (z)
-     {
-     strcpy(c,SWAPPATH);
-     strcat(c,TEMP_FILE);
-     SEND_LOG("(PURGE) Purging temp '%s'",c,0);
-     remove(c);
-     }
-*/
-  }
-
-
 
 void back_music()
   {
@@ -837,7 +803,7 @@ void done_skeldal(void)
   SEND_LOG("(GAME) Video returned to textmode",0,0);
   close_manager();
   close_story_file();
-  purge_temps(1);
+  Sys_PurgeTemps(1);
   Sound_StopMixing();
 //  deinstall_mouse_handler();
   if (texty!=NULL) release_list(texty);texty=NULL;
@@ -1093,7 +1059,7 @@ SEND_LOG("(INIT) Global keyboard event handler.",0,0);
 SEND_LOG("(INIT) Error exception event handler.",0,0);
   send_message(E_ADD,E_PRGERROR,error_exception);
 SEND_LOG("(INIT) Wizard handler.",0,0);
-// FIXME: rewrite
+// TODO: rewrite
 //  if (debug_enabled) install_wizard();
 SEND_LOG("(INIT) Background music timer.",0,0);
   add_to_timer(TM_BACK_MUSIC,5,-1,back_music);
@@ -1432,7 +1398,7 @@ void play_anim(int anim_num)
   zoom_speed(1);
   turn_speed(1);
   configure("skeldal.ini",config_skeldal);
-  purge_temps(1);
+  Sys_PurgeTemps(1);
   textmode_effekt();
   clrscr();
   init_skeldal();
@@ -1561,7 +1527,7 @@ static void new_game(int argc, char *argv[])
   int sect,dir;
   char enforce=0;
 
-  purge_temps(0);
+  Sys_PurgeTemps(0);
   game_time=0;
   reinit_kouzla_full();
   load_shops();
@@ -1760,7 +1726,7 @@ int main(int argc,char *argv[])
      }
 #endif
   start_check();
-  purge_temps(1);
+  Sys_PurgeTemps(1);
 //  textmode_effekt();
   clrscr();
   SEND_LOG("\n(GAME) Init----------------",0,0);

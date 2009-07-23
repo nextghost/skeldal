@@ -31,21 +31,23 @@
 #include "libs/types.h"
 #include "libs/memman.h"
 
+static char nil; // TSTR_LIST terminator
+
 TSTR_LIST create_list(int count)
   {
   register TSTR_LIST p;int i,j;
 
-  p=(TSTR_LIST)malloc(count*sizeof(*p));
+  p=(TSTR_LIST)malloc((count+1)*sizeof(*p));
   if (p==NULL) return NULL;
 //  j=_msize(p)/sizeof(*p);
 //  for(i=0;i<j;i++) p[i]=NULL;
   for(i=0;i<count;i++) p[i]=NULL;
+  p[count] = &nil;
   return p;
   }
 
 TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -61,6 +63,11 @@ TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
     mov eax, edi
     }
 */
+
+	// TODO: needs testing
+	int i;
+	for (i = 0; i < _size && source[i] != _ptr; i++) ;
+	return source + i;
   }
     //parm [edi][eax][ecx] value[edi];
 
@@ -136,15 +143,14 @@ void str_delfreelines(TSTR_LIST *list)
   int count,i,j;
   TSTR_LIST p;
 
-// FIXME: rewrite
 //  count=_msize(*list)/sizeof(*p);
+  count = str_count(*list);
   j=0;
   for(i=0;i<count;i++)
      if ((*list)[i]!=NULL) (*list)[j++]=(*list)[i];
   if (j==0) j++;
   p=(TSTR_LIST)realloc(*list,j*sizeof(*p));
   if (p!=NULL) *list=p;
-// FIXME: rewrite
 //  count=_msize(*list)/sizeof(*p);
   for(i=j;i<count;i++) (*list)[i]=NULL;
   }
@@ -154,8 +160,9 @@ int str_count(TSTR_LIST p)
   int count;
 
   if (p==NULL) return 0;
-// FIXME: rewrite
 //  count=_msize(p)/sizeof(*p);
+// This is going to crash if the list wasn't created using create_list()
+  for (count = 0; p[count] != &nil; count++);
   return count;
   }
 

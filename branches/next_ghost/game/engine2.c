@@ -21,9 +21,11 @@
  *  Last commit made by: $Id$
  */
 //#include <skeldal_win.h>
+#include <string.h>
 #include "libs/types.h"
 #include "game/engine1.h"
 #include "libs/bgraph.h"
+#include "game/globals.h"
 
 
 typedef ZOOMINFO tzoom;
@@ -33,7 +35,6 @@ extern word *screen;
 
 void sikma_zleva(void)
   {
-// FIXME: rewrite
 /*  __asm
 	{
         mov     edi,zoom       ;nacti ukazatel do obrazovky
@@ -74,11 +75,30 @@ skzskp:add     edx,2 ;dalsi hodnota v tabulce
         jnz     skzl3 ;opakuj dokud neni nula        
 	}
 */
+
+	// TODO: needs testing
+	int x, y;
+	byte *src = zoom.texture, *tmp;
+	word *dst = zoom.startptr;
+
+	for (y = 0; y < zoom.ycount; y++) {
+		tmp = src;
+		for (x = 0; x < zoom.xmax; x++) {
+			if (*src == 1) {
+				src += zoom.xtable[x] + 1;
+				break;
+			} else if (*src) {
+				dst[x-y*zoom.line_len] = zoom.palette[*src];
+			}
+			src += zoom.xtable[x] + 1;
+		}
+
+		src = tmp + *zoom.ytable++ * zoom.texture_line;
+	}
   }
 
 void sikma_zprava(void)
   {
-// FIXME: rewrite
 /*  __asm
 	{
         mov     edi,zoom       ;nacti ukazatel do obrazovky
@@ -119,13 +139,33 @@ skpskp: add     edx,2 ;dalsi hodnota v tabulce
         jnz     skzp3 ;opakuj dokud neni nula
     }
 */
+
+	// TODO: needs testing
+	int x, y;
+	byte *src = zoom.texture, *tmp;
+	word *dst = zoom.startptr;
+
+	for (y = 0; y < zoom.ycount; y++) {
+		tmp = src;
+		for (x = 0; x < zoom.xmax; x++) {
+			if (*src == 1) {
+				src += zoom.xtable[x] + 1;
+				break;
+			} else if (*src) {
+				dst[-x-y*zoom.line_len] = zoom.palette[*src];
+			}
+			src += zoom.xtable[x] + 1;
+		}
+
+		src = tmp + *zoom.ytable++ * zoom.texture_line;
+	}
   }
 
+/*
 void zooming_dx(void *source,void *target,void *background,void *xlat_tab,long xysize)
 //#pragma aux zooming_dx parm [ESI][EDI][EAX][EBX][ECX] modify [EDX]
   {
-// FIXME: rewrite
-/*  __asm
+  __asm
     {
     mov esi,source
     mov edi,target
@@ -192,18 +232,18 @@ z32b:   add     ebp,4
         jnz     z32d
         pop     ebp
     }
-*/
   }
+*/
 
+/*
 void scroll_support_dx(void *lbuf,void *src1,void *src2,int size1)
 //#pragma aux scroll_support_dx parm [EDI][ESI][EDX][ECX] modify [EAX]
   {
-// FIXME: rewrite
-/*  __asm
+  __asm
     {
         mov     edi,lbuf
         mov     esi,src1
-        mov     edx,scr2
+        mov     edx,scr2	; mov edx,src2?
         mov     ecx,size1
 
         push    ebp             ;uchovej ebp
@@ -234,15 +274,14 @@ scrl1:  push    esi             ;uchovej esi
         jnz     scrl1           ;opakuj
         pop     ebp
     }
+  }
 */
 
-  }
-
+/*
 void lodka_dx(void *source,void *target,void *background,void *xlat_tab,long xysize)
 //#pragma aux lodka_dx parm [ESI][EDI][EAX][EBX][ECX] modify [EDX]
   {
-// FIXME: rewrite
-/*  __asm
+  __asm
     {
       mov esi,source
       mov edi,target
@@ -305,13 +344,12 @@ l32b:   add     ebp,4
         pop     ebp
 
     }
-*/
   }
+*/
 
-void fcdraw(void *source,void *target, void *table)
+void fcdraw(void *source,void *target, T_FLOOR_MAP *table)
 //#pragma aux fcdraw parm [EDX][EBX][EAX] modify [ECX ESI EDI];
   {
-// FIXME: rewrite
 /*  __asm
     {
         mov     edx,source
@@ -339,13 +377,21 @@ fcdraw_:mov     esi,[eax+12]
         jnz     fcdraw_
     }
 */
+
+	// TODO: needs testing
+	do {
+		source += table->lineofs;
+		target += table->txtrofs;
+		memcpy(target, source, table->linesize * sizeof(word));
+		source += table->linesize * sizeof(word);
+		target += table->linesize * sizeof(word);
+	} while ((table++)->counter);
   }
 
-static void klicovani_anm_back(void *target,void *source);
-void klicovani_anm(void *target,void *source,char mirror)
+static void klicovani_anm_back(word *target,word *source);
+void klicovani_anm(word *target,word *source,char mirror)
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
   {
-// FIXME: rewrite
 /*  if (mirror) klicovani_anm_back(target,source);
   else
   __asm
@@ -379,12 +425,36 @@ ka_skip:add     edi,4
         jnz     ka_lp2
     }
 */
+
+	if (mirror) {
+		klicovani_anm_back(target,source);
+		return;
+	}
+
+	// TODO: needs testing
+	int x, y;
+	word color;
+	for (y = 0; y < 180; y++) {
+		for (x = 0; x < 320; x++) {
+			color = source[x+y*320];
+			if (color & 0x8000) {
+				continue;
+			}
+
+			// red and green are shifted by one bit to the right
+			// to make space for skip bit 0x8000
+			color += color & 0x7fe0;
+			target[2*x+y*scr_linelen2] = color;
+			target[2*x+1+y*scr_linelen2] = color;
+			target[2*x+(y+1)*scr_linelen2] = color;
+			target[2*x+1+(y+1)*scr_linelen2] = color;
+		}
+	}
   }
 
-static void klicovani_anm_back(void *target,void *source)
+static void klicovani_anm_back(word *target,word *source)
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
   {
-// FIXME: rewrite
 /*  __asm
     {
         mov     edi,target
@@ -417,6 +487,26 @@ kba_skip:dec     ebx
         jnz     kba_lp2
     }
 */
+
+	// TODO: needs testing
+	int x, y;
+	word color;
+	for (y = 0; y < 180; y++) {
+		for (x = 1; x <= 320; x++) {
+			color = source[x+y*320];
+			if (color & 0x8000) {
+				continue;
+			}
+
+			// red and green are shifted by one bit to the right
+			// to make space for skip bit 0x8000
+			color += color & 0x7fe0;
+			target[640-2*x+y*scr_linelen2] = color;
+			target[640-2*x+1+y*scr_linelen2] = color;
+			target[640-2*x+(y+1)*scr_linelen2] = color;
+			target[640-2*x+1+(y+1)*scr_linelen2] = color;
+		}
+	}
   }
 
 #define zobraz_1 \
@@ -428,10 +518,9 @@ kba_skip:dec     ebx
 
 
 
-void small_anm_buff(void *target,void *buff,void *paleta)
+void small_anm_buff(word *target,byte *buff,word *paleta)
 //#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov   edi,target;
@@ -448,12 +537,20 @@ shmab3: zobraz_1
         jnc     shmab4
     }
 */
+
+	// TODO: needs testing
+	int x, y;
+	for (y = 0; y < 180; y++) {
+		for (x = 0; x < 320; x++) {
+			target[x+640*y] = paleta[buff[x+320*y]];
+		}
+	}
   }
 
-void small_anm_delta(void *target,void *buff,void *paleta)
+// small_anm_delta() is similar to show_delta_lfb12e in libs/mgifplaya.c - merge?
+void small_anm_delta(word *target,byte *buff,word *paleta)
 //#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov   edi,target;
@@ -494,14 +591,34 @@ shmad4: add     edi,scr_linelen
         jnz     shmad5
     }
 */
+
+	// TODO: needs testing
+	int i, j, k;
+	byte *map = buff + 4;
+	word *tmp;
+	buff += 4 + *(int*)buff;
+
+	for (i = 0; i < 180; i += j) {
+		tmp = target;
+		for (j = *map++; j < 0xc0; j = *map++) {
+			target += 2 * j;
+			for (k = 0; k < *map; k++) {
+				*target++ = paleta[*buff++];
+				*target++ = paleta[*buff++];
+			}
+			map++;
+		}
+
+		j -= 0xbf;
+		target = tmp + j * scr_linelen2;
+	}
   }
 
 
-void scroll_and_copy(void *pic,void *slide, void *scr, int _size,int shift, void *lineinfo)
+void scroll_and_copy(word *pic,word *slide, word *scr, int _size,int shift, int lineinfo[][2])
 //#pragma aux scroll_and_copy parm[esi][ebx][edi][ecx][edx][eax]
   {  
 
-// FIXME: rewrite
 /*  __asm
     {
         mov     esi,pic
@@ -585,6 +702,38 @@ sac_end:sub     ecx,2           ;odecti counter
 
     }
 */
+
+	// TODO: needs testing, testing and more testing
+	int i, j, info0, info1;
+
+	for (i = 0; i < _size; i++) {
+		info0 = min(lineinfo[i][0], lineinfo[shift+i][0]);
+		info1 = max(lineinfo[i][1], lineinfo[shift+i][1]) - info0;
+
+		do {
+			slide[0] = slide[shift*scr_linelen2];
+			slide[1] = slide[shift*scr_linelen2+1];
+
+			if (((slide[1] << 16) | slide[0]) & ~BGSWITCHBIT) {
+				*scr++ = (slide[0] & 0x20) ? *pic : slide[0];
+				pic++;
+				*scr++ = (slide[1] & 0x20) ? *pic : slide[1];
+				pic++;
+			} else {
+				*scr++ = *pic++;
+				*scr++ = *pic++;
+			}
+
+			slide += 2;
+			info1 -= 2;
+		} while (info1 > 0);
+
+		info1 += 640 - info0;
+		pic += info1;
+		info1 += scr_linelen2 - 640;
+		scr += info1;
+		slide += info1;
+	}
   }
 
 #define pic_start 2+2+2+512*5+512*5
@@ -592,10 +741,9 @@ sac_end:sub     ecx,2           ;odecti counter
 #define ed_stk1 600*4
 
 
-void enemy_draw(void *src,void *trg,int shade,int scale,int maxspace,int clip)
+void enemy_draw(byte *src,word *trg,int shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov esi,src
@@ -701,11 +849,62 @@ ed_err: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
 */
+
+
+	// TODO: needs testing, testing and more testing
+	if (maxspace >= 470) {
+		return;
+	}
+
+	int i, j, pos, tmp, array1[600], array2[800];
+	word *pal = (word*)src;
+	byte idx;
+
+	for (i = 0, pos = 1, tmp = 0; i < maxspace && pos < pal[1]; i++) {
+		array1[i] = pal[0] * (pal[1] - pos);
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array1[i] = -1;
+
+	for (i = 0, pos = 0, tmp = 0; pos < pal[0]; i++) {
+		array2[i] = pos;
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array2[i] = -1;
+
+	if (i <= clip % 0x10000) {
+		return;
+	}
+
+	pal = (word*)(src + shade);
+	src += pic_start;
+
+	for (i = 0; array1[i] != -1; i++) {
+		for (j = 0; j < (clip / 0x10000); j++) {
+			if (array2[j + clip % 0x10000] == -1) {
+				break;
+			}
+
+			idx = src[array1[i] + array2[j + clip % 0x10000]];
+			if (!idx) {
+				continue;
+			}
+
+			if (idx == 1) {
+				trg[j-i*scr_linelen2] = (trg[j-i*scr_linelen2] & 0xf7de) >> 1;
+			} else {
+				trg[j-i*scr_linelen2] = pal[idx];
+			}
+		}
+	}
   }
-void enemy_draw_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip)
+void enemy_draw_transp(byte *src,word *trg,palette_t shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov esi,src
@@ -815,12 +1014,65 @@ et_err: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
 */
+
+	// TODO: needs testing, testing and more testing
+	if (maxspace >= 470) {
+		return;
+	}
+
+	int i, j, pos, tmp, array1[600], array2[800];
+	word *header = (word*)src;
+	byte idx;
+
+	for (i = 0, pos = 1, tmp = 0; i < maxspace && pos < header[1]; i++) {
+		array1[i] = header[0] * (header[1] - pos);
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array1[i] = -1;
+
+	for (i = 0, pos = 0, tmp = 0; pos < header[0]; i++) {
+		array2[i] = pos;
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array2[i] = -1;
+
+	if (i <= clip % 0x10000) {
+		return;
+	}
+
+	if (src[5] == 2) {
+		src += 6;
+	} else {
+		src += pic_start;
+	}
+
+	for (i = 0; array1[i] != -1; i++) {
+		for (j = 0; j < (clip / 0x10000); j++) {
+			if (array2[j + clip % 0x10000] == -1) {
+				break;
+			}
+
+			idx = src[array1[i] + array2[j + clip % 0x10000]];
+			if (!idx) {
+				continue;
+			}
+
+			if (idx & 0x80) {
+				trg[j-i*scr_linelen2] = ((trg[j-i*scr_linelen2] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
+			} else {
+				trg[j-i*scr_linelen2] = shade[idx];
+			}
+		}
+	}
   }
 
-void enemy_draw_mirror_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip)
+void enemy_draw_mirror_transp(byte *src,word *trg,palette_t shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_mirror_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov esi,src
@@ -927,12 +1179,62 @@ etmerr: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
 */
+
+	// TODO: needs testing, testing and more testing
+	int i, j, pos, tmp, array1[600], array2[800];
+	word *header = (word*)src;
+	byte idx;
+
+	for (i = 0, pos = 1, tmp = 0; i < maxspace && pos < header[1]; i++) {
+		array1[i] = header[0] * (header[1] - pos);
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array1[i] = -1;
+
+	// this loop is the only difference from enemy_draw_transp() - merge?
+	for (i = 0, pos = header[0] - 1, tmp = 0; pos >= 0; i++) {
+		array2[i] = pos;
+		tmp += 320;
+		pos -= tmp / scale;
+		tmp %= scale;
+	}
+	array2[i] = -1;
+
+	if (i <= clip % 0x10000) {
+		return;
+	}
+
+	if (src[5] == 2) {
+		src += 6;
+	} else {
+		src += pic_start;
+	}
+
+	for (i = 0; array1[i] != -1; i++) {
+		for (j = 0; j < (clip / 0x10000); j++) {
+			if (array2[j + clip % 0x10000] == -1) {
+				break;
+			}
+
+			idx = src[array1[i] + array2[j + clip % 0x10000]];
+			if (!idx) {
+				continue;
+			}
+
+			if (idx & 0x80) {
+				trg[j-i*scr_linelen2] = ((trg[j-i*scr_linelen2] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
+			} else {
+				trg[j-i*scr_linelen2] = shade[idx];
+			}
+		}
+	}
   }
-void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int clip)
+void enemy_draw_mirror(byte *src,word *trg,int shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_mirror parm[ESI][EDI][EBX][EDX][EAX][ECX]
 //clip je v poradi vpravo - vlevo (HiLo)
   {
-// FIXME: rewrite
 /*  __asm
     {
     mov esi,src
@@ -1035,4 +1337,52 @@ edmerr: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
     }
 */
+
+	// TODO: needs testing, testing and more testing
+	int i, j, pos, tmp, array1[600], array2[800];
+	word *pal = (word*)src;
+	byte idx;
+
+	for (i = 0, pos = 1, tmp = 0; i < maxspace && pos < pal[1]; i++) {
+		array1[i] = pal[0] * (pal[1] - pos);
+		tmp += 320;
+		pos += tmp / scale;
+		tmp %= scale;
+	}
+	array1[i] = -1;
+
+	// this loop is the only difference from enemy_draw() - merge?
+	for (i = 0, pos = pal[0] - 1, tmp = 0; pos >= 0; i++) {
+		array2[i] = pos;
+		tmp += 320;
+		pos -= tmp / scale;
+		tmp %= scale;
+	}
+	array2[i] = -1;
+
+	if (i <= clip % 0x10000) {
+		return;
+	}
+
+	pal = (word*)(src + shade);
+	src += pic_start;
+
+	for (i = 0; array1[i] != -1; i++) {
+		for (j = 0; j < (clip / 0x10000); j++) {
+			if (array2[j + clip % 0x10000] == -1) {
+				break;
+			}
+
+			idx = src[array1[i] + array2[j + clip % 0x10000]];
+			if (!idx) {
+				continue;
+			}
+
+			if (idx == 1) {
+				trg[j-i*scr_linelen2] = (trg[j-i*scr_linelen2] & 0xf7de) >> 1;
+			} else {
+				trg[j-i*scr_linelen2] = pal[idx];
+			}
+		}
+	}
   }

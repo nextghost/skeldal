@@ -568,16 +568,16 @@ void restore_current_map() //pouze obnovuje ulozeny stav aktualni mapy
   for(i=1;i<mapsize*4;i++) call_macro(i,MC_STARTLEV);
   }
 
+/*
 inline char rotate(char c)
   {
-// FIXME: rewrite
-/*  __asm
+  __asm
     {
     mov al,c
     rol al,1;
     }
-*/
   }
+*/
 
 //#pragma aux rotate parm [al] value [al]="rol al,1";
 
@@ -589,7 +589,8 @@ inline char rotate(char c)
  */
 int pack_status_file(FILE *f,char *status_name)
   {
-  int stt;
+//  int stt;
+  FILE *stt;
   char rcheck=0;
   long fsz;
   char *buffer,*c,*fullnam;
@@ -600,18 +601,18 @@ int pack_status_file(FILE *f,char *status_name)
   if (fullnam==NULL) return 2;
   strcpy(fullnam,pathtable[SR_TEMP]);
   strcat(fullnam,status_name);
-// FIXME: O_BINARY is Windows-specific
+// O_BINARY is Windows-specific
 //  stt=open(fullnam,O_RDONLY | O_BINARY);
-  stt=open(fullnam,O_RDONLY);
+  stt=fopen(fullnam,"rb");
 //  fsz=filelength(stt);
-  fsz = lseek(stt, 0, SEEK_END);
-  lseek(stt, 0, SEEK_SET);
+  fsz = fseek(stt, 0, SEEK_END);
+  fseek(stt, 0, SEEK_SET);
   c=buffer=getmem(fsz+12+4+2);
   strcpy(c,status_name);c+=12;
   *(long *)c=fsz+2;
   c+=sizeof(long);
-  read(stt,c,fsz);
-  close(stt);
+  fread(c,fsz,1,stt);
+  fclose(stt);
   crc=vypocet_crc(c,fsz);
   c+=fsz;
   memcpy(c,&crc,sizeof(crc));
@@ -623,7 +624,8 @@ int pack_status_file(FILE *f,char *status_name)
 
 int unpack_status_file(FILE *f)
   {
-  int stt;
+//  int stt;
+  FILE *stt;
   char rcheck=0;
   long fsz;
   char *buffer,*c,*fullnam;
@@ -650,46 +652,20 @@ int unpack_status_file(FILE *f)
      free(buffer);
      return 3;
      }
-// FIXME: Windows-specific flags
+// O_BINARY and _S_IREAD/_S_IWRITE are Windows-specific flags
 //  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
-  stt=open(fullnam, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-  if (stt==-1)
+  stt=fopen(fullnam, "wb+");
+//  if (stt==-1)
+  if (!stt)
      {
      free(buffer);
      return 1;
      }
-  rcheck=(write(stt,buffer,fsz)!=fsz) ;
+//  rcheck=(write(stt,buffer,fsz)!=fsz) ;
+  rcheck=fwrite(buffer,1,fsz,stt)!=fsz;
   free(buffer);
-  close(stt);
+  fclose(stt);
   return rcheck;
-  }
-
-int pack_all_status(FILE *f)
-  {
-// FIXME: rewrite
-/*
-  char *c;
-  WIN32_FIND_DATA inf;
-  HANDLE res;
-
-  concat(c,pathtable[SR_TEMP],"*.TMP");
-  res=FindFirstFile(c,&inf);
-  if (res!=INVALID_HANDLE_VALUE)
-    do
-     {
-     int i;
-     if (inf.cFileName[0]!='~')
-        {
-        i=pack_status_file(f,inf.cFileName);
-        if (i) return i;
-        }
-     }
-    while (FindNextFile(res,&inf));     
-  FindClose(res);
-  c[0]=0;
-  fwrite(c,1,12,f);
-*/
-  return 0;
   }
 
 int unpack_all_status(FILE *f)
@@ -908,7 +884,7 @@ int save_game(int slotnum,char *gamename)
   {
 	fwrite(gn,1,SAVE_NAME_SIZE,svf);
 	close_story_file();
-	r=pack_all_status(svf);
+	r=Sys_PackStatus(svf);
 	open_story_file();
 	fclose(svf);
   }
@@ -929,7 +905,7 @@ int load_game(int slotnum)
   if (battle) konec_kola();
   battle=0;
   close_story_file();
-  purge_temps(0);
+  Sys_PurgeTemps(0);
   concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
   ssn=alloca(strlen(sn)+3);
   sprintf(ssn,sn,slotnum);

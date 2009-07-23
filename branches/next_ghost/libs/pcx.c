@@ -36,9 +36,9 @@
 void *get_palette_ptr=NULL;
 
 
-void decomprimate_line_256(char *src,char *trg,int linelen,int *srcstep)
+void decomprimate_line_256(unsigned char *src,char *trg,int linelen,int *srcstep)
   {
-  char *srcsave;
+  unsigned char *srcsave;
 
   srcsave=src;
   while (linelen--)
@@ -54,9 +54,9 @@ void decomprimate_line_256(char *src,char *trg,int linelen,int *srcstep)
      }
   *srcstep=src-srcsave;
   }
-void decomprimate_line_hi(char *src,unsigned short *trg,unsigned short *paleta,int linelen,int *srcstep)
+void decomprimate_line_hi(unsigned char *src,unsigned short *trg,unsigned short *paleta,int linelen,int *srcstep)
   {
-  char *srcsave;
+  unsigned char *srcsave;
 
   srcsave=src;
   while (linelen--)

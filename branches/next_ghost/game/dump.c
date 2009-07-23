@@ -28,29 +28,6 @@
 //#include <debug.h>
 #include "libs/system.h"
 
-static int latest_version(char *wild,int numpos)
-  {
-// FIXME: rewrite
-/*
-  WIN32_FIND_DATA ff;
-  HANDLE rc;
-  int i=0,j=-1;
-  char *p;
-
-  rc=FindFirstFile(wild,&ff);
-  if (rc!=INVALID_HANDLE_VALUE)
-    do
-     {
-     p=ff.cFileName+numpos;
-     sscanf(p,"%d",&i);
-     if (i>j) j=i;
-     }
-    while (FindNextFile(rc,&ff));
-  FindClose(rc);
-  return j;  
-*/
-  }
-
 void save_dump()
   {
   static dump_counter=-1;
@@ -61,7 +38,7 @@ void save_dump()
 
   if (dump_counter==-1)
      {
-     dump_counter=latest_version("DUMP*.BMP",4);
+     dump_counter=Sys_LatestFile("DUMP*.BMP",4);
      SEND_LOG("(DUMP) Dump counter sets to %d",dump_counter,0);
      }
   sprintf(c,"DUMP%04d.BMP",++dump_counter);

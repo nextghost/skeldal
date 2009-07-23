@@ -20,6 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
+
+#ifndef __LIBS_GUI_H
+#define __LIBS_GUI_H
+
+#include "libs/devices.h"
+
 #define E_MS_CLICK 50
 #define E_MS_MOVE 51
 #define E_GET_FOCUS 52
@@ -176,13 +182,4 @@ void disable_bar(int x,int y,int xs,int ys,word color);
 void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys);
 void goto_control(int obj_id);
 
-
-
-
-
-
-
-
-
-
-
+#endif

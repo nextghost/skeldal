@@ -152,9 +152,9 @@ static word *paleta;
 static long loc_anim_render_buffer;
 static short task_num=-1;
 
-void small_anm_buff(void *target,void *buff,void *paleta);
+void small_anm_buff(word *target,byte *buff,word *paleta);
 //#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
-void small_anm_delta(void *target,void *buff,void *paleta);
+void small_anm_delta(word *target,byte *buff,word *paleta);
 //#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
 
 static void animace_kouzla(int act,void *data,int csize)

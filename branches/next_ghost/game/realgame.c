@@ -259,8 +259,9 @@ int load_map(char *filename)
   mob_template=NULL;
   mob_size=0;
   if (f==NULL) return -1;
-// FIXME: rewrite
+// TODO: rewrite properly
 //  if (snd_devnum==DEV_DAC) Sound_StopMixing();
+  Sound_StopMixing();
   do
      {
      r=load_section(f,&temp,&sect,&size);
@@ -408,8 +409,9 @@ int load_map(char *filename)
      exit(0);
      }
   doNotLoadMapState=0;
-// FIXME: rewrite
+// TODO: rewrite properly
 //  if (snd_devnum==DEV_DAC) Sound_StartMixing();
+  Sound_StartMixing();
   return suc;
   }
 
@@ -1947,8 +1949,8 @@ void *game_keyboard(EVENT_MSG *msg,void **usr)
   if (msg->msg==E_KEYBOARD)
      {
      c=(*(int *)msg->data)>>8;
-     // FIXME: rewrite
 //     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
+     while (Input_Kbhit()) Input_ReadKey();
      switch (c)
         {
         case 'H':step_zoom(0);break;

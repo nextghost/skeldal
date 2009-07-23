@@ -299,7 +299,7 @@ static void break_line()
 
 static char read_set(FILE *txt,char *var,char *set)
   {
-// FIXME: this REALLY needs rewrite
+// TODO: this REALLY needs rewrite
   int c;
   char *cc;
 
@@ -458,7 +458,7 @@ static char skip_section(FILE *txt)
   return end;
   }
 
-void prekodovat(char *c)
+void prekodovat(unsigned char *c)
   {
   while (*c)
      {

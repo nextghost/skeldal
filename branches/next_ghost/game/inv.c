@@ -1263,7 +1263,7 @@ void display_items_wearing(THUMAN *h)
         vzhled=itt->vzhled;
         if (h->female==1) vzhled+=face_arr[2];else vzhled+=face_arr[1];
         w=ablock(vzhled);
-        enemy_draw(w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+scr_linelen2*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
+        enemy_draw((byte*)w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+scr_linelen2*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
         }
   }
 

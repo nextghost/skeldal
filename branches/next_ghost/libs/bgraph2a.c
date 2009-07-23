@@ -22,6 +22,7 @@
  */
 //#include <skeldal_win.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libs/types.h"
 #include "libs/bgraph.h"
 //#include <debug.h>
@@ -137,10 +138,10 @@ void line_32(int x,int y,int xs,int ys)
 	}
   }
 
+// draw character
 void char_32(word *posit,word *font,char znak)
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -189,11 +190,42 @@ chr4:   add     ebx,scr_linelen;dalsi radka
 chrend:                 ;konec
     }
 */
+
+	// TODO: needs testing
+	if (!font[znak]) return;
+	int x,y;
+	word zstart = font[znak];
+	unsigned char tmp = 0, *data = (unsigned char *)font;
+
+	data += zstart + 2;
+
+	for (x = 0; x < font[zstart] & 0xff; x++) {
+		for (y = 0; y < (font[zstart] >> 8); y++) {
+			while (tmp--) continue;
+
+			tmp = *data++;
+
+			if (!tmp) {
+				continue;
+			} else if (tmp == 0xff) {
+				return;
+			} else if (tmp >= 8) {
+				tmp -= 7;
+				continue;
+			}
+
+			if (charcolors[tmp-1] != 0xffff) {
+				posit[x+y*scr_linelen2] = charcolors[tmp-1];
+			}
+			tmp = 0;
+		}
+	}
   }
+
+// Draw double sized character
 void char2_32(word *posit,word *font,char znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -248,12 +280,46 @@ chr24:  add     ebx,scr_linelen;dalsi radka
 chr2end:              ;konec
     }
 */
+
+
+	// TODO: needs testing
+	if (!font[znak]) return;
+	int x,y;
+	word zstart = font[znak];
+	unsigned char tmp = 0, *data = (unsigned char *)font;
+
+	data += zstart + 2;
+
+	for (x = 0; x < font[zstart] & 0xff; x++) {
+		for (y = 0; y < (font[zstart] >> 8); y++) {
+			while (tmp--) continue;
+
+			tmp = *data++;
+
+			if (!tmp) {
+				continue;
+			} else if (tmp == 0xff) {
+				return;
+			} else if (tmp >= 8) {
+				tmp -= 7;
+				continue;
+			}
+
+			if (charcolors[tmp-1] != 0xffff) {
+				posit[2*x+2*y*scr_linelen2] = charcolors[tmp-1];
+				posit[2*x+2*y*scr_linelen2+1] = charcolors[tmp-1];
+				posit[2*x+2*(y*scr_linelen2+1)] = charcolors[tmp-1];
+				posit[2*x+2*(y*scr_linelen2+1)+1] = charcolors[tmp-1];
+			}
+			tmp = 0;
+		}
+	}
   }
 
+// get size word of selected character
 word charsize(word *font,char znak)
   {
 //#pragma aux charsize parm [esi] [eax]
-// FIXME: rewrite
 /*
   __asm
     {
@@ -271,6 +337,10 @@ word charsize(word *font,char znak)
 chsend: and     eax,0ffffh
     }
 */
+
+	// TODO: needs testing
+	unsigned char *data = (unsigned char *)font;
+	return font[znak] ? *(word*)(data+font[znak]) : 0;
   }
 
 void put_picture(word x,word y,void *p)
@@ -371,10 +441,10 @@ void get_picture(word x,word y,word xs,word ys,void *p)
     }
   }
 
+// image: 16bit full color
 void put_image(word *image,word *target,int start_line,int sizex,int sizey)
 //#pragma aux put_image parm [ESI][EDI][EAX][EBX][EDX] modify [ECX]
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -410,15 +480,24 @@ puti_lp:mov     ecx,ebx
         jnz     puti_lp
     }
 */
+
+	// TODO: needs testing, image indexing either doesn't make sense in asm
+	// or it's wrong here
+	int i, line_length = *image;
+	image += start_line * line_length + 3;
+
+	for (i = 0; i < sizey; i++) {
+		memcpy(target + i*scr_linelen2, image + i*line_length, sizex * sizeof(word));
+	}
   }
 
-void put_8bit_clipped(void *src,void *trg,int startline,int velx,int vely)
+// src: 8bit image with simple palette
+void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely)
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
   {
   if (src==NULL) return;
-// FIXME: rewrite
 /*
-  _asm
+  __asm
     {
         mov     esi,src
         mov     edi,trg
@@ -467,12 +546,25 @@ put8_trns:
 ende:
     }
 */
+
+	// TODO: needs testing
+	int x, y, line_length = *src;
+	word *pal = src + 3;
+	byte *data = (byte*)(src + 259);
+
+	for (y = 0; y < vely; y++) {
+		for (x = 0; x < velx; x++) {
+			if (data[x+y*line_length]) {
+				trg[x+y*scr_linelen2] = pal[data[x+y*line_length]];
+			}
+		}
+	}
   }
 
-void put_textured_bar_(void *src,void *trg,int xsiz,int ysiz,int xofs,int yofs)
+// src: 8bit image with simple palette
+void put_textured_bar_(word *src,word *trg,int xsiz,int ysiz,int xofs,int yofs)
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -548,6 +640,20 @@ ptb_skip2:
         POP     EBP        
     }    
 */
+
+	// TODO: needs testing
+	int x, y, line_length = *src, col_length = *(src+1);
+	word *pal = src + 3;
+	byte *data = (byte*)(src + 259);
+
+	for (y = 0; y < ysiz; y++) {
+		for (x = 0; x < xsiz; x++) {
+			int idx = ((y+yofs) % col_length) * line_length + (x+xofs) % line_length;
+			if (data[idx]) {
+				trg[x+y*scr_linelen2] = pal[data[idx]];
+			}
+		}
+	}
   }
 
 #define MIXTRANSP(a,b) ((((a) & 0xF7DE)+((b) & 0xF7DE))>>1)
@@ -616,12 +722,13 @@ void wait_retrace()
   }
 
 
-#define pic_start (2+2+2+512*5+512*5)
+//#define pic_start (2+2+2+512*5+512*5)
 
+// target: 8bit image with shade palette (10*256 colors)
+// source: 8bit image with shade palette
 void put_picture2picture(word *source,word *target,int xp,int yp)
 //#pragma aux put_picture2picture parm [ESI][EDI][EAX][EDX] modify [ECX]
   {
-// FIXME: rewrite
 /*
   __asm
     {
@@ -657,5 +764,18 @@ ppp_trn:inc     edi                             ;dalsi bod
         jnc     ppp_lp2
     }
 */
+
+	// TODO: needs testing
+	int x, y, targ_line = *target, line_length = *source, col_length = source[1];
+	byte *src = (byte*)(source + 2563), *dst = (byte*)(target + 2563);
+	dst += targ_line * yp + xp;
+
+	for (y = 0; y < col_length; y++) {
+		for (x = 0; x < line_length; x++) {
+			if (src[x+y*line_length]) {
+				dst[x+y*targ_line] = src[x+y*line_length];
+			}
+		}
+	}
   }
 
