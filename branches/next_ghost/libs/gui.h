@@ -157,7 +157,7 @@ void install_gui(void);
 void uninstall_gui(void);
 void on_change(void (*proc)());
 void on_enter(void (*proc)());
-void on_exit(void (*proc)());
+void on_leave(void (*proc)());
 void on_event(void (*proc)());
 void terminate(void);
 void set_change(void);

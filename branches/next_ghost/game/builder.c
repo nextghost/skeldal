@@ -20,26 +20,26 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
+//#include <conio.h>
 #include <malloc.h>
 #include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
-#include "Version.h"
+#include "libs/bios.h"
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "game/version.h"
 
 #define ZIVOTY_S 60
 #define ZIVOTY_E 62
@@ -204,7 +204,7 @@ void show_money()
   {
   char c[20];
   set_font(H_FONT7,RGB555(28,28,21));
-  sprintf(c,"%d",money);
+  sprintf(c,"%ld",money);
   set_aligned_position(460,13,2,2,c);
   outtext(c);
   }

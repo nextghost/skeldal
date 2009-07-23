@@ -27,6 +27,9 @@
 #define bar bar32
 #define point point32
 
+#define RGB888(r,g,b) ((unsigned short)((((r)<<8)&0xF800) | (((g)<<3) & 0x7C0) | ((b)>>3)))
+#define RGB555(r,g,b) ((unsigned short)(((r)<<11) | ((g)<<6) | (b)))
+
 word *GetScreenAdr();
 word *GetBuffer2nd();
 void RedirectScreen(word *newaddr);

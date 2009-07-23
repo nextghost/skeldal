@@ -20,10 +20,10 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
-#include "Engine1.h"
-#include <bgraph.h>
+//#include <skeldal_win.h>
+#include "libs/types.h"
+#include "game/engine1.h"
+#include "libs/bgraph.h"
 
 
 typedef ZOOMINFO tzoom;
@@ -33,7 +33,8 @@ extern word *screen;
 
 void sikma_zleva(void)
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
 	{
         mov     edi,zoom       ;nacti ukazatel do obrazovky
   	    mov     ebx,[zoom]tzoom.palette ;ukazatel na paletu
@@ -72,11 +73,13 @@ skzskp:add     edx,2 ;dalsi hodnota v tabulce
         sub     ecx,10000h ;sniz horni pulku ecx o jedna
         jnz     skzl3 ;opakuj dokud neni nula        
 	}
+*/
   }
 
 void sikma_zprava(void)
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
 	{
         mov     edi,zoom       ;nacti ukazatel do obrazovky
         mov     ebx,[zoom]tzoom.palette ;ukazatel na paletu
@@ -115,12 +118,14 @@ skpskp: add     edx,2 ;dalsi hodnota v tabulce
         sub     ecx,10000h ;sniz horni pulku ecx o jedna
         jnz     skzp3 ;opakuj dokud neni nula
     }
+*/
   }
 
 void zooming_dx(void *source,void *target,void *background,void *xlat_tab,long xysize)
 //#pragma aux zooming_dx parm [ESI][EDI][EAX][EBX][ECX] modify [EDX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov esi,source
     mov edi,target
@@ -187,12 +192,14 @@ z32b:   add     ebp,4
         jnz     z32d
         pop     ebp
     }
+*/
   }
 
 void scroll_support_dx(void *lbuf,void *src1,void *src2,int size1)
 //#pragma aux scroll_support_dx parm [EDI][ESI][EDX][ECX] modify [EAX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
         mov     edi,lbuf
         mov     esi,src1
@@ -227,13 +234,15 @@ scrl1:  push    esi             ;uchovej esi
         jnz     scrl1           ;opakuj
         pop     ebp
     }
+*/
 
   }
 
 void lodka_dx(void *source,void *target,void *background,void *xlat_tab,long xysize)
 //#pragma aux lodka_dx parm [ESI][EDI][EAX][EBX][ECX] modify [EDX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
       mov esi,source
       mov edi,target
@@ -296,12 +305,14 @@ l32b:   add     ebp,4
         pop     ebp
 
     }
+*/
   }
 
 void fcdraw(void *source,void *target, void *table)
 //#pragma aux fcdraw parm [EDX][EBX][EAX] modify [ECX ESI EDI];
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
         mov     edx,source
         mov     ebx,target
@@ -327,13 +338,15 @@ fcdraw_:mov     esi,[eax+12]
         or      ecx,ecx
         jnz     fcdraw_
     }
+*/
   }
 
-void klicovani_anm_back(void *target,void *source);
+static void klicovani_anm_back(void *target,void *source);
 void klicovani_anm(void *target,void *source,char mirror)
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
   {
-  if (mirror) klicovani_anm_back(target,source);
+// FIXME: rewrite
+/*  if (mirror) klicovani_anm_back(target,source);
   else
   __asm
     {
@@ -365,12 +378,14 @@ ka_skip:add     edi,4
         dec     cl
         jnz     ka_lp2
     }
+*/
   }
 
 static void klicovani_anm_back(void *target,void *source)
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
         mov     edi,target
         mov     esi,source
@@ -401,6 +416,7 @@ kba_skip:dec     ebx
         dec     ecx
         jnz     kba_lp2
     }
+*/
   }
 
 #define zobraz_1 \
@@ -415,7 +431,8 @@ kba_skip:dec     ebx
 void small_anm_buff(void *target,void *buff,void *paleta)
 //#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov   edi,target;
     mov   esi,buff;
@@ -430,12 +447,14 @@ shmab3: zobraz_1
         sub     ecx,010000h
         jnc     shmab4
     }
+*/
   }
 
 void small_anm_delta(void *target,void *buff,void *paleta)
 //#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov   edi,target;
     mov   esi,buff;
@@ -474,6 +493,7 @@ shmad4: add     edi,scr_linelen
         or      ch,ch           ;je li counter nulovy tak padame
         jnz     shmad5
     }
+*/
   }
 
 
@@ -481,7 +501,8 @@ void scroll_and_copy(void *pic,void *slide, void *scr, int _size,int shift, void
 //#pragma aux scroll_and_copy parm[esi][ebx][edi][ecx][edx][eax]
   {  
 
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
         mov     esi,pic
         mov     ebx,slide
@@ -563,6 +584,7 @@ sac_end:sub     ecx,2           ;odecti counter
         pop     ebp             ;obnov ebp
 
     }
+*/
   }
 
 #define pic_start 2+2+2+512*5+512*5
@@ -573,7 +595,8 @@ sac_end:sub     ecx,2           ;odecti counter
 void enemy_draw(void *src,void *trg,int shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov esi,src
     mov edi,trg
@@ -677,11 +700,13 @@ ed_end3:pop     edx         ;obnov vse ulozene
 ed_err: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
+*/
   }
 void enemy_draw_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov esi,src
     mov edi,trg
@@ -789,12 +814,14 @@ et_end3:pop     edx         ;obnov vse ulozene
 et_err: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
+*/
   }
 
 void enemy_draw_mirror_transp(void *src,void *trg,void *shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_mirror_transp parm[ESI][EDI][EBX][EDX][EAX][ECX]
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov esi,src
     mov edi,trg
@@ -899,12 +926,14 @@ etmend3:pop     edx         ;obnov vse ulozene
 etmerr: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
      }
+*/
   }
 void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int clip)
 //#pragma aux enemy_draw_mirror parm[ESI][EDI][EBX][EDX][EAX][ECX]
 //clip je v poradi vpravo - vlevo (HiLo)
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov esi,src
     mov edi,trg
@@ -1005,4 +1034,5 @@ edmend3:pop     edx         ;obnov vse ulozene
 edmerr: add     esp,ed_stack;vymaz tabulku
         pop     ebp         ;obnov ebp
     }
+*/
   }

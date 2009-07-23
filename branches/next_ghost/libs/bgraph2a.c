@@ -20,10 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
-#include "bgraph.h"
-#include <debug.h>
+//#include <skeldal_win.h>
+#include <stdlib.h>
+#include "libs/types.h"
+#include "libs/bgraph.h"
+//#include <debug.h>
 
 
 void bar32(int x1,int y1, int x2, int y2)
@@ -139,6 +140,8 @@ void line_32(int x,int y,int xs,int ys)
 void char_32(word *posit,word *font,char znak)
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,posit;
@@ -185,11 +188,13 @@ chr4:   add     ebx,scr_linelen;dalsi radka
         jnz     chr6    ;dokud neni nula
 chrend:                 ;konec
     }
-
+*/
   }
 void char2_32(word *posit,word *font,char znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov edi,posit
@@ -242,12 +247,14 @@ chr24:  add     ebx,scr_linelen;dalsi radka
         jnz     chr26    ;dokud neni nula
 chr2end:              ;konec
     }
-
+*/
   }
 
 word charsize(word *font,char znak)
   {
 //#pragma aux charsize parm [esi] [eax]
+// FIXME: rewrite
+/*
   __asm
     {
     mov     esi,font
@@ -263,6 +270,7 @@ word charsize(word *font,char znak)
         lodsw
 chsend: and     eax,0ffffh
     }
+*/
   }
 
 void put_picture(word x,word y,void *p)
@@ -366,6 +374,8 @@ void get_picture(word x,word y,word xs,word ys,void *p)
 void put_image(word *image,word *target,int start_line,int sizex,int sizey)
 //#pragma aux put_image parm [ESI][EDI][EAX][EBX][EDX] modify [ECX]
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov     esi,image
@@ -399,12 +409,15 @@ puti_lp:mov     ecx,ebx
         dec     edx
         jnz     puti_lp
     }
+*/
   }
 
 void put_8bit_clipped(void *src,void *trg,int startline,int velx,int vely)
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
   {
   if (src==NULL) return;
+// FIXME: rewrite
+/*
   _asm
     {
         mov     esi,src
@@ -453,11 +466,14 @@ put8_trns:
         jmp     put8nxt
 ende:
     }
+*/
   }
 
 void put_textured_bar_(void *src,void *trg,int xsiz,int ysiz,int xofs,int yofs)
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov    ebx,src
@@ -531,6 +547,7 @@ ptb_skip2:
         jnz     ptb_l2          ;konec velke smycky
         POP     EBP        
     }    
+*/
   }
 
 #define MIXTRANSP(a,b) ((((a) & 0xF7DE)+((b) & 0xF7DE))>>1)
@@ -604,6 +621,8 @@ void wait_retrace()
 void put_picture2picture(word *source,word *target,int xp,int yp)
 //#pragma aux put_picture2picture parm [ESI][EDI][EAX][EDX] modify [ECX]
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov   esi,source
@@ -637,5 +656,6 @@ ppp_trn:inc     edi                             ;dalsi bod
         sub     ecx,10000h                      ;opakuj pro y radku
         jnc     ppp_lp2
     }
+*/
   }
 

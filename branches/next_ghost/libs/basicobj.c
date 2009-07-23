@@ -20,21 +20,21 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 // toto je include soubor, jenz je pouzit v knihovne GUI.C
 
-#include "types.h"
+#include "libs/types.h"
 #include <stdio.h>
-#include <mem.h>
+#include "libs/mem.h"
 #include <malloc.h>
 #include <time.h>
-#include "memman.h"
-#include "event.h"
-#include "devices.h"
-#include "bmouse.h"
-#include "bgraph.h"
-#include "gui.h"
-#include "basicobj.h"
+#include "libs/memman.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/gui.h"
+#include "libs/basicobj.h"
 
 #define MEMTEXT "Pamˆt: "
 
@@ -264,6 +264,8 @@ void draw_status_line(char *c)
 
 void *status_mem_info(EVENT_MSG *msg)
   {
+// FIXME: rewrite
+/*
   char *c;
   unsigned long long l;
   static char memtext[]=MEMTEXT;
@@ -279,6 +281,7 @@ void *status_mem_info(EVENT_MSG *msg)
   sprintf(c,"%u KB ",l/1024);
   c=strchr(c,'\0');
   msg->data=(void *)c;
+*/
   return NULL;
   }
 

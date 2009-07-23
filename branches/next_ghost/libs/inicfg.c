@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <strlite.h>
-#include <inicfg.h>
+#include "libs/strlite.h"
+#include "libs/inicfg.h"
 
 TSTR_LIST read_config(const char *filename)
   {
@@ -125,7 +125,8 @@ void add_field_num(TSTR_LIST *ls,const char *name,long number)
   {
   char buff[20];
 
-  itoa(number,buff,10);
+//  itoa(number,buff,10);
+  sprintf(buff, "%d", number);
   add_field_txt(ls,name,buff);
   }
 

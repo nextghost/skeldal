@@ -21,15 +21,16 @@
  *  Last commit made by: $Id$
  */
 //Toto je hlavni soubor specialnich procedur pro hru BRANY SKELDALU
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <event.h>
-#include <strlite.h>
-#include "bgraph.h"
-#include "globals.h"
-#include "specproc.h"
-#include "bmouse.h"
+#include "libs/event.h"
+#include "libs/strlite.h"
+#include "libs/bgraph.h"
+#include "game/globals.h"
+#include "game/specproc.h"
+#include "libs/bmouse.h"
+#include "libs/system.h"
 #include <math.h>
 //#include "i86.h"
 
@@ -42,7 +43,8 @@ static void event_error(char *text,int number)
   char buff[256];
   closemode();
   sprintf(buff,"%s\n Specproc num: %d\n",text,number);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+  Sys_ErrorBox(buff);
+//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
   exit(1);
   }
 
@@ -518,12 +520,12 @@ static char mob_strelec(int event_type,TMOB *m)
      i=i+2&3;
      if (mob_check_next_sector(m->sector,i,m->stay_strategy & MOB_BIG,0))
         {
-        int l=4,z,max=RAND_MAX+1;
+        int l=4,z,max=RAND_MAX;
         for(i=0;i<4;i++)
            if (!mob_check_next_sector(m->sector,i,m->stay_strategy & MOB_BIG,0))
               {
               int s=map_sectors[m->sector].step_next[i];
-              if (!get_dangerous_place(s) && (z=rand())<max) max=z,l=i;
+              if (!get_dangerous_place(s) && (z=rand())<=max) max=z,l=i;
               }
         if (l==4) return 0;
         i=l;

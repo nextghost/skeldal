@@ -20,20 +20,21 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include "engine1.h"
-#include "globals.h"
-#include "specproc.h"
+#include "libs/bios.h"
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/system.h"
+#include "game/engine1.h"
+#include "game/globals.h"
+#include "game/specproc.h"
 
 #define MOB_ZNAKY "FLBLCH"
 #define MOB_START 1
@@ -262,8 +263,10 @@ static void register_mob_graphics(int num,char *name_part,char *anims,char *seq)
            {
 		   char buff[256];
            closemode();
-           sprintf(buff,"Soubor sekvence %s obsahuje chybne udaje nebo je sekvence je moc kratka\n");
-		   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+           sprintf(buff,"Soubor sekvence %s obsahuje chybne udaje nebo je sekvence je moc kratka\n", fulname);
+//		   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+	   Sys_ErrorBox(buff);
+
            exit(0);
            }
         }
@@ -399,7 +402,8 @@ void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize)
   	      char buff[256];
           closemode();
           sprintf(buff,"Nestvura cislo #%d (%s) je spatne definovana (rychlost)",i,mobs[i].name);
-		  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONEXCLAMATION);
+	  Sys_WarnBox(buff);
+//		  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONEXCLAMATION);
           exit(1);
           }
         cisla[i]=mobs[i].cislo_vzoru;
@@ -854,7 +858,9 @@ void rozhodni_o_smeru(TMOB *p)
         if (v==1 && p->stay_strategy & MOB_GUARD) r=return_home(p,&dir);
         if (r)
            {
-           if (v<2) r=1;else r=rand()*v/(RAND_MAX+1)+1;
+// WTF?!
+//         if (v<2) r=1;else r=rand()*v/(RAND_MAX+1)+1;
+           if (v<2) r=1;else r=rand()%v+1;
            vdir=dir=mob_vyber_vychod(r,sect,dir,alone,passable);
            //if ( p->stay_strategy & MOB_WATCH && rnd(100)<20 && lv<128 && dir!=p->dir) dir=-1;
            }
@@ -1344,7 +1350,8 @@ void mob_strelba(TMOB *p)
   if (i==item_count)
      {	 
      closemode();
-     MessageBox(NULL,"Nestvura nemuze strilet. Neni nadefinovan obekt sipu",NULL,MB_OK|MB_ICONSTOP);
+     Sys_ErrorBox("Nestvura nemuze strilet. Neni nadefinovan objekt sipu");
+//     MessageBox(NULL,"Nestvura nemuze strilet. Neni nadefinovan objekt sipu",NULL,MB_OK|MB_ICONSTOP);
      exit(1);
      }
   t=glob_items+i;
@@ -1513,7 +1520,8 @@ void mobs_live(int num)
      char buff[256];
      closemode();
      sprintf(buff,"Potvora v neexistujicim sektoru (%d, %d) ",num,p->sector);
-	 MessageBox(NULL,buff,NULL,MB_OK|MB_ICONEXCLAMATION);
+     Sys_WarnBox(buff);
+//	 MessageBox(NULL,buff,NULL,MB_OK|MB_ICONEXCLAMATION);
      exit(1);
      }
   if (p->headx==p->locx && p->heady==p->locy && !p->anim_phase)

@@ -20,26 +20,27 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
+#include "libs/bios.h"
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
 #include <ctype.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include <mgifmem.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
+#include "libs/mgifmem.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "libs/system.h"
 
 typedef struct t_paragraph
   {
@@ -234,7 +235,8 @@ static void error(char *text)
   {
   char buff[256];
   sprintf(buff,"%s v odstavci %d\r\nLocal_pgf=%d / DIALOG : %d / SENTENCE : %d\r\n",text,last_pgf+local_pgf,local_pgf,local_pgf/128,last_pgf);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
+//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);
+  Sys_ErrorBox(buff);
   SEND_LOG("(DIALOGS) Dialog error detected at %d:%d",local_pgf/128,last_pgf);
   SEND_LOG("(DIALOGS) Error description: %s",text,0);  
   }

@@ -20,16 +20,19 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
-#include <mgfplay.h>
-#include <bgraph.h>
+//#include <skeldal_win.h>
+#include <stdlib.h>
+#include "libs/types.h"
+#include "libs/mgfplay.h"
+#include "libs/bgraph.h"
 
 
 
 void show_full_interl_lfb(void *source,void *target,void *palette, long linelen)
   {  
   int sslinelen=2*linelen-1280;
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -57,11 +60,14 @@ shfif1: lodsb
         pop     eax
         pop     ebp
     }
+*/
   }
 //#pragma aux show_full_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
 void show_delta_interl_lfb(void *source,void *target,void *palette, long linelen)
   {  
   int sslinelen=2*linelen;
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -122,11 +128,14 @@ shdif7: add     edi,[esp]       ;preskoc radek
 shdif5: pop     ebp
 konec:
     }
+*/
   }
 //#pragma aux show_delta_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
 
 void show_full_lfb12e(void *target,void *buff,void *paleta)
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -152,10 +161,13 @@ shfl1:  lodsw
         jnz     shfl2
         pop     ebp
     }
+*/
   }   
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 void show_delta_lfb12e(void *target,void *buff,void *paleta)
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -209,11 +221,14 @@ shdl7: add     edi,640        ;preskoc radek
 shdl5: pop     ebp
 konec:
     }
+*/
   }
 //#pragma aux show_delta_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta)
   {  
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -247,10 +262,13 @@ shfl1:  lodsw
 		pop		eax
         pop     ebp
     }
+*/
   }   
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 void show_delta_lfb12e_dx(void *target,void *buff,void *paleta,unsigned long Pitch)
   {
+// FIXME: rewrite
+/*
   __asm
     {
         mov     edi,target
@@ -309,6 +327,7 @@ shdl7: add     edi,scr_linelen  ;preskoc radek
 shdl5:	pop		eax		
 		pop     ebp
     }
+*/
   }
 
 char test_next_frame(void *bufpos,int size)

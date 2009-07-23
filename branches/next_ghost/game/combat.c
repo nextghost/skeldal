@@ -20,20 +20,21 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <bios.h>
+//#include <skeldal_win.h>
+//#include <bios.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <event.h>
-#include <conio.h>
-#include <zvuk.h>
-#include <bgraph.h>
-#include <bmouse.h>
-#include <mem.h>
+#include "libs/event.h"
+//#include <conio.h>
+#include "libs/zvuk.h"
+#include "libs/bgraph.h"
+#include "libs/bmouse.h"
+#include "libs/mem.h"
 #include <malloc.h>
-#include <memman.h>
-#include <math.h>
-#include "globals.h"
+#include "libs/memman.h"
+//#include <math.h>
+#include "game/globals.h"
+#include "libs/system.h"
 
 #define PRG_COLOR RGB555(0,31,31)
 #define PRG_HELP_COLOR RGB555(31,31,0)
@@ -116,7 +117,7 @@ word weapon_skill[]=         //tabulka poctu uspesnych zasahu pro kazdy level
    65535,      // max
    };
 
-char JePozdrzeno();
+static char JePozdrzeno();
 char mask_click(int id,int xa,int ya,int xr,int yr);
 char mask_click_help(int id,int xa,int ya,int xr,int yr);
 char mask_click_help_clear(int id,int xa,int ya,int xr,int yr);
@@ -755,7 +756,8 @@ void wire_presun_postavy()
   cancel_render=1;
   }
 
-static DWORD SPozdrzeno=0;
+//static DWORD SPozdrzeno=0;
+static unsigned long SPozdrzeno=0;
 
 static char JePozdrzeno()
 {
@@ -1904,7 +1906,8 @@ void souboje_turn(char smer)
   norefresh=1;
   hold_timer(TM_BACK_MUSIC,1);
                  viewdir=(viewdir+smer)&3;
-                 if (GetKeyState(VK_SHIFT) & 0x80) fix_group_direction();
+//                 if (GetKeyState(VK_SHIFT) & 0x80) fix_group_direction();
+                 if (get_shift_state() & 0x80) fix_group_direction();
                  else postavy[select_player].direction=viewdir;
                  render_scene(viewsector,viewdir);
                  hide_ms_at(387);
@@ -1937,7 +1940,8 @@ void programming_keyboard(EVENT_MSG *msg,void **unused)
   if (msg->msg==E_KEYBOARD)
      {
      c=(*(int *)msg->data)>>8;
-     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
+// FIXME: rewrite
+//     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
      switch (c)
         {
         case 1:konec(0,0,0,0,0);break;

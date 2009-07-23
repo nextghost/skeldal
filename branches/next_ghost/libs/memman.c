@@ -20,20 +20,22 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
-#include <mem.h>
-#include <dos.h>
+//#include <skeldal_win.h>
+#include "libs/types.h"
+#include "libs/mem.h"
+//#include <dos.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include "memman.h"
+#include "libs/memman.h"
 #include <time.h>
 //#include <i86.h>
-#include "swaper.c"
+#include "libs/swaper.c"
+#include "libs/system.h"
+//#include <io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
-#include <io.h>
-#include <SYS\STAT.H>
 
 #define DPMI_INT 0x31
 #define LOAD_BUFFER 4096
@@ -56,11 +58,14 @@ static int max_handle=0;
 void (*mman_action)(int action)=NULL;
 
 long last_load_size;
+// FIXME: rewrite
+/*
 void get_mem_info(MEMORYSTATUS *mem)
   {
   mem->dwLength=sizeof(*mem);
   GlobalMemoryStatus(mem);
   }
+*/
 
 
 void standard_mem_error(size_t size)
@@ -69,7 +74,8 @@ void standard_mem_error(size_t size)
   SEND_LOG("(ERROR) Memory allocation error detected, %u bytes missing",size,0);
   DXCloseMode();
   sprintf(buff,"Memory allocation error\n Application can't allocate %u bytes of memory (%xh)\n",size,memman_handle);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  Sys_ErrorBox(buff);
+//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
   exit(1);
   }
 
@@ -82,7 +88,8 @@ void load_error(char *filename)
   #endif
   DXCloseMode();
   sprintf(buff,"Load error while loading file: %s", filename);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  Sys_ErrorBox(buff);
+//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
   exit(1);
   }
 
@@ -91,7 +98,8 @@ void standard_swap_error()
   char buff[256];
   DXCloseMode();
   sprintf(buff,"Swap error. Maybe disk is full");
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  Sys_ErrorBox(buff);
+//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
   exit(1);
   }
 
@@ -128,7 +136,9 @@ void *load_file(char *filename)
 
   if (mman_action!=NULL) mman_action(MMA_READ);
   SEND_LOG("(LOAD) Loading file '%s'",filename,0);
-  f=open(filename,O_BINARY | O_RDONLY);
+// FIXME: O_BINARY is Windows-specific
+//  f=open(filename,O_BINARY | O_RDONLY);
+  f=open(filename, O_RDONLY);
   if (f==-1) load_error(filename);
   size=filelength(f);
   p=(void *)getmem(size);
@@ -406,7 +416,9 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
   memset(_handles,0,sizeof(_handles));
   if (filename!=NULL)
      {
-     bmf=open(filename,O_BINARY | O_RDONLY);
+// FIXME: O_BINARY is Windows-specific
+//     bmf=open(filename,O_BINARY | O_RDONLY);
+     bmf=open(filename, O_RDONLY);
      if (bmf!=-1)
         {
         main_file_name=(char *)getmem(strlen(filename)+1);
@@ -422,7 +434,9 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
   mem_error=heap_error;
   if (swp!=NULL)
      {
-     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
+// FIXME: Windows-specific flags
+//     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
+     swap=open(swp, O_RDWR | O_CREAT | O_TRUNC,S_IRUSR | S_IWUSR);
      swap_init();
      }
   else
@@ -777,6 +791,8 @@ void close_manager()
 
 void display_status()
   {
+// FIXME: rewrite
+/*
   int i,j;
   THANDLE_DATA *h;
   char names[][5]={"MISS","*ok*","SWAP","????","PTR "};
@@ -827,6 +843,7 @@ void display_status()
   get_mem_info(&mem);
   printf("Data: %7d KB, Loaded: %7d KB, Largest free: %7d KB",total_data/1024,total_mem/1024,mem.dwAvailPageFile/1024);
   while (getchar()!='\n');
+*/
   }
 
 void *grealloc(void *p,long size)
@@ -876,7 +893,9 @@ char add_patch_file(char *filename)
 	SEND_LOG("Adding patch: %s",filename,0);
 	if (patch!=-1) return 2;
 	if (bmf==-1) return 3;
-	patch=open(filename,O_BINARY|O_RDONLY);
+// FIXME: O_BINARY is Windows-specific
+//	patch=open(filename,O_BINARY|O_RDONLY);
+	patch=open(filename, O_RDONLY);
 	if (patch==-1) return 1;
 	lseek(patch,4,SEEK_SET);
 	read(patch,&l,4);

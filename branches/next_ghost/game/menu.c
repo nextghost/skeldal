@@ -20,26 +20,27 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
+//#include <conio.h>
 #include <malloc.h>
-#include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
+//#include <math.h>
+//#include <bios.h>
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
 //#include <vesa.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "libs/system.h"
 
 
 #define MUSIC "TRACK06.MUS"
@@ -118,6 +119,8 @@ T_CLK_MAP clk_main_menu[]=
 void rozdily(void *orign,void *obr,void *hicolor,void *xtab,int pocet)
 //#pragma aux rozdily parm[EDX][ESI][EDI][EBX][ECX]=
 {
+// FIXME: rewrite
+/*
 __asm
   {
   mov edx,orign
@@ -135,6 +138,7 @@ jp1:lodsb
   dec  ecx
   jnz  jp1
   }
+*/
 }
 
 static void nahraj_rozdilovy_pcx(void **pp,long *s)
@@ -189,6 +193,8 @@ static void init_menu_entries(void)
 void zobraz_podle_masky_asm(char barva,void *scr,void *data, void *maska,int xs,int ys)
 //#pragma aux zobraz_podle_masky_asm parm[al][edi][esi][ebx][edx][ecx]=
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov  al,barva
@@ -216,6 +222,7 @@ jp2: inc  ebx
     jnz  jp3
     pop  ebp
     }
+*/
   }
 
 static void zobraz_podle_masky(char barva,char anim)
@@ -382,7 +389,8 @@ char *get_next_title(char control,char *filename)
 			    char popis[300];
                 closemode();
                 sprintf(popis,"Soubor nenalezen: %s%s nebo %s%s\n",pathtable[SR_MAP],filename,pathtable[SR_DATA],filename);
-				MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
+		Sys_ErrorBox(popis);
+//				MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
                 exit(1);
                 }
               }
@@ -506,7 +514,7 @@ static void get_max_extend(int *l,int *r)
 void titles(va_list args)
 //#pragma aux titles parm[]
   {
-  char send_back=va_arg(args,char);
+  int send_back=va_arg(args,int);
   char *textname=va_arg(args,char *);
 
   void *picture;

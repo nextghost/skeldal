@@ -20,25 +20,26 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
-#include "inicfg.h"
+//#include <math.h>
+//#include <bios.h>
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "libs/inicfg.h"
+#include "libs/system.h"
 
 
 
@@ -400,7 +401,8 @@ int load_map(char *filename)
   if (!doNotLoadMapState && load_map_state()==-2)
      {
      closemode();
-     MessageBox(NULL,"Bug in temp file. Please purge some status blocks in last load savegame file.",NULL,MB_OK|MB_ICONSTOP);
+     Sys_ErrorBox("Bug in temp file. Please purge some status blocks in last load savegame file.");
+//     MessageBox(NULL,"Bug in temp file. Please purge some status blocks in last load savegame file.",NULL,MB_OK|MB_ICONSTOP);
      exit(0);
      }
   doNotLoadMapState=0;
@@ -1932,17 +1934,20 @@ void *game_keyboard(EVENT_MSG *msg,void **usr)
   if (msg->msg==E_KEYBOARD)
      {
      c=(*(int *)msg->data)>>8;
-     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
+     // FIXME: rewrite
+//     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
      switch (c)
         {
         case 'H':step_zoom(0);break;
         case 'P':step_zoom(2);break;
-        case 'M':if (GetKeyState(VK_CONTROL) & 0x80)
+//        case 'M':if (GetKeyState(VK_CONTROL) & 0x80)
+        case 'M':if (get_control_state() & 0x80)
             step_zoom(1);
           else
             turn_zoom(1);
           break;
-        case 'K':if (GetKeyState(VK_CONTROL) & 0x80)
+//        case 'K':if (GetKeyState(VK_CONTROL) & 0x80)
+        case 'K':if (get_control_state() & 0x80)
             step_zoom(3);
           else
             turn_zoom(-1);

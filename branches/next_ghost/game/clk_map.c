@@ -20,16 +20,18 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
-#include <types.h>
-#include <event.h>
-#include <devices.h>
-#include <bgraph.h>
-#include <bmouse.h>
-#include <memman.h>
-#include "globals.h"
-#include "engine1.h"
+#include <stdlib.h>
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bgraph.h"
+#include "libs/bmouse.h"
+#include "libs/memman.h"
+#include "game/globals.h"
+#include "game/engine1.h"
+#include "libs/system.h"
 
 #define get_shift_state() ((GetKeyState(VK_SHIFT) & 0x80)!=0)
 int default_ms_cursor=0;
@@ -273,7 +275,8 @@ char start_invetory(int id,int xa,int ya,int xr,int yr)
         {
         if (ms_last_event.event_type & 0x2)
            {
-           if (GetKeyState(VK_CONTROL) & 0x80)
+//         if (GetKeyState(VK_CONTROL) & 0x80)
+           if (get_control_state() & 0x80)
               {
               if (p->sektor==viewsector)
                  {

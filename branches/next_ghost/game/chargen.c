@@ -21,25 +21,25 @@
  *  Last commit made by: $Id$
  */
 //CHARACTER GENERATOR
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <gui.h>
-#include <basicobj.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+#include "libs/bios.h"
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/gui.h"
+#include "libs/basicobj.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
 #include <stddef.h>
 
 //there is defined procedures from source "INV.C"
@@ -145,16 +145,16 @@ char *error_text=NULL;
 
 
 
-char select_xicht(int id,int xa,int ya,int xr,int yr);
-char vol_vlastnosti(int id,int xa,int ya,int xr,int yr);
-char go_next_page(int id,int xa,int ya,int xr,int yr);
+static char select_xicht(int id,int xa,int ya,int xr,int yr);
+static char vol_vlastnosti(int id,int xa,int ya,int xr,int yr);
+static char go_next_page(int id,int xa,int ya,int xr,int yr);
 char vls_click(int id,int xa,int ya,int xr,int yr);
-char view_another_click2(int id,int xa,int ya,int xr,int yr);
+static char view_another_click2(int id,int xa,int ya,int xr,int yr);
 //char edit_another_click(int id,int xa,int ya,int xr,int yr);
 char edit_another_click2(int id,int xa,int ya,int xr,int yr);
 char gen_exit_editor(int id,int xa,int ya,int xr,int yr);
 
-void zobraz_staty(T_VLASTS *st);
+static void zobraz_staty(T_VLASTS *st);
 
 #define CLK_PAGE1 6
 

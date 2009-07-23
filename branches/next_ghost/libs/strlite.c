@@ -20,15 +20,15 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "strlite.h"
+//#include <skeldal_win.h>
+#include "libs/strlite.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <mem.h>
+#include "libs/mem.h"
 #include <malloc.h>
-#include <dos.h>
-#include "types.h"
-#include "memman.h"
+//#include <dos.h>
+#include "libs/types.h"
+#include "libs/memman.h"
 
 TSTR_LIST create_list(int count)
   {
@@ -43,6 +43,8 @@ TSTR_LIST create_list(int count)
 
 TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov edi, source
@@ -56,6 +58,7 @@ TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
     skok:
     mov eax, edi
     }
+*/
   }
     //parm [edi][eax][ecx] value[edi];
 

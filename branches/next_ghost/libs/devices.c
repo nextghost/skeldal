@@ -20,14 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
+//#include <skeldal_win.h>
+#include "libs/types.h"
 #include <stdio.h>
-#include <dos.h>
+//#include <dos.h>
 //#include <i86.h>
-#include <bios.h>
-#include "event.h"
-#include "devices.h"
+//#include <bios.h>
+#include "libs/event.h"
+#include "libs/devices.h"
 #include <time.h>
 
 /* Data touched at mouse callback time -- they are in a structure to
@@ -62,8 +62,9 @@ void keyboard(EVENT_MSG *msg,void *user_data)
   if (msg->msg==E_WATCH)
      {
      *otevri_zavoru=1;
-     if (!_bios_keybrd(_KEYBRD_READY)) return;
-     i=_bios_keybrd(_KEYBRD_READ);
+// FIXME: rewrite
+//     if (!_bios_keybrd(_KEYBRD_READY)) return;
+//     i=_bios_keybrd(_KEYBRD_READ);
      d=i>>8;
      c=i & 0xff;
      if (c=='+' && d<55 && !cz_mode) cz_mode=2;

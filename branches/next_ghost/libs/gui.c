@@ -20,18 +20,18 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 //Gui system - object system + graphic
-#include "types.h"
+#include "libs/types.h"
 #include <stdio.h>
-#include <mem.h>
+#include "libs/mem.h"
 #include <malloc.h>
-#include "memman.h"
-#include "event.h"
-#include "devices.h"
-#include "bmouse.h"
-#include "bgraph.h"
-#include "gui.h"
+#include "libs/memman.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/gui.h"
 
 #define E_REDRAW_DESKTOP 2010
 #define E_REDRAW_WINDOW 2000
@@ -757,7 +757,7 @@ void on_enter(void (*proc)())
   {
   o_end->events[1]=proc;
   }
-void on_exit(void (*proc)())
+void on_leave(void (*proc)())
 {
   o_end->events[2]=proc;
   }

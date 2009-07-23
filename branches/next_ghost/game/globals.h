@@ -20,8 +20,8 @@
  *  
  *  Last commit made by: $Id$
  */
-#include "types.h"
-#include "engine1.h"
+#include "libs/types.h"
+#include "game/engine1.h"
 
 #define POCET_POSTAV 6
 #define HODINA 360
@@ -100,7 +100,10 @@
 #define SD_DIRECTION   0x03     //smer akce.
 
 #define get_string(t) texty[t]
-#define rnd(num) (rand()*(num)/(RAND_MAX+1))
+// WTF?!
+//#define rnd(num) (rand()*(num)/(RAND_MAX+1))
+// done properly:
+#define rnd(num) (rand() % (num))
 
 static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 
@@ -129,6 +132,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define GET_G_COLOR(col) ((col & 0x07E0)>>3)
 #define GET_B_COLOR(col) ((col & 0x001F)<<3)
 
+#define BGSWITCHBIT 0x0020
 #define NOSHADOW(x) ((x)|BGSWITCHBIT)
 
 #define SWAPPATH pathtable[SR_TEMP]
@@ -646,7 +650,7 @@ void pcx_8bit_nopal(void **p,long *s);
 void set_background(void **p,long *s);
 void wav_load(void **p,long *s);
 void wire_main_functs();
-void ukaz_kompas();
+void ukaz_kompas(char mode);
 void *timming(EVENT_MSG *msg,void **data);
 void do_timer();
 void hold_timer(int id,char hld);
@@ -1306,6 +1310,7 @@ char get_player_triggered(int p);  //zjistuje zda hrac s cislem p byl makrem zas
 char save_load_trigger(short load); //uklada/obnovuje trigger vlajky. -1 uklada, jinak hodnota ulozeneho triggeru
 char save_codelocks(FILE *fsta); //uklada do savegame nastaveni kodovych zamku (128 bytu);
 char load_codelocks(FILE *fsta); //obnovuje ze savegame nastaveni kodovych zamku (128 bytu);
+void macro_load_another_map(TMA_LOADLEV *z);
 
 
 typedef struct letici_vec
@@ -1390,7 +1395,6 @@ void show_textured_button(int x,int y,int xs,int ys,int texture,void *border3d);
 
 //sounder & music
 
-extern short sample_volume;           //hlastitost samplu
 extern char **sound_table;
 
 void init_tracks();
@@ -1409,7 +1413,7 @@ void mute_all_tracks(char all);
 void kill_all_sounds();
 void create_sound_table(char *template,long size);
 void create_sound_table_old();
-void start_play_flute();
+void start_play_flute(char note);
 void stop_play_flute();
 void pc_speak_play_sample(char *sample,int size,char step,int freq);
 char enable_sound(char enbl);

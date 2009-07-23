@@ -20,25 +20,25 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
-#include "specproc.h"
+//#include <math.h>
+//#include <bios.h>
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "game/specproc.h"
 
 int **macros=NULL;
 void *macro_block;
@@ -51,7 +51,7 @@ static char trig_group;
 
 SGlobalEventDef GlobEventList[MAGLOB_NEXTID];
 
-void propadnout(int sector);
+static void propadnout(int sector);
 
 #define TRIG_GROUP 1
 #define TRIG_SECTOR 2
@@ -281,6 +281,8 @@ char if_lock(int side,int key_id,int level,TMA_LOCK *lk)
 void xchg_block(void *b1,void *b2,int leng)
 //#pragma aux xchg_block parm[edi][esi][ecx]=
 {
+// FIXME: rewrite
+/*
 __asm
   {
      mov edi,b1
@@ -295,6 +297,7 @@ __asm
      dec  ecx
      jnz  lp1
   }
+*/
 }
 
 static void propadnout(int sector)

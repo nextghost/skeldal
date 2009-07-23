@@ -22,6 +22,9 @@
  */
 #ifndef __ENGINE1_H
 #define __ENGINE1_H
+
+#include "libs/types.h"
+
 #define VIEW_SIZE_X 640
 #define VIEW_SIZE_Y 360
 #define TAB_SIZE_X 640

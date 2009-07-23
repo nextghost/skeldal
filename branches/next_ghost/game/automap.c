@@ -33,7 +33,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include "libs/pcx.h"
 #include "globals.h"
@@ -70,7 +70,7 @@ char psani_poznamek(int id,int xa,int ya,int xr,int yr);
 char map_target_select(int id,int xa,int ya,int xr,int yr);
 char map_target_cancel(int id,int xa,int ya,int xr,int yr);
 char map_menu(int id,int xa,int ya,int xr,int yr);
-char map_menu_glob_map(int id,int xa,int ya,int xr,int yr);
+static char map_menu_glob_map(int id,int xa,int ya,int xr,int yr);
 
 char noarrows=0;
 char enable_glmap=0;

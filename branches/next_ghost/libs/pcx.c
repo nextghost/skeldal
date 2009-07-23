@@ -20,13 +20,13 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <malloc.h>
-#include <mem.h>
+#include "libs/mem.h"
 #include <stdio.h>
 /*#include "..\types.h"*/
-#include "pcx.h"
-#include "memman.h"
+#include "libs/pcx.h"
+#include "libs/memman.h"
 /*#include "..\bgraph.h"*/
 
 #define SHADE_STEPS 5

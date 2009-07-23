@@ -20,40 +20,43 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
+//#include <skeldal_win.h>
+//#include <debug.h>
 #include <assert.h>
 //#include <env.h>
-#include <dos.h>
-#include <bios.h>
+//#include <dos.h>
+//#include <bios.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-#include <conio.h>
+//#include <conio.h>
 #include <malloc.h>
-#include <mem.h>
-#include <pcx.h>
-#include <direct.h>
-#include <types.h>
-#include <bgraph.h>
-#include <event.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <memman.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include <gui.h>
-#include <basicobj.h>
+#include <limits.h>
+#include <unistd.h>
+#include "libs/mem.h"
+#include "libs/pcx.h"
+//#include <direct.h>
+#include "libs/types.h"
+#include "libs/bgraph.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/memman.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
+#include "libs/gui.h"
+#include "libs/basicobj.h"
 #include <time.h>
-#include <mgfplay.h>
-#include <doserr.h>
-#include <inicfg.h>
-#include "globals.h"
-#include "engine1.h"
-#include "wizard.h"
-#include "version.h"
-#include <uvodni.h>
+#include "libs/mgfplay.h"
+//#include <doserr.h>
+#include "libs/inicfg.h"
+#include "game/globals.h"
+#include "game/engine1.h"
+#include "game/wizard.h"
+#include "game/version.h"
+#include "windows/uvodni.h"
+#include "libs/system.h"
 
 #define CONFIG_NAME SKELDALINI
 
@@ -117,7 +120,8 @@ TMA_LOADLEV loadlevel;
 
 typedef struct inis
   {
-  char heslo[15];
+//  char heslo[15];
+  char heslo[20];
   char parmtype;
   }INIS;
 
@@ -380,7 +384,8 @@ int ask_video()
   printf("\nJaky videomode?:\n"
          "  1) 640x480x256 \n"
          "  2) 640x480xHiColor \n");
-  c=_bios_keybrd(_KEYBRD_READ)>>8;
+// FIXME: rewrite
+//  c=_bios_keybrd(_KEYBRD_READ)>>8;
   if (c==1) exit(0);
   return c-1;
   }
@@ -574,8 +579,9 @@ void music_init()
   set_snd_effect(SND_GFX,init_gfx_vol);
   set_snd_effect(SND_MUSIC,init_music_vol);
   path=plugins_path;
-  if (path==0 || path[0]==0)  
-    path=AutodetectWinAmp();
+// FIXME: rewrite
+//  if (path==0 || path[0]==0)  
+//    path=AutodetectWinAmp();
   if (path!=0 && path[0]!=0)
   {
     SEND_LOG("(SOUND) Installing plugins, path: %s",path,0);
@@ -596,6 +602,8 @@ void clrscr()
 
 void purge_temps(char z)
   {
+// FIXME: rewrite
+/*
   HANDLE rc;
   WIN32_FIND_DATA fi;
   char c[200];
@@ -625,7 +633,7 @@ void purge_temps(char z)
      SEND_LOG("(PURGE) Purging temp '%s'",c,0);
      remove(c);
      }
-
+*/
   }
 
 
@@ -903,7 +911,8 @@ void cti_texty()
         case -3:sprintf(buff,"Memory very low (need min 4MB)\n");break;
         default:sprintf(buff,"Error in string table at line %d\n",err);break;
         }
-    MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+    Sys_ErrorBox(buff);
+//    MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
      exit(1);
      }
   }
@@ -1254,7 +1263,8 @@ static int do_config_skeldal(int num,int numdata,char *txt)
 	 case 23:windowedzoom=numdata;
      case 24:monitor=numdata;
      case 25:if (VERSIONNUM<numdata)
-               MessageBox(NULL,"Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne","Chybna verze hry",MB_OK);
+               Sys_InfoBox("Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne");
+//               MessageBox(NULL,"Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne","Chybna verze hry",MB_OK);
             break;
      case 26:refresh=numdata;
      default:num-=CESTY_POS;
@@ -1268,7 +1278,7 @@ static int do_config_skeldal(int num,int numdata,char *txt)
   }
 
 
-static void config_skeldal(char *line)
+static void config_skeldal(const char *line)
   {
   int ndata=0,i,maxi;
 
@@ -1499,7 +1509,8 @@ static void game_big_circle(char enforced)
           case -3: sprintf(buff,"Map file is corrupted!\n");break;
           default: sprintf(buff,"Error in string table at line %d",err);break;
           }
-	   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+	  Sys_ErrorBox(buff);
+//	   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
        exit(1);
        }
     viewsector=loadlevel.start_pos;
@@ -1690,7 +1701,7 @@ void disable_intro()
 
 #include "crashdump.h"
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
   {
   char *c,rm;
   
@@ -1703,7 +1714,8 @@ void main(int argc,char *argv[])
   OPEN_LOG("con");
   SEND_LOG("START --------------------------",0,0);
   argv;
-  c=getcwd(NULL,_MAX_PATH+1);
+//  c=getcwd(NULL,_MAX_PATH+1);
+  c=getcwd(NULL,PATH_MAX+1);
   pathtable[SR_SAVES]=getmem(strlen(c)+2);
   strcpy(pathtable[SR_SAVES],c);
   strcat(pathtable[SR_SAVES],"\\");
@@ -1761,14 +1773,17 @@ void main(int argc,char *argv[])
   escape();
   update_config();
   closemode();
+  return 0;
   }
 
+#ifdef WIN32
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
   {
-  main(__argc, __argv);
+  return main(__argc, __argv);
   }
+#endif
   
-#include "..\game\version.h"
+#include "game/version.h"
 
 
 int GetExeVersion()

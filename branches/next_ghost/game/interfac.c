@@ -20,38 +20,38 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <dos.h>
-#include <bios.h>
+//#include <skeldal_win.h>
+//#include <dos.h>
+#include "libs/bios.h"
 #include <stdlib.h>
-#include <io.h>
-#include <direct.h>
+//#include <io.h>
+//#include <direct.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 //#include <dpmi.h>
-#include <conio.h>
+//#include <conio.h>
 #include <malloc.h>
-#include <mem.h>
-#include <pcx.h>
-#include <types.h>
-#include <bgraph.h>
-#include <event.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <memman.h>
-#include <zvuk.h>
-#include <strlite.h>
+#include "libs/mem.h"
+#include "libs/pcx.h"
+#include "libs/types.h"
+#include "libs/bgraph.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/memman.h"
+#include "libs/zvuk.h"
+#include "libs/strlite.h"
 #include <ctype.h>
-#include <gui.h>
-#include <basicobj.h>
+#include "libs/gui.h"
+#include "libs/basicobj.h"
 #include <time.h>
-#include <mgfplay.h>
-#include <wav.h>
-#include <io.h>
+#include "libs/mgfplay.h"
+#include "libs/wav.h"
+//#include <io.h>
 #include <fcntl.h>
-#include "globals.h"
-#include "engine1.h"
+#include "game/globals.h"
+#include "game/engine1.h"
 
 #define MES_MAXSIZE 500
 #define CHECK_BOX_ANIM 6
@@ -106,8 +106,11 @@ void create_frame(int x,int y,int xs,int ys,char clear)
   }
 
 
-void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
+//void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
+void show_textured_button(int x,int y,int xs,int ys,int texture,void *border3d)
   {
+// FIXME: rewrite to platform independent code
+/*
   int i;i=0;
   if (texture) put_textured_bar(ablock(texture),x,y,xs,ys,border3d->light,border3d->shadow);
 
@@ -126,7 +129,7 @@ void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
         trans_line_y(x+i,y+i,ys-(i<<1),RGB555(31,31,31));
         trans_line_y(x+xs-i-1,y+i,ys-(i<<1),0);
         }
-
+*/
   }
 void show_textured_win(struct window *w)
   {
@@ -1519,7 +1522,9 @@ int smlouvat(int cena,int puvod,int pocet,int money,char mode)
   cena,puvod,pocet,money;text[0]=0;text[1]=0;
   add_window(170,130,300,150,H_IDESKA,3,20,20);
   define(-1,10,15,1,1,0,label,texty[241]);
-  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
+//  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
+  sprintf(buffer, "%d", cena);
+  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,buffer);
   set_font(H_FBOLD,MSG_COLOR1);
   define(-1,10,30,1,1,0,label,texty[238]);
   define(10,150,30,100,13,0,input_line,8);property(def_border(5,BAR_COLOR),NULL,NULL,0);set_default("");
@@ -1638,7 +1643,9 @@ void show_jrc_logo(char *filename)
     ccc=cdiff;
     mix_back_sound(0);
     }
-  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));
+// FIXME: rewrite
+//  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));
+  while (cdiff<SHOWDELAY);
   curcolor=0;bar(0,0,639,479);
   showview(0,0,0,0);
   free(pcx);

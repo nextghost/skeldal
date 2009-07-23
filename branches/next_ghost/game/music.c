@@ -20,20 +20,21 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
+//#include <skeldal_win.h>
+//#include <debug.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mem.h>
-#include <memman.h>
-#include <zvuk.h>
-#include <wav_mem.h>
-#include <event.h>
-#include "globals.h"
+#include <limits.h>
+#include "libs/mem.h"
+#include "libs/memman.h"
+#include "libs/zvuk.h"
+#include "libs/wav_mem.h"
+#include "libs/event.h"
+#include "game/globals.h"
 #include <math.h>
 //#include <i86.h>  //Sound and Nosound
-#include <strlite.h>
-#include <io.h>
+#include "libs/strlite.h"
+//#include <io.h>
 
 #define PL_RANDOM 1
 #define PL_FORWARD 2
@@ -427,8 +428,8 @@ void create_playlist(char *playlist)
   for (c=playlist;c!=NULL;c=strchr(c+1,' '))
      {
      char *e;
-     char d[MAX_PATH+2]="!";
-     strncat(d,c+j,MAX_PATH);d[MAX_PATH+1]=0;j=1;
+     char d[PATH_MAX+2]="!";
+     strncat(d,c+j,PATH_MAX);d[PATH_MAX+1]=0;j=1;
      if ((e=strchr(d,32))!=NULL) *e=0;
      str_add(&cur_playlist,d);
      }
@@ -448,7 +449,7 @@ void create_playlist(char *playlist)
 void play_next_music(char **c)
   {
   int i,step;
-  static char d[MAX_PATH];
+  static char d[PATH_MAX];
 
   *c=NULL;
   if (cur_playlist==NULL) return;

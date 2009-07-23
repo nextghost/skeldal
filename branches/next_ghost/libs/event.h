@@ -125,7 +125,7 @@ void send_message(long message,...);
  // posila zpravu do stromu
 void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg);
  // pripojuje zakladni funkce brany, jako je instalace listu a jejich deinstalace
-T_EVENT_ROOT *gate_basics(EVENT_MSG *msg, void *user_data);
+T_EVENT_ROOT *gate_basics(EVENT_MSG *msg, void **user_data);
  // implementace brany
  /* vstupuji informace, jake dostane brana pri zavolani
     vystupuji informace s jakymi musi vstoupit do stromu.
@@ -138,7 +138,7 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg);
 void do_events();
 void escape();
 
-#include <FCS_Tasker.h>
+#include "windows/fcs_tasker.h"
 /*
 void *task_sleep(void *param);
 //#pragma aux task_sleep parm [eax] value [eax]

@@ -20,28 +20,29 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
+//#include <skeldal_win.h>
+//#include <debug.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
+#include "libs/bios.h"
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
 #include <ctype.h>
-#include <devices.h>
-#include <conio.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <io.h>
-#include <strlite.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+#include "libs/devices.h"
+//#include <conio.h>
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+//#include <io.h>
+#include "libs/strlite.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
+#include "libs/system.h"
 
 #define GLOBMAP "GLOBMAP.DAT"
 
@@ -195,7 +196,8 @@ static void error(char *text)
   sprintf(popis,"Chyba v souboru "GLOBMAP" na radce %d.\r\n%s",linecounter,text);
   SEND_LOG("(ERROR) %s : %s",popis,text);
   closemode();
-  MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
+  Sys_ErrorBox(popis);
+//  MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
   exit(0);
   }
 
@@ -469,8 +471,6 @@ static int find_leave_place(int sector)
   return found_place;
   }
 
-macro_load_another_map();
-
 static select_mode;
 
 
@@ -501,7 +501,9 @@ static char load_index_map(int index)
       if (h->sektor!=lv && !labyrinth_find_path(h->sektor,lv,(SD_PLAY_IMPS | SD_SECRET),flp_validate2,NULL))
         {
         char c[20];
-        bott_disp_text(itoa(i,c,10));
+	sprintf(c, "%d", i);
+//        bott_disp_text(itoa(i,c,10));
+        bott_disp_text(c);
         return 0;
         }
   if (!GlobEvent(MAGLOB_LEAVEMAP,viewsector,viewdir)) return 0;

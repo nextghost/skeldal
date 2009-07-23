@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 /*
 
  Popis jazyka pro psani textu do knihy
@@ -65,11 +65,12 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
-#include <strlite.h>
-#include <bgraph.h>
-#include <memman.h>
-#include <event.h>
-#include "globals.h"
+#include "libs/strlite.h"
+#include "libs/bgraph.h"
+#include "libs/memman.h"
+#include "libs/event.h"
+#include "game/globals.h"
+#include "libs/system.h"
 
 #define XMAX 254
 #define YMAX 390
@@ -298,6 +299,7 @@ static void break_line()
 
 static char read_set(FILE *txt,char *var,char *set)
   {
+// FIXME: this REALLY needs rewrite
   int c;
   char *cc;
 
@@ -547,7 +549,8 @@ void seek_section(FILE *txt,int sect_number)
 	{
     char buff[256];
 	sprintf(buff,"Nemohu najit odstavec s cislem %d.",sect_number);
-	MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+	Sys_ErrorBox(buff);
+//	MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
 	}
   exit(1);
   }

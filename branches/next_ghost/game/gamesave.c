@@ -20,29 +20,31 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
-#include <dos.h>
-#include <bios.h>
+//#include <skeldal_win.h>
+//#include <debug.h>
+//#include <dos.h>
+#include "libs/bios.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <conio.h>
+//#include <conio.h>
 #include <malloc.h>
-#include <mem.h>
-#include <pcx.h>
-#include <types.h>
-#include <bgraph.h>
-#include <event.h>
-#include <strlite.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <memman.h>
+#include "libs/mem.h"
+#include "libs/pcx.h"
+#include "libs/types.h"
+#include "libs/bgraph.h"
+#include "libs/event.h"
+#include "libs/strlite.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/memman.h"
+//#include <io.h>
+#include "libs/zvuk.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
-#include <io.h>
-#include <zvuk.h>
-#include <SYS\STAT.H>
-#include "globals.h"
+#include "game/globals.h"
+#include "libs/system.h"
 
 #define STATE_CUR_VER 1
 
@@ -119,7 +121,8 @@ static unable_open_temp(char *c)
 
   concat(e,d,c);
   closemode();
-  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
+  Sys_ErrorBox(e);
+//  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
   SEND_LOG("(SAVELOAD) Open temp error detected (%s)",c,0);
   exit(1);
   }
@@ -130,7 +133,8 @@ static unable_write_temp(char *c)
 
   concat(e,d,c);
   closemode();
-  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
+  Sys_ErrorBox(e);
+//  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
   SEND_LOG("(SAVELOAD) Open temp error detected (%s)",c,0);
   exit(1);
   }
@@ -394,7 +398,7 @@ int save_map_state() //uklada stav mapy pro savegame (neuklada aktualni pozici);
   expand_map_file_name(sta);
   fsta=fopen(sta,"wb");if (fsta==NULL) unable_open_temp(sta);
   SEND_LOG("(SAVELOAD) Saving map state for current map",0,0);
-  if (load_org_map(level_fname,&org_sides,&org_sectors,NULL,NULL)) goto err;
+  if (load_org_map(level_fname,(void*)&org_sides,(void*)&org_sectors,NULL,NULL)) goto err;
   siz=(mapsize+7)/8;
   bf=(char *)getmem(siz);
   ver=0;
@@ -559,18 +563,20 @@ void restore_current_map() //pouze obnovuje ulozeny stav aktualni mapy
   free(map_sides);        //uvolni informace o stenach
   free(map_sectors);      //uvolni informace o sektorech
   free(map_coord);       //uvolni minfo informace
-  load_org_map(level_fname,&map_sides,&map_sectors,&map_coord,NULL); //nahrej originalni mapu
+  load_org_map(level_fname,(void*)&map_sides,(void*)&map_sectors,(void*)&map_coord,NULL); //nahrej originalni mapu
   load_map_state(); //nahrej ulozenou mapu
   for(i=1;i<mapsize*4;i++) call_macro(i,MC_STARTLEV);
   }
 
-_inline char rotate(char c)
+inline char rotate(char c)
   {
-  __asm
+// FIXME: rewrite
+/*  __asm
     {
     mov al,c
     rol al,1;
     }
+*/
   }
 
 //#pragma aux rotate parm [al] value [al]="rol al,1";
@@ -594,7 +600,9 @@ int pack_status_file(FILE *f,char *status_name)
   if (fullnam==NULL) return 2;
   strcpy(fullnam,pathtable[SR_TEMP]);
   strcat(fullnam,status_name);
-  stt=open(fullnam,O_RDONLY | O_BINARY);
+// FIXME: O_BINARY is Windows-specific
+//  stt=open(fullnam,O_RDONLY | O_BINARY);
+  stt=open(fullnam,O_RDONLY);
   fsz=filelength(stt);
   c=buffer=getmem(fsz+12+4+2);
   strcpy(c,status_name);c+=12;
@@ -640,7 +648,9 @@ int unpack_status_file(FILE *f)
      free(buffer);
      return 3;
      }
-  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
+// FIXME: Windows-specific flags
+//  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
+  stt=open(fullnam, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
   if (stt==-1)
      {
      free(buffer);
@@ -654,6 +664,8 @@ int unpack_status_file(FILE *f)
 
 int pack_all_status(FILE *f)
   {
+// FIXME: rewrite
+/*
   char *c;
   WIN32_FIND_DATA inf;
   HANDLE res;
@@ -674,6 +686,7 @@ int pack_all_status(FILE *f)
   FindClose(res);
   c[0]=0;
   fwrite(c,1,12,f);
+*/
   return 0;
   }
 
@@ -886,7 +899,8 @@ int save_game(int slotnum,char *gamename)
   {
 	char buff[256];
 	sprintf(buff,"Nelze ulozit pozici na cestu: %s", ssn);
-    MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);  
+	Sys_ErrorBox(buff);
+//    MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);  
   }
   else
   {
@@ -943,7 +957,8 @@ int load_game(int slotnum)
            }
   for(t=0;t<POCET_POSTAV;t++) postavy[t].zvolene_akce=NULL;
   SEND_LOG("(SAVELOAD) Game loaded.... Result %d",r,0);
-  if (GetKeyState(VK_CONTROL) & 0x80) correct_level();
+//  if (GetKeyState(VK_CONTROL) & 0x80) correct_level();
+  if (get_control_state() & 0x80) correct_level();
   return r;
   }
 
@@ -1102,7 +1117,7 @@ static void redraw_story_bar(int pos)
   }
 
 //#pragma aux read_story_task parm []
-static read_story_task(va_list args)
+static void read_story_task(va_list args)
   {
   int slot=va_arg(args,int);
 
@@ -1190,7 +1205,7 @@ static int bright_slot(int yr)
   return id;
   }
 
-char updown_scroll(int id,int xa,int ya,int xr,int yr);
+static char updown_scroll(int id,int xa,int ya,int xr,int yr);
 
 static char updown_noinst=0;
 
@@ -1598,7 +1613,7 @@ int load_map_automap(char *mapfile)
   free(map_sides);        //uvolni informace o stenach
   free(map_sectors);      //uvolni informace o sektorech
   free(map_coord);       //uvolni minfo informace
-  load_org_map(mapfile,&map_sides,&map_sectors,&map_coord,&mapsize); //nahrej originalni mapu
+  load_org_map(mapfile,(void*)&map_sides,(void*)&map_sectors,(void*)&map_coord,(void*)&mapsize); //nahrej originalni mapu
   return load_map_state_partial(mapfile,mapsize); //nahrej ulozenou mapu
   }
 //po teto akci se nesmi spustit TM_SCENE!!!! pokud mapfile!=level_fname

@@ -20,19 +20,19 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
+//#include <skeldal_win.h>
+#include "libs/types.h"
 //#include <vesa.h>
 //#include <dpmi.h>
 //#include <i86.h>
-#include <mem.h>
+#include "libs/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 //#include <graph.h>
-#include <conio.h>
-#include "bgraph.h"
-#include "memman.h"
+//#include <conio.h>
+#include "libs/bgraph.h"
+#include "libs/memman.h"
 
 word *screen;
 word curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
@@ -152,7 +152,7 @@ void write_vesa_info(int mode)
   delay(300);
   }
 */
-void showview_dx(word x,word y,word xs,word ys);
+static void showview_dx(word x,word y,word xs,word ys);
 //void showview64b(word x,word y,word xs,word ys);
 /*void showview32b(word x,word y,word xs,word ys)
   {

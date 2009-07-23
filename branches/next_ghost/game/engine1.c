@@ -20,20 +20,21 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
-#include <types.h>
+//#include <skeldal_win.h>
+//#include <debug.h>
+#include "libs/types.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <mem.h>
-#include <bios.h>
-#include <memman.h>
-#include <bgraph.h>
-#include <event.h>
-#include <zvuk.h>
-#include "math.h"
-#include "globals.h"
-#include "engine1.h"
+#include "libs/mem.h"
+#include "libs/bios.h"
+#include "libs/memman.h"
+#include "libs/bgraph.h"
+#include "libs/event.h"
+#include "libs/zvuk.h"
+//#include "math.h"
+#include "game/globals.h"
+#include "game/engine1.h"
+#include "windows/bgraph2dx.h"
 
 #define CTVR 128
 
@@ -656,11 +657,12 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
   zoom.line_len=scr_linelen;
-  __try
+// FIXME: what's this?
+//  __try
 	{
 	if (rev) sikma_zprava(); else sikma_zleva();
 	}
-  __finally
+//  __finally
 	{
 	}
   }
@@ -912,6 +914,8 @@ void report_mode(int mode)
 
 __inline void clear_color(void *start,int _size,word _color)
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov  edi,start
@@ -925,6 +929,7 @@ __inline void clear_color(void *start,int _size,word _color)
     rcl  ecx,1
     rep  stosw      
     }
+*/
   }
     
     //parm [EDI][ECX][EAX] modify [EBX];
@@ -1328,6 +1333,8 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
 __inline void prumeruj(void *target,void *source1, void *source2)
 //#pragma aux prumeruj parm [edi][eax][edx]=
   {
+// FIXME: rewrite
+/*
   _asm
     {
     mov  edi,target
@@ -1341,6 +1348,7 @@ __inline void prumeruj(void *target,void *source1, void *source2)
     shr  eax,1
     stos
     }
+*/
   }
 
 void double_zoom_xicht(word x,word y,word *source)

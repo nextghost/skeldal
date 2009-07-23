@@ -20,26 +20,27 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <gui.h>
-#include <basicobj.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+//#include <bios.h>
+#include "libs/mem.h"
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/memman.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/bgraph.h"
+#include "libs/zvuk.h"
+#include "libs/gui.h"
+#include "libs/basicobj.h"
+#include "game/engine1.h"
+#include "libs/pcx.h"
+#include "game/globals.h"
 #include <stddef.h>
+#include "libs/system.h"
 
 #define neprezbrojit() (battle && (battle_mode!=MD_PREZBROJIT || select_player!=human_selected-postavy))
 
@@ -203,7 +204,8 @@ void load_items()
   if (f==NULL)
      {
         closemode();
-	    MessageBox(NULL,"Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.",NULL,MB_OK|MB_ICONSTOP);
+	Sys_ErrorBox("Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.");
+//	    MessageBox(NULL,"Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.",NULL,MB_OK|MB_ICONSTOP);
         exit(0);
      }
   do
@@ -683,7 +685,8 @@ char pick_item_(int id,int xa,int ya,int xr,int yr)
      else
      if (id>1 || ya>=get_top_of_next(sect,id))
         {
-		if ((game_extras & EX_BAG_EXTENDED) && (GetKeyState(VK_CONTROL) & 0x80) &&
+//		if ((game_extras & EX_BAG_EXTENDED) && (GetKeyState(VK_CONTROL) & 0x80) &&
+		if ((game_extras & EX_BAG_EXTENDED) && (get_control_state() & 0x80) &&
 		  (glob_items[*picked_item-1].nosnost>0))
 		  {
 		  int curinside=count_items_inside(picked_item);
@@ -911,10 +914,10 @@ void definuj_postavy()
                        }
                     break;
            case 128:r=sscanf(c,"%c%14[^\r]",&cc,p->jmeno);r--;break;
-           case 129:r=sscanf(c,"%hd",&p->female);break;
-           case 130:r=sscanf(c,"%hd",&p->xicht);break;
+           case 129:r=sscanf(c,"%hhd",&p->female);break;
+           case 130:r=sscanf(c,"%hhd",&p->xicht);break;
            case 131:r=sscanf(c,"%hd",&p->level);break;
-           case 132:r=sscanf(c,"%d",&p->exp);break;
+           case 132:r=sscanf(c,"%ld",&p->exp);break;
            case 133:r=sscanf(c,"%d",&num1);
                     while(r==1 && num1!=-1)
                        {
@@ -943,7 +946,8 @@ void definuj_postavy()
      if (r!=1)
         {
         closemode();
-	    MessageBox(NULL,"Error in file POSTAVY.DAT. May be missing a parameter in some definition.",NULL,MB_OK|MB_ICONSTOP);
+	Sys_ErrorBox("Error in file POSTAVY.DAT. May be missing a parameter in some definition.");
+//	    MessageBox(NULL,"Error in file POSTAVY.DAT. May be missing a parameter in some definition.",NULL,MB_OK|MB_ICONSTOP);
         exit(0);
         }
      c=strchr(c,'\n')+1;
@@ -1292,7 +1296,7 @@ static void percent_bar(int x,int y,int xs,int ys,int val,int max,char *popis)
   outtext(s);
   }
 
-typedef struct t_inv_script
+struct t_inv_script
   {
   short col,line;
   char *text;
@@ -1794,7 +1798,9 @@ static char MakeItemCombinations(short *itm1, short *itm2)
   if (table==0 && pathtable[SR_MAP2][0])
   {
       concat(fname,pathtable[SR_MAP2],fname);
-      table=fopen(table,"r");
+// WTF?!
+//      table=fopen(table,"r");
+      table=fopen(fname,"r");
   }
   if (table==0) return 0;
   cnt=fscanf(table,"%d %d -> %d %d",&src1,&src2,&trg1,&trg2);
@@ -2365,9 +2371,9 @@ void build_all_players()
 #define CLK_SHOP 10
 
 static short cur_owner=0; //1 hrac, -1 obchodnik, 0 Nikdo
-char shop_bag_click(int id,int xa,int ya,int xr,int yr);
-char shop_keeper_click(int id, int xa, int ya,int xr,int yr);
-char shop_block_click(int id, int xa, int ya,int xr,int yr);
+static char shop_bag_click(int id,int xa,int ya,int xr,int yr);
+static char shop_keeper_click(int id, int xa, int ya,int xr,int yr);
+static char shop_block_click(int id, int xa, int ya,int xr,int yr);
 char shop_change_player(int id, int xa, int ya,int xr,int yr);
 char _exit_shop(int id, int xa, int ya,int xr,int yr);
 void unwire_shop();
@@ -2678,7 +2684,7 @@ static char shop_keeper_click(int id, int xa, int ya,int xr,int yr)
         redraw_keepers_items();
         ukaz_mysku();
         update_mysky();
-		if ((GetKeyState(VK_CONTROL) & 0x80) && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item)<=money)
+		if ((get_control_state() & 0x80) && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item)<=money)
 		  {
           play_sample_at_channel(H_SND_OBCHOD,1,100);
 	      money-=get_sell_price(*picked_item);
@@ -2765,7 +2771,7 @@ static char shop_bag_click(int id,int xa,int ya,int xr,int yr)
      {
      id=bag_click(id,xa,ya,xr,yr);
      cur_owner=picked_item!=NULL;
-	 if (picked_item!=NULL && picked_item[1]==0 && (game_extras & EX_FAST_TRADE) && (GetKeyState(VK_CONTROL) & 0x80))
+	 if (picked_item!=NULL && picked_item[1]==0 && (game_extras & EX_FAST_TRADE) && (get_control_state() & 0x80))
 	   {
 	   short z;
        price=make_offer(z=picked_item[0]);

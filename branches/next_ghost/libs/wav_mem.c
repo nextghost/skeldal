@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "WAV_MEM.H"
+#include "wav_mem.h"
 
 char *find_chunk(char *wav,char *name)
   {

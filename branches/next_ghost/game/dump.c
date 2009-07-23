@@ -19,11 +19,12 @@
  *  Project home: https://sourceforge.net/projects/skeldal/
  *  
  *  Last commit made by: $Id$
- */#include <skeldal_win.h>
+ */
+#include <skeldal_win.h>
 #include <stdio.h>
-#include <bgraph.h>
-#include <dos.h>
-#include <memman.h>
+#include "libs/bgraph.h"
+//#include <dos.h>
+#include "libs/memman.h"
 #include <debug.h>
 
 static int latest_version(char *wild,int numpos)

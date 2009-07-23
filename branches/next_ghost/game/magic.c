@@ -20,20 +20,20 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <bgraph.h>
+#include "libs/bgraph.h"
 #include <malloc.h>
-#include <memman.h>
-#include <mem.h>
-#include <mgifmem.h>
-#include <event.h>
+#include "libs/memman.h"
+#include "libs/mem.h"
+#include "libs/mgifmem.h"
+#include "libs/event.h"
 //#include <i86.h>
 #include <math.h>
-#include <bmouse.h>
-#include "engine1.h"
-#include "globals.h"
+#include "libs/bmouse.h"
+#include "game/engine1.h"
+#include "game/globals.h"
 
 
 #define S_jmeno 128
@@ -185,7 +185,7 @@ void show_delta_lfb12e(void *target,void *buff,void *paleta);
 char mob_check_next_sector(int sect,int dir,char alone,char passable);
 
 void call_spell(int i);
-int calculatePhaseDoor(int sector, int dir, int um);
+static int calculatePhaseDoor(int sector, int dir, int um);
 
 
 static void animace_kouzla(int act,void *data, int ssize)
@@ -717,7 +717,7 @@ static void spell_demon(int num,TKOUZLO *spl,int cil,int demon)
   bott_draw(1);
   }
 
-void spell_hit(int cil,int min,int max,int owner)
+void spell_hit(int cil,int lbound,int max,int owner)
   {
   if (cil)
      if (cil<0)
@@ -727,7 +727,7 @@ void spell_hit(int cil,int min,int max,int owner)
      m=&mobs[cil];
      select_player=owner;
      vybrana_zbran=-1;
-     mob_hit(m,min+rnd(max-min));
+     mob_hit(m,lbound+rnd(max-lbound));
      }
      else if(cil>0)
      {
@@ -736,7 +736,7 @@ void spell_hit(int cil,int min,int max,int owner)
 
      cil--;
      h=&postavy[cil];
-     vysl=min+rnd(max-min);
+     vysl=lbound+rnd(max-lbound);
      if (vysl<0)
       {
       h->lives-=vysl,h->lives=min(h->lives,h->vlastnosti[VLS_MAXHIT]);
@@ -1399,7 +1399,8 @@ static void calc_rand_value(int val1,int val2)
 void call_spell(int i)
   {
   TKOUZLO *p;
-  char *c;
+//  char *c;
+  unsigned char *c;
   int z;
   char ext=0;
   int cil;
@@ -1483,7 +1484,8 @@ void call_spell(int i)
 
      }
   while(!ext);
-  p->start=c-(char *)ablock(H_KOUZLA);
+//  p->start=c-(char *)ablock(H_KOUZLA);
+  p->start=c-(unsigned char *)ablock(H_KOUZLA);
   }
 
 int add_spell(int num,int cil,int owner,char noanim)

@@ -20,12 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
-#include "types.h"
-#include "memman.h"
-#include "mem.h"
-#include "mgifmem.h"
+#include "libs/types.h"
+#include "libs/memman.h"
+#include "libs/mem.h"
+#include "libs/mgifmem.h"
 
 #define MGIF "MGIF"
 #define LZW_MAX_CODES  16384
@@ -122,6 +122,8 @@ void close_mgif()           //dealokuje buffery pro prehravani
 
 int input_code(void *source,long *bitepos,int bitsize,int mask)
   {
+// FIXME: rewrite
+/*
   __asm
     {
     mov esi,source
@@ -138,6 +140,7 @@ int input_code(void *source,long *bitepos,int bitsize,int mask)
     and     eax,edx
     add     [edi],ebx
     }
+*/
   }
 //#pragma aux input_code parm [esi][edi][ebx][edx]=\    value[eax] modify [ecx];
 
@@ -160,6 +163,8 @@ int de_add_code(int group,int chr,int mask)
 char fast_expand_code(int code,char **target)
 //#pragma aux fast_expand_code parm[eax][edi] modify [esi ecx] value [bl]
   {
+// FIXME: rewrite
+/*
   _asm
     {
      mov     eax,code
@@ -202,6 +207,7 @@ elp2:inc     esi
 end:
      movzx   eax,bl
     }
+*/
   }
 
 

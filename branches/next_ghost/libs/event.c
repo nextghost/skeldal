@@ -20,21 +20,22 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "types.h"
-#include "event.h"
-#include "devices.h"
-#include <mem.h>
+#include "libs/types.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/mem.h"
 //#include <dpmi.h>
 #include <malloc.h>
-#include <bios.h>
+//#include <bios.h>
 //#include <i86.h>
 #include <time.h>
-#include "memman.h"
+#include "libs/memman.h"
 #include <setjmp.h>
-#include <signal.h>
+#include "libs/system.h"
+//#include <signal.h>
 #include <assert.h>
 
 static jmp_buf jmpenv;

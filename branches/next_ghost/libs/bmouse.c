@@ -20,12 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include "types.h"
-#include "bgraph.h"
-#include "event.h"
-#include "devices.h"
-#include "bmouse.h"
+//#include <skeldal_win.h>
+#include "libs/types.h"
+#include "libs/bgraph.h"
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/bmouse.h"
 #include <stdio.h>
 
 char visible=0;

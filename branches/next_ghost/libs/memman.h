@@ -106,7 +106,7 @@ int find_handle(char *name,void *decomp);   //hleda mezi rukojeti stejnou defini
 int test_file_exist(int group,char *filename); //testuje zda soubor existuje v ramci mmanageru
 void *afile(char *filename,int group,long *blocksize); //nahraje do pameti soubor registrovany v ramci mmanageru
 long get_handle_size(int handle);
-void get_mem_info(MEMORYSTATUS *mem); 
+//void get_mem_info(MEMORYSTATUS *mem); 
 
 void apreload_sign(int handle,int max_handle);     //pripravi preloading pro nacteni dat z CD (sekvencne)
 void apreload_start(void (*percent)(int cur,int max));   //provede sekvenci apreload
