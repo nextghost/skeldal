@@ -26,8 +26,9 @@
 //#include <conio.h>
 #include <malloc.h>
 #include <math.h>
-#include "libs/bios.h"
-#include "libs/mem.h"
+#include <string.h>
+//#include "libs/bios.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
@@ -253,7 +254,7 @@ void chveni(int i)
   if (i) count=i;count--;
   if (!count) pos=0;
   wait_retrace();
-  setvesa_displaystart(8*pos,0);
+  Screen_Shift(8*pos,0);
   pos=!pos;
   }
 
@@ -300,7 +301,8 @@ word *bott_clear(void)
   word *bott_scr;
 
   bott_scr=(word *)getmem(scr_linelen2*104*2);
-  memset(bott_scr,0,_msize(bott_scr));
+//  memset(bott_scr,0,_msize(bott_scr));
+  memset(bott_scr,0,scr_linelen2*104*2);
   return bott_scr;
   }
 
@@ -327,7 +329,8 @@ static void bott_fletna_normal(void **pp,long *s)
      set_aligned_position(x,32,1,1,texty[180+i]);outtext(texty[180+i]);
      }
   *pp=Screen_GetAddr();
-  *s=_msize(*pp);
+// FIXME: rewrite
+//  *s=_msize(*pp);
   Screen_Restore();
   }
 
@@ -423,7 +426,8 @@ static void bott_draw_normal(void **pp,long *s)
         }
  */
   *pp=Screen_GetAddr();
-  *s=_msize(*pp);
+// FIXME: rewrite
+//  *s=_msize(*pp);
   Screen_Restore();
   }
 
@@ -461,7 +465,8 @@ void bott_disp_text_proc(void **pp,long *ss)
      }
   while (p[0]);
   *pp=Screen_GetAddr();
-  *ss=_msize(*pp);
+// FIXME: rewrite
+//  *ss=_msize(*pp);
   Screen_Restore();
   }
 
@@ -520,7 +525,8 @@ void bott_draw_rune(void **pp,long *ss)
   outtext(buff);
   put_picture(70,30,ablock(glob_items[showruneitem].vzhled+face_arr[0]));
   *pp=Screen_GetAddr();
-  *ss=_msize(*pp);
+// FIXME: rewrite
+//  *ss=_msize(*pp);
   Screen_Restore();  
   }
 
@@ -594,7 +600,7 @@ void draw_spell(int handle,int phase,int xicht)
 void other_draw()
   {
 //  if (cancel_render) return;
-  StripBlt(ablock(H_BOTTBAR),480-102,102);
+  Screen_StripBlt(ablock(H_BOTTBAR),480-102,102);
 //  memcpy(Screen_GetAddr()+(480-102)*scr_linelen2,ablock(H_BOTTBAR),scr_linelen2*102*2);
   if (spell_handle)
      {

@@ -25,16 +25,17 @@
 #include <stdlib.h>
 //#include <conio.h>
 #include <malloc.h>
+#include <string.h>
 //#include <math.h>
 //#include <bios.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 //#include <vesa.h>
 #include "game/engine1.h"
@@ -154,7 +155,9 @@ static void nahraj_rozdilovy_pcx(void **pp,long *s)
   size=(word *)vysl;
   free(*pp);
   siz=size[0]*size[1];
-  p=hicolor=getmem(siz*2+12);
+  *s = siz * 2 + 12;
+//  p=hicolor=getmem(siz*2+12);
+  p=hicolor=getmem(*s);
   *p++=size[0];
   *p++=size[1];
   *p++=16;
@@ -165,7 +168,7 @@ static void nahraj_rozdilovy_pcx(void **pp,long *s)
   rozdily(org,pos,hicolor+3,paltab,siz);
   free(vysl);
   *pp=hicolor;
-  *s=_msize(*pp);
+//  *s=_msize(*pp);
   }
 
 
@@ -286,7 +289,7 @@ static void preload_anim(va_list args)
   for(i=0;i<30;i+=2)
      {
      apreload(H_ANIM+i);
-     task_sleep(NULL);
+     Task_Sleep(NULL);
      }
   for(i=1;i<30;i+=2)
      {
@@ -299,15 +302,15 @@ static void preload_anim(va_list args)
         break;
         }
      apreload(H_ANIM+i);
-     task_sleep(NULL);
+     Task_Sleep(NULL);
      }
   for(i=0;i<5;i++)
      {
      apreload(H_MENU_ANIM+i);
-     task_sleep(NULL);
+     Task_Sleep(NULL);
      }
   apreload(H_MENU_MASK);
-  task_wait_event(E_TIMER);
+  Task_WaitEvent(E_TIMER);
   load_ok=1;
   }
 
@@ -338,13 +341,13 @@ int enter_menu(char open)
   char c;
   char *d;
   init_menu_entries();
-  add_task(2048,preload_anim);
+  Task_Add(2048,preload_anim);
   load_ok=0;
-  while(!load_ok) task_sleep(NULL);
+  while(!load_ok) Task_Sleep(NULL);
   if (!open)
     {
     play_next_music(&d);
-    change_music(d);
+    Sound_ChangeMusic(d);
     }
   update_mysky();
   schovej_mysku();
@@ -358,13 +361,13 @@ int enter_menu(char open)
   send_message(E_ADD,E_KEYBOARD,klavesnice);
   ms_last_event.event_type=0x1;
   send_message(E_MOUSE,&ms_last_event);
-  d=task_wait_event(E_MENU_SELECT);
+  d=Task_WaitEvent(E_MENU_SELECT);
   c=*d;
   disable_click_map();
   send_message(E_DONE,E_KEYBOARD,klavesnice);
   cur_dir[c]=UNSELECT;
-  while (cur_pos[c]) task_wait_event(E_TIMER);
-  task_wait_event(E_TIMER);
+  while (cur_pos[c]) Task_WaitEvent(E_TIMER);
+  Task_WaitEvent(E_TIMER);
   send_message(E_DONE,E_TIMER,prehraj_animaci_v_menu);
   return c;
   }
@@ -560,7 +563,7 @@ void titles(va_list args)
         buff+=scr_linelen2*359;
         memcpy(buff,buff+scr_linelen2*skip,40*scr_linelen);
         showview(0,0,640,40);
-        task_wait_event(E_TIMER);
+        Task_WaitEvent(E_TIMER);
         counter+=skip;
         lcounter-=skip;
         }
@@ -580,7 +583,7 @@ void titles(va_list args)
            lcounter+=c;
         }
      }
-  while (!(task_quitmsg() || (end && lcounter<=0)));
+  while (!(Task_QuitMsg() || (end && lcounter<=0)));
   ukaz_mysku();
   get_next_title(-1,NULL);
   aunlock(H_PICTURE);
@@ -590,9 +593,9 @@ void titles(va_list args)
 void run_titles(va_list args)
   {
   int task_id;
-  task_id=add_task(8196,titles,1,"titulky.TXT");
-  task_wait_event(E_KEYBOARD);
-  term_task(task_id);
+  task_id=Task_Add(8196,titles,1,"titulky.TXT");
+  Task_WaitEvent(E_KEYBOARD);
+  Task_Term(task_id);
   }
 
 void konec_hry()
@@ -607,23 +610,23 @@ void konec_hry()
   effect_show(NULL);
   create_playlist(texty[205]);
   play_next_music(&d);
-  change_music(d);
+  Sound_ChangeMusic(d);
   timer=Timer_GetValue();
-  while (Timer_GetValue()-timer<150) task_sleep(NULL);
-  task_id=add_task(8196,titles,1,"ENDTEXT.TXT");
-  task_wait_event(E_KEYBOARD);
-  if (is_running(task_id)) term_task(task_id);
-  task_wait_event(E_TIMER);
-  task_wait_event(E_TIMER);
-  task_id=add_task(8196,titles,0,"TITULKY.TXT");
-  task_wait_event(E_KEYBOARD);
-  if (is_running(task_id)) term_task(task_id);
-  change_music("?");
+  while (Timer_GetValue()-timer<150) Task_Sleep(NULL);
+  task_id=Task_Add(8196,titles,1,"ENDTEXT.TXT");
+  Task_WaitEvent(E_KEYBOARD);
+  if (Task_IsRunning(task_id)) Task_Term(task_id);
+  Task_WaitEvent(E_TIMER);
+  Task_WaitEvent(E_TIMER);
+  task_id=Task_Add(8196,titles,0,"TITULKY.TXT");
+  Task_WaitEvent(E_KEYBOARD);
+  if (Task_IsRunning(task_id)) Task_Term(task_id);
+  Sound_ChangeMusic("?");
   curcolor=0;
   bar(0,0,639,479);
   ukaz_mysku();
   effect_show(NULL);
   timer=Timer_GetValue();
-  while (Timer_GetValue()-timer<150) task_sleep(NULL);
+  while (Timer_GetValue()-timer<150) Task_Sleep(NULL);
   }
 

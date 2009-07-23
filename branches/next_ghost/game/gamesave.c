@@ -23,13 +23,13 @@
 //#include <skeldal_win.h>
 //#include <debug.h>
 //#include <dos.h>
-#include "libs/bios.h"
+//#include "libs/bios.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 //#include <conio.h>
 #include <malloc.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/pcx.h"
 #include "libs/types.h"
 #include "libs/bgraph.h"
@@ -39,7 +39,7 @@
 #include "libs/bmouse.h"
 #include "libs/memman.h"
 //#include <io.h>
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -603,7 +603,9 @@ int pack_status_file(FILE *f,char *status_name)
 // FIXME: O_BINARY is Windows-specific
 //  stt=open(fullnam,O_RDONLY | O_BINARY);
   stt=open(fullnam,O_RDONLY);
-  fsz=filelength(stt);
+//  fsz=filelength(stt);
+  fsz = lseek(stt, 0, SEEK_END);
+  lseek(stt, 0, SEEK_SET);
   c=buffer=getmem(fsz+12+4+2);
   strcpy(c,status_name);c+=12;
   *(long *)c=fsz+2;
@@ -728,14 +730,14 @@ int save_basic_info()
   s.game_time=game_time;
   s.enable_sort=enable_sort;
   s.sleep_long=sleep_ticks;
-  s.sample_vol=get_snd_effect(SND_GFX);
-  s.music_vol=get_snd_effect(SND_MUSIC);
-  s.xbass=get_snd_effect(SND_XBASS);
-  s.bass=get_snd_effect(SND_BASS);
-  s.treble=get_snd_effect(SND_TREBL);
-  s.stereing=get_snd_effect(SND_LSWAP);
-  s.swapchans=get_snd_effect(SND_SWAP);
-  s.out_filter=get_snd_effect(SND_OUTFILTER);
+  s.sample_vol=Sound_GetEffect(SND_GFX);
+  s.music_vol=Sound_GetEffect(SND_MUSIC);
+  s.xbass=Sound_GetEffect(SND_XBASS);
+  s.bass=Sound_GetEffect(SND_BASS);
+  s.treble=Sound_GetEffect(SND_TREBL);
+  s.stereing=Sound_GetEffect(SND_LSWAP);
+  s.swapchans=Sound_GetEffect(SND_SWAP);
+  s.out_filter=Sound_GetEffect(SND_OUTFILTER);
   s.autosave=autosave_enabled;
 	s.game_flags=(enable_glmap!=0);
   strncpy(s.level_name,level_fname,12);
@@ -846,7 +848,7 @@ static void MakeSaveGameDir(const char *name)
   char *p=(char *)alloca(strlen(name)+1);
   strcpy(p,name);
   p[strlen(p)-1]=0;
-  CreateDirectory(p,NULL);
+  Sys_Mkdir(p);
 }
 
 static int save_global_events()
@@ -983,8 +985,8 @@ static void load_specific_file(int slot_num,char *filename,void **out,long *size
   fread(fname,1,12,slot);
   while(fname[0] && !succes)
      {
-     task_sleep(NULL);
-     if (task_quitmsg()) break;
+     Task_Sleep(NULL);
+     if (Task_QuitMsg()) break;
      fread(&siz,1,4,slot);
      if (!strncmp(fname,filename,12)) succes=1; else
            {
@@ -1167,9 +1169,9 @@ static void read_story(int slot)
   {
   static task_num=-1;
 
-  if (task_num!=-1) term_task(task_num);
+  if (task_num!=-1) Task_Term(task_num);
   if (slot!=-1)
-     task_num=add_task(8196,read_story_task,slot);
+     task_num=Task_Add(8196,read_story_task,slot);
   }
 
 
@@ -1426,7 +1428,7 @@ void wire_ask_gamename(int id)
   schovej_mysku();
   put_picture(x,y,ablock(H_LOADTXTR));
   strcpy(global_gamename,slot_list[id]);
-  clk_ask_name[0].id=add_task(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
+  clk_ask_name[0].id=Task_Add(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
   change_click_map(clk_ask_name,CLK_ASK_NAME);
   ukaz_mysku();
   }
@@ -1546,7 +1548,7 @@ void open_story_file()
 
   concat(c,pathtable[SR_TEMP],STORY_BOOK);
   story=fopen(c,"a");
-  err=GetLastError();
+//  err=GetLastError();
   if (story==NULL) story=fopen(c,"w");
   if (story==NULL)
      unable_open_temp(c);

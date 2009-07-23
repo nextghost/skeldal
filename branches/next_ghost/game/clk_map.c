@@ -243,7 +243,7 @@ char clk_sleep(int id,int xa,int ya,int xr,int yr)
      bott_disp_text(texty[120]);
      return 1;
      }
-  if (!battle) add_task(8100,sleep_players);
+  if (!battle) Task_Add(8100,sleep_players);
   return 1;
   }
 

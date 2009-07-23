@@ -138,7 +138,7 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg);
 void do_events();
 void escape();
 
-#include "windows/fcs_tasker.h"
+//#include "windows/fcs_tasker.h"
 /*
 void *task_sleep(void *param);
 //#pragma aux task_sleep parm [eax] value [eax]

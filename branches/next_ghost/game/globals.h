@@ -20,6 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
+#include <stdarg.h>
 #include "libs/types.h"
 #include "game/engine1.h"
 
@@ -1752,4 +1753,4 @@ static __inline char TimerEvents(int sector, int side, long time)
 }
 
 //extras
-#include "extras.h"
+#include "game/extras.h"

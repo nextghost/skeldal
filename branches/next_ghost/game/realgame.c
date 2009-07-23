@@ -24,16 +24,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 //#include <math.h>
 //#include <bios.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -169,7 +170,7 @@ void preload_objects(int ofsts)
   for(i=1;i<mapsize;i++) if (map_sectors[i].sector_type==S_LODKA) break;
   if (i==mapsize) lodka=0;
   sprintf(c,"%sLOADING.MUS",pathtable[SR_WORK]);
-//  change_music(c);
+//  Sound_ChangeMusic(c);
   trans_bar(0,460,640,20,0);
   position(0,460);
   set_font(H_FBOLD,RGB555(0,31,0));
@@ -247,7 +248,7 @@ int load_map(char *filename)
   c=find_map_path(filename);
   schovej_mysku();
   if (level_preload) show_loading_picture("LOADING.HI");
-  change_music("?");
+  Sound_ChangeMusic("?");
   zobraz_mysku();
   f=fopen(c,"rb");
   if (level_fname!=NULL) free(level_fname);
@@ -259,7 +260,7 @@ int load_map(char *filename)
   mob_size=0;
   if (f==NULL) return -1;
 // FIXME: rewrite
-//  if (snd_devnum==DEV_DAC) stop_mixing();
+//  if (snd_devnum==DEV_DAC) Sound_StopMixing();
   do
      {
      r=load_section(f,&temp,&sect,&size);
@@ -320,7 +321,7 @@ int load_map(char *filename)
          case A_MAPGLOB:
                   num_ofsets[BACK_NUM]=ofsts;
 				  memset(&mglob,0,sizeof(mglob));
-                  memcpy(&mglob,temp,__min(size,sizeof(mglob)));
+                  memcpy(&mglob,temp,min(size,sizeof(mglob)));
                   free(temp);
                   for(r=0;r<4;r++)
                   def_handle(ofsts++,mglob.back_fnames[r],pcx_fade_decomp,SR_GRAFIKA);
@@ -397,7 +398,7 @@ int load_map(char *filename)
   if (!suc && level_texts!=NULL) create_playlist(level_texts[0]);
   init_tracks();
   play_next_music(&d);
-  change_music(d);
+  Sound_ChangeMusic(d);
   for(r=0;r<mapsize*4;r++) flag_map[r]=(char)map_sides[r].flags;
   if (!doNotLoadMapState && load_map_state()==-2)
      {
@@ -408,7 +409,7 @@ int load_map(char *filename)
      }
   doNotLoadMapState=0;
 // FIXME: rewrite
-//  if (snd_devnum==DEV_DAC) start_mixing();
+//  if (snd_devnum==DEV_DAC) Sound_StartMixing();
   return suc;
   }
 
@@ -623,7 +624,9 @@ TFLY *duplic_fly(TFLY *p)
   *q=*p;
   if (q->items!=NULL)
      {
-     int s=_msize(q->items);
+//     int s=_msize(q->items);
+     int s = 0;
+     for (; q->items[s]; s++);
      q->items=(short *)getmem(s);
      memcpy(q->items,p->items,s);
      }
@@ -1542,7 +1545,7 @@ void postavy_teleport_effect(int sector,int dir,int postava,char effect)
      while (running_anm) do_events();
      play_sample_at_channel(H_SND_TELEPIN,2,100);
      play_big_mgif_animation(H_TELEPORT);
-     while (!running_anm) task_sleep(NULL);
+     while (!running_anm) Task_Sleep(NULL);
      kolo=global_anim_counter;
      if (norefresh)
         {
@@ -1718,7 +1721,7 @@ void step_zoom(char smer)
   if (!cancel_render) showview(0,0,0,0);
   norefresh=0;
   cancel_render=1;
-  mix_back_sound(0);
+  Sound_MixBack(0);
   viewsector=postavy_propadnout(viewsector);
   check_postavy_teleport();
   recheck_button(sect,1);
@@ -1769,7 +1772,7 @@ void turn_zoom(int smer)
   norefresh=0;
   cancel_render=1;
   hold_timer(TM_BACK_MUSIC,0);
-  mix_back_sound(0);
+  Sound_MixBack(0);
   pass_zavora=0;
   }
 
@@ -1811,6 +1814,12 @@ int check_path(word **path,word tosect)
   return tosect;
   }
 
+static unsigned path_length(word *path) {
+	unsigned i;
+	for (i = 0; path[i]; i++);
+	return i;
+}
+
 void recall()
   {
   int tosect,max,i,j;
@@ -1826,9 +1835,11 @@ void recall()
   do
      {
      max=0xffff;j=-1;
-     for(i=0;i<POCET_POSTAV;i++) if (paths[i]!=NULL && _msize(paths[i])<(unsigned)max)
+//     for(i=0;i<POCET_POSTAV;i++) if (paths[i]!=NULL && _msize(paths[i])<(unsigned)max)
+     for(i=0;i<POCET_POSTAV;i++) if (paths[i]!=NULL && path_length(paths[i])<(unsigned)max)
                                       {
-                                      max=_msize(paths[i]);
+//                                      max=_msize(paths[i]);
+                                      max=path_length(paths[i]);
                                       j=i;
                                       }
      if (j!=-1)
@@ -1899,10 +1910,10 @@ void sleep_players(va_list args)
            ukaz_mysku();
            showview(0,120,640,20);
            showview(0,378,640,102);
-           task_wait_event(E_TIMER);
-           task_wait_event(E_TIMER);
-           task_wait_event(E_TIMER);
-           task_wait_event(E_TIMER);
+           Task_WaitEvent(E_TIMER);
+           Task_WaitEvent(E_TIMER);
+           Task_WaitEvent(E_TIMER);
+           Task_WaitEvent(E_TIMER);
            }
        sleep_enemy(reg);
        check_players_place(0);

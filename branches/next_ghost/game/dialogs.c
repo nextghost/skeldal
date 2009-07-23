@@ -25,8 +25,9 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include "libs/bios.h"
-#include "libs/mem.h"
+#include <string.h>
+//#include "libs/bios.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include <ctype.h>
@@ -190,9 +191,9 @@ static void dialog_anim(va_list args)
   do
      {
      anm=open_mgif(aptr);
-     while (anm!=NULL && task_quitmsg())
+     while (anm!=NULL && Task_QuitMsg())
        {
-       task_sleep(NULL);
+       Task_Sleep(NULL);
        if (!spdc)
           {
           if (ms_last_event.x<=PIC_X+320 && ms_last_event.y<=PIC_Y+180)
@@ -214,13 +215,13 @@ static void dialog_anim(va_list args)
      rep--;
      close_mgif();
      }
-  while (!cntr && rep && !task_quitmsg());
+  while (!cntr && rep && !Task_QuitMsg());
   free(aptr);
   }
 
 static void stop_anim()
   {
-  if (task_num!=-1) term_task(task_num);
+  if (task_num!=-1) Task_Term(task_num);
   }
 
 static void run_anim(char *name,int speed,int rep)
@@ -228,7 +229,7 @@ static void run_anim(char *name,int speed,int rep)
   char *bl;
   stop_anim();
   bl=getmem(strlen(name)+1);strcpy(bl,name);
-  task_num=add_task(8196,dialog_anim,bl,speed,rep);
+  task_num=Task_Add(8196,dialog_anim,bl,speed,rep);
   }
 
 static void error(char *text)
@@ -1191,7 +1192,7 @@ static char isall()
 
 static void spat(int hodin)
   {
-  sleep_ticks=hodin*HODINA;add_task(16384,sleep_players);
+  sleep_ticks=hodin*HODINA;Task_Add(16384,sleep_players);
   insleep=1;
   while (insleep) do_events();
   }

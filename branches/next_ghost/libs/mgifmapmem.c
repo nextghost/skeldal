@@ -20,23 +20,29 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <bgraph.h>
-#include <bgraph2dx.h>
+//#include <skeldal_win.h>
+#include "libs/bgraph.h"
+//#include "libs/bgraph2dx.h"
 #include <stdio.h>
-#include "types.h"
-#include "memman.h"
-#include "mem.h"
-#include "mgifmem.h"
-#include <zvuk.h>
+#include <string.h>
+#include "libs/types.h"
+#include "libs/memman.h"
+//#include "libs/mem.h"
+#include "libs/mgifmem.h"
+#include "libs/sound.h"
+#include "libs/system.h"
 
-static HANDLE mapped_mgif;
-static HANDLE mgif_file;
+//static HANDLE mapped_mgif;
+//static HANDLE mgif_file;
 static MGIF_HEADER_T *mgif_header;
 
 static short mgif_accnums[2];
 static long mgif_writepos;
 
+void *OpenMGFFile(const char *filename);
+void CloseMGFFile(void *file);
+
+/* Moved to windows backend directory
 static void *OpenMGFFile(const char *filename)
   {
   mgif_file=CreateFile(filename,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN,NULL);
@@ -45,6 +51,7 @@ static void *OpenMGFFile(const char *filename)
   if (mapped_mgif==INVALID_HANDLE_VALUE) return NULL;
   return MapViewOfFile(mapped_mgif,FILE_MAP_READ,0,0,0);
   }
+*/
 
 static word *paleta;
 
@@ -101,34 +108,30 @@ static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
   if (file==NULL) return;
   while (file) 
 	{
-    __try
+//    __try
 	  {
 	  file=mgif_play(file);
 	  }
-  __except(1)
+//  __except(1)
   	  {
 	  SEND_LOG("(PLAYANIM) Exception raised",0,0);
 	  file=NULL;
 	  }
 	StretchImageHQ(picture, Screen_GetAddr()+ypos*scr_linelen2, scr_linelen2,full);
 	showview(0,ypos,0,360);
-	if (_bios_keybrd(_KEYBRD_READY)==0) mix_back_sound(0);
+// FIXME: rewrite
+/*
+	if (_bios_keybrd(_KEYBRD_READY)==0) Sound_MixBack(0);
 	else 
 	  {
 	  _bios_keybrd(_KEYBRD_READ);
 	  break;
 	  }
+*/
 	}
   close_mgif();  
   DoneVideoSound(sound);
   free(picture);
-  }
-
-static void CloseMGFFile(void *file)
-  {
-  UnmapViewOfFile(file);
-  CloseHandle(mapped_mgif);
-  CloseHandle(mgif_file);
   }
 
 void show_full_lfb12e(void *target,void *buff,void *paleta);
@@ -153,7 +156,7 @@ void BigPlayProc(int act,void *data,int csize)
 void play_animation(char *filename,char mode,int posy,char sound)
   {
   void *mgf=OpenMGFFile(filename);
-  change_music(NULL);
+  Sound_ChangeMusic(NULL);
   if (mgf==NULL) return;
   PlayMGFFile(mgf,BigPlayProc,posy,mode & 0x80);
   CloseMGFFile(mgf);

@@ -25,7 +25,7 @@
 //#include <vesa.h>
 //#include <dpmi.h>
 //#include <i86.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>

@@ -24,16 +24,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 //#include <math.h>
 //#include <bios.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -644,7 +645,7 @@ void macro_change_music(int textindex)
 
   create_playlist(trackdef);
   play_next_music(&nextTrack);
-  change_music(nextTrack);
+  Sound_ChangeMusic(nextTrack);
 }
 
 void macro_register_global_event(TMULTI_ACTION *q)

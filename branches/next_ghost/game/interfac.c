@@ -22,7 +22,7 @@
  */
 //#include <skeldal_win.h>
 //#include <dos.h>
-#include "libs/bios.h"
+//#include "libs/bios.h"
 #include <stdlib.h>
 //#include <io.h>
 //#include <direct.h>
@@ -32,7 +32,7 @@
 //#include <dpmi.h>
 //#include <conio.h>
 #include <malloc.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/pcx.h"
 #include "libs/types.h"
 #include "libs/bgraph.h"
@@ -40,7 +40,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/memman.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include <ctype.h>
 #include "libs/gui.h"
@@ -414,7 +414,7 @@ void type_text_v2(va_list args)
   short *back_pic;
   int i;
 
-  task_sleep(NULL);
+  Task_Sleep(NULL);
   schovej_mysku();
   set_font(font,color);
   xs=max_size+text_width("_");
@@ -441,9 +441,9 @@ void type_text_v2(va_list args)
      position(px+x,y+3);outtext("_");
      ukaz_mysku();
      showview(x,y,xs,ys);
-     znak=*(word *)task_wait_event(E_KEYBOARD); //proces bude cekat na klavesu
+     znak=*(word *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
      schovej_mysku();
-     if (task_quitmsg()==1) znak=27;
+     if (Task_QuitMsg()==1) znak=27;
      switch(znak & 0xff)
         {
         case 8:if (pos>0)
@@ -735,6 +735,8 @@ void radio_butts_gr(OBJREC *o)
 
 char ask_test(char *text,char def)
   {
+// FIXME: rewrite
+/*
   char znak;
   SEND_LOG("(START CHECK) %s",text,0);
   cprintf("\n\r%s (A/N, Cokoliv=%c)\x7",text,def);
@@ -742,6 +744,7 @@ char ask_test(char *text,char def)
   if (znak>='a' && znak<='z') znak-='a'-'A';
   if (znak!='N' && znak!='A') znak=def;
   return znak=='A';
+*/
   }
 
 long get_disk_free(char disk)
@@ -1188,7 +1191,7 @@ void fletna_pridej_notu(char note)
 
 static void play_wav(int wav,int sector)
   {
-  if (check_snd_effect(SND_GFX))
+  if (Sound_CheckEffect(SND_GFX))
      {
      play_sample_at_sector(wav,sector,sector,0,0);
      }
@@ -1594,9 +1597,9 @@ void show_jrc_logo(char *filename)
   word palette[256],*palw;
   int cntr,cdiff,cpalf,ccc;
 
-  change_music("?");
+  Sound_ChangeMusic("?");
   curcolor=0;bar(0,0,639,479);
-  showview(0,0,0,0);Sleep(1000);
+  showview(0,0,0,0);Timer_Sleep(1000);
   concat(s,pathtable[SR_VIDEO],filename);
   if (open_pcx(s,A_8BIT,&pcx)) return;
   pcxw=(word *)pcx;
@@ -1641,7 +1644,7 @@ void show_jrc_logo(char *filename)
     if (!bnk) wait_retrace();put_picture(xp,yp,pcx);
     if (bnk) {wait_retrace();showview(xp,yp,pcxw[0],pcxw[1]);}
     ccc=cdiff;
-    mix_back_sound(0);
+    Sound_MixBack(0);
     }
 // FIXME: rewrite
 //  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));

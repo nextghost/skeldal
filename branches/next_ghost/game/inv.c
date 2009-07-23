@@ -25,15 +25,16 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
+#include <string.h>
 //#include <bios.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/gui.h"
 #include "libs/basicobj.h"
 #include "game/engine1.h"
@@ -1242,7 +1243,8 @@ void *build_items_wearing(THUMAN *h)
 void build_items_called(void **p,long *s)
   {
   *p=build_items_wearing(&postavy[memman_handle-H_POSTAVY]);
-  *s=(long)(_msize(*p));
+//  *s=(long)(_msize(*p));
+  *s = PO_XS*PO_YS+PIC_FADE_PAL_SIZE;
   }
 
 void display_items_wearing(THUMAN *h)

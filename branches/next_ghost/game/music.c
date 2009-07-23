@@ -25,9 +25,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "libs/mem.h"
+#include <string.h>
+//#include "libs/mem.h"
 #include "libs/memman.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/wav_mem.h"
 #include "libs/event.h"
 #include "game/globals.h"
@@ -141,8 +142,8 @@ int find_free_channel(int stamp)
   minvol=0xffff;
   for(i=0;i<CHANNELS;i++)
      {
-     if (!get_channel_state(i)) return i;
-     get_channel_volume(i,&left,&right);
+     if (!Sound_GetChannelState(i)) return i;
+     Sound_GetVolume(i,&left,&right);
      mid=(left+right)/2;
      if (playings[i].side<0) mid*=2;
      if (mid<minvol)
@@ -162,7 +163,7 @@ void release_channel(int channel)
 
   i=chan_state[channel];
   if (i==-1) return;
-  mute_channel(channel);
+  Sound_Mute(channel);
      {
      aunlock(playings[channel].block);
      chan_state[channel]=-1;
@@ -216,7 +217,7 @@ int calcul_volume(int chan,int x,int y,int side,int volume)
      }
   lv=(lv*sample_volume)>>8;
   rv=(rv*sample_volume)>>8;
-  set_channel_volume(chan,lv,rv);
+  Sound_SetVolume(chan,lv,rv);
   return 0;
   }
 
@@ -291,8 +292,8 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
   if (p->bit16 & 0x8)
      {
      int vol=SND_EFF_MAXVOL*p->volume/100;
-     if (rnd(100)>50) set_channel_volume(chan,rnd(vol),vol);
-     else set_channel_volume(chan,vol,rnd(vol));
+     if (rnd(100)>50) Sound_SetVolume(chan,rnd(vol),vol);
+     else Sound_SetVolume(chan,vol,rnd(vol));
      }
   else
      if (calcul_volume(chan,x-xd,y-yd,/*side-*/sided,p->volume)) return;
@@ -312,7 +313,7 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
   alock(blockid);
   s=ablock(blockid);
   s+=p->offset+sizeof(struct t_wave)+4;
-  play_sample(chan,s,p->end_loop-p->offset,p->start_loop-p->offset,p->freq,1+(p->bit16 & 1));
+  Sound_PlaySample(chan,s,p->end_loop-p->offset,p->start_loop-p->offset,p->freq,1+(p->bit16 & 1));
   playings[chan].data=p;
   playings[chan].xpos=xd;
   playings[chan].ypos=yd;
@@ -378,7 +379,7 @@ void recalc_volumes(int sector,int side)
      if (chan_state[i]>=0 && playings[i].side>=0)
         {
         calcul_volume(i,newx-playings[i].xpos,newy-playings[i].ypos,/*side-*/playings[i].side,playings[i].volume);
-        if (!get_channel_state(i)) release_channel(i);
+        if (!Sound_GetChannelState(i)) release_channel(i);
         }
      else calcul_volume(i,0,0,-1,playings[i].volume);
   for(i=1;i<TRACKS;i++) if (track_state[i]<0 && tracks[i].data!=NULL)
@@ -468,9 +469,9 @@ void play_next_music(char **c)
      }
   while (step);
   playing_track=i;
-  sprintf_s(d,sizeof(d),"%s%s",pathtable[SR_MUSIC],cur_playlist[i]+1);
-  if (_access(d,0) == -1)
-      sprintf_s(d,sizeof(d),"%s%s",pathtable[SR_ORGMUSIC],cur_playlist[i]+1);
+  snprintf(d,sizeof(d),"%s%s",pathtable[SR_MUSIC],cur_playlist[i]+1);
+  if (access(d,0) == -1)
+      snprintf(d,sizeof(d),"%s%s",pathtable[SR_ORGMUSIC],cur_playlist[i]+1);
   cur_playlist[i][0]=33;
   remain_play--;
   *c=d;
@@ -507,7 +508,7 @@ void play_sample_at_sector(int sample,int sector1,int sector2,int track, char lo
      p=(struct t_wave *)s;
      s+=sizeof(struct t_wave);
      siz=*(int *)s;s+=4;
-     play_sample(chan,s,siz,loop?0:siz,p->freq,(p->freq!=p->bps?2:1));
+     Sound_PlaySample(chan,s,siz,loop?0:siz,p->freq,(p->freq!=p->bps?2:1));
      playings[chan].data=NULL;
      }
   playings[chan].xpos=xd;
@@ -528,7 +529,7 @@ void play_sample_at_channel(int sample,int channel,int vol)
   if (!sound_enabled) return;
   channel+=CHANNELS;
   vol*=SND_EFF_MAXVOL/100;
-  set_channel_volume(channel,vol,vol);
+  Sound_SetVolume(channel,vol,vol);
   if (locks[channel]) aunlock(locks[channel]);
   alock(sample);
   locks[channel]=sample;
@@ -536,7 +537,7 @@ void play_sample_at_channel(int sample,int channel,int vol)
   p=(struct t_wave *)s;
   s+=sizeof(struct t_wave);
   siz=*(int *)s;s+=4;
-  play_sample(channel,s,siz,siz,p->freq,(p->freq!=p->bps?2:1));
+  Sound_PlaySample(channel,s,siz,siz,p->freq,(p->freq!=p->bps?2:1));
   }
 
 
@@ -578,7 +579,7 @@ void stop_track(int track)
   int chan;
   chan=track_state[track];
   if (chan==-1) return;
-  chan_break_loop(chan);
+  Sound_BreakLoop(chan);
   }
 
 void stop_track_free(int track)
@@ -586,7 +587,7 @@ void stop_track_free(int track)
   int chan;
   chan=track_state[track];
   if (chan==-1) return;
-  chan_break_loop(chan);
+  Sound_BreakLoop(chan);
   track_state[track]=-1;
   chan_state[chan]=0;
   }
@@ -624,13 +625,13 @@ void start_play_flute(char note)
   int vol=50;
 
   realfrq=16000*pow(2,note/12.0);
-  if (check_snd_effect(SND_GFX))
+  if (Sound_CheckEffect(SND_GFX))
      {
      q=ablock(H_FLETNA);
      w=q;w+=sizeof(struct t_wave)+4;
      vol*=SND_EFF_MAXVOL/100;
-     set_channel_volume(flute_canal,vol,vol);
-     play_sample(flute_canal,w,0x1665,0xADE,(int)(realfrq+0.5),1);
+     Sound_SetVolume(flute_canal,vol,vol);
+     Sound_PlaySample(flute_canal,w,0x1665,0xADE,(int)(realfrq+0.5),1);
      }
   else
      {
@@ -643,11 +644,11 @@ void stop_play_flute()
   void *q;
   char *w;
 
-  if (check_snd_effect(SND_GFX))
+  if (Sound_CheckEffect(SND_GFX))
      {
      q=ablock(H_FLETNA);
      w=q;w+=sizeof(struct t_wave);
-     chan_break_ext(flute_canal,w+4,*(int *)w);
+     Sound_BreakExt(flute_canal,w+4,*(int *)w);
      flute_canal^=1;
      }
   else

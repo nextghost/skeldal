@@ -25,8 +25,9 @@
 #include "libs/types.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "libs/mem.h"
-#include "libs/bios.h"
+#include <string.h>
+//#include "libs/mem.h"
+//#include "libs/bios.h"
 #include "libs/memman.h"
 #include "libs/bgraph.h"
 #include "libs/event.h"
@@ -34,7 +35,7 @@
 //#include "math.h"
 #include "game/globals.h"
 #include "game/engine1.h"
-#include "windows/bgraph2dx.h"
+//#include "windows/bgraph2dx.h"
 
 #define CTVR 128
 
@@ -130,7 +131,7 @@ static long old_timer;
 
 static void wait_timer()
   {
-  Sleep(10);
+  Timer_Sleep(10);
   }
 
 /*void zooming1(void *source,long target,word *background,void *xlat,long xysize)
@@ -470,7 +471,7 @@ static void zooming_forward_backward(word *background,char back)
   if (!zooming_step) return;  
     {
     long tmp=Timer_GetValue();
-    void *buffer=DxPrepareWalk(SCREEN_OFFLINE);
+    void *buffer=Screen_PrepareWalk(SCREEN_OFFLINE);
     int tpoints[4]={90,31,90+460,31+259};
 
     int maxtime=5*zoom_speed(-1);
@@ -483,11 +484,11 @@ static void zooming_forward_backward(word *background,char back)
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
       if (back) phase=1.0-phase;
-      DxZoomWalk(buffer, SCREEN_OFFLINE, tpoints,phase, NULL);
+      Screen_ZoomWalk(buffer, SCREEN_OFFLINE, tpoints,phase, NULL);
       do_events();
       }
     while (curtime<maxtime);
-    DxDoneWalk(buffer);
+    Screen_DoneWalk(buffer);
     }
   }
 
@@ -535,7 +536,7 @@ static void turn_left_right(char right)
   if (!rot_phases) return;  
     {
     long tmp=Timer_GetValue();
-    void *buffer=DxPrepareTurn(SCREEN_OFFLINE);
+    void *buffer=Screen_PrepareTurn(SCREEN_OFFLINE);
 
 	int maxtime=5*rot_phases;
     int curtime;
@@ -547,11 +548,11 @@ static void turn_left_right(char right)
       curtime=Timer_GetValue()-tmp;
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
-      DxTurn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
+      Screen_Turn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
       do_events();
       }
     while (curtime<maxtime);
-	DxDoneTurn(buffer);
+	Screen_DoneTurn(buffer);
     }
   }
 

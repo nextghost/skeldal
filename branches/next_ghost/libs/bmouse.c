@@ -63,7 +63,7 @@ void ms_idle_event(EVENT_MSG *info,void *user_data)
   if (info->msg==E_WATCH)
      {
      *otevri_zavoru=1;
-     get_ms_event(&x);
+     Mouse_GetEvent(&x);
      if (x.event)
        {
        ms_last_event=x;
@@ -92,7 +92,7 @@ void update_mysky(void)
   {
   MS_EVENT x;
 
-  get_ms_event(&x);
+  Mouse_GetEvent(&x);
   if (x.event)
      {
      ms_last_event=x;

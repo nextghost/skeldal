@@ -22,15 +22,16 @@
  */
 //#include <skeldal_win.h>
 #include "libs/types.h"
-#include "libs/mem.h"
+//#include "libs/mem.h"
 //#include <dos.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libs/memman.h"
 #include <time.h>
 //#include <i86.h>
-#include "libs/swaper.c"
+//#include "libs/swaper.c"
 #include "libs/system.h"
 //#include <io.h>
 #include <sys/types.h>
@@ -870,7 +871,8 @@ void *grealloc(void *p,long size)
      }*/
   q=getmem(size);
   if (p==NULL) return q;
-  scop=_msize(p);
+// FIXME: rewrite
+//  scop=_msize(p);
   if (scop>size) scop=size;
   memmove(q,p,scop);
   free(p);

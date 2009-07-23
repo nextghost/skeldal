@@ -25,9 +25,10 @@
 
 #include "libs/types.h"
 #include <stdio.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include <malloc.h>
 #include <time.h>
+#include <string.h>
 #include "libs/memman.h"
 #include "libs/event.h"
 #include "libs/devices.h"

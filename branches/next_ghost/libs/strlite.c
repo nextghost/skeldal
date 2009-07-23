@@ -24,8 +24,9 @@
 #include "libs/strlite.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include <malloc.h>
+#include <string.h>
 //#include <dos.h>
 #include "libs/types.h"
 #include "libs/memman.h"
@@ -135,14 +136,16 @@ void str_delfreelines(TSTR_LIST *list)
   int count,i,j;
   TSTR_LIST p;
 
-  count=_msize(*list)/sizeof(*p);
+// FIXME: rewrite
+//  count=_msize(*list)/sizeof(*p);
   j=0;
   for(i=0;i<count;i++)
      if ((*list)[i]!=NULL) (*list)[j++]=(*list)[i];
   if (j==0) j++;
   p=(TSTR_LIST)realloc(*list,j*sizeof(*p));
   if (p!=NULL) *list=p;
-  count=_msize(*list)/sizeof(*p);
+// FIXME: rewrite
+//  count=_msize(*list)/sizeof(*p);
   for(i=j;i<count;i++) (*list)[i]=NULL;
   }
 
@@ -151,7 +154,8 @@ int str_count(TSTR_LIST p)
   int count;
 
   if (p==NULL) return 0;
-  count=_msize(p)/sizeof(*p);
+// FIXME: rewrite
+//  count=_msize(p)/sizeof(*p);
   return count;
   }
 

@@ -22,8 +22,9 @@
  */
 //#include <skeldal_win.h>
 #include <malloc.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include <stdio.h>
+#include <string.h>
 /*#include "..\types.h"*/
 #include "libs/pcx.h"
 #include "libs/memman.h"

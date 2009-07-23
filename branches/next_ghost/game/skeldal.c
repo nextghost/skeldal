@@ -34,7 +34,7 @@
 #include <malloc.h>
 #include <limits.h>
 #include <unistd.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/pcx.h"
 //#include <direct.h>
 #include "libs/types.h"
@@ -43,7 +43,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/memman.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include "libs/gui.h"
 #include "libs/basicobj.h"
@@ -55,7 +55,7 @@
 #include "game/engine1.h"
 #include "game/wizard.h"
 #include "game/version.h"
-#include "windows/uvodni.h"
+//#include "windows/uvodni.h"
 #include "libs/system.h"
 
 #define CONFIG_NAME SKELDALINI
@@ -394,7 +394,8 @@ void pcx_fade_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_FADE_PAL,&buff,mglob.fade_r,mglob.fade_g,mglob.fade_b);
-  *s=_msize(buff);
+// FIXME: rewrite
+//  *s=_msize(buff);
   free(*p);
   *p=buff;
   }
@@ -403,7 +404,8 @@ void pcx_15bit_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
-  *s=_msize(buff);
+// FIXME: rewrite
+//  *s=_msize(buff);
   free(*p);
   *p=buff;
   }
@@ -412,7 +414,8 @@ void pcx_15bit_autofade(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
-  *s=_msize(buff);
+// FIXME: rewrite
+//  *s=_msize(buff);
   free(*p);
   *p=buff;
   buff[5]=0x80;
@@ -427,7 +430,8 @@ void pcx_15bit_backgrnd(void **p,long *s)
      {
      load_pcx(*p,*s,A_16BIT,&buff);
      z=(long *)buff;
-     *s=_msize(buff);
+// FIXME: rewrite
+//     *s=_msize(buff);
      for(i=*s;i>0;i-=4,z++) *z|=0x80008000;
      free(*p);
      *p=buff;
@@ -441,7 +445,8 @@ void pcx_8bit_nopal(void **p,long *s)
   if (*p!=NULL)
      {
      load_pcx(*p,*s,A_8BIT_NOPAL,&buff);
-     *s=_msize(buff);
+// FIXME: rewrite
+//     *s=_msize(buff);
      free(*p);
      *p=buff;
      }
@@ -452,7 +457,8 @@ void pcx_8bit_decomp(void **p,long *s)
   {
   char *buff;
   load_pcx(*p,*s,A_8BIT,&buff);
-  *s=_msize(buff);
+// FIXME: rewrite
+//  *s=_msize(buff);
   free(*p);
   *p=buff;
   }
@@ -565,7 +571,7 @@ void set_font(int font,int c1,...)
 
 void music_init()
   {
-  char *path;
+//  char *path;
 /*  if (sound_detection)
      {
      SEND_LOG("(SOUND) SOUND_DETECT Detecting sound card",0,0);
@@ -573,21 +579,22 @@ void music_init()
      }*/
   SEND_LOG("(SOUND) SOUND_SET Setting Sound: Device '%s' Port: %3X",device_name(snd_devnum),snd_parm1);
   SEND_LOG("(SOUND) SOUND_SET Setting Sound: IRQ: %X DMA: %X",snd_parm2,snd_parm3);
-  set_mixing_device(snd_devnum,snd_mixing,snd_parm1,snd_parm2,snd_parm3);
+  Sound_SetMixer(snd_devnum,snd_mixing,snd_parm1,snd_parm2,snd_parm3);
   SEND_LOG("(SOUND) SOUND_INIT Starting mixing",0,0);
-  start_mixing();
+  Sound_StartMixing();
   Sound_SetEffect(SND_GFX,init_gfx_vol);
   Sound_SetEffect(SND_MUSIC,init_music_vol);
+/*
   path=plugins_path;
-// FIXME: rewrite
-//  if (path==0 || path[0]==0)  
-//    path=AutodetectWinAmp();
+  if (path==0 || path[0]==0)  
+    path=AutodetectWinAmp();
   if (path!=0 && path[0]!=0)
   {
     SEND_LOG("(SOUND) Installing plugins, path: %s",path,0);
     init_winamp_plugins(path);
     if (path!=plugins_path) free(path);
   }  
+*/
   SEND_LOG("(SOUND) SOUND_DONE Sound Engine should work now",0,0);
 
   }
@@ -640,7 +647,7 @@ void purge_temps(char z)
 
 void back_music()
   {
-  mix_back_sound(0);
+  Sound_MixBack(0);
   }
 
 /*void *anim_idle(EVENT_MSG *msg,void **usr)
@@ -831,7 +838,7 @@ void done_skeldal(void)
   close_manager();
   close_story_file();
   purge_temps(1);
-  stop_mixing();
+  Sound_StopMixing();
 //  deinstall_mouse_handler();
   if (texty!=NULL) release_list(texty);texty=NULL;
   if (cur_config!=NULL) release_list(cur_config);cur_config=NULL;
@@ -1086,7 +1093,8 @@ SEND_LOG("(INIT) Global keyboard event handler.",0,0);
 SEND_LOG("(INIT) Error exception event handler.",0,0);
   send_message(E_ADD,E_PRGERROR,error_exception);
 SEND_LOG("(INIT) Wizard handler.",0,0);
-  if (debug_enabled) install_wizard();
+// FIXME: rewrite
+//  if (debug_enabled) install_wizard();
 SEND_LOG("(INIT) Background music timer.",0,0);
   add_to_timer(TM_BACK_MUSIC,5,-1,back_music);
 SEND_LOG("(INIT) Creating game window.",0,0);
@@ -1114,7 +1122,7 @@ SEND_LOG("(INIT) Loading items.",0,0);
   load_items();
 SEND_LOG("(INIT) Loading shops.",0,0);
   load_shops();
-  SetWheelMapping('H','P');
+  Mouse_MapWheel('H','P');
   }
 
 void wire_main_functs();
@@ -1198,7 +1206,7 @@ void enter_game()
   chod_s_postavama(0);
   bott_draw(1);
   norefresh=0;
-  task_wait_event(E_TIMER);
+  Task_WaitEvent(E_TIMER);
   redraw_scene();
   wire_main_functs();
   add_to_timer(TM_FAST_TIMER,2,-1,objekty_mimo);
@@ -1207,14 +1215,14 @@ void enter_game()
   set_game_click_map();
   SEND_LOG("(GAME) --------- Waiting for E_CLOSE_MAP ------------\n",0,0);
   send_message(E_ADD,E_RELOADMAP,reload_map_handler);
-  end=*(int *)task_wait_event(E_CLOSE_MAP);
+  end=*(int *)Task_WaitEvent(E_CLOSE_MAP);
   send_message(E_DONE,E_RELOADMAP,reload_map_handler);
   SEND_LOG("(GAME) --------- E_CLOSE_MAP triggered, leaving map------------\n",0,0);
   unwire_main_functs();
   delete_from_timer(TM_FAST_TIMER);
   cancel_pass=1;
-  task_wait_event(E_TIMER);
-  task_wait_event(E_TIMER);
+  Task_WaitEvent(E_TIMER);
+  Task_WaitEvent(E_TIMER);
   unwire_main_functs();
   mute_all_tracks(1);
   if (end==255) konec_hry();
@@ -1337,8 +1345,8 @@ static update_config()
   SEND_LOG("(GAME) Updating config. file '%s'",CONFIG_NAME,NULL);
   add_field_num(&cur_config,sinit[1].heslo,zoom_speed(-1));
   add_field_num(&cur_config,sinit[2].heslo,turn_speed(-1));
-  if (check_snd_effect(SND_MUSIC)) add_field_num(&cur_config,sinit[3].heslo,get_snd_effect(SND_MUSIC));
-  if (check_snd_effect(SND_GFX)) add_field_num(&cur_config,sinit[4].heslo,get_snd_effect(SND_GFX));
+  if (Sound_CheckEffect(SND_MUSIC)) add_field_num(&cur_config,sinit[3].heslo,Sound_GetEffect(SND_MUSIC));
+  if (Sound_CheckEffect(SND_GFX)) add_field_num(&cur_config,sinit[4].heslo,Sound_GetEffect(SND_GFX));
   add_field_num(&cur_config,sinit[9].heslo,level_preload);
   add_field_num(&cur_config,sinit[13].heslo,autosave_enabled);
   save_config(cur_config,CONFIG_NAME);
@@ -1617,10 +1625,10 @@ static void load_saved_game(void)
   wire_save_load(4);
   ukaz_mysku();
   update_mysky();
-  game=*((char *)task_wait_event(E_CLOSE_MAP));
+  game=*((char *)Task_WaitEvent(E_CLOSE_MAP));
   unwire_proc();
   disable_click_map();
-  task_wait_event(E_TIMER);
+  Task_WaitEvent(E_TIMER);
   if (game!=-1)
       {
       reinit_kouzla_full();
@@ -1629,7 +1637,7 @@ static void load_saved_game(void)
       if (load_game(game))
         {
         send_message(E_ADD,E_IDLE,load_error_report);
-        task_wait_event(E_CLOSE_MAP);
+        Task_WaitEvent(E_CLOSE_MAP);
         send_message(E_DONE,E_IDLE,load_error_report);
         exit_wait=0;
         goto err;
@@ -1660,7 +1668,7 @@ static void start(va_list args)
    skip_intro=0;
    create_playlist(texty[1]);
    //play_next_music(&d);
-   change_music(NULL);
+   Sound_ChangeMusic(NULL);
    zobraz_mysku();
    showview(0,0,0,0);
   do
@@ -1699,13 +1707,14 @@ void disable_intro()
   update_config();
   }
 
-#include "crashdump.h"
+//#include "crashdump.h"
 
 int main(int argc,char *argv[])
   {
   char *c,rm;
   
-  InitCrashDump();
+  Sys_Init();
+//  InitCrashDump();
   
   if (argc>=3) rm=!strcmp(argv[1],"12345678");else rm=0;
   if (!rm) if (OtevriUvodniOkno()==0) return;
@@ -1725,7 +1734,7 @@ int main(int argc,char *argv[])
   mman_pathlist=pathtable;
   zoom_speed(1);
   turn_speed(1);
-  SetEnvironmentVariable("BSVER",VERSION);
+  Sys_SetEnv("BSVER",VERSION);
   configure(CONFIG_NAME);
   if ((argc>=2 || SelectAdventure()) && !rm )
     {
@@ -1757,14 +1766,14 @@ int main(int argc,char *argv[])
   SEND_LOG("\n(GAME) Init----------------",0,0);
   init_skeldal();
 
-  //add_task(32768,check_number_1phase,argv[0]);
+  //Task_Add(32768,check_number_1phase,argv[0]);
   SEND_LOG("(INIT) Starting game thread.",0,0);
   if (argc>=3 && rm)
      {
-     add_task(65536,start_from_mapedit,argc,argv);
+     Task_Add(65536,start_from_mapedit,argc,argv);
      }
   else
-     add_task(65536,start);
+     Task_Add(65536,start);
   SEND_LOG("(INIT) Main thread goes to sleep.",0,0);
 /*  position(200,200);
   set_font(H_FBIG,RGB(200,200,200));

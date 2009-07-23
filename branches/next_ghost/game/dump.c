@@ -20,15 +20,18 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+//#include <skeldal_win.h>
 #include <stdio.h>
 #include "libs/bgraph.h"
 //#include <dos.h>
 #include "libs/memman.h"
-#include <debug.h>
+//#include <debug.h>
+#include "libs/system.h"
 
 static int latest_version(char *wild,int numpos)
   {
+// FIXME: rewrite
+/*
   WIN32_FIND_DATA ff;
   HANDLE rc;
   int i=0,j=-1;
@@ -45,6 +48,7 @@ static int latest_version(char *wild,int numpos)
     while (FindNextFile(rc,&ff));
   FindClose(rc);
   return j;  
+*/
   }
 
 void save_dump()
@@ -64,16 +68,16 @@ void save_dump()
   SEND_LOG("(DUMP) Saving screen shot named '%s'",c,0);
   f=fopen(c,"wb");
   fputc('B',f);fputc('M',f);
-  i=DxGetResX()*DxGetResY()*3+0x36;
+  i=Screen_GetXSize()*Screen_GetYSize()*3+0x36;
   fwrite(&i,1,4,f);i=0;
   fwrite(&i,1,4,f);
   i=0x36;
   fwrite(&i,1,4,f);
   i=0x28;
   fwrite(&i,1,4,f);
-  i=DxGetResX();
+  i=Screen_GetXSize();
   fwrite(&i,1,4,f);
-  i=DxGetResY();
+  i=Screen_GetYSize();
   fwrite(&i,1,4,f);
   i=1;
   fwrite(&i,1,2,f);
@@ -81,14 +85,14 @@ void save_dump()
   fwrite(&i,1,2,f);
   i=0;
   fwrite(&i,1,4,f);
-  i=DxGetResX()*DxGetResY()*3;
+  i=Screen_GetXSize()*Screen_GetYSize()*3;
   fwrite(&i,1,4,f);
   for(i=4,r=0;i>0;i--) fwrite(&r,1,4,f);
-  for(y=DxGetResY();y>0;y--)
+  for(y=Screen_GetYSize();y>0;y--)
      {
      word *scr=Screen_GetAddr();
      a=scr+(y-1)*scr_linelen2;
-     for(x=0;x<DxGetResX();x++)
+     for(x=0;x<Screen_GetXSize();x++)
         {
         i=a[x];
         b=(i & 0x1f)<<3;

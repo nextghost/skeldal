@@ -23,14 +23,25 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include "libs/system.h"
 
 char *strupr(char *str) {
-	for (; *str; str++) {
-		*str = toupper(*str);
+	int i;
+	for (; str[i]; i++) {
+		str[i] = toupper(str[i]);
 	}
+	return str;
 }
 
 // TODO: implement these
+void Mouse_GetEvent(MS_EVENT *event) {
+
+}
+
+void Mouse_MapWheel(char up, char down) {
+
+}
+
 void Sys_ErrorBox(const char *msg) {
 
 }
@@ -47,6 +58,18 @@ void Sys_Shutdown(void) {
 
 }
 
+void Sys_SetEnv(const char *name, const char *value) {
+
+}
+
+void Sys_Init(void) {
+
+}
+
+void Sys_Mkdir(const char *path) {
+
+}
+
 int Screen_GetXSize(void) {
 	return 0;
 }
@@ -60,7 +83,7 @@ unsigned short *Screen_GetAddr(void) {
 }
 
 unsigned short *Screen_GetBackAddr(void) {
-
+	return NULL;
 }
 
 void Screen_SetAddr(unsigned short *addr) {
@@ -83,6 +106,42 @@ void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs,
 
 }
 
+void *Screen_PrepareWalk(int ypos) {
+	return NULL;
+}
+
+void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka) {
+
+}
+
+void Screen_DoneWalk(void *handle) {
+
+}
+
+void *Screen_PrepareTurn(int ypos) {
+	return NULL;
+}
+
+void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka) {
+
+}
+
+void Screen_DoneTurn(void *handle) {
+
+}
+
+void Screen_StripBlt(void *data, unsigned int startline, unsigned long wihtd) {
+
+}
+
+void Screen_Shift(int x, int y) {
+
+}
+
+void ShareCPU(void) {
+
+}
+
 char Sound_SetEffect(int filter, int data) {
 	return 0;
 }
@@ -91,8 +150,100 @@ int Sound_GetEffect(int filter) {
 	return 0;
 }
 
+char Sound_CheckEffect(int filter) {
+	return 0;
+}
+
 char Sound_IsActive(void) {
 	return 0;
+}
+
+void Sound_SetVolume(int channel, int left, int right) {
+
+}
+
+void Sound_GetVolume(int channel, int *left, int *right) {
+
+}
+
+char Sound_GetChannelState(int channel) {
+	return 0;
+}
+
+int Sound_MixBack(int synchro) {
+	return 0;
+}
+
+void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
+
+}
+
+void Sound_ChangeMusic(char *file) {
+
+}
+
+void Sound_BreakLoop(int channel) {
+
+}
+
+void Sound_BreakExt(int channel, void *sample, long size) {
+
+}
+
+void Sound_Mute(int channel) {
+
+}
+
+void Sound_StopMixing(void) {
+
+}
+
+void Sound_StartMixing(void) {
+
+}
+
+void Sound_SetMixer(int dev, int freq, ...) {
+
+}
+
+int Task_Add(int stack, TaskerFunctionName func, ...) {
+	return 0;
+}
+
+void *Task_Sleep(void *data) {
+	return NULL;
+}
+
+void *Task_WaitEvent(long event) {
+	return NULL;
+}
+
+char Task_IsMaster(void) {
+	return 0;
+}
+
+int Task_Count(void) {
+	return 0;
+}
+
+void Task_Wakeup(EVENT_MSG *msg) {
+
+}
+
+void Task_Term(int id) {
+
+}
+
+char Task_IsRunning(int id) {
+	return 0;
+}
+
+char Task_QuitMsg() {
+	return 0;
+}
+
+void Task_Shutdown(int id) {
+
 }
 
 int Timer_GetValue(void) {
@@ -103,11 +254,51 @@ int Timer_GetTick(void) {
 	return 0;
 }
 
-int get_control_state() {
+void Timer_Sleep(int msec) {
+
+}
+
+int get_control_state(void) {
 	return 0;
 }
 
-int get_shift_state() {
+int get_shift_state(void) {
 	return 0;
+}
+
+void *LoadDefaultFont(void) {
+	return NULL;
+}
+
+void *PrepareVideoSound(int mixfreq, int buffsize) {
+	return NULL;
+}
+
+void DoneVideoSound(void *buffer) {
+
+}
+
+char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat, short *accnums, long *writepos) {
+	return 0;
+}
+
+void *OpenMGFFile(const char *filename) {
+	return NULL;
+}
+
+void CloseMGFFile(void *file) {
+
+}
+
+char OtevriUvodniOkno() {
+	return 0;
+}
+
+char SelectAdventure() {
+	return 0;
+}
+
+char *GetSelectedAdventure() {
+	return NULL;
 }
 

@@ -24,15 +24,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 //#include <bios.h>
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -130,7 +131,7 @@ static void unwire_setup()
   autosave_enabled=f_get_value(0,120) & 1;
   level_preload=f_get_value(0,130) & 1;
   delete_from_timer(TM_CHECKBOX);
-  mix_back_sound(32768);
+  Sound_MixBack(32768);
   close_current();
   send_message(E_DONE,E_KEYBOARD,setup_keyboard);
   wire_proc();
@@ -168,7 +169,7 @@ void new_setup()
   static int textyp[]={275,305, 65, 95,125, 65, 95,125,185,215,245,275,305,235, 40, 40};
   static int  textc[]={ 53, 54, 56, 57, 58, 56, 57, 58,140,141,142,143,144 ,51, 55, 59};
 
-  mix_back_sound(256000-16384);
+  Sound_MixBack(256000-16384);
   memset(&ctl,0,sizeof(ctl));
   change_click_map(setup,4);
   set_font(H_FBOLD,SETUP_COL2);
@@ -177,10 +178,10 @@ void new_setup()
   w=create_window(0,SCREEN_OFFLINE,639,359,0,&ctl);
   w->draw_event=show_setup_desktop;
   desktop_add_window(w);
-  define(10,50,270,190,20,0,skeldal_checkbox);  c_default(get_snd_effect(SND_SWAP));   on_change(do_setup_change);
-  if (check_snd_effect(SND_OUTFILTER))
+  define(10,50,270,190,20,0,skeldal_checkbox);  c_default(Sound_GetEffect(SND_SWAP));   on_change(do_setup_change);
+  if (Sound_CheckEffect(SND_OUTFILTER))
      {
-     define(20,50,300,190,20,0,skeldal_checkbox);c_default(get_snd_effect(SND_OUTFILTER));
+     define(20,50,300,190,20,0,skeldal_checkbox);c_default(Sound_GetEffect(SND_OUTFILTER));
         on_change(do_setup_change);
      }
 
@@ -210,9 +211,9 @@ void new_setup()
      define(-1,textxp[i],textyp[i]-1,1,1,0,label,texty[textc[i]]);
 
   for(i=0;i<sizeof(effects)/sizeof(int);i++)
-     if (check_snd_effect(effects[i]))
+     if (Sound_CheckEffect(effects[i]))
        {
-       define(200+i*10,50+i*60,30,30,200,0,skeldal_soupak,effects[i]==SND_MUSIC?127:255);c_default(get_snd_effect(effects[i]));
+       define(200+i*10,50+i*60,30,30,200,0,skeldal_soupak,effects[i]==SND_MUSIC?127:255);c_default(Sound_GetEffect(effects[i]));
        on_change(do_setup_change);
        }
   define(300,559,336,81,21,0,setup_ok_button,texty[174]);on_change(unwire_setup);
@@ -241,7 +242,7 @@ void GameResume(EVENT_MSG *msg,void **data)
   data;
   if (msg->msg==E_INIT)
      {
-     volsave=get_snd_effect(SND_GVOLUME);
+     volsave=Sound_GetEffect(SND_GVOLUME);
      Sound_SetEffect(SND_GVOLUME,volsave>>1);
      }
   if (msg->msg==E_KEYBOARD)

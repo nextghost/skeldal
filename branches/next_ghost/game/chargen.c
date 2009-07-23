@@ -26,15 +26,16 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
-#include "libs/bios.h"
-#include "libs/mem.h"
+#include <string.h>
+//#include "libs/bios.h"
+//#include "libs/mem.h"
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/gui.h"
 #include "libs/basicobj.h"
 #include "game/engine1.h"
@@ -528,16 +529,16 @@ static void edit_name()
   {
   if (shut_downing_text) return;
   curcolor=0;bar(120,2,120+104,16);
-  edit_task=add_task(16384,type_text_v2,postavy[cur_edited].jmeno,120,2,104,
+  edit_task=Task_Add(16384,type_text_v2,postavy[cur_edited].jmeno,120,2,104,
      sizeof(postavy[cur_edited].jmeno)-1,H_FONT6,RGB555(31,31,0),edit_name);
   }
 
 static void stop_edit_name()
   {
   shut_downing_text=1;send_message(E_KEYBOARD,13);
-  task_sleep(NULL);
-  if (edit_task>0 && is_running(edit_task)) 
-    shut_down_task(edit_task);
+  Task_Sleep(NULL);
+  if (edit_task>0 && Task_IsRunning(edit_task)) 
+    Task_Shutdown(edit_task);
   shut_downing_text=0;
   }
 
@@ -583,7 +584,7 @@ static void def_entries()
      sprintf(s,CHAR_NAME,i);
      def_handle(H_GEN_POSTAVY+i,s,pcx_8bit_decomp,SR_BGRAFIKA);
      apreload(H_GEN_POSTAVY+i);
-     mix_back_sound(0);
+     Sound_MixBack(0);
      }
   for(i=0;i<MAX_XICHTS;i++)
      {
@@ -592,7 +593,7 @@ static void def_entries()
      sprintf(s,XICHT_NAME,i);
      def_handle(H_GEN_XICHTY+i,s,pcx_8bit_decomp,SR_BGRAFIKA);
      apreload(H_GEN_XICHTY+i);
-     mix_back_sound(0);
+     Sound_MixBack(0);
      }
   }
 
@@ -763,7 +764,7 @@ void effect_show(va_list args)
      {
      showview(0,240-i*20-20,640,20);
      showview(0,240+(i*20),640,20);
-     task_wait_event(E_TIMER);
+     Task_WaitEvent(E_TIMER);
      }
   ukaz_mysku();
   }
@@ -861,7 +862,7 @@ char enter_generator()
      do
        {
        send_message(E_ADD,E_KEYBOARD,enter_reaction);
-       i=*(char *)task_wait_event(E_CLOSE_GEN);
+       i=*(char *)Task_WaitEvent(E_CLOSE_GEN);
        send_message(E_DONE,E_KEYBOARD,enter_reaction);
        if (i==3 && potvrzeno(texty[116],redraw_generator)) goto znova;
        if (i==255) return 1;
@@ -882,7 +883,7 @@ char enter_generator()
        do
         {
         send_message(E_ADD,E_KEYBOARD,enter_reaction2);
-        i=*(char *)task_wait_event(E_CLOSE_GEN);
+        i=*(char *)Task_WaitEvent(E_CLOSE_GEN);
         send_message(E_DONE,E_KEYBOARD,enter_reaction2);
         if (i==3 && potvrzeno(texty[116],redraw_svitek)) goto znova;
         if (i==2)

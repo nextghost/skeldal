@@ -24,12 +24,13 @@
 //#include <bios.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libs/event.h"
 //#include <conio.h>
-#include "libs/zvuk.h"
+#include "libs/sound.h"
 #include "libs/bgraph.h"
 #include "libs/bmouse.h"
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include <malloc.h>
 #include "libs/memman.h"
 #include <math.h>
@@ -1146,7 +1147,7 @@ static char StrachPostavy(THUMAN *p)
     p->sektor=cesta[i];
     build_player_map();
     prejdi_na_pohled(p);
-    Sleep(200);
+    Timer_Sleep(200);
     p->kondice-=wf;
   }
   p->provadena_akce+=p->programovano-1;
@@ -1927,7 +1928,7 @@ void souboje_turn(char smer)
   cancel_render=1;
   hold_timer(TM_BACK_MUSIC,0);
   recalc_volumes(viewsector,viewdir);
-  mix_back_sound(0);
+  Sound_MixBack(0);
   }
 
 

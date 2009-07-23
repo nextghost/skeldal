@@ -304,7 +304,7 @@ static void OtaceniObrazu()
 	do_events();
 	}
   while (curtime<maxtime);
-  Sleep(1000);
+  Timer_Sleep(1000);
   free(picture);
   }
 

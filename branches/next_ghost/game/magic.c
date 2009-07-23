@@ -25,8 +25,9 @@
 #include <stdlib.h>
 #include "libs/bgraph.h"
 #include <malloc.h>
+#include <string.h>
 #include "libs/memman.h"
-#include "libs/mem.h"
+//#include "libs/mem.h"
 #include "libs/mgifmem.h"
 #include "libs/event.h"
 //#include <i86.h>
@@ -226,13 +227,13 @@ static void play_anim(va_list args) //tasked animation
   SEND_LOG("(ANIM) Buffer is now ready...",0,0);
   while (anm!=NULL)
      {
-     task_wait_event(E_KOUZLO_ANM);
+     Task_WaitEvent(E_KOUZLO_ANM);
      c++;
      SEND_LOG("(ANIM) Rendering frame %d in animation %xh",c,block);
      anm=mgif_play(anm);
      neco_v_pohybu=1;
      }
-  task_wait_event(E_KOUZLO_ANM);
+  Task_WaitEvent(E_KOUZLO_ANM);
   close_mgif();
   running_anm=0;
   free(anim_render_buffer);
@@ -242,8 +243,8 @@ static void play_anim(va_list args) //tasked animation
 
 void play_big_mgif_animation(int block)
   {
-  add_task(2048,play_anim,block);
-  task_sleep(NULL);
+  Task_Add(2048,play_anim,block);
+  Task_Sleep(NULL);
   }
 
 int get_spell_mana(int num)
@@ -322,7 +323,7 @@ void spell_anim(char *name)
   i=find_handle(name,NULL);
   if (i==-1) i=end_ptr++;
   def_handle(i,name,NULL,SR_ITEMS);
-  add_task(8196,play_anim,i);
+  Task_Add(8196,play_anim,i);
   }
 
 void spell_sound(char *name)
@@ -974,7 +975,7 @@ void spell_teleport_sector(int cil,int owner)
     if (TelepLocation.map)
     {
       destroy_player_map();
-      if (stricmp(TelepLocation.map,level_fname)!=0)
+      if (strcasecmp(TelepLocation.map,level_fname)!=0)
       {
         int sector=postavy[cil].sektor;
         int i;

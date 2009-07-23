@@ -20,38 +20,19 @@
  *  
  *  Last commit made by: $Id$
  */
-#ifndef __DEVICES_H
-#define __DEVICES_H
+#define EX_RANDOM_BACKFIRES 1  //hotovo
+#define EX_RESPAWN_MONSTERS 2  //hotovo
+#define EX_ALTERNATEFIGHT 4  //hotovo
+#define EX_RECOVER_DESTROYED_ITEMS 8  //hotovo
+#define EX_MULTIPLE_ITEMS_IN_CURSOR 16  //zruseno
+#define EX_BAG_EXTENDED 32		//hotovo
+#define EX_SHIELD_BLOCKING 64     //hotovo
+#define EX_FAST_TRADE 128       //hotovo
+#define EX_ALWAYS_MINIMAP 256   //hotovo
+#define EX_GROUP_FLEE 512
+#define EX_NOHUNGRY 1024
+#define EX_AUTOOPENBOOK 2048
+#define EX_AUTOSHOWRUNE 4096
+#define EX_WALKDIAGONAL 8192
 
-#include "types.h"
-#include "event.h"
-typedef struct tms_basic_info
-  {
-        int mouse_event;
-        unsigned short mouse_code;
-        unsigned short mouse_bx;
-        unsigned short mouse_cx;
-        unsigned short mouse_dx;
-        signed short mouse_si;
-        signed short mouse_di;
-  }TMS_BASIC_INFO;
-
-typedef struct ms_event
-  {
-   char event;
-   word x,y;
-   char tl1,tl2,tl3;
-   word event_type;
-  }MS_EVENT;
-
-extern TMS_BASIC_INFO ms_basic_info;
-extern char ms_fake_mode;
-
-//int install_mouse_handler();
-//int deinstall_mouse_handler();
-//void hranice_mysky(int x1,int y1,int x2,int y2);
-//void get_ms_event(MS_EVENT *event);
-int lock_region (void *address, unsigned length);
-void keyboard(EVENT_MSG *msg,void *user_data);
-char ms_get_keycount();
-#endif
+extern int game_extras;

@@ -23,10 +23,11 @@
 //#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libs/types.h"
 #include "libs/event.h"
 #include "libs/devices.h"
-#include "libs/mem.h"
+//#include "libs/mem.h"
 //#include <dpmi.h>
 #include <malloc.h>
 //#include <bios.h>
@@ -223,7 +224,7 @@ static void unsuspend_task(EVENT_MSG *msg)
      {
      nexttask=i;
      task_info[nexttask]&=~TASK_EVENT_WAITING;
-     task_sleep(msg->data);
+     Task_Sleep(msg->data);
      }
   nexttask=nt;
   }
@@ -287,7 +288,7 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg)
         p=s;
         }*/
      }
-  unsuspend_task(msg);
+  Task_Wakeup(msg);
   }
 
 T_EVENT_POINT *install_event(T_EVENT_ROOT **tree,long ev_num,EV_PROC proc,void *procdata,char end)
@@ -432,8 +433,8 @@ void tasker(EVENT_MSG *msg,void **data)
      case E_WATCH:
      case E_IDLE:
      default:
-           if (q_any_task()>=1)
-              task_sleep(NULL);
+           if (Task_Count()>=1)
+              Task_Sleep(NULL);
            break;
      case E_DONE:
            {
@@ -443,7 +444,7 @@ void tasker(EVENT_MSG *msg,void **data)
               {
               for (i=1;i<taskcount;i++)
                  if (tasklist_sp[i]!=NULL) break;
-              if (i!=taskcount) task_sleep(NULL);
+              if (i!=taskcount) Task_Sleep(NULL);
               }
            while (i<taskcount);
            free(tasklist_sp);
@@ -489,7 +490,7 @@ static char do_events_called=0;
 void do_events()
   {
   do_events_called=1;
-  if (!q_is_mastertask()) task_sleep(NULL);
+  if (!Task_IsMaster()) Task_Sleep(NULL);
   else
      {
      send_message(E_WATCH);
@@ -637,7 +638,7 @@ void shut_down_task(int id_num)
      free(*idnum);
      *idnum=NULL;
      task_info[nexttask]&=~TASK_EVENT_WAITING;
-     task_sleep(msg->data);
+     Task_Sleep(msg->data);
      msg->msg=-2;
      nexttask=nt;
      }
@@ -647,6 +648,6 @@ void shut_down_task(int id_num)
   {
   if (!curtask) return NULL;
   suspend_task(curtask,event_number);
-  return task_sleep(NULL);
+  return Task_Sleep(NULL);
   }
 */

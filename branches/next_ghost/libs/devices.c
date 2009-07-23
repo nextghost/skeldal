@@ -30,22 +30,8 @@
 #include "libs/devices.h"
 #include <time.h>
 
-/* Data touched at mouse callback time -- they are in a structure to
-        simplify calculating the size of the region to lock.
-*/
-
-extern MS_EVENT win_mouseEvent;
-
-
 TMS_BASIC_INFO ms_basic_info={0};
 static char ms_keys;
-
-void get_ms_event(MS_EVENT *event)
-  {  
-  CheckMessageQueue();
-  *event=win_mouseEvent;
-  win_mouseEvent.event=0;
-  }
 
 char cz_table_1[]=" 1!3457­908+,-./‚+ˆ¨‡©‘˜ ¡\"–?=:_2ABCDEFGHIJKLMNOPQRSTUVWXYZ£\\)6=;abcdefghijklmnopqrstuvwxyz/|(; ";
 char cz_table_2[]=" !\"#$%&'()*+,-./0123456789:;<=>?@BCDFGH‹JKŠMN•PQ«ST—VWXZ[\\]^_` bcd‚fgh¡jkmn¢pqªst£vwx˜z{|}~ ";
