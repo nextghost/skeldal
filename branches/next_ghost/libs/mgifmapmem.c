@@ -110,7 +110,7 @@ static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
 	  SEND_LOG("(PLAYANIM) Exception raised",0,0);
 	  file=NULL;
 	  }
-	StretchImageHQ(picture, GetScreenAdr()+ypos*scr_linelen2, scr_linelen2,full);
+	StretchImageHQ(picture, Screen_GetAddr()+ypos*scr_linelen2, scr_linelen2,full);
 	showview(0,ypos,0,360);
 	if (_bios_keybrd(_KEYBRD_READY)==0) mix_back_sound(0);
 	else 

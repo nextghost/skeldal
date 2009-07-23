@@ -229,7 +229,7 @@ static void zobraz_podle_masky(char barva,char anim)
   {
   char *maska;
   word *data;
-  word *obr=GetScreenAdr()+300*scr_linelen2+220;
+  word *obr=Screen_GetAddr()+300*scr_linelen2+220;
   word xs,ys;
 
   alock(H_MENU_MASK);
@@ -410,7 +410,7 @@ static int insert_next_line(int ztrata)
   {
   char *c;
   int ll=-1;
-  RedirectScreenBufferSecond();
+  Screen_SetBackAddr();
   do
      {
      if (title_mode!=TITLE_KONEC) c=get_next_title(0,NULL);else c[0]=0;
@@ -468,7 +468,7 @@ static int insert_next_line(int ztrata)
         }
      }
   while (c[0]=='*');
-  RestoreScreen();
+  Screen_Restore();
   if (title_mode==TITLE_KONEC) ll=-1;
   return ll;
   }
@@ -529,7 +529,7 @@ void titles(va_list args)
   schovej_mysku();
   speedscroll=4;
   curcolor=BGSWITCHBIT ; bar(0,0,639,479);
-  RedirectScreenBufferSecond();bar(0,0,639,479);RestoreScreen();
+  Screen_SetBackAddr();bar(0,0,639,479);Screen_Restore();
   memset(title_lines,0,sizeof(title_lines));
   def_handle(H_PICTURE,"titulky.pcx",pcx_15bit_decomp,SR_BGRAFIKA);
   alock(H_PICTURE);
@@ -538,13 +538,13 @@ void titles(va_list args)
   effect_show(NULL);
   titlefont=H_FBIG;
   set_font(titlefont,RGB(158,210,25));charcolors[1]=0;
-  counter=get_timer_value();newc=counter;
+  counter=Timer_GetValue();newc=counter;
   do
      {
      int skip;
-     scr=scr_linelen2*60+GetScreenAdr();
-     buff=GetBuffer2nd();
-     counter=get_timer_value();
+     scr=scr_linelen2*60+Screen_GetAddr();
+     buff=Screen_GetBackAddr();
+     counter=Timer_GetValue();
      skip=(counter-newc)/speedscroll;
      if (skip>0)
         {
@@ -552,7 +552,7 @@ void titles(va_list args)
         newc+=skip*speedscroll;
         scan_lines(buff,360,skip);
         scroll_and_copy((word *)picture+640*60+3,buff,scr,360,skip,title_lines);
-        //memcpy(GetScreenAdr(),buff,480*scr_linelen);
+        //memcpy(Screen_GetAddr(),buff,480*scr_linelen);
         get_max_extend(&l,&r);
         memmove(title_lines,&title_lines[skip],sizeof(title_lines)-skip*sizeof(int)*2);
         //showview(l,60,r-l+1,360);
@@ -570,7 +570,7 @@ void titles(va_list args)
         {
         int c;
         c=insert_next_line(lcounter);
-        scan_lines(GetBuffer2nd(),360+lcounter,-lcounter);
+        scan_lines(Screen_GetBackAddr(),360+lcounter,-lcounter);
         if (c==-1)
            {
            end=1;
@@ -608,8 +608,8 @@ void konec_hry()
   create_playlist(texty[205]);
   play_next_music(&d);
   change_music(d);
-  timer=get_timer_value();
-  while (get_timer_value()-timer<150) task_sleep(NULL);
+  timer=Timer_GetValue();
+  while (Timer_GetValue()-timer<150) task_sleep(NULL);
   task_id=add_task(8196,titles,1,"ENDTEXT.TXT");
   task_wait_event(E_KEYBOARD);
   if (is_running(task_id)) term_task(task_id);
@@ -623,7 +623,7 @@ void konec_hry()
   bar(0,0,639,479);
   ukaz_mysku();
   effect_show(NULL);
-  timer=get_timer_value();
-  while (get_timer_value()-timer<150) task_sleep(NULL);
+  timer=Timer_GetValue();
+  while (Timer_GetValue()-timer<150) task_sleep(NULL);
   }
 

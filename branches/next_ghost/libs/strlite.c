@@ -36,8 +36,9 @@ TSTR_LIST create_list(int count)
 
   p=(TSTR_LIST)malloc(count*sizeof(*p));
   if (p==NULL) return NULL;
-  j=_msize(p)/sizeof(*p);
-  for(i=0;i<j;i++) p[i]=NULL;
+//  j=_msize(p)/sizeof(*p);
+//  for(i=0;i<j;i++) p[i]=NULL;
+  for(i=0;i<count;i++) p[i]=NULL;
   return p;
   }
 
@@ -78,9 +79,10 @@ const char *str_replace(TSTR_LIST *list,int line,const char *text)
         p=getmem((count+plus)*sizeof(*p));
         memcpy(p,*list,count*sizeof(*p));
         free(*list);
-        j=_msize(p)/sizeof(*p);
+//        j=_msize(p)/sizeof(*p);
         i=count;
-        for(;i<j;i++) p[i]=NULL;
+//        for(;i<j;i++) p[i]=NULL;
+        for(;i<count+plus;i++) p[i]=NULL;
         i=count;count=j;
         *list=p;
      }

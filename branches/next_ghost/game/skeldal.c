@@ -576,8 +576,8 @@ void music_init()
   set_mixing_device(snd_devnum,snd_mixing,snd_parm1,snd_parm2,snd_parm3);
   SEND_LOG("(SOUND) SOUND_INIT Starting mixing",0,0);
   start_mixing();
-  set_snd_effect(SND_GFX,init_gfx_vol);
-  set_snd_effect(SND_MUSIC,init_music_vol);
+  Sound_SetEffect(SND_GFX,init_gfx_vol);
+  Sound_SetEffect(SND_MUSIC,init_music_vol);
   path=plugins_path;
 // FIXME: rewrite
 //  if (path==0 || path[0]==0)  
@@ -806,7 +806,7 @@ void *user_timer(EVENT_MSG *msg,void **usr)
   if (msg->msg==E_WATCH)
      {
      *otevri_zavoru=1;
-     x=get_timer_value();
+     x=Timer_GetValue();
      x-=lastvalue;
      lastvalue+=x;
      if (x) send_message(E_TIMER,x);
@@ -1365,22 +1365,22 @@ void set_verify(char state);
 void play_movie_seq(char *s,int y)
   {
   int hic=full_video?SMD_HICOLOR+128:SMD_HICOLOR,cc=full_video?SMD_256+128:SMD_256;
-  word *lbuffer=GetScreenAdr();
+  word *lbuffer=Screen_GetAddr();
   set_play_attribs(lbuffer,0,banking,vmode==5);
   switch (vmode)
      {
      case 1:if (!banking)
-              play_animation(s,cc,y,snd_devnum!=DEV_NOSOUND);
+              play_animation(s,cc,y,Sound_IsActive());
             else
               {
-              set_play_attribs(GetScreenAdr(),1,0,vmode==5);
-              play_animation(s,hic,y,snd_devnum!=DEV_NOSOUND);
+              set_play_attribs(Screen_GetAddr(),1,0,vmode==5);
+              play_animation(s,hic,y,Sound_IsActive());
               }
             break;
      case 5:
-     case 2:play_animation(s,hic,y,snd_devnum!=DEV_NOSOUND);break;
-     default: set_play_attribs(GetScreenAdr(),1,0,vmode==5);
-              play_animation(s,hic,y,snd_devnum!=DEV_NOSOUND);break;
+     case 2:play_animation(s,hic,y,Sound_IsActive());break;
+     default: set_play_attribs(Screen_GetAddr(),1,0,vmode==5);
+              play_animation(s,hic,y,Sound_IsActive());break;
      }
   }
 
@@ -1391,7 +1391,7 @@ void play_anim(int anim_num)
      char *t,*z;
      TSTR_LIST titl=NULL;
      concat(s,pathtable[SR_VIDEO],texty[anim_num]);
-     if (snd_devnum==DEV_NOSOUND || titles_on)
+     if (!Sound_IsActive() || titles_on)
       {
       concat(t,s,"   ");
       z=strrchr(t,'.');

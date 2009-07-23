@@ -258,7 +258,8 @@ int load_map(char *filename)
   mob_template=NULL;
   mob_size=0;
   if (f==NULL) return -1;
-  if (snd_devnum==DEV_DAC) stop_mixing();
+// FIXME: rewrite
+//  if (snd_devnum==DEV_DAC) stop_mixing();
   do
      {
      r=load_section(f,&temp,&sect,&size);
@@ -406,7 +407,8 @@ int load_map(char *filename)
      exit(0);
      }
   doNotLoadMapState=0;
-  if (snd_devnum==DEV_DAC) start_mixing();
+// FIXME: rewrite
+//  if (snd_devnum==DEV_DAC) start_mixing();
   return suc;
   }
 

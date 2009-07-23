@@ -34,7 +34,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -191,7 +191,7 @@ void ukaz_kompas(char mode)
      if (direct>=20) direct-=40;
      speed=((direct>0)-(direct<0));
      }
-  if (mode!=255) put_image(ablock(H_KOMPAS),GetScreenAdr()+476,phase*16,102,16);
+  if (mode!=255) put_image(ablock(H_KOMPAS),Screen_GetAddr()+476,phase*16,102,16);
   if (mode==1)
      {
      phase-=speed;if (phase>39) phase=0;
@@ -229,7 +229,7 @@ void anim_sipky(int h,int mode)
        if (phase>4) i=8-phase; else i=phase;
        i=(i-2)*110;
        if (i>=0)
-       put_8bit_clipped(ablock(handle),GetScreenAdr()+378*scr_linelen2+498,i,142,102);
+       put_8bit_clipped(ablock(handle),Screen_GetAddr()+378*scr_linelen2+498,i,142,102);
        else put_picture(498,378,ablock(H_SIPKY_END));
        drw=1;
        if (mode!=-1)
@@ -285,12 +285,13 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet)
     return;
     }
 	if (phase>7) return;
-	adr=520+378*scr_linelen2+GetScreenAdr();
+	adr=520+378*scr_linelen2+Screen_GetAddr();
 	i=105*phase;
 	phase++;
   put_8bit_clipped(ablock(H_KREVMIN+block-1),adr,i,120,102);
 	set_font(H_FTINY,RGB555(31,31,31));
-	itoa(dostal,s,10);
+//	itoa(dostal,s,10);
+	sprintf(s, "%d", dostal);
 	set_aligned_position(60+520,51+378,1,1,s);outtext(s);
 	}
 
@@ -317,7 +318,7 @@ static void bott_fletna_normal(void **pp,long *s)
   word *bott_scr;
   int i,x;
   bott_scr=bott_clear();
-  RedirectScreen(bott_scr);
+  Screen_SetAddr(bott_scr);
   put_picture(0,0,ablock(H_FLETNA_BAR));
   set_font(H_FTINY,RGB555(31,31,0));
   set_aligned_position(103,52,1,1,texty[174]);outtext(texty[174]);
@@ -325,9 +326,9 @@ static void bott_fletna_normal(void **pp,long *s)
      {
      set_aligned_position(x,32,1,1,texty[180+i]);outtext(texty[180+i]);
      }
-  *pp=GetScreenAdr();
+  *pp=Screen_GetAddr();
   *s=_msize(*pp);
-  RestoreScreen();
+  Screen_Restore();
   }
 
 static void bott_draw_normal(void **pp,long *s)
@@ -337,7 +338,7 @@ static void bott_draw_normal(void **pp,long *s)
   THUMAN *p;
 
   bott_scr=bott_clear();
-  RedirectScreen(bott_scr);
+  Screen_SetAddr(bott_scr);
   if (battle && cur_mode==MD_INBATTLE) put_picture(0,0,ablock(H_BATTLE_BAR));
   else put_picture(0,0,ablock(H_DESK));
   memcpy(&xs,ablock(H_OKNO),2);
@@ -421,9 +422,9 @@ static void bott_draw_normal(void **pp,long *s)
         outtext(s);
         }
  */
-  *pp=GetScreenAdr();
+  *pp=Screen_GetAddr();
   *s=_msize(*pp);
-  RestoreScreen();
+  Screen_Restore();
   }
 
 
@@ -446,7 +447,7 @@ void bott_disp_text_proc(void **pp,long *ss)
   text=alloca(strlen(bott_text)+2);
   set_font(H_FBOLD,NOSHADOW(0));
   zalamovani(bott_text,text,390,&xx,&yy);
-  RedirectScreen(bott_clear());
+  Screen_SetAddr(bott_clear());
   if (battle && cur_mode==MD_INBATTLE) put_picture(0,0,ablock(H_BATTLE_BAR));
   else put_picture(0,0,ablock(H_DESK));
   create_frame(70,20,400,50,1);
@@ -459,9 +460,9 @@ void bott_disp_text_proc(void **pp,long *ss)
      p=strchr(p,0)+1;
      }
   while (p[0]);
-  *pp=GetScreenAdr();
+  *pp=Screen_GetAddr();
   *ss=_msize(*pp);
-  RestoreScreen();
+  Screen_Restore();
   }
 
 void bott_disp_text(char *text)
@@ -481,7 +482,7 @@ static void MaskPutPicture(int x, int y, char mask, word color, char blend, void
   {
   short *info=(short *)pic;
   char *data=(char *)(info+3+256);
-  word *pos=GetScreenAdr()+x+y*scr_linelen2; 
+  word *pos=Screen_GetAddr()+x+y*scr_linelen2; 
   if (blend) color=color & 0xF7DE;
   for (y=0;y<info[1];y++,pos+=scr_linelen2,data+=info[0])	
 	for (x=0;x<info[0];x++)
@@ -501,7 +502,7 @@ void bott_draw_rune(void **pp,long *ss)
   int i;
   char buff[300];
   int spell=(sel_zivel*7+sel_rune)*3;
-  RedirectScreen(bott_clear());
+  Screen_SetAddr(bott_clear());
   if (battle && cur_mode==MD_INBATTLE) put_picture(0,0,ablock(H_BATTLE_BAR));
   else put_picture(0,0,ablock(H_DESK));
   create_frame(70,20,280,50,1);
@@ -518,9 +519,9 @@ void bott_draw_rune(void **pp,long *ss)
   position (75,60);
   outtext(buff);
   put_picture(70,30,ablock(glob_items[showruneitem].vzhled+face_arr[0]));
-  *pp=GetScreenAdr();
+  *pp=Screen_GetAddr();
   *ss=_msize(*pp);
-  RestoreScreen();  
+  Screen_Restore();  
   }
 
 void bott_disp_rune(char rune, int item)
@@ -585,7 +586,7 @@ void draw_spell(int handle,int phase,int xicht)
      w=ablock(H_OKNO);
      x=54+w[0]*i+PIC_X;
      y=PIC_Y+378;
-     put_8bit_clipped(ablock(handle),GetScreenAdr()+x+y*scr_linelen2,phase*75,54,75);
+     put_8bit_clipped(ablock(handle),Screen_GetAddr()+x+y*scr_linelen2,phase*75,54,75);
      neco_v_pohybu=1;
      }
   }
@@ -594,7 +595,7 @@ void other_draw()
   {
 //  if (cancel_render) return;
   StripBlt(ablock(H_BOTTBAR),480-102,102);
-//  memcpy(GetScreenAdr()+(480-102)*scr_linelen2,ablock(H_BOTTBAR),scr_linelen2*102*2);
+//  memcpy(Screen_GetAddr()+(480-102)*scr_linelen2,ablock(H_BOTTBAR),scr_linelen2*102*2);
   if (spell_handle)
      {
      draw_spell(spell_handle,spell_phase,spell_xicht);
@@ -610,8 +611,8 @@ void other_draw()
   show_money();
   anim_sipky(0,-1);
   draw_fx();
-  memset(GetScreenAdr()+(SCREEN_OFFLINE-1)*scr_linelen2,0,1280);
-  memset(GetScreenAdr()+(SCREEN_OFFLINE+360)*scr_linelen2,0,1280);
+  memset(Screen_GetAddr()+(SCREEN_OFFLINE-1)*scr_linelen2,0,1280);
+  memset(Screen_GetAddr()+(SCREEN_OFFLINE+360)*scr_linelen2,0,1280);
   }
 
 void display_spell_in_icone(int handle,int xicht)
@@ -1033,9 +1034,9 @@ void back_clear(int celx,int color)
   if (x1<x2)
      {
      curcolor=color;
-     RedirectScreenBufferSecond();
+     Screen_SetBackAddr();
      bar(x1,y1,x2,y2);
-     RestoreScreen();
+     Screen_Restore();
      }
   }
 
@@ -1112,7 +1113,7 @@ static void trace_for_bgr(int dir)
 			{
 			if (bgr_distance==-1)
 				{
-				word *w=GetScreenAdr();int i=scr_linelen2*480;
+				word *w=Screen_GetAddr();int i=scr_linelen2*480;
 				do {if (*w>=NOSHADOW(0)) *w=back_color;w++;} while(--i);
 				}
 			zneplatnit_block(H_BGR_BUFF);
@@ -1250,13 +1251,13 @@ void debug_print()
 void redraw_scene()
   {
   if (norefresh) return;
-  if (one_buffer) RedirectScreenBufferSecond();
+  if (one_buffer) Screen_SetBackAddr();
   render_scene(viewsector,viewdir);
   if (cancel_render) return;
-  if (running_anm) klicovani_anm(GetBuffer2nd()+SCREEN_OFFSET,anim_render_buffer,anim_mirror);
+  if (running_anm) klicovani_anm(Screen_GetBackAddr()+SCREEN_OFFSET,anim_render_buffer,anim_mirror);
   update_mysky();
   schovej_mysku();
-  if (one_buffer) RestoreScreen();
+  if (one_buffer) Screen_Restore();
   OutBuffer2nd();
   if (battle || (game_extras & EX_ALWAYS_MINIMAP)) draw_medium_map();
   if (show_debug) debug_print();
@@ -1296,7 +1297,7 @@ void draw_fx()
   c=ablock(H_FX);
   while (fx!=NULL)
      {
-     put_8bit_clipped(c,GetScreenAdr()+fx->x+fx->y*scr_linelen2,fx->phase*16,c[0],16);
+     put_8bit_clipped(c,Screen_GetAddr()+fx->x+fx->y*scr_linelen2,fx->phase*16,c[0],16);
      if (++fx->phase>14)
         {
         *last=NULL;

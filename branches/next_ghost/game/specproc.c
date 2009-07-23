@@ -198,13 +198,13 @@ static void show_liane(THE_TIMER *t)
   schovej_mysku();
   if (counter<5 && counter)
      {
-     bt=GetScreenAdr()+SCREEN_OFFSET;
-     bs=GetBuffer2nd()+SCREEN_OFFSET;
+     bt=Screen_GetAddr()+SCREEN_OFFSET;
+     bs=Screen_GetBackAddr()+SCREEN_OFFSET;
      }
      else
      {
      redraw_scene();
-     bs=GetScreenAdr()+SCREEN_OFFSET;
+     bs=Screen_GetAddr()+SCREEN_OFFSET;
      }
 
   switch(counter)
@@ -257,7 +257,7 @@ static __inline int toInt(float fval)
 
 static void OtocObrazPodleMatice(float mx[3][2], word *picture)
   {
-  word *trg=GetScreenAdr()+17*scr_linelen2;
+  word *trg=Screen_GetAddr()+17*scr_linelen2;
   int x,y;
   picture+=6;
   for (y=0;y<360;y++,trg+=scr_linelen2)
@@ -280,7 +280,7 @@ static void OtaceniObrazu()
   float mx[3][2];
 
   int maxtime=500;
-  int lasttime=GetTickCount();
+  int lasttime=Timer_GetTick();
   int curtime;
   get_picture(0,17,640,360,picture);
   do
@@ -289,7 +289,7 @@ static void OtaceniObrazu()
 	float uhel;
 	float cosuhel;
 	float sinuhel;
-	curtime=GetTickCount()-lasttime;
+	curtime=Timer_GetTick()-lasttime;
 	phase=curtime/(float)maxtime;
 	if (phase>1.0f) phase=1.0f;
 	uhel=phase*3.14159265;

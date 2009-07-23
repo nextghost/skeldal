@@ -119,7 +119,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 
 #define TX_LOAD 0
 
-#define LODKA_POS (SCREEN_OFFLINE+301)*scr_linelen2+GetBuffer2nd()
+#define LODKA_POS (SCREEN_OFFLINE+301)*scr_linelen2+Screen_GetBackAddr()
 #define LODKA_SIZ 640*60
 
 

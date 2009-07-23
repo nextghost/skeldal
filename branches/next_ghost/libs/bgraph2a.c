@@ -32,8 +32,8 @@ void bar32(int x1,int y1, int x2, int y2)
   word *begline;
   int i,j;
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (x1>x2) swap_int(x1,x2);
   if (y1>y2) swap_int(y1,y2);
@@ -41,7 +41,7 @@ void bar32(int x1,int y1, int x2, int y2)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=GetScreenAdr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
     {
     for (j=x1;j<=x2;j++) begline[j]=curcolor;
     }
@@ -53,22 +53,22 @@ void hor_line32(int x1,int y1,int x2)
   int i;
   unsigned long curcolor2=curcolor | (curcolor<<16);
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (y1<0 || y1>my) return;
   if (x1>x2) swap_int(x1,x2);  
   if (x1<0) x1=0;
   if (x2>mx) x2=mx;
-  begline=GetScreenAdr()+scr_linelen2*y1;
+  begline=Screen_GetAddr()+scr_linelen2*y1;
   for (i=x1;i<x2;i+=2) *(unsigned long *)(begline+i)=curcolor2;
   if (i==x2) begline[i]=curcolor;
   }
 
 void ver_line32(int x1,int y1,int y2)
   {
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   word *begline;
   int i;
@@ -76,7 +76,7 @@ void ver_line32(int x1,int y1,int y2)
   if (x1<0 || x1>mx) return;
   if (y1<0) y1=0;
   if (y2>my) y2=my;
-  begline=GetScreenAdr()+scr_linelen2*y1+x1;
+  begline=Screen_GetAddr()+scr_linelen2*y1+x1;
   for (i=y1;i<=y2;i++,begline+=scr_linelen2) *begline=curcolor;
   }
   
@@ -86,14 +86,14 @@ void hor_line_xor(int x1,int y1,int x2)
   int i;
   unsigned long curcolor2=curcolor | (curcolor<<16);
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (y1<0 || y1>my) return;
   if (x1>x2) swap_int(x1,x2);  
   if (x1<0) x1=0;
   if (x2>mx) x2=mx;
-  begline=GetScreenAdr()+scr_linelen2*y1;
+  begline=Screen_GetAddr()+scr_linelen2*y1;
   for (i=x1;i<x2;i+=2) *(unsigned long *)(begline+i)^=curcolor2;
   if (i==x2) begline[i]^=curcolor;
   }
@@ -103,14 +103,14 @@ void ver_line_xor(int x1,int y1,int y2)
   word *begline;
   int i;
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (y1>y2) swap_int(y1,y2);
   if (x1<0 || x1>mx) return;
   if (y1<0) y1=0;
   if (y2>my) y2=my;
-  begline=GetScreenAdr()+scr_linelen2*y1+x1;
+  begline=Screen_GetAddr()+scr_linelen2*y1+x1;
   for (i=y1;i<=y2;i++,begline+=scr_linelen2) *begline^=curcolor;
   }
 
@@ -276,7 +276,7 @@ chsend: and     eax,0ffffh
 void put_picture(word x,word y,void *p)
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
   {
-  word *adr=GetScreenAdr()+scr_linelen2*y+x;
+  word *adr=Screen_GetAddr()+scr_linelen2*y+x;
   word *data=p;
   word xs=data[0];
   word ys=data[1];
@@ -284,8 +284,8 @@ void put_picture(word x,word y,void *p)
   word xss=xs;
   word yss=ys;
 
-  if (x+xss>=DxGetResX()) xss=DxGetResX()-x;
-  if (y+yss>=DxGetResY()) yss=DxGetResY()-y;
+  if (x+xss>=Screen_GetXSize()) xss=Screen_GetXSize()-x;
+  if (y+yss>=Screen_GetYSize()) yss=Screen_GetYSize()-y;
 
   data+=3;
 
@@ -346,13 +346,13 @@ void put_picture(word x,word y,void *p)
   }
 void get_picture(word x,word y,word xs,word ys,void *p)
   {
-  word *adr=GetScreenAdr()+scr_linelen2*y+x;
+  word *adr=Screen_GetAddr()+scr_linelen2*y+x;
   word *data=p;
   word xss=xs;
   word yss=ys;
 
-  if (x+xss>=DxGetResX()) xss=DxGetResX()-x;
-  if (y+yss>=DxGetResY()) yss=DxGetResY()-y;
+  if (x+xss>=Screen_GetXSize()) xss=Screen_GetXSize()-x;
+  if (y+yss>=Screen_GetYSize()) yss=Screen_GetYSize()-y;
   
   data[0]=xss;
   data[1]=yss;
@@ -561,8 +561,8 @@ void trans_bar(int x,int y,int xs,int ys,int barva)
   int y2=y+ys-1;
   int i,j;
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (x1>x2) swap_int(x1,x2);
   if (y1>y2) swap_int(y1,y2);
@@ -570,7 +570,7 @@ void trans_bar(int x,int y,int xs,int ys,int barva)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=GetScreenAdr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
     {
     for (j=x1;j<=x2;j++) begline[j]=MIXTRANSP(begline[j],barva);
     }
@@ -595,8 +595,8 @@ void trans_bar25(int x,int y,int xs,int ys)
   int y2=y+ys-1;
   int i,j;
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (x1>x2) swap_int(x1,x2);
   if (y1>y2) swap_int(y1,y2);
@@ -604,7 +604,7 @@ void trans_bar25(int x,int y,int xs,int ys)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=GetScreenAdr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
     {
     for (j=x1;j<=x2;j++) begline[j]=MIXTRANSP(begline[j],MIXTRANSP(begline[j],0));
     }

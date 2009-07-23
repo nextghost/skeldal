@@ -72,7 +72,8 @@ void standard_mem_error(size_t size)
   {
   char buff[256];
   SEND_LOG("(ERROR) Memory allocation error detected, %u bytes missing",size,0);
-  DXCloseMode();
+  Sys_Shutdown();
+//  DXCloseMode();
   sprintf(buff,"Memory allocation error\n Application can't allocate %u bytes of memory (%xh)\n",size,memman_handle);
   Sys_ErrorBox(buff);
 //  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
@@ -86,7 +87,8 @@ void load_error(char *filename)
   #ifdef LOGFILE
  //   bonz_table();
   #endif
-  DXCloseMode();
+  Sys_Shutdown();
+//  DXCloseMode();
   sprintf(buff,"Load error while loading file: %s", filename);
   Sys_ErrorBox(buff);
 //  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
@@ -96,7 +98,8 @@ void load_error(char *filename)
 void standard_swap_error()
   {
   char buff[256];
-  DXCloseMode();
+  Sys_Shutdown();
+//  DXCloseMode();
   sprintf(buff,"Swap error. Maybe disk is full");
   Sys_ErrorBox(buff);
 //  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
@@ -140,7 +143,9 @@ void *load_file(char *filename)
 //  f=open(filename,O_BINARY | O_RDONLY);
   f=open(filename, O_RDONLY);
   if (f==-1) load_error(filename);
-  size=filelength(f);
+//  size=filelength(f);
+  size = lseek(f, 0, SEEK_END);
+  lseek(f, 0, SEEK_SET);
   p=(void *)getmem(size);
   if (read(f,p,size)!=size) load_error(filename);
   close(f);
@@ -261,8 +266,9 @@ int swap_block(THANDLE_DATA *h)
   if (mman_action!=NULL) mman_action(MMA_SWAP);
   if (swap==-1) return -1;
   if (h->flags & BK_HSWAP) pos=h->seekpos; else pos=swap_add_block(h->size);
-  lseek(swap,0,SEEK_END);
-  wsize=tell(swap);
+  wsize=lseek(swap,0,SEEK_END);
+//  lseek(swap,0,SEEK_END);
+//  wsize=tell(swap);
   if (wsize<pos) write(swap,NULL,pos-wsize);
   lseek(swap,pos,SEEK_SET);
   SEND_LOG("(SWAP) Swaping block '%-.12hs'",h->src_file,0);

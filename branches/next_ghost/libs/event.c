@@ -406,7 +406,7 @@ void timer(EVENT_MSG *msg)
   static unsigned long lasttime=0;  
   if (msg->msg==E_WATCH)
      {
-     unsigned long tm=GetTickCount()/TIMERSPEED;
+     unsigned long tm=Timer_GetValue();
      if (tm==lasttime) return;
      lasttime=tm;
      send_message(E_TIMER,tm);

@@ -32,7 +32,7 @@
 #include "libs/mem.h"
 #include <malloc.h>
 #include "libs/memman.h"
-//#include <math.h>
+#include <math.h>
 #include "game/globals.h"
 #include "libs/system.h"
 
@@ -761,13 +761,13 @@ static unsigned long SPozdrzeno=0;
 
 static char JePozdrzeno()
 {
-  return GetTickCount()<SPozdrzeno;
+  return Timer_GetTick()<SPozdrzeno;
 }
 
 void pozdrz_akci()
 {
   int battlespeed=gamespeed-gamespeed*gamespeedbattle/5;
-  SPozdrzeno=GetTickCount()+battlespeed*2000/6;
+  SPozdrzeno=Timer_GetTick()+battlespeed*2000/6;
 }
 
 /*void pozdrz_akci_proc(THE_TIMER *x)
@@ -1347,7 +1347,7 @@ void fill_rune(char *d,int i)
         for(y=378;y<480;y++)
            {
            word *z;
-           z=GetScreenAdr()+y*scr_linelen2;
+           z=Screen_GetAddr()+y*scr_linelen2;
            for(x=520;x<640;x++)
               if (*dd++==i) z[x]=z[x]-((z[x] & RGB555(28,28,28))>>2);
            }
@@ -1405,7 +1405,7 @@ void display_power_bar(char drw)
   schovej_mysku();
   put_picture(520,378,ablock(H_POWERBAR));
   for(i=0;i<3;i++)
-     put_8bit_clipped(ablock(H_POWERLED),520+coords[i][0]+(378+coords[i][1])*scr_linelen2+GetScreenAdr(),24*powers[i],21,24);
+     put_8bit_clipped(ablock(H_POWERLED),520+coords[i][0]+(378+coords[i][1])*scr_linelen2+Screen_GetAddr(),24*powers[i],21,24);
   ukaz_mysku();
   if (drw) showview(520,378,120,102);
   }
@@ -1692,7 +1692,7 @@ void souboje_stisknout(int d)
   schovej_mysku();
   d--;
   d*=105;
-  put_8bit_clipped(ablock(H_BATTLE_CLICK),378*scr_linelen2+520+GetScreenAdr(),d,120,102);
+  put_8bit_clipped(ablock(H_BATTLE_CLICK),378*scr_linelen2+520+Screen_GetAddr(),d,120,102);
   ukaz_mysku();
   showview(520,378,120,102);
   cancel_render=1;

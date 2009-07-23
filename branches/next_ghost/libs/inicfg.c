@@ -126,7 +126,7 @@ void add_field_num(TSTR_LIST *ls,const char *name,long number)
   char buff[20];
 
 //  itoa(number,buff,10);
-  sprintf(buff, "%d", number);
+  sprintf(buff, "%ld", number);
   add_field_txt(ls,name,buff);
   }
 

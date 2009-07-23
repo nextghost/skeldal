@@ -73,7 +73,7 @@ void create_frame(int x,int y,int xs,int ys,char clear)
    y-=VEL_RAMEC;
    xs=(xs+VEL_RAMEC-1)/VEL_RAMEC+1;
    ys=(ys+VEL_RAMEC-1)/VEL_RAMEC+1;
-   line=GetScreenAdr()+y*scr_linelen2+x;
+   line=Screen_GetAddr()+y*scr_linelen2+x;
    col=line;
    put_8bit_clipped(ablock(H_RAMECEK),col,0,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
    for(i=1;i<xs;i++)
@@ -941,7 +941,7 @@ static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   else
      put_picture(x1,y1,o->userptr);
   phase=(CHECK_BOX_ANIM-(*data>>1))*20;
-  put_8bit_clipped(obr,GetScreenAdr()+x1+y1*scr_linelen2,phase,obr[0],obr[0]);
+  put_8bit_clipped(obr,Screen_GetAddr()+x1+y1*scr_linelen2,phase,obr[0],obr[0]);
   }
 
 static void skeldal_checkbox_event(EVENT_MSG *msg,OBJREC *o)
@@ -1606,10 +1606,10 @@ void show_jrc_logo(char *filename)
   memcpy(palette,palw,256*sizeof(word));
   memset(palw,0,256*sizeof(word));
   xp/=2;yp/=2;xp=320-xp;yp=240-yp;
-  cntr=get_timer_value();ccc=0;
+  cntr=Timer_GetValue();ccc=0;
   do
     {
-    cdiff=(get_timer_value()-cntr)/2;
+    cdiff=(Timer_GetValue()-cntr)/2;
     if (cdiff<SHOWDEND && ccc!=cdiff)
       {
       cpalf=cdiff;

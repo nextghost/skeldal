@@ -30,7 +30,7 @@
 #include "libs/memman.h"
 #include "libs/bgraph.h"
 #include "libs/event.h"
-#include "libs/zvuk.h"
+//#include "libs/zvuk.h"
 //#include "math.h"
 #include "game/globals.h"
 #include "game/engine1.h"
@@ -123,7 +123,7 @@ void lodka64b(void *source,void *target,void *background,void *xlat,long xysize)
 void *p,*p2,*pozadi,*podlaha,*strop,*sit;int i;
 void (*zooming)(void *source,long target,word *background,void *xlat,long xysize);
 void (*turn)(long lbuf,void *src1,void *src2,int size1);
-word *GetBuffer2nd();
+word *Screen_GetBackAddr();
 word *background;
 char debug=0,nosides=0,nofloors=0,drwsit=0,show_names=0,show_lives=0;
 static long old_timer;
@@ -137,9 +137,9 @@ static void wait_timer()
   {
   wait_timer();
   if (backgrnd_mode)
-    lodka_dx(source,GetScreenAdr()+target,background+3,xlat,xysize);
+    lodka_dx(source,Screen_GetAddr()+target,background+3,xlat,xysize);
   else
-    zooming_dx(source,GetScreenAdr()+target,background+3,xlat,xysize);
+    zooming_dx(source,Screen_GetAddr()+target,background+3,xlat,xysize);
   showview(0,0,0,0);
   }
 /*
@@ -203,7 +203,7 @@ void zooming7(void *source,long target,word *background,void *xlat,long xysize)
 void turn1(long lbuf,void *src1,void *src2,int size1)
   {
 //wait_timer();
-//     scroll_support_dx(lbuf+GetScreenAdr(),src1,src2,size1);
+//     scroll_support_dx(lbuf+Screen_GetAddr(),src1,src2,size1);
   showview(0,0,0,0);
   }
 
@@ -469,7 +469,7 @@ static void zooming_forward_backward(word *background,char back)
   {
   if (!zooming_step) return;  
     {
-    long tmp=get_timer_value();
+    long tmp=Timer_GetValue();
     void *buffer=DxPrepareWalk(SCREEN_OFFLINE);
     int tpoints[4]={90,31,90+460,31+259};
 
@@ -479,7 +479,7 @@ static void zooming_forward_backward(word *background,char back)
 
     do 
       {
-      curtime=get_timer_value()-tmp;
+      curtime=Timer_GetValue()-tmp;
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
       if (back) phase=1.0-phase;
@@ -510,7 +510,7 @@ void zooming_backward(word *background)
      zoom.ytable=(short *)&zooming_ytable[i];
      zoom.texture_line=0;
      do_events();
-     zooming(GetScreenAdr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
+     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
      }*/
 /*void zooming_backward(word *background)
   {
@@ -523,7 +523,7 @@ void zooming_backward(word *background)
      zoom.ytable=(short *)&zooming_ytable[i];
      zoom.texture_line=0;
      do_events();
-     zooming(GetScreenAdr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
+     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
      }
   }
 
@@ -534,7 +534,7 @@ static void turn_left_right(char right)
   {
   if (!rot_phases) return;  
     {
-    long tmp=get_timer_value();
+    long tmp=Timer_GetValue();
     void *buffer=DxPrepareTurn(SCREEN_OFFLINE);
 
 	int maxtime=5*rot_phases;
@@ -544,7 +544,7 @@ static void turn_left_right(char right)
 
     do 
       {
-      curtime=get_timer_value()-tmp;
+      curtime=Timer_GetValue()-tmp;
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
       DxTurn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
@@ -563,14 +563,14 @@ void turn_left()
 /*  word *kde1,c;
   int i;
 
-  kde1=GetScreenAdr()+SCREEN_OFFSET+70;
+  kde1=Screen_GetAddr()+SCREEN_OFFSET+70;
   c=640-140;
   for(i=0;i<rot_phases;i++)
      {
      kde1+=rot_step;
      c-=rot_step;
      do_events();
-     turn(SCREEN_OFFSET,kde1,GetBuffer2nd()+SCREEN_OFFSET+70,c);
+     turn(SCREEN_OFFSET,kde1,Screen_GetBackAddr()+SCREEN_OFFSET+70,c);
       }*/
   }
 void turn_right()
@@ -579,14 +579,14 @@ void turn_right()
 /*  word *kde1,c;
   int i;
 
-  kde1=GetBuffer2nd()+SCREEN_OFFSET+70+400;
+  kde1=Screen_GetBackAddr()+SCREEN_OFFSET+70+400;
   c=640-140-400;
   for(i=0;i<rot_phases;i++)
      {
      kde1-=rot_step;
      c+=rot_step;
      do_events();
-     turn(SCREEN_OFFSET,kde1,GetScreenAdr()+SCREEN_OFFSET+70,c);
+     turn(SCREEN_OFFSET,kde1,Screen_GetAddr()+SCREEN_OFFSET+70,c);
       }
       */
   }
@@ -646,9 +646,9 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev)
-  zoom.startptr=GetBuffer2nd()+yofs*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+yofs*scr_linelen2+(639-x)+SCREEN_OFFSET;
   else
-  zoom.startptr=GetBuffer2nd()+yofs*scr_linelen2+x+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+yofs*scr_linelen2+x+SCREEN_OFFSET;
   zoom.texture=p;
   zoom.texture_line=txtsx;
   zoom.xtable=&x3d->zoom_table[i];
@@ -717,9 +717,9 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev==2)
-  zoom.startptr=GetBuffer2nd()+(yofs)*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+(yofs)*scr_linelen2+(639-x)+SCREEN_OFFSET;
   else
-  zoom.startptr=GetBuffer2nd()+(yofs)*scr_linelen2+x+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+(yofs)*scr_linelen2+x+SCREEN_OFFSET;
   zoom.texture=p;
   zoom.texture_line=txtsx;
   zoom.xtable=x3d->zoom_table;
@@ -744,10 +744,10 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
      y=(VIEW_SIZE_Y-MIDDLE_Y)-points[0][0][cely].y+1;
      if (y<1) y=1;
      txtr=(void *)((word *)txtr);
-     fcdraw(txtr,GetBuffer2nd()+SCREEN_OFFSET,&showtabs.f_table[celx+3][y]);
+     fcdraw(txtr,Screen_GetBackAddr()+SCREEN_OFFSET,&showtabs.f_table[celx+3][y]);
 /*     if (debug)
         {
-         memcpy(GetScreenAdr(),GetBuffer2nd(),512000);
+         memcpy(Screen_GetAddr(),Screen_GetBackAddr(),512000);
          showview(0,0,0,0);
         }*/
      }
@@ -755,10 +755,10 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
      {
      y=points[0][1][cely].y+MIDDLE_Y+1;
      if (y<0) y=0;
-     fcdraw(txtr,GetBuffer2nd()+SCREEN_OFFSET,&showtabs.c_table[celx+3][y]);
+     fcdraw(txtr,Screen_GetBackAddr()+SCREEN_OFFSET,&showtabs.c_table[celx+3][y]);
 /*     if (debug)
         {
-         memcpy(GetScreenAdr(),GetBuffer2nd(),512000);
+         memcpy(Screen_GetAddr(),Screen_GetBackAddr(),512000);
          showview(0,0,0,0);
         }*/
      }
@@ -770,14 +770,14 @@ void OutBuffer2nd(void)
   {
   int i;
   for (i=0;i<480;i++)
-	memcpy(GetScreenAdr()+i*scr_linelen2,GetBuffer2nd()+i*scr_linelen2,640*2);
+	memcpy(Screen_GetAddr()+i*scr_linelen2,Screen_GetBackAddr()+i*scr_linelen2,640*2);
   }
 
 void CopyBuffer2nd(void)
   {
   int i;
   for (i=0;i<480;i++)
-	memcpy(GetBuffer2nd()+i*scr_linelen2,GetScreenAdr()+i*scr_linelen2,640*2);
+	memcpy(Screen_GetBackAddr()+i*scr_linelen2,Screen_GetAddr()+i*scr_linelen2,640*2);
   }
 
   /*void chozeni(void)
@@ -940,7 +940,7 @@ void clear_buff(word *background,word backcolor,int lines)
   if (background!=NULL) put_picture(0,SCREEN_OFFLINE,background);else lines=0;
   if (lines!=360) 
 	for (i=lines;i<360;i++)
-     clear_color(GetBuffer2nd()+SCREEN_OFFSET+scr_linelen2*i,640,backcolor);
+     clear_color(Screen_GetBackAddr()+SCREEN_OFFSET+scr_linelen2*i,640,backcolor);
 
 }
 
@@ -954,8 +954,8 @@ void general_engine_init()
   calc_points();
   create_tables();
   create_zooming();
-  clear_screen(GetScreenAdr(),0);
-  clear_screen(GetBuffer2nd(),0);
+  clear_screen(Screen_GetAddr(),0);
+  clear_screen(Screen_GetBackAddr(),0);
   screen_buffer_size=scr_linelen2*480*2;
 }
 
@@ -1047,7 +1047,7 @@ void map_pos(int celx,int cely,int posx,int posy,int posz,int *x,int *y)
      calc_y_buffer((short *)&zoomtab_y,ys2,ys1,360);
      }
   if (y-ysr<0) ysr=y;
-  zoom.startptr=GetBuffer2nd()+y*640+x+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+y*640+x+SCREEN_OFFSET;
   zoom.texture=(short *)((char *)(&pic[3+SHADE_PAL])+xofs);
   zoom.texture_line=xs;
   zoom.xtable=(long *)&zoomtab_x;
@@ -1080,7 +1080,7 @@ void draw_item(int celx,int cely,int posx,int posy,short *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 
@@ -1089,7 +1089,7 @@ void put_textured_bar(void *src,int x,int y,int xs,int ys,int xofs,int yofs)
   word *pos;
   word *xy;
 
-  pos=GetScreenAdr()+x+scr_linelen2*y;
+  pos=Screen_GetAddr()+x+scr_linelen2*y;
   xy=src;
   xofs=xofs%xy[0];
   yofs=yofs%xy[1];
@@ -1116,8 +1116,8 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-     if (turn) enemy_draw_mirror(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
-     else enemy_draw(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     if (turn) enemy_draw_mirror(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     else enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 /*void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int posz,char turn)
@@ -1157,8 +1157,8 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   calc_y_buffer((short *)&zoomtab_y,320,last_scale,360);
   if (y-ysr<0) ysr=y;
   if (ysr<=0) return;
-  if (turn) zoom.startptr=GetBuffer2nd()+y*640+(VIEW_SIZE_X-x)+SCREEN_OFFSET;
-  else zoom.startptr=GetBuffer2nd()+y*640+x+SCREEN_OFFSET;
+  if (turn) zoom.startptr=Screen_GetBackAddr()+y*640+(VIEW_SIZE_X-x)+SCREEN_OFFSET;
+  else zoom.startptr=Screen_GetBackAddr()+y*640+x+SCREEN_OFFSET;
   zoom.texture=(short *)((char *)(&txtr[3+SHADE_PAL])+xofs);
   zoom.texture_line=xs;
   zoom.xtable=(long *)&zoomtab_x;
@@ -1261,13 +1261,13 @@ void draw_enemy(DRW_ENEMY *drw)
   else clipl=0;
   clipr=rclip-x;
   if (clipr>0)
-  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
-else enemy_draw_transp(drw->txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
   if (show_lives)
      {
      char s[25];
 
-     RedirectScreenBufferSecond();
+     Screen_SetBackAddr();
      sprintf(s,"%d",drw->num);
      sd=text_width(s)/2;
      if (lx-sd>0 && lx+sd<639)
@@ -1276,7 +1276,7 @@ else enemy_draw_transp(drw->txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen
         trans_bar(lx-sd-5,ly-10,sd*2+10,10,0);
         set_aligned_position(lx,ly,1,2,s);outtext(s);
         }
-     RestoreScreen();
+     Screen_Restore();
      }
   }
 
@@ -1285,7 +1285,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
   int x,y,yc,lx,sd;
   int clipl,clipr;
 
-  RedirectScreenBufferSecond();
+  Screen_SetBackAddr();
   map_pos(celx,cely,posx+64,posy+64,0,&x,&y);
   lx=x;
   x-=(adjust*last_scale)/320;
@@ -1298,7 +1298,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,GetBuffer2nd()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw(txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   if (show_names && name!=NULL)
      {
      sd=text_width(name)/2;
@@ -1309,7 +1309,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
         set_aligned_position(lx,ly,1,2,name);outtext(name);
         }
      }
-  RestoreScreen();
+  Screen_Restore();
   }
 
 
@@ -1327,7 +1327,7 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw_transp(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,(char *)txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
+  enemy_draw_transp(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,(char *)txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
   }
 
 __inline void prumeruj(void *target,void *source1, void *source2)
@@ -1363,7 +1363,7 @@ void double_zoom_xicht(word x,word y,word *source)
   sr=(char *)(xpal+256);
   for(yy=0;yy<75;yy++)
      {
-     sline=GetScreenAdr()+(y+(yy<<1))*scr_linelen2+x;
+     sline=Screen_GetAddr()+(y+(yy<<1))*scr_linelen2+x;
      slline=sline;
      pline=sr+yy*54;
      for(xx=0;xx<54;xx++)
@@ -1413,7 +1413,7 @@ void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
+  enemy_draw(txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
   }
 
 /*

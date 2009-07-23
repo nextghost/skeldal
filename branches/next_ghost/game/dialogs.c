@@ -34,7 +34,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/zvuk.h"
+//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "libs/mgifmem.h"
 #include "game/engine1.h"
@@ -158,7 +158,7 @@ void small_anm_delta(void *target,void *buff,void *paleta);
 
 static void animace_kouzla(int act,void *data,int csize)
   {
-  word *p=GetScreenAdr()+loc_anim_render_buffer;
+  word *p=Screen_GetAddr()+loc_anim_render_buffer;
   switch (act)
      {
      case MGIF_LZW:
@@ -205,7 +205,7 @@ static void dialog_anim(va_list args)
           if (hid) ukaz_mysku();
           showview(PIC_X,PIC_Y,320,180);
           }
-       tm2=get_timer_value();
+       tm2=Timer_GetValue();
        if (tm!=tm2)
         {
         spdc--;tm=tm2;
@@ -1146,11 +1146,11 @@ static void dark_screen(int time,int gtime)
   {
   int z,i;
   THUMAN *h;
-  i=get_timer_value()+time*50;
+  i=Timer_GetValue()+time*50;
   curcolor=0;
   bar(0,17,639,377);
   showview(0,0,0,0);
-  while (get_timer_value()<i) do_events();
+  while (Timer_GetValue()<i) do_events();
   game_time+=gtime*HODINA;
   for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->used && h->lives)
      {
@@ -1320,7 +1320,7 @@ void do_dialog()
 static void create_back_pic()
   {
   int skpx=4,skpy=5,xp,yp;
-  word *p,*s=GetScreenAdr()+SCREEN_OFFSET,*s2;
+  word *p,*s=Screen_GetAddr()+SCREEN_OFFSET,*s2;
 
   schovej_mysku();
   p=back_pic=NewArr(word,3+340*200);

@@ -20,7 +20,8 @@
  *  
  *  Last commit made by: $Id$
  */
-#include "types.h"
+#include "libs/types.h"
+#include "libs/system.h"
 #define line line32
 #define hor_line hor_line32
 #define ver_line ver_line32
@@ -30,10 +31,10 @@
 #define RGB888(r,g,b) ((unsigned short)((((r)<<8)&0xF800) | (((g)<<3) & 0x7C0) | ((b)>>3)))
 #define RGB555(r,g,b) ((unsigned short)(((r)<<11) | ((g)<<6) | (b)))
 
-word *GetScreenAdr();
-word *GetBuffer2nd();
-void RedirectScreen(word *newaddr);
-void RestoreScreen();
+//word *GetScreenAdr();
+//word *GetBuffer2nd();
+//void RedirectScreen(word *newaddr);
+//void RestoreScreen();
 void RedirectScreenBufferSecond();
 
 
@@ -53,7 +54,7 @@ extern char no_restore_mode;
 
 static __inline word *getadr32(longint x,longint y)
   {
-  return GetScreenAdr()+scr_linelen2*y+x;
+  return Screen_GetAddr()+scr_linelen2*y+x;
   }
 
 static __inline void point32(longint x,longint y, word color)

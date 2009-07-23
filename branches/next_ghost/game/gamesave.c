@@ -819,14 +819,14 @@ int load_basic_info()
   autosave_enabled=s.autosave;
   money=s.gold;
   for(i=0;i<5;i++) runes[i]=s.runes[i];
-  set_snd_effect(SND_GFX,s.sample_vol);
-  set_snd_effect(SND_MUSIC,s.music_vol);
-  set_snd_effect(SND_XBASS,s.xbass);
-  set_snd_effect(SND_BASS,s.bass);
-  set_snd_effect(SND_TREBL,s.treble);
-  set_snd_effect(SND_LSWAP,s.stereing);
-  set_snd_effect(SND_SWAP,s.swapchans);
-  set_snd_effect(SND_OUTFILTER,s.out_filter);
+  Sound_SetEffect(SND_GFX,s.sample_vol);
+  Sound_SetEffect(SND_MUSIC,s.music_vol);
+  Sound_SetEffect(SND_XBASS,s.xbass);
+  Sound_SetEffect(SND_BASS,s.bass);
+  Sound_SetEffect(SND_TREBL,s.treble);
+  Sound_SetEffect(SND_LSWAP,s.stereing);
+  Sound_SetEffect(SND_SWAP,s.swapchans);
+  Sound_SetEffect(SND_OUTFILTER,s.out_filter);
   if (level_fname==NULL || strncmp(s.level_name,level_fname,12))
      {
      strncpy(loadlevel.name,s.level_name,12);

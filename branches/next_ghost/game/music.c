@@ -103,8 +103,8 @@ static char last_beep_lev;
 static int get_pc_speed()
   {
   int ticks=0;
-  int timer=get_timer_value();
-  while (get_timer_value()-timer<50) pcspeak_uroven(127,1000),ticks+=1000;
+  int timer=Timer_GetValue();
+  while (Timer_GetValue()-timer<50) pcspeak_uroven(127,1000),ticks+=1000;
   return ticks;
   }
 

@@ -74,9 +74,9 @@ static void do_setup_change()
   c=f_get_value(0,o_aktual->id);
   switch (o_aktual->id)
      {
-     case 10:set_snd_effect(SND_SWAP,c & 1);break;
-     case 20:set_snd_effect(SND_OUTFILTER,c & 1);break;
-     default:set_snd_effect(effects[o_aktual->id/10-20],c);break;
+     case 10:Sound_SetEffect(SND_SWAP,c & 1);break;
+     case 20:Sound_SetEffect(SND_OUTFILTER,c & 1);break;
+     default:Sound_SetEffect(effects[o_aktual->id/10-20],c);break;
      }
   }
 
@@ -242,11 +242,11 @@ void GameResume(EVENT_MSG *msg,void **data)
   if (msg->msg==E_INIT)
      {
      volsave=get_snd_effect(SND_GVOLUME);
-     set_snd_effect(SND_GVOLUME,volsave>>1);
+     Sound_SetEffect(SND_GVOLUME,volsave>>1);
      }
   if (msg->msg==E_KEYBOARD)
      {
-     set_snd_effect(SND_GVOLUME,volsave);
+     Sound_SetEffect(SND_GVOLUME,volsave);
      wire_main_functs();
      msg->msg=-2;
      }

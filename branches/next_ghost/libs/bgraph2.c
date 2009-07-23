@@ -322,7 +322,8 @@ void switchvesabank(word bank)
 */
 int initmode_dx(char inwindow, char zoom, char monitor, int refresh)
   {
-  if (!DXInit64(inwindow,zoom,monitor,refresh)) return -1;
+// FIXME: rewrite
+//  if (!DXInit64(inwindow,zoom,monitor,refresh)) return -1;
   showview=showview_dx;
   screenstate=1;
   scr_linelen2=scr_linelen/2;
@@ -433,7 +434,8 @@ void closemode()
   if (screenstate)
      {
      palmem=NULL;
-     DXCloseMode();
+     Sys_Shutdown();
+//     DXCloseMode();
      }
   screenstate=0;
 
@@ -443,13 +445,13 @@ static void showview_dx(word x,word y,word xs,word ys)
   {
 //  register longint a;
 
-  if (x>DxGetResX() || y>DxGetResY()) return;
-  if (xs==0) xs=DxGetResX();
-  if (ys==0) ys=DxGetResY();
+  if (x>Screen_GetXSize() || y>Screen_GetYSize()) return;
+  if (xs==0) xs=Screen_GetXSize();
+  if (ys==0) ys=Screen_GetYSize();
   xs+=2;ys+=2;
-  if (x+xs>DxGetResX()) xs=DxGetResX()-x;
-  if (y+ys>DxGetResY()) ys=DxGetResY()-y;
-  DXCopyRects64(x,y,xs,ys);  
+  if (x+xs>Screen_GetXSize()) xs=Screen_GetXSize()-x;
+  if (y+ys>Screen_GetYSize()) ys=Screen_GetYSize()-y;
+  Screen_DrawRect(x,y,xs,ys);  
   }
 /*
 static void showview64b(word x,word y,word xs,word ys)
@@ -518,8 +520,8 @@ void show_ms_cursor(integer x,integer y)
   {
   integer xs,ys;
 
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
 
   if (x<0) x=0;
   if (x>mx) x=mx;
@@ -553,8 +555,8 @@ void *register_ms_cursor(void *cursor)
 void move_ms_cursor(integer newx,integer newy,char nodraw)
   {
   integer xs,ys;
-  int mx =  DxGetResX() - 1;
-  int my =  DxGetResY() - 1;
+  int mx =  Screen_GetXSize() - 1;
+  int my =  Screen_GetYSize() - 1;
   static integer msshowx=0,msshowy=0;
 
   xs=*(integer *)mscursor;

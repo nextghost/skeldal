@@ -229,7 +229,7 @@ void displ_button(char disable,char **text)
      {
      if (disable & 1)
         {
-        put_8bit_clipped(ablock(H_GEN_CHARGENB),(392+posy[i])*scr_linelen2+524+GetScreenAdr(),posy[i],96,sizy[i]);
+        put_8bit_clipped(ablock(H_GEN_CHARGENB),(392+posy[i])*scr_linelen2+524+Screen_GetAddr(),posy[i],96,sizy[i]);
         font_color(color_butt_off);
         }
      else
@@ -246,7 +246,7 @@ static void draw_other_bar()
   {
   int i;
   word *bbar=ablock(H_BOTTBAR);
-  word *screen=GetScreenAdr()+(480-102)*scr_linelen2;
+  word *screen=Screen_GetAddr()+(480-102)*scr_linelen2;
   for (i=0;i<102;i++,screen+=scr_linelen2,bbar+=scr_linelen2) memcpy(screen,bbar,scr_linelen);
   //put_8bit_clipped(ablock(H_GEN_OKBUTT),378*640+520+screen,0,120,102);
   displ_button(b_disables,b_texty);
@@ -311,7 +311,7 @@ static void zobraz_perlu(void)
   vypocet_perly(cur_angle,perla[0],perla[1],&x,&y);
   xs=perla[0];ys=perla[1];
   get_picture(x,y,xs,ys,pod_perlou);
-  sss=x+scr_linelen2*y+GetScreenAdr();
+  sss=x+scr_linelen2*y+Screen_GetAddr();
   p=(char *)(perla+256+3);
   b=perla+3;
   for(;ys>0;ys--)

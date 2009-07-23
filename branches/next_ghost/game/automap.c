@@ -33,7 +33,7 @@
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-#include "libs/sound.h"
+//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "libs/pcx.h"
 #include "globals.h"
@@ -517,7 +517,7 @@ static void displ_button(char disable,char **text)
      {
      if (disable & 1)
         {
-        put_8bit_clipped(ablock(H_CHARGENB),(392+posy[i])*scr_linelen2+524+GetScreenAdr(),posy[i],96,sizy[i]);
+        put_8bit_clipped(ablock(H_CHARGENB),(392+posy[i])*scr_linelen2+524+Screen_GetAddr(),posy[i],96,sizy[i]);
         font_color(color_butt_off);
         }
      else

@@ -1250,7 +1250,7 @@ void display_items_wearing(THUMAN *h)
   int it;
   put_picture(4,TOP_OFS,ablock(H_IOBLOUK));
   zneplatnit_block(h-postavy+H_POSTAVY);
-  enemy_draw(ablock(h-postavy+H_POSTAVY),GetScreenAdr()+HUMAN_X+HUMAN_Y*scr_linelen2,6,320,HUMAN_Y,640*65536);
+  enemy_draw(ablock(h-postavy+H_POSTAVY),Screen_GetAddr()+HUMAN_X+HUMAN_Y*scr_linelen2,6,320,HUMAN_Y,640*65536);
   it=h->wearing[PO_BATOH];
   if (it)
         {
@@ -1261,7 +1261,7 @@ void display_items_wearing(THUMAN *h)
         vzhled=itt->vzhled;
         if (h->female==1) vzhled+=face_arr[2];else vzhled+=face_arr[1];
         w=ablock(vzhled);
-        enemy_draw(w,GetScreenAdr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+scr_linelen2*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
+        enemy_draw(w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+scr_linelen2*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
         }
   }
 

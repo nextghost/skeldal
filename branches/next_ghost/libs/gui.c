@@ -94,7 +94,7 @@ void check_window(WINDOW *w)
   {
   if (w->x<=w->border3d.bsize) w->x=w->border3d.bsize;
   if (w->y<=w->border3d.bsize) w->y=w->border3d.bsize;
-  if (w->x>=SCR_WIDTH_X-w->border3d.bsize-w->xs) w->x=SCR_WIDTH_X-w->border3d.bsize-w->xs-1;
+  if (w->x>=Screen_GetXSize()-w->border3d.bsize-w->xs) w->x=Screen_GetXSize()-w->border3d.bsize-w->xs-1;
   if (w->y>=desktop_y_size-w->border3d.bsize-w->ys) w->y=desktop_y_size-w->border3d.bsize-w->ys-1;
   }
 
@@ -251,7 +251,7 @@ void absolute_window(WINDOW *w,OBJREC *o, int *x, int *y)
 
      for (i=y;i<=y+ys;i++)
         {
-        a=GetScreenAdr()+scr_linelen2*i+x;
+        a=Screen_GetAddr()+scr_linelen2*i+x;
         for(j=x;j<=x+xs;j++)
            {
            *a=((*a & RGB555(30,30,30))+(color & RGB555(30,30,30)))>>1;
@@ -449,7 +449,7 @@ void redraw_desktop_call(EVENT_MSG *msg,void **data)
   if (gui_background==NULL)
      {
      curcolor=DESK_TOP_COLOR;
-     bar(0,0,SCR_WIDTH_X,SCR_WIDTH_Y-1);
+     bar(0,0,Screen_GetXSize(),Screen_GetYSize()-1);
      }
   else
      put_picture(0,0,gui_background);
@@ -726,7 +726,7 @@ void do_it_events(EVENT_MSG *msg,void **user_data)
 
 void install_gui(void)
   {
-  desktop_y_size = SCR_WIDTH_Y;
+  desktop_y_size = Screen_GetYSize();
   send_message(E_ADD,E_MOUSE,do_it_events);
   send_message(E_ADD,E_KEYBOARD,do_it_events);
   send_message(E_ADD,E_CHANGE,do_it_events);
@@ -934,7 +934,7 @@ void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys)
 
   if (newxs<w->minsizx) newxs=w->minsizx;
   if (newys<w->minsizy) newys=w->minsizy;
-  if (newxs>=(SCR_WIDTH_X-2*w->border3d.bsize)) newxs=(SCR_WIDTH_X-2*w->border3d.bsize)-1;
+  if (newxs>=(Screen_GetXSize()-2*w->border3d.bsize)) newxs=(Screen_GetXSize()-2*w->border3d.bsize)-1;
   if (newys+2>=(desktop_y_size-2*w->border3d.bsize)) newys=(desktop_y_size-2*w->border3d.bsize)-2;
   xsdif=newxs-w->xs;
   ysdif=newys-w->ys;

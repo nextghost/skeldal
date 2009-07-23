@@ -86,7 +86,7 @@ void save_dump()
   for(i=4,r=0;i>0;i--) fwrite(&r,1,4,f);
   for(y=DxGetResY();y>0;y--)
      {
-     word *scr=GetScreenAdr();
+     word *scr=Screen_GetAddr();
      a=scr+(y-1)*scr_linelen2;
      for(x=0;x<DxGetResX();x++)
         {
