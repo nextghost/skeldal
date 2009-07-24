@@ -391,27 +391,35 @@ char *get_next_title(char control,char *filename)
   static FILE *titles=NULL;
   static ENCFILE fl;
   static char buffer[81];
-  char *path,*c;
+	char *path, *c, *p1, *p2;
 
   switch(control)
      {
-     case 1:concat(path,pathtable[SR_MAP],filename);
-            titles=enc_open(path,&fl);
-            if (titles==NULL)
-              {
-              concat(path,pathtable[SR_DATA],filename);
-              titles=enc_open(path,&fl);
-              if (titles==NULL)
-                {
-			    char popis[300];
-                closemode();
-                sprintf(popis,"Soubor nenalezen: %s%s nebo %s%s\n",pathtable[SR_MAP],filename,pathtable[SR_DATA],filename);
-		Sys_ErrorBox(popis);
-//				MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
-                exit(1);
-                }
-              }
-            return (char *)titles;
+     case 1:
+//            concat(path,pathtable[SR_MAP],filename);
+//            titles=enc_open(path,&fl);
+		p2 = Sys_FullPath(SR_MAP, filename);
+		p1 = alloca((strlen(p2) + 1) * sizeof(char));
+		strcpy(p1, p2);
+		titles = enc_open(p1, &fl);
+		if (!titles) {
+//              concat(path,pathtable[SR_DATA],filename);
+//              titles=enc_open(path,&fl);
+			p2 = Sys_FullPath(SR_DATA, filename);
+			titles = enc_open(p2, &fl);
+		}
+
+		if (!titles) {
+			char popis[300];
+			closemode();
+			sprintf(popis, "Soubor nenalezen: %s ani %s\n", p1, p2);
+			Sys_ErrorBox(popis);
+//			MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
+			exit(1);
+		}
+
+		// FIXME: this is disgusting
+		return (char *)titles;
      case 0:if (titles!=NULL)fgets(buffer,80,titles);
             c=strchr(buffer,'\n');if (c!=NULL) *c=0;
             return buffer;

@@ -550,7 +550,7 @@ extern int viewsector;             //aktualni sektor vyhledu
 extern int viewdir;                //aktualni smer vyhledu
 extern THE_TIMER timer_tree;       //strom casovych udalosti
 extern D_ACTION *d_action;         //spojovy seznam zpozdenych akci
-extern char *pathtable[];          //tabulka adresaru
+//extern char *pathtable[];          //tabulka adresaru
 extern char level_preload;         //informace o preloadingu
 extern char **texty;               //globalni tabulka textu
 extern char **level_texts;         //lokalni tabulka textu

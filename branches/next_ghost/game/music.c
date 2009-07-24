@@ -35,6 +35,7 @@
 #include <math.h>
 //#include <i86.h>  //Sound and Nosound
 #include "libs/strlite.h"
+#include "libs/system.h"
 //#include <io.h>
 
 #define PL_RANDOM 1
@@ -451,6 +452,7 @@ void play_next_music(char **c)
   {
   int i,step;
   static char d[PATH_MAX];
+	char *tmp;
 
   *c=NULL;
   if (cur_playlist==NULL) return;
@@ -469,9 +471,18 @@ void play_next_music(char **c)
      }
   while (step);
   playing_track=i;
+/*
   snprintf(d,sizeof(d),"%s%s",pathtable[SR_MUSIC],cur_playlist[i]+1);
   if (access(d,0) == -1)
       snprintf(d,sizeof(d),"%s%s",pathtable[SR_ORGMUSIC],cur_playlist[i]+1);
+*/
+
+	tmp = Sys_FullPath(SR_MUSIC, cur_playlist[i] + 1);
+	if (!Sys_FileExists(tmp)) {
+		tmp = Sys_FullPath(SR_ORGMUSIC, cur_playlist[i] + 1);
+	}
+	strcpy(d, tmp);
+
   cur_playlist[i][0]=33;
   remain_play--;
   *c=d;

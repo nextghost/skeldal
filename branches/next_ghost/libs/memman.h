@@ -81,7 +81,7 @@ typedef handle_list *handle_groups[BK_MAJOR_HANDLES];
 #define BK_PRELOAD 8
 #define BK_HSWAP 16
 
-extern char **mman_pathlist;  //tento pointer musi byt naplnen ukazatelem na tabulku cest
+//extern char **mman_pathlist;  //tento pointer musi byt naplnen ukazatelem na tabulku cest
 extern void (*mem_error)(size_t);    //pokud neni NULL je tato funkce volana vzdy kdyz dojde pamet a system si s tim nevi rady
 extern void (*swap_error)();
 extern int memman_handle; //cislo handle naposled zpracovavaneho prikazem ablock

@@ -274,7 +274,8 @@ static char test_kriterii(void)
         default:
                 {
                 char c[200];
-                sprintf(c,"%s%s.TMP",pathtable[SR_TEMP],text);
+//                sprintf(c,"%s%s.TMP",pathtable[SR_TEMP],text);
+                sprintf(c, "%s.TMP", Sys_FullPath(SR_TEMP, text));
                 hodn=!access(c,0);
                 }
               break;

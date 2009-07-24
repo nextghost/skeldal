@@ -146,8 +146,9 @@ void expand_map_file_name(char *s) //prepise *.map na fullpath\*.TMP
   c=strchr(s,0);
   while (c!=s && *c!='.' && *c!='\\') c--;
   if (*c=='.') strcpy(c,".TMP");
-  concat(st,pathtable[SR_TEMP],s);
-  strcpy(s,st);
+//  concat(st,pathtable[SR_TEMP],s);
+//  strcpy(s,st);
+	strcpy(s, Sys_FullPath(SR_TEMP, s));
   }
 
 int load_org_map(char *filename,void **sides,void **sectors,void **coords,int *mapsize)
@@ -597,13 +598,14 @@ int pack_status_file(FILE *f,char *status_name)
   word crc;
 
   SEND_LOG("(SAVELOAD) Packing status file '%s'",status_name,0);
-  fullnam=alloca(strlen(status_name)+strlen(pathtable[SR_TEMP])+1);
-  if (fullnam==NULL) return 2;
-  strcpy(fullnam,pathtable[SR_TEMP]);
-  strcat(fullnam,status_name);
+//  fullnam=alloca(strlen(status_name)+strlen(pathtable[SR_TEMP])+1);
+//  if (fullnam==NULL) return 2;
+//  strcpy(fullnam,pathtable[SR_TEMP]);
+//  strcat(fullnam,status_name);
 // O_BINARY is Windows-specific
 //  stt=open(fullnam,O_RDONLY | O_BINARY);
-  stt=fopen(fullnam,"rb");
+//  stt=fopen(fullnam,"rb");
+	stt = fopen(Sys_FullPath(SR_TEMP, status_name), "rb");
 //  fsz=filelength(stt);
   fsz = fseek(stt, 0, SEEK_END);
   fseek(stt, 0, SEEK_SET);
@@ -640,10 +642,10 @@ int unpack_status_file(FILE *f)
   fread(&fsz,1,4,f);
   c=buffer=(char *)getmem(fsz);
   if (fread(buffer,1,fsz,f)!=(unsigned)fsz) return 1;
-  fullnam=alloca(strlen(name)+strlen(pathtable[SR_TEMP])+2);
-  if (fullnam==NULL) return 2;
-  strcpy(fullnam,pathtable[SR_TEMP]);
-  strcat(fullnam,name);
+//  fullnam=alloca(strlen(name)+strlen(pathtable[SR_TEMP])+2);
+//  if (fullnam==NULL) return 2;
+//  strcpy(fullnam,pathtable[SR_TEMP]);
+//  strcat(fullnam,name);
   fsz-=2;
   crc=vypocet_crc(c,fsz);
   c+=fsz;memcpy(&crccheck,c,sizeof(crccheck));
@@ -654,8 +656,9 @@ int unpack_status_file(FILE *f)
      }
 // O_BINARY and _S_IREAD/_S_IWRITE are Windows-specific flags
 //  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
-  stt=fopen(fullnam, "wb+");
+//  stt=fopen(fullnam, "wb+");
 //  if (stt==-1)
+	stt = fopen(Sys_FullPath(SR_TEMP, name), "wb+");
   if (!stt)
      {
      free(buffer);
@@ -688,7 +691,8 @@ int save_basic_info()
   char res=0;
   THUMAN *h;
 
-  concat(c,pathtable[SR_TEMP],_GAME_ST);
+//  concat(c,pathtable[SR_TEMP],_GAME_ST);
+	c = Sys_FullPath(SR_TEMP, _GAME_ST);
   SEND_LOG("(SAVELOAD) Saving basic info for game (file:%s)",c,0);
   f=fopen(c,"wb");
   if (f==NULL) return 1;
@@ -747,7 +751,8 @@ int load_basic_info()
   TITEM *itg;
   THUMAN *h;
 
-  concat(c,pathtable[SR_TEMP],_GAME_ST);
+//  concat(c,pathtable[SR_TEMP],_GAME_ST);
+	c = Sys_FullPath(SR_TEMP, _GAME_ST);
   SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)",c,0);
   f=fopen(c,"rb");
   if (f==NULL) return 1;
@@ -819,6 +824,7 @@ int load_basic_info()
   return res;
   }
 
+/*
 static void MakeSaveGameDir(const char *name)
 {
   char *p=(char *)alloca(strlen(name)+1);
@@ -826,13 +832,15 @@ static void MakeSaveGameDir(const char *name)
   p[strlen(p)-1]=0;
   Sys_Mkdir(p);
 }
+*/
 
 static int save_global_events()
 {
   FILE *f;
   char *c;
-  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-  f=fopen(c,"wb");
+//  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
+//  f=fopen(c,"wb");
+	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "wb");
   if (f==NULL) return 1;
   fwrite(GlobEventList,1,sizeof(GlobEventList),f);
   fclose(f);
@@ -845,8 +853,9 @@ static int load_global_events()
   char *c;
   memset(GlobEventList,0,sizeof(GlobEventList));
 
-  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-  f=fopen(c,"rb");
+//  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
+//  f=fopen(c,"rb");
+	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "rb");
   if (f==NULL) return 1;
   fread(GlobEventList,1,sizeof(GlobEventList),f);
   fclose(f);
@@ -861,8 +870,10 @@ int save_game(int slotnum,char *gamename)
 
   SEND_LOG("(SAVELOAD) Saving game slot %d",slotnum,0);
   save_map_state();
-  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
-  MakeSaveGameDir(pathtable[SR_SAVES]);
+//  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
+// FIXME: rewrite
+//  MakeSaveGameDir(pathtable[SR_SAVES]);
+	sn = Sys_FullPath(SR_SAVES, _SLOT_SAV);
   ssn=alloca(strlen(sn)+3);
   sprintf(ssn,sn,slotnum);
   gn=alloca(SAVE_NAME_SIZE);
@@ -906,7 +917,8 @@ int load_game(int slotnum)
   battle=0;
   close_story_file();
   Sys_PurgeTemps(0);
-  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
+//  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
+	sn = Sys_FullPath(SR_SAVES, _SLOT_SAV);
   ssn=alloca(strlen(sn)+3);
   sprintf(ssn,sn,slotnum);
   svf=fopen(ssn,"rb");
@@ -948,7 +960,8 @@ static void load_specific_file(int slot_num,char *filename,void **out,long *size
   char fname[12];
   char succes=0;
 
-  concat(c,pathtable[SR_SAVES],_SLOT_SAV);
+//  concat(c,pathtable[SR_SAVES],_SLOT_SAV);
+	c = Sys_FullPath(SR_SAVES, _SLOT_SAV);
   d=alloca(strlen(c)+2);
   sprintf(d,c,slot_num);
   slot=fopen(d,"rb");
@@ -1004,7 +1017,8 @@ void read_slot_list()
   char *mask,*name;
   char slotname[SAVE_NAME_SIZE];
   if (slot_list==NULL) slot_list=create_list(SLOTS_MAX);
-  concat(mask,pathtable[SR_SAVES],_SLOT_SAV);
+//  concat(mask,pathtable[SR_SAVES],_SLOT_SAV);
+	mask = Sys_FullPath(SR_SAVES, _SLOT_SAV);
   name=alloca(strlen(mask)+1);
   for(i=0;i<SLOTS_MAX;i++)
      {
@@ -1522,7 +1536,8 @@ void open_story_file()
   char *c;
   int err;
 
-  concat(c,pathtable[SR_TEMP],STORY_BOOK);
+//  concat(c,pathtable[SR_TEMP],STORY_BOOK);
+	c = Sys_FullPath(SR_TEMP, STORY_BOOK);
   story=fopen(c,"a");
 //  err=GetLastError();
   if (story==NULL) story=fopen(c,"w");

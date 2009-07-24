@@ -185,9 +185,10 @@ static void dialog_anim(va_list args)
 
   loc_anim_render_buffer=PIC_Y*scr_linelen2+PIC_X;
   mgif_install_proc(animace_kouzla);
-  concat(ch,pathtable[SR_DIALOGS],block);
+//  concat(ch,pathtable[SR_DIALOGS],block);
   free(block);
-  aptr=load_file(ch);
+//  aptr=load_file(ch);
+  aptr=load_file(Sys_FullPath(SR_DIALOGS, block));
   do
      {
      anm=open_mgif(aptr);

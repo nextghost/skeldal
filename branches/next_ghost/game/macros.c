@@ -606,7 +606,7 @@ static ma_play_anim(char *filename,char cls)
   char *a;
 
   unwire_main_functs();
-  concat(a,pathtable[SR_VIDEO],filename);
+//  concat(a,pathtable[SR_VIDEO],filename);
   curcolor=0;
   if (cls)
      {
@@ -616,7 +616,8 @@ static ma_play_anim(char *filename,char cls)
   mute_all_tracks(1);
   cancel_render=0;
   cancel_pass=0;
-  play_movie_seq(a,cls?60:SCREEN_OFFLINE);
+//  play_movie_seq(a,cls?60:SCREEN_OFFLINE);
+	play_movie_seq(Sys_FullPath(SR_VIDEO, filename), cls ? 60 : SCREEN_OFFLINE);
   wire_main_functs();
   }
 

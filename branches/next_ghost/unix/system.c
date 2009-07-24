@@ -23,9 +23,9 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
+#include <unistd.h>
 #include "libs/system.h"
-
-char *pathtable[18] = {0};
 
 char *strupr(char *str) {
 	int i;
@@ -37,294 +37,369 @@ char *strupr(char *str) {
 
 // TODO: implement these
 void Mouse_GetEvent(MS_EVENT *event) {
-
+	assert(0);
 }
 
 void Mouse_MapWheel(char up, char down) {
+	assert(0);
 
 }
 
 int Input_Kbhit(void) {
+	assert(0);
 
 }
 
 int Input_ReadKey(void) {
+	assert(0);
 
 }
 
 void Sys_ErrorBox(const char *msg) {
+	assert(0);
 
 }
 
 void Sys_WarnBox(const char *msg) {
+	assert(0);
 
 }
 
 void Sys_InfoBox(const char *msg) {
+	assert(0);
 
 }
 
 void Sys_Shutdown(void) {
+	assert(0);
 
 }
 
 void Sys_SetEnv(const char *name, const char *value) {
-
+	setenv(name, value, 1);
 }
 
 void Sys_Mkdir(const char *path) {
+	assert(0);
 
 }
 
 int Sys_LatestFile(char *mask, int offset) {
+	assert(0);
 	return 0;
 }
 
 void Sys_PurgeTemps(char z) {
+	assert(0);
 
 }
 
 int Sys_PackStatus(FILE *f) {
+	assert(0);
 	return 0;
 }
 
+int Sys_FileExists(const char *file) {
+	return !access(file, F_OK);
+}
+
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
+	assert(0);
 	return 0;
 }
 
 int Screen_GetXSize(void) {
+	assert(0);
 	return 0;
 }
 
 int Screen_GetYSize(void) {
+	assert(0);
 	return 0;
 }
 
 unsigned short *Screen_GetAddr(void) {
+	assert(0);
 	return NULL;
 }
 
 unsigned short *Screen_GetBackAddr(void) {
+	assert(0);
 	return NULL;
 }
 
 long Screen_GetSize(void) {
+	assert(0);
 	return 0;
 }
 
 void Screen_SetAddr(unsigned short *addr) {
+	assert(0);
 
 }
 
 void Screen_SetBackAddr() {
+	assert(0);
 
 }
 
 void Screen_Restore(void) {
+	assert(0);
 
 }
 
 void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
+	assert(0);
 
 }
 
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
+	assert(0);
 
 }
 
 void *Screen_PrepareWalk(int ypos) {
+	assert(0);
 	return NULL;
 }
 
 void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka) {
+	assert(0);
 
 }
 
 void Screen_DoneWalk(void *handle) {
+	assert(0);
 
 }
 
 void *Screen_PrepareTurn(int ypos) {
+	assert(0);
 	return NULL;
 }
 
 void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka) {
+	assert(0);
 
 }
 
 void Screen_DoneTurn(void *handle) {
+	assert(0);
 
 }
 
 void Screen_StripBlt(void *data, unsigned int startline, unsigned long wihtd) {
+	assert(0);
 
 }
 
 void Screen_Shift(int x, int y) {
+	assert(0);
 
 }
 
 void ShareCPU(void) {
+	assert(0);
 
 }
 
 char Sound_SetEffect(int filter, int data) {
+	assert(0);
 	return 0;
 }
 
 int Sound_GetEffect(int filter) {
+	assert(0);
 	return 0;
 }
 
 char Sound_CheckEffect(int filter) {
+	assert(0);
 	return 0;
 }
 
 char Sound_IsActive(void) {
+	assert(0);
 	return 0;
 }
 
 void Sound_SetVolume(int channel, int left, int right) {
+	assert(0);
 
 }
 
 void Sound_GetVolume(int channel, int *left, int *right) {
+	assert(0);
 
 }
 
 char Sound_GetChannelState(int channel) {
+	assert(0);
 	return 0;
 }
 
 int Sound_MixBack(int synchro) {
+	assert(0);
 	return 0;
 }
 
 void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
+	assert(0);
 
 }
 
 void Sound_ChangeMusic(char *file) {
+	assert(0);
 
 }
 
 void Sound_BreakLoop(int channel) {
+	assert(0);
 
 }
 
 void Sound_BreakExt(int channel, void *sample, long size) {
+	assert(0);
 
 }
 
 void Sound_Mute(int channel) {
+	assert(0);
 
 }
 
 void Sound_StopMixing(void) {
+	assert(0);
 
 }
 
 void Sound_StartMixing(void) {
+	assert(0);
 
 }
 
 void Sound_SetMixer(int dev, int freq, ...) {
+	assert(0);
 
 }
 
 int Task_Add(int stack, TaskerFunctionName func, ...) {
+	assert(0);
 	return 0;
 }
 
 void *Task_Sleep(void *data) {
+	assert(0);
 	return NULL;
 }
 
 void *Task_WaitEvent(long event) {
+	assert(0);
 	return NULL;
 }
 
 char Task_IsMaster(void) {
+	assert(0);
 	return 0;
 }
 
 int Task_Count(void) {
+	assert(0);
 	return 0;
 }
 
 void Task_Wakeup(EVENT_MSG *msg) {
+	assert(0);
 
 }
 
 void Task_Term(int id) {
+	assert(0);
 
 }
 
 char Task_IsRunning(int id) {
+	assert(0);
 	return 0;
 }
 
 char Task_QuitMsg() {
+	assert(0);
 	return 0;
 }
 
 void Task_Shutdown(int id) {
+	assert(0);
 
 }
 
 int Timer_GetValue(void) {
+	assert(0);
 	return 0;
 }
 
 int Timer_GetTick(void) {
+	assert(0);
 	return 0;
 }
 
 void Timer_Sleep(int msec) {
+	assert(0);
 
 }
 
 int get_control_state(void) {
+	assert(0);
 	return 0;
 }
 
 int get_shift_state(void) {
+	assert(0);
 	return 0;
 }
 
 void *LoadDefaultFont(void) {
+	assert(0);
 	return NULL;
 }
 
 void *PrepareVideoSound(int mixfreq, int buffsize) {
+	assert(0);
 	return NULL;
 }
 
 void DoneVideoSound(void *buffer) {
+	assert(0);
 
 }
 
 char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat, short *accnums, long *writepos) {
+	assert(0);
 	return 0;
 }
 
 void *OpenMGFFile(const char *filename) {
+	assert(0);
 	return NULL;
 }
 
 void CloseMGFFile(void *file) {
+	assert(0);
 
 }
 
+// TODO: implement game launcher
 char OtevriUvodniOkno() {
-	return 0;
+	return 1;
 }
 
 char SelectAdventure() {
+	assert(0);
 	return 0;
 }
 
 char *GetSelectedAdventure() {
+	assert(0);
 	return NULL;
 }
 

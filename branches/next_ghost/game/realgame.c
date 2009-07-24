@@ -169,8 +169,9 @@ void preload_objects(int ofsts)
 
   for(i=1;i<mapsize;i++) if (map_sectors[i].sector_type==S_LODKA) break;
   if (i==mapsize) lodka=0;
-  sprintf(c,"%sLOADING.MUS",pathtable[SR_WORK]);
+//  sprintf(c,"%sLOADING.MUS",pathtable[SR_WORK]);
 //  Sound_ChangeMusic(c);
+//  Sound_ChangeMusic(Sys_FullPath(SR_WORK, "LOADING.MUS"));
   trans_bar(0,460,640,20,0);
   position(0,460);
   set_font(H_FBOLD,RGB555(0,31,0));
@@ -426,8 +427,9 @@ void save_leaving_places(void)
   char *s;
 
   if (leaving_places==NULL) return;
-  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
-  save_config(leaving_places,s);
+//  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
+//  save_config(leaving_places,s);
+	save_config(leaving_places, Sys_FullPath(SR_TEMP, "_LPLACES.TMP"));
   }
 
 void load_leaving_places(void)
@@ -435,8 +437,9 @@ void load_leaving_places(void)
   char *s;
 
   if (leaving_places!=NULL) release_list(leaving_places);
-  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
-  leaving_places=read_config(s);
+//  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
+//  leaving_places=read_config(s);
+	leaving_places = read_config(Sys_FullPath(SR_TEMP, "_LPLACES.TMP"));
   }
 
 int set_leaving_place(void)

@@ -47,7 +47,7 @@
 void bonz_table();
 
 #define NON_GETMEM_RESERVED (4*1024)
-char **mman_pathlist=NULL;
+//char **mman_pathlist=NULL;
 static char swap_status=0;
 
 //static int swap;
@@ -205,6 +205,7 @@ static void bonz_table()
 
 static int test_file_exist_DOS(int group,char *filename)
   {
+/*
      char *f;
 
      f=alloca(strlen(mman_pathlist[group])+strlen(filename)+1);
@@ -212,6 +213,9 @@ static int test_file_exist_DOS(int group,char *filename)
      strcat(f,filename);
      if (access(f,0)) return 0;
      return 1;
+*/
+
+	return Sys_FileExists(Sys_FullPath(group, filename));
   }
 
 
@@ -573,7 +577,12 @@ void *afile(char *filename,int group,long *blocksize)
      p=getmem(*blocksize);
 //     read(hnd,p,*blocksize);
      fread(p,1,*blocksize,hnd);
-     }
+	} else {
+		SEND_LOG("(LOAD) Afile is loading file '%s' from disk", d, group);
+		p = load_file(Sys_FullPath(group, filename));
+		*blocksize=last_load_size;
+	}
+/*
   else if (mman_pathlist!=NULL)
      {
      SEND_LOG("(LOAD) Afile is loading file '%s' from disk",d,group);
@@ -583,6 +592,7 @@ void *afile(char *filename,int group,long *blocksize)
      *blocksize=last_load_size;
      }
   else return NULL;
+*/
   return p;
   }
 
@@ -607,7 +617,8 @@ void *ablock(int handle)
   if (h->status==BK_NOT_LOADED)
      {
         void *p;long s;
-        char c[200];
+//        char c[200];
+	char *c;
 
         SEND_LOG("(LOAD) Loading file as block '%-.12hs' %04X",h->src_file,handle);
         if (h->seekpos==0)
@@ -615,9 +626,15 @@ void *ablock(int handle)
            if (h->src_file[0]!=0)
               {
               if (mman_action!=NULL) mman_action(MMA_READ);
+/*
               strcpy(c,mman_pathlist[h->path]);
 	      strcat(c,h->src_file);
               c[strlen(mman_pathlist[h->path])+12]='\0';
+*/
+		c = Sys_FullPath(h->path, "");
+		s = strlen(c);
+		strcpy(c+s, h->src_file);
+		c[s+12] = '\0';
               p=load_file(c);
               s=last_load_size;
               }

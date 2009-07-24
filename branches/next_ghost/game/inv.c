@@ -1795,16 +1795,27 @@ static char MakeItemCombinations(short *itm1, short *itm2)
 
   FILE *table;
 
+/*
   concat(fname,pathtable[SR_MAP],"COMBITEM.DAT");
   table=fopen(fname,"r");
   if (table==0 && pathtable[SR_MAP2][0])
   {
       concat(fname,pathtable[SR_MAP2],fname);
-// WTF?!
-//      table=fopen(table,"r");
-      table=fopen(fname,"r");
+      table=fopen(table,"r");
   }
   if (table==0) return 0;
+*/
+
+	table = fopen(Sys_FullPath(SR_MAP, "COMBITEM.DAT"), "r");
+
+	if (!table) {
+		table = fopen(Sys_FullPath(SR_MAP2, "COMBITEM.DAT"), "r");
+	}
+
+	if (!table) {
+		return 0;
+	}
+
   cnt=fscanf(table,"%d %d -> %d %d",&src1,&src2,&trg1,&trg2);
   while(cnt>=3)
   {
@@ -3005,8 +3016,9 @@ char save_shops()
 
   SEND_LOG("(SHOP) Saving shops...",0,0);
   if (max_shops==0 || shop_hacek==NULL) return 0;
-  concat(c,pathtable[SR_TEMP],_SHOP_ST);
-  f=fopen(c,"wb");
+//  concat(c,pathtable[SR_TEMP],_SHOP_ST);
+//  f=fopen(c,"wb");
+	f = fopen(Sys_FullPath(SR_TEMP, _SHOP_ST), "wb");
   if (f==NULL) return 1;
   fwrite(&max_shops,1,sizeof(max_shops),f);
   fwrite(&shop_hacek_size,1,sizeof(shop_hacek_size),f);
@@ -3024,8 +3036,9 @@ char load_saved_shops()
   int i=0,j=0;
 
   SEND_LOG("(SHOP) Loading saved shops...",0,0);
-  concat(c,pathtable[SR_TEMP],_SHOP_ST);
-  f=fopen(c,"rb");
+//  concat(c,pathtable[SR_TEMP],_SHOP_ST);
+//  f=fopen(c,"rb");
+	f = fopen(Sys_FullPath(SR_TEMP, _SHOP_ST), "rb");
   if (f==NULL) return 0;
   fread(&i,1,sizeof(max_shops),f);
   fread(&j,1,sizeof(shop_hacek_size),f);

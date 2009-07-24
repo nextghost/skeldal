@@ -1324,6 +1324,7 @@ char *find_map_path(char *filename)
 	{
 	char *p1,*p;
 
+/*
 	if (pathtable[SR_MAP2]!=NULL)
 		{
 		concat(p1,pathtable[SR_MAP2],filename);
@@ -1333,6 +1334,17 @@ char *find_map_path(char *filename)
 	found:
 	p=NewArr(char,strlen(p1)+1);
 	strcpy(p,p1);
+	return p;
+*/
+
+	p1 = Sys_FullPath(SR_MAP2, filename);
+
+	if (!Sys_FileExists(p1)) {
+		p1 = Sys_FullPath(SR_MAP, filename);
+	}
+
+	p = malloc((strlen(p1) + 1) * sizeof (char));
+	strcpy(p, p1);
 	return p;
 	}
 
@@ -1362,10 +1374,16 @@ FILE *enc_open(char *filename,ENCFILE *fil)
     return NULL;
     }
   d=strrchr(enc,'\\');if(d==NULL)d=enc;else d++;
+/*
   temp=malloc((i=strlen(pathtable[SR_TEMP]))+strlen(d)+1);
   strcpy(temp,pathtable[SR_TEMP]);
   strcat(temp,d);
   d=temp+i;
+*/
+	temp = Sys_FullPath(SR_TEMP, d);
+	d = malloc((strlen(temp) + 1) * sizeof(char));
+	strcpy(d, temp);
+	temp = d;
   d=strrchr(d,'.');
   strcpy(d,".dec");
   g=fopen(temp,"wb");
@@ -1597,8 +1615,11 @@ void show_jrc_logo(char *filename)
   Sound_ChangeMusic("?");
   curcolor=0;bar(0,0,639,479);
   showview(0,0,0,0);Timer_Sleep(1000);
-  concat(s,pathtable[SR_VIDEO],filename);
-  if (open_pcx(s,A_8BIT,&pcx)) return;
+//  concat(s,pathtable[SR_VIDEO],filename);
+//  if (open_pcx(s,A_8BIT,&pcx)) return;
+	if (open_pcx(Sys_FullPath(SR_VIDEO, filename), A_8BIT, &pcx)) {
+		return;
+	}
   pcxw=(word *)pcx;
   xp=pcxw[0];
   yp=pcxw[1];

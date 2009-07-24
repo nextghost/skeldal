@@ -872,9 +872,13 @@ void reg_grafiku_postav()
 
 void cti_texty()
   {
-  char path[80];int err;
+//  char path[80];int err;
+	char *path;
+	int err;
+
   texty=(TSTR_LIST)create_list(4);
-  sprintf(path,"%s%s",pathtable[SR_DATA],TEXTY);
+//  sprintf(path,"%s%s",pathtable[SR_DATA],TEXTY);
+	path = Sys_FullPath(SR_DATA, TEXTY);
   if ((err=load_string_list_ex(&texty,path))!=0)
      {
 	 char buff[256];
@@ -1011,7 +1015,8 @@ static void patch_error(int err)
 
 void init_skeldal(void)
   {
-  char c[200],d[200];
+//  char c[200],d[200];
+	char *c, *d;
   int verr;
 
   boldcz=LoadDefaultFont();
@@ -1036,8 +1041,12 @@ SEND_LOG("(INIT) Initializing engine.",0,0);
 /*SEND_LOG("(INIT) Loading DOS error handler.",0,0);
   install_dos_error(device_error,(char *)getmem(4096)+4096);*/
   swap_error=swap_error_exception;
-  sprintf(c,"%s%s",SWAPPATH,TEMP_FILE);
-  sprintf(d,"%s%s",pathtable[SR_DATA],"skeldal.ddl");
+//  sprintf(c,"%s%s",SWAPPATH,TEMP_FILE);
+//  sprintf(d,"%s%s",pathtable[SR_DATA],"skeldal.ddl");
+	d = Sys_FullPath(SR_TEMP, TEMP_FILE);
+	c = alloca((strlen(d) + 1) * sizeof (char));
+	strcpy(c, d);
+	d = Sys_FullPath(SR_DATA, "skeldal.ddl");
 SEND_LOG("(INIT) Initializing memory manager",0,0);
   init_manager(d,c);
 SEND_LOG("(GAME) Memory manager initialized. Using DDL: '%s' Temp dir: '%s'",d,c);
@@ -1369,7 +1378,8 @@ void play_anim(int anim_num)
      char *s;
      char *t,*z;
      TSTR_LIST titl=NULL;
-     concat(s,pathtable[SR_VIDEO],texty[anim_num]);
+//     concat(s,pathtable[SR_VIDEO],texty[anim_num]);
+	s = Sys_FullPath(SR_VIDEO, texty[anim_num]);
      if (!Sound_IsActive() || titles_on)
       {
       concat(t,s,"   ");
@@ -1701,22 +1711,27 @@ int main(int argc,char *argv[])
   strcpy(pathtable[SR_SAVES],c);
   strcat(pathtable[SR_SAVES],"\\");
   free(c);
-*/
   SEND_LOG("(GAME) Save directory sets to '%s'",pathtable[SR_SAVES],0);
+*/
 //  set_verify(0);
-  mman_pathlist=pathtable;
+//  mman_pathlist=pathtable;
   zoom_speed(1);
   turn_speed(1);
   Sys_SetEnv("BSVER",VERSION);
-  configure(CONFIG_NAME);
+//  configure(CONFIG_NAME);
+	configure(Sys_FullPath(SR_WORK, CONFIG_NAME));
   if ((argc>=2 || SelectAdventure()) && !rm )
     {
 	char *adventure;
     char **config=cur_config;
 
+/*
     const char *music = mman_pathlist[SR_MUSIC];
     mman_pathlist[SR_ORGMUSIC]=(char *)getmem(strlen(music)+1);
     strcpy(mman_pathlist[SR_ORGMUSIC],music);
+*/
+	// FIXME: ugly hack, is this really needed?
+	Sys_SetPath(SR_ORGMUSIC, Sys_FullPath(SR_MUSIC, ""));
 
 	if (argc<2) adventure=GetSelectedAdventure();
 	else adventure=argv[1];
@@ -1729,7 +1744,8 @@ int main(int argc,char *argv[])
 #ifdef LOGFILE
      {
      int i;
-     for(i=0;i<(sizeof(pathtable)/4);i++) SEND_LOG("(GAME) LOG: Using directory '%s' as '%s'",pathtable[i],sinit[i+CESTY_POS].heslo);
+// FIXME: rewrite?
+//     for(i=0;i<(sizeof(pathtable)/4);i++) SEND_LOG("(GAME) LOG: Using directory '%s' as '%s'",pathtable[i],sinit[i+CESTY_POS].heslo);
      }
 #endif
   start_check();

@@ -692,8 +692,17 @@ void save_book()
   char *tx;
 
   if (all_text==NULL) return;
+/*
   concat(c,pathtable[SR_TEMP],BOOK_FILE);
   f=fopen(c,"w");if (f==NULL) return;
+*/
+
+	f = fopen(Sys_FullPath(SR_TEMP, BOOK_FILE), "w");
+
+	if (!f) {
+		return;
+	}
+
   i=0;
   ss=str_count(all_text);
   while (i<ss && (tx=all_text[i++])!=NULL)
@@ -712,8 +721,17 @@ void load_book()
 
   if (all_text!=NULL) release_list(all_text);
   all_text=NULL;
+/*
   concat(c,pathtable[SR_TEMP],BOOK_FILE);
   f=fopen(c,"r");if (f==NULL) return;
+*/
+
+	f = fopen(Sys_FullPath(SR_TEMP, BOOK_FILE), "r");
+
+	if (!f) {
+		return;
+	}
+
   all_text=create_list(256);
   while (fgets(tx,510,f)!=NULL)
      {
