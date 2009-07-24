@@ -36,9 +36,13 @@
 
 #define E_RELOADMAP 40
 #define TIMERSPEED 20
-#define SKELDALINI "wskeldal.ini"
+#define SKELDALINI "skeldal.ini"
+
+#define PATHTABLE_SIZE 18
 
 typedef void (*TaskerFunctionName)(va_list);
+
+extern char *pathtable[PATHTABLE_SIZE];
 
 void Mouse_GetEvent(MS_EVENT *event);
 void Mouse_MapWheel(char up, char down);
@@ -57,6 +61,7 @@ void Sys_Mkdir(const char *path);
 int Sys_LatestFile(char *mask, int offset);
 void Sys_PurgeTemps(char z);
 int Sys_PackStatus(FILE *f);
+void Sys_SetPath(unsigned idx, const char *path);
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
 int Screen_GetXSize(void);

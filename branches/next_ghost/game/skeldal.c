@@ -64,6 +64,7 @@
 #define INI_INT 2
 
 #define ERR_GENERAL 1
+/*
 char def_path[]="";
 char graph_path[]="graphics\\";
 char basc_graph[]="graphics\\basic\\";
@@ -83,6 +84,7 @@ char cd_path[]="";
 char map2_path[]="";
 char plugins_path[]="";
 char *pathtable[]={def_path,graph_path,sample_path,font_path,map_path,music_path,temp_path,basc_graph,item_graph,enemies_path,video_path,dialogs_path,saves_path,work_path,cd_path,map2_path,plugins_path,org_music_path};
+*/
 
 /*
 char *pathtable[]=
@@ -1242,8 +1244,11 @@ static int do_config_skeldal(int num,int numdata,char *txt)
             break;
      case 26:refresh=numdata;
      default:num-=CESTY_POS;
+		Sys_SetPath(num, txt);
+/*
              mman_pathlist[num]=(char *)getmem(strlen(txt)+1);
              strcpy(mman_pathlist[num],txt);
+*/
              SEND_LOG("(GAME) Directory '%s' has been assigned to group nb. %d",txt,num);
              break;
 
@@ -1690,11 +1695,13 @@ int main(int argc,char *argv[])
   SEND_LOG("START --------------------------",0,0);
   argv;
 //  c=getcwd(NULL,_MAX_PATH+1);
+/*
   c=getcwd(NULL,PATH_MAX+1);
   pathtable[SR_SAVES]=getmem(strlen(c)+2);
   strcpy(pathtable[SR_SAVES],c);
   strcat(pathtable[SR_SAVES],"\\");
   free(c);
+*/
   SEND_LOG("(GAME) Save directory sets to '%s'",pathtable[SR_SAVES],0);
 //  set_verify(0);
   mman_pathlist=pathtable;

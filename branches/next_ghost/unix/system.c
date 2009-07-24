@@ -25,6 +25,8 @@
 #include <ctype.h>
 #include "libs/system.h"
 
+char *pathtable[18] = {0};
+
 char *strupr(char *str) {
 	int i;
 	for (; str[i]; i++) {
@@ -67,10 +69,6 @@ void Sys_Shutdown(void) {
 }
 
 void Sys_SetEnv(const char *name, const char *value) {
-
-}
-
-void Sys_Init(void) {
 
 }
 

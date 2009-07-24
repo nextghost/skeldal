@@ -12,7 +12,7 @@ OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	libs/mgifmapmem.o libs/mgifmem.o libs/mgifplaya.o libs/pcx.o \
 	libs/strlite.o libs/swaper.o libs/wav_mem.o libs/sound.o
 	
-UNIXOBJS=unix/system.o
+UNIXOBJS=unix/init.o unix/system.o
 
 .PHONY: all clean
 
