@@ -29,21 +29,28 @@
 #include "game/globals.h"
 
 // TODO: set this from configure script
-#define DATA_PATH "/usr/share/games/skeldal/"
+#define DATA_PATH "/usr/local/games/skeldal/"
 
 #define PATHTABLE_SIZE 18
 
 static char *pathtable[18] = {0};
 
 void Sys_SetPath(unsigned idx, const char *path) {
+	int len = strlen(path);
 	assert(idx < PATHTABLE_SIZE);
 
 	if (pathtable[idx]) {
 		free(pathtable[idx]);
 	}
 
-	pathtable[idx] = malloc((strlen(path) + 1) * sizeof(char));
+	if (path[len-1] != '/') {
+		len++;
+	}
+
+	pathtable[idx] = malloc((len + 1) * sizeof(char));
 	strcpy(pathtable[idx], path);
+	pathtable[idx][len-1] = '/';
+	pathtable[idx][len] = '\0';
 }
 
 char *Sys_FullPath(unsigned idx, const char *file) {
@@ -84,4 +91,11 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_CD, DATA_PATH);
 	Sys_SetPath(SR_MAP2, DATA_PATH);
 	Sys_SetPath(SR_ORGMUSIC, DATA_PATH);
+}
+
+// FIXME: implement properly
+void Sys_PreparePaths(void) {
+	mkdir(pathtable[SR_WORK], 0755);
+	mkdir(pathtable[SR_TEMP], 0755);
+	mkdir(pathtable[SR_SAVES], 0755);
 }

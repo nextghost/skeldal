@@ -50,6 +50,7 @@
 #include "libs/wav.h"
 //#include <io.h>
 #include <fcntl.h>
+#include <errno.h>
 #include "game/globals.h"
 #include "game/engine1.h"
 
@@ -1373,8 +1374,9 @@ FILE *enc_open(char *filename,ENCFILE *fil)
     fil->to_delete=NULL;
     return NULL;
     }
-  d=strrchr(enc,'\\');if(d==NULL)d=enc;else d++;
+  d=strrchr(enc,'/');if(d==NULL)d=enc;else d++;
 /*
+  d=strrchr(enc,'\\');if(d==NULL)d=enc;else d++;
   temp=malloc((i=strlen(pathtable[SR_TEMP]))+strlen(d)+1);
   strcpy(temp,pathtable[SR_TEMP]);
   strcat(temp,d);
@@ -1443,12 +1445,15 @@ int load_string_list_ex(TSTR_LIST *list,char *filename)
      lin++;
        do
         {
-        j=fgetc(f);
+	do {
+		j = fgetc(f);
+	} while (j <= ' ');
         if (j==';') while ((j=fgetc(f))!='\n' && j!=EOF);
         if (j=='\n') lin++;
         }
        while (j=='\n');
       ungetc(j,f);
+	errno = 0;
      j=fscanf(f,"%d",&i);
      if (j==EOF)
         {

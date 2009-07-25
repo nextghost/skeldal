@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include "libs/system.h"
+#include "game/globals.h"
 
 char *strupr(char *str) {
 	int i;
@@ -55,19 +56,19 @@ int Input_ReadKey(void) {
 
 }
 
+// FIXME: Implement in GUI
 void Sys_ErrorBox(const char *msg) {
-	assert(0);
-
+	fprintf(stderr, "Error: %s", msg);
 }
 
+// FIXME: Implement in GUI
 void Sys_WarnBox(const char *msg) {
-	assert(0);
-
+	fprintf(stderr, "Warning: %s", msg);
 }
 
+// FIXME: Implement in GUI
 void Sys_InfoBox(const char *msg) {
-	assert(0);
-
+	fprintf(stderr, "Info: %s", msg);
 }
 
 void Sys_Shutdown(void) {
@@ -89,9 +90,9 @@ int Sys_LatestFile(char *mask, int offset) {
 	return 0;
 }
 
+// FIXME: get rid of temps
 void Sys_PurgeTemps(char z) {
-	assert(0);
-
+//	assert(0);
 }
 
 int Sys_PackStatus(FILE *f) {
@@ -101,6 +102,24 @@ int Sys_PackStatus(FILE *f) {
 
 int Sys_FileExists(const char *file) {
 	return !access(file, F_OK);
+}
+
+void *Sys_ReadFile(const char *file) {
+	FILE *fr = fopen(file, "r");
+	int len;
+	void *ret;
+
+	if (!fr) {
+		fprintf(stderr, "Could not open file %s\n", file);
+		exit(1);
+	}
+
+	len = fseek(fr, 0, SEEK_END);
+	fseek(fr, 0, SEEK_SET);
+
+	ret = malloc(len);
+	fread(ret, 1, len, fr);
+	return ret;
 }
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
@@ -359,8 +378,9 @@ int get_shift_state(void) {
 }
 
 void *LoadDefaultFont(void) {
-	assert(0);
-	return NULL;
+//	assert(0);
+//	return NULL;
+	return Sys_ReadFile(Sys_FullPath(SR_FONT, "BOLDCZ.FON"));
 }
 
 void *PrepareVideoSound(int mixfreq, int buffsize) {
@@ -388,7 +408,7 @@ void CloseMGFFile(void *file) {
 
 }
 
-// TODO: implement game launcher
+// FIXME: implement game launcher
 char OtevriUvodniOkno() {
 	return 1;
 }

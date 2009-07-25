@@ -78,22 +78,29 @@ const char *str_replace(TSTR_LIST *list,int line,const char *text)
   char *c;
 
   count=str_count(*list);
-  if (line>=count)
-     {
-     int plus;
+	if (line >= count) {
+		int plus;
 
-        plus=count-line;
-        plus=(plus/STR_REALLOC_STEP+1)*STR_REALLOC_STEP;
-        p=getmem((count+plus)*sizeof(*p));
-        memcpy(p,*list,count*sizeof(*p));
-        free(*list);
+        	plus = count - line;
+        	plus = (plus/STR_REALLOC_STEP + 1) * STR_REALLOC_STEP;
+/*
+        	p = getmem((count+plus) * sizeof(*p));
+        	memcpy(p, *list, count * sizeof(*p));
+        	free(*list);
+*/
+		*list = realloc(*list, (count + plus + 1) * sizeof(**list));
 //        j=_msize(p)/sizeof(*p);
-        i=count;
+//		i = count;
 //        for(;i<j;i++) p[i]=NULL;
-        for(;i<count+plus;i++) p[i]=NULL;
-        i=count;count=j;
-        *list=p;
-     }
+		for (i = count; i < count+plus; i++) {
+			(*list)[i] = NULL;
+		}
+		(*list)[count+plus] = &nil;
+
+//		i = count;
+//		count = j;
+//		*list = p;
+	}
   if ((*list)[line]!=NULL) free((*list)[line]);
   if (text!=NULL)
      {

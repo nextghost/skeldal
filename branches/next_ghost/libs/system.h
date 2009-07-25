@@ -60,6 +60,8 @@ int Sys_PackStatus(FILE *f);
 void Sys_SetPath(unsigned idx, const char *path);
 char *Sys_FullPath(unsigned idx, const char *file);
 int Sys_FileExists(const char *file);
+void *Sys_ReadFile(const char *file);
+void Sys_PreparePaths(void);
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
 int Screen_GetXSize(void);

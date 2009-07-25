@@ -1720,16 +1720,14 @@ int main(int argc,char *argv[])
   Sys_SetEnv("BSVER",VERSION);
 //  configure(CONFIG_NAME);
 	configure(Sys_FullPath(SR_WORK, CONFIG_NAME));
+
+// FIXME: implement game launcher
+/*
   if ((argc>=2 || SelectAdventure()) && !rm )
     {
 	char *adventure;
     char **config=cur_config;
 
-/*
-    const char *music = mman_pathlist[SR_MUSIC];
-    mman_pathlist[SR_ORGMUSIC]=(char *)getmem(strlen(music)+1);
-    strcpy(mman_pathlist[SR_ORGMUSIC],music);
-*/
 	// FIXME: ugly hack, is this really needed?
 	Sys_SetPath(SR_ORGMUSIC, Sys_FullPath(SR_MUSIC, ""));
 
@@ -1741,6 +1739,8 @@ int main(int argc,char *argv[])
     release_list(cur_config);
     cur_config=config;
     }
+*/
+
 #ifdef LOGFILE
      {
      int i;
@@ -1748,6 +1748,7 @@ int main(int argc,char *argv[])
 //     for(i=0;i<(sizeof(pathtable)/4);i++) SEND_LOG("(GAME) LOG: Using directory '%s' as '%s'",pathtable[i],sinit[i+CESTY_POS].heslo);
      }
 #endif
+	Sys_PreparePaths();
   start_check();
   Sys_PurgeTemps(1);
 //  textmode_effekt();
