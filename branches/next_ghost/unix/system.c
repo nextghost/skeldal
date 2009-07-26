@@ -30,7 +30,7 @@
 
 char *strupr(char *str) {
 	int i;
-	for (; str[i]; i++) {
+	for (i = 0; str[i]; i++) {
 		str[i] = toupper(str[i]);
 	}
 	return str;
@@ -72,8 +72,8 @@ void Sys_InfoBox(const char *msg) {
 }
 
 void Sys_Shutdown(void) {
+	Screen_Shutdown();
 	assert(0);
-
 }
 
 void Sys_SetEnv(const char *name, const char *value) {
@@ -120,36 +120,6 @@ void *Sys_ReadFile(const char *file) {
 	ret = malloc(len);
 	fread(ret, 1, len, fr);
 	return ret;
-}
-
-char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
-	assert(0);
-	return 0;
-}
-
-int Screen_GetXSize(void) {
-	assert(0);
-	return 0;
-}
-
-int Screen_GetYSize(void) {
-	assert(0);
-	return 0;
-}
-
-unsigned short *Screen_GetAddr(void) {
-	assert(0);
-	return NULL;
-}
-
-unsigned short *Screen_GetBackAddr(void) {
-	assert(0);
-	return NULL;
-}
-
-long Screen_GetSize(void) {
-	assert(0);
-	return 0;
 }
 
 void Screen_SetAddr(unsigned short *addr) {

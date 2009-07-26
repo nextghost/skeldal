@@ -77,6 +77,7 @@ void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs,
 void *Screen_PrepareWalk(int ypos);
 void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
 void Screen_DoneWalk(void *handle);
+void Screen_Shutdown(void);
 
 void *Screen_PrepareTurn(int ypos);
 void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka);

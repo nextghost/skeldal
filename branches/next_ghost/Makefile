@@ -1,6 +1,6 @@
 CFLAGS= -I.
 CXXFLAGS= -I.
-LDFLAGS= -lm
+LDFLAGS= -lm -lSDL
 
 OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	game/dump.o game/enemy.o game/engine1.o game/engine2.o game/gamesave.o \
@@ -11,7 +11,9 @@ OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	libs/devices.o libs/event.o libs/gui.o libs/inicfg.o libs/memman.o \
 	libs/mgifmapmem.o libs/mgifmem.o libs/mgifplaya.o libs/pcx.o \
 	libs/strlite.o libs/swaper.o libs/wav_mem.o libs/sound.o
-	
+
+SDLOBJS=sdl/screen.o
+
 UNIXOBJS=unix/init.o unix/system.o
 
 .PHONY: all clean
@@ -19,7 +21,7 @@ UNIXOBJS=unix/init.o unix/system.o
 all: skeldal
 
 clean:
-	rm -f skeldal $(OBJS) $(UNIXOBJS)
+	rm -f skeldal $(OBJS) $(UNIXOBJS) $(SDLOBJS)
 
-skeldal : $(OBJS) $(UNIXOBJS)
+skeldal : $(OBJS) $(UNIXOBJS) $(SDLOBJS)
 	$(CC) $(LDFLAGS) -o skeldal $^

@@ -540,6 +540,7 @@ THANDLE_DATA *def_handle(int handle,char *filename,void *decompress,char path)
      return h;
      }
   strncpy(h->src_file,filename,12);
+  h->src_file[12] = '\0';
   h->seekpos=0;
   strupr(h->src_file);
   h->loadproc=decompress;
