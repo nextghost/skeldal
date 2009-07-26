@@ -102,10 +102,10 @@ void Screen_FixPalette(word *pal) {
 }
 
 
-void Screen_FixMGIFPalette(word *pal) {
+void Screen_FixMGIFPalette(word *pal, int size) {
 	unsigned i, r, g, b;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < size; i++) {
 		r = (pal[i] >> 10) & 0x1f;
 		g = (pal[i] >> 5) & 0x1f;
 		b = pal[i] & 0x1f;

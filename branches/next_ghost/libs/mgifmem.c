@@ -77,7 +77,6 @@ void init_lzw_compressor(int dic_size)
 
 	if (!compress_dic) {
 		compress_dic = (DOUBLE_S *)getmem(sizeof(CODE_TABLE));
-		fprintf(stderr, "compress_dic: %p\n", compress_dic);
 	}
   clear_code=1<<dic_size;
   end_code=clear_code+1;
@@ -90,7 +89,6 @@ void init_lzw_compressor(int dic_size)
 
 void done_lzw_compressor()
   {
-	fprintf(stderr, "Free compress_dic: %p\n", compress_dic);
   free(compress_dic);
   compress_dic=NULL;
   }
@@ -124,34 +122,12 @@ void close_mgif()           //dealokuje buffery pro prehravani
   }
 
 
-int input_code(byte *source,long *bitepos,int bitsize,int mask)
-  {
-/*
-  __asm
-    {
-    mov esi,source
-    mov edi,bitepos
-    mov ebx,bitsize
-    mov edx,mask
-
-    mov     ecx,[edi]
-    mov     eax,ecx
-    shr     eax,3
-    mov     eax,[esi+eax]
-    and     cl,7
-    shr     eax,cl
-    and     eax,edx
-    add     [edi],ebx
-    }
-*/
-
-	// TODO: needs testing
-	int ret = *(int *)(source + (*bitepos >> 3));
+unsigned input_code(byte *source,long *bitepos,int bitsize,int mask) {
+	unsigned ret = *(unsigned *)(source + (*bitepos >> 3));
 	ret >>= *bitepos & 0x7;
 	*bitepos += bitsize;
 	return ret & mask;
-  }
-//#pragma aux input_code parm [esi][edi][ebx][edx]=\    value[eax] modify [ecx];
+}
 
 
 int de_add_code(int group,int chr,int mask)
@@ -169,56 +145,7 @@ int de_add_code(int group,int chr,int mask)
   }
 
 
-char fast_expand_code(int code,char **target)
-//#pragma aux fast_expand_code parm[eax][edi] modify [esi ecx] value [bl]
-  {
-/*
-  _asm
-    {
-     mov     eax,code
-     mov     edi,target
-
-     cmp     eax,256
-     jnc     expand
-     mov     esi,[edi]
-     inc     dword ptr [edi]
-     mov     bl,al
-     add     al,old_value
-     mov     [esi],al
-     mov     old_value,al
-     jmp     end
-expand:
-     mov     ebx,compress_dic
-     lea     ecx,[eax*8+ebx]
-     movzx   eax,short ptr [ecx+4]
-     add     [edi],eax
-     push    eax
-     mov     esi,[edi]
-     					// do {
-eloop:movzx   eax,short ptr [ecx+2]	// 	eax = *(ecx+2);
-     mov     [esi],al			// 	*esi = al;
-     dec     esi			// 	--esi;
-     movzx   eax,short ptr [ecx]	// 	eax = *ecx;
-     lea     ecx,[eax*8+ebx]		// 	ecx = ebx + 8*eax;
-     cmp     eax,256
-     jnc     eloop			// } while (eax >= 256);
-     mov     bl,al
-     add     al,old_value
-     mov     [esi],al
-     inc     dword ptr [edi]
-     pop     ecx
-elp2:inc     esi
-     add     al,[esi]
-     mov     [esi],al
-     dec     ecx
-     jnz     elp2
-     mov     old_value,al
-end:
-     movzx   eax,bl
-    }
-*/
-
-	// FIXME: most likely broken
+char fast_expand_code(int code, byte **target) {
 	if (code < 256) {
 		old_value = **target = (code + old_value) & 0xff;
 		++*target;
@@ -230,11 +157,12 @@ end:
 	int idx = code;
 
 	do {
-		*ptr-- = compress_dic[idx].chr;
+		*ptr-- = compress_dic[idx].chr & 0xff;
 	} while ((idx = compress_dic[idx].group) >= 256);
 
 	ret = idx;
-	*ptr++ = (idx + old_value) & 0xff;
+	idx = (idx + old_value) & 0xff;
+	*ptr++ = idx;
 	code = compress_dic[code].first;
 
 	do {
@@ -245,10 +173,9 @@ end:
 	old_value = idx;
 	++*target;
 	return ret;
-  }
+}
 
-
-void lzw_decode(void *source,char *target)
+void lzw_decode(void *source,byte *target)
   {
   long bitpos=0;
   register int code;
@@ -266,6 +193,7 @@ void lzw_decode(void *source,char *target)
   mask=(1<<bitsize)-1;
   code=input_code(source,&bitpos,bitsize,mask);
   old_first=fast_expand_code(code,&target);
+//  old_first=expand_code(code,&target);
   old=code;
   while ((code=input_code(source,&bitpos,bitsize,mask))!=end_code)
      {
@@ -276,6 +204,7 @@ void lzw_decode(void *source,char *target)
      else if (code<nextgroup)
         {
         old_first=fast_expand_code(code,&target);
+//        old_first=expand_code(code,&target);
         //group=old;
         //chr=old_first;
         mask=de_add_code(old,old_first,mask);
@@ -287,6 +216,7 @@ void lzw_decode(void *source,char *target)
         //p.chr=old_first;
         mask=de_add_code(old,old_first,mask);
         old_first=fast_expand_code(code,&target);
+//        old_first=expand_code(code,&target);
         old=code;
         }
      }

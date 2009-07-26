@@ -156,7 +156,7 @@ void BigPlayProc(int act, void *data, int csize)
      case MGIF_PAL:
 //     	paleta = data;
 	memcpy(paleta, data, csize);
-	Screen_FixMGIFPalette(paleta);
+	Screen_FixMGIFPalette(paleta, csize / 2);
 	break;
 
      case MGIF_SOUND: 
