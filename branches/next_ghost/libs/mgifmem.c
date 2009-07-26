@@ -75,7 +75,10 @@ void reinit_lzw()
 void init_lzw_compressor(int dic_size)
   {
 
-  if (compress_dic==NULL) compress_dic=(DOUBLE_S *)getmem(sizeof(CODE_TABLE));
+	if (!compress_dic) {
+		compress_dic = (DOUBLE_S *)getmem(sizeof(CODE_TABLE));
+		fprintf(stderr, "compress_dic: %p\n", compress_dic);
+	}
   clear_code=1<<dic_size;
   end_code=clear_code+1;
   free_code=end_code+1;
@@ -87,6 +90,7 @@ void init_lzw_compressor(int dic_size)
 
 void done_lzw_compressor()
   {
+	fprintf(stderr, "Free compress_dic: %p\n", compress_dic);
   free(compress_dic);
   compress_dic=NULL;
   }
@@ -190,13 +194,14 @@ expand:
      add     [edi],eax
      push    eax
      mov     esi,[edi]
-eloop:movzx   eax,short ptr [ecx+2]
-     mov     [esi],al
-     dec     esi
-     movzx   eax,short ptr [ecx]
-     lea     ecx,[eax*8+ebx]
+     					// do {
+eloop:movzx   eax,short ptr [ecx+2]	// 	eax = *(ecx+2);
+     mov     [esi],al			// 	*esi = al;
+     dec     esi			// 	--esi;
+     movzx   eax,short ptr [ecx]	// 	eax = *ecx;
+     lea     ecx,[eax*8+ebx]		// 	ecx = ebx + 8*eax;
      cmp     eax,256
-     jnc     eloop
+     jnc     eloop			// } while (eax >= 256);
      mov     bl,al
      add     al,old_value
      mov     [esi],al
@@ -213,7 +218,7 @@ end:
     }
 */
 
-	// TODO: needs testing
+	// FIXME: most likely broken
 	if (code < 256) {
 		old_value = **target = (code + old_value) & 0xff;
 		++*target;
@@ -222,7 +227,7 @@ end:
 
 	*target += compress_dic[code].first;
 	char ret, *ptr = *target;
-	int idx;
+	int idx = code;
 
 	do {
 		*ptr-- = compress_dic[idx].chr;
@@ -287,45 +292,51 @@ void lzw_decode(void *source,char *target)
      }
     }
 
-void *mgif_play(void *mgif) //dekoduje a zobrazi frame
-  {
-  char *pf,*pc,*ff;
-  int acts,size,act,csize;
-  void *scr_sav;
-  int scr_act=-1;
+//dekoduje a zobrazi frame
+void *mgif_play(void *mgif) {
+	byte *pf, *pc, *ff;
+	int acts, size, act, csize;
+	void *scr_sav;
+	int scr_act = -1;
+	
+	pf = mgif;
+	acts = *pf++;
+	size = (*(unsigned*)pf) & 0xffffff;
+	pf += 3;
+	pc = pf;
+	pf += size;
+	for (; acts; acts--) {
+		act = *pc++;
+		csize = (*(unsigned*)pc) & 0xffffff;
+		pc += 3;
+		if ((act == MGIF_LZW) || (act == MGIF_DELTA)) {
+			ff = lzw_buffer;
+			lzw_decode(pc, ff);
+			scr_sav = ff;
+			scr_act = act;
+		} else if (act == MGIF_COPY) {
+			scr_sav = ff;
+			scr_act = act;
+		} else {
+			ff = pc;
+			show_proc(act, ff, csize);
+		}
 
-  pf=mgif;
-  acts=*pf++;
-  size=(*(int *)pf) & 0xffffff;
-  pf+=3;pc=pf;pf+=size;
-  if (acts)
-  do
-     {
-     act=*pc++;csize=(*(int *)pc) & 0xffffff;pc+=3;
-     if (act==MGIF_LZW || act==MGIF_DELTA)
-        {
-        ff=lzw_buffer;
-        lzw_decode(pc,ff);
-        scr_sav=ff;
-        scr_act=act;
-        }
-     else if (act==MGIF_COPY)
-        {
-        scr_sav=ff;scr_act=act;
-        }
-     else
-        {
-        ff=pc;
-        show_proc(act,ff,csize);
-        }
-     pc+=csize;
-     }
-  while (--acts);
-  if (scr_act!=-1) show_proc(scr_act,scr_sav,csize);
-  cur_frame+=1;
-  if (cur_frame==mgif_frames) return NULL;
-  return pf;
-  }
+		pc += csize;
+	}
+
+	if (scr_act != -1) {
+		show_proc(scr_act, scr_sav, csize);
+	}
+
+	cur_frame += 1;
+
+	if (cur_frame == mgif_frames) {
+		return NULL;
+	}
+
+	return pf;
+}
 
 
 

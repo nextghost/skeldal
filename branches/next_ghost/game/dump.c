@@ -68,7 +68,7 @@ void save_dump()
   for(y=Screen_GetYSize();y>0;y--)
      {
      word *scr=Screen_GetAddr();
-     a=scr+(y-1)*scr_linelen2;
+     a=scr+(y-1)*Screen_GetXSize();
      for(x=0;x<Screen_GetXSize();x++)
         {
         i=a[x];

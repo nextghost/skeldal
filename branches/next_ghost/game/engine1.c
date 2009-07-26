@@ -399,7 +399,7 @@ void create_tables(void)
       xr=xr*(y1+1)/points[0][0][0].y+MIDDLE_X;
       if (xl<0) xl=0;if (xr<0) xr=0;
       if (xl>639) xl=639;if (xr>639) xr=639;
-      showtabs.f_table[x][y].lineofs=(y1+MIDDLE_Y)*scr_linelen+xl*2;
+      showtabs.f_table[x][y].lineofs=(y1+MIDDLE_Y)*Screen_GetScan()+xl*2;
       showtabs.f_table[x][y].linesize=xr-xl+(xl!=xr);
       showtabs.f_table[x][y].counter=(y1-points[0][0][yp].y);
       showtabs.f_table[x][y].txtrofs=(y1+MIDDLE_Y-VIEW_SIZE_Y+F_YMAP_SIZE)*1280+xl*2;
@@ -429,7 +429,7 @@ void create_tables(void)
       xr=xr*(y1-2)/points[0][1][0].y+MIDDLE_X;
       if (xl<0) xl=0;if (xr<0) xr=0;
       if (xl>639) xl=639;if (xr>639) xr=639;
-      showtabs.c_table[x][y].lineofs=(y1+MIDDLE_Y)*scr_linelen+xl*2;
+      showtabs.c_table[x][y].lineofs=(y1+MIDDLE_Y)*Screen_GetScan()+xl*2;
       showtabs.c_table[x][y].linesize=xr-xl+(xl!=xr);
       showtabs.c_table[x][y].counter=points[0][1][yp].y-y1;
       showtabs.c_table[x][y].txtrofs=(y1+MIDDLE_Y)*1280+xl*2;
@@ -462,7 +462,7 @@ void create_zooming(void)
      {
      calc_zooming(zooming_xtable[j],320,zooming_points[j][0]);
      calc_y_buffer(zooming_ytable[j],zooming_points[j][1],360,360);
-     for(i=0;i<360;i++) zooming_ytable[j][i]*=scr_linelen;
+     for(i=0;i<360;i++) zooming_ytable[j][i]*=Screen_GetScan();
      }
   }
 
@@ -511,7 +511,7 @@ void zooming_backward(word *background)
      zoom.ytable=(short *)&zooming_ytable[i];
      zoom.texture_line=0;
      do_events();
-     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
+     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*Screen_GetXSize()+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
      }*/
 /*void zooming_backward(word *background)
   {
@@ -524,7 +524,7 @@ void zooming_backward(word *background)
      zoom.ytable=(short *)&zooming_ytable[i];
      zoom.texture_line=0;
      do_events();
-     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*scr_linelen2+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
+     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*Screen_GetXSize()+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
      }
   }
 
@@ -647,9 +647,9 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev)
-  zoom.startptr=Screen_GetBackAddr()+yofs*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+yofs*Screen_GetXSize()+(639-x)+SCREEN_OFFSET;
   else
-  zoom.startptr=Screen_GetBackAddr()+yofs*scr_linelen2+x+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+yofs*Screen_GetXSize()+x+SCREEN_OFFSET;
   zoom.texture=p;
   zoom.texture_line=txtsx;
   zoom.xtable=&x3d->zoom_table[i];
@@ -657,7 +657,7 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
-  zoom.line_len=scr_linelen;
+  zoom.line_len=Screen_GetScan();
 // TODO: what's this?
 //  __try
 	{
@@ -718,9 +718,9 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev==2)
-  zoom.startptr=Screen_GetBackAddr()+(yofs)*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+(yofs)*Screen_GetXSize()+(639-x)+SCREEN_OFFSET;
   else
-  zoom.startptr=Screen_GetBackAddr()+(yofs)*scr_linelen2+x+SCREEN_OFFSET;
+  zoom.startptr=Screen_GetBackAddr()+(yofs)*Screen_GetXSize()+x+SCREEN_OFFSET;
   zoom.texture=p;
   zoom.texture_line=txtsx;
   zoom.xtable=x3d->zoom_table;
@@ -728,7 +728,7 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
-  zoom.line_len=scr_linelen;
+  zoom.line_len=Screen_GetScan();
   if (rev==2) sikma_zprava(); else sikma_zleva();
   }
 
@@ -771,14 +771,14 @@ void OutBuffer2nd(void)
   {
   int i;
   for (i=0;i<480;i++)
-	memcpy(Screen_GetAddr()+i*scr_linelen2,Screen_GetBackAddr()+i*scr_linelen2,640*2);
+	memcpy(Screen_GetAddr()+i*Screen_GetXSize(),Screen_GetBackAddr()+i*Screen_GetXSize(),640*2);
   }
 
 void CopyBuffer2nd(void)
   {
   int i;
   for (i=0;i<480;i++)
-	memcpy(Screen_GetBackAddr()+i*scr_linelen2,Screen_GetAddr()+i*scr_linelen2,640*2);
+	memcpy(Screen_GetBackAddr()+i*Screen_GetXSize(),Screen_GetAddr()+i*Screen_GetXSize(),640*2);
   }
 
   /*void chozeni(void)
@@ -946,13 +946,13 @@ void clear_buff(word *background,word backcolor,int lines)
   if (background!=NULL) put_picture(0,SCREEN_OFFLINE,background);else lines=0;
   if (lines!=360) 
 	for (i=lines;i<360;i++)
-     clear_color(Screen_GetBackAddr()+SCREEN_OFFSET+scr_linelen2*i,640,backcolor);
+     clear_color(Screen_GetBackAddr()+SCREEN_OFFSET+Screen_GetXSize()*i,640,backcolor);
 
 }
 
 void clear_screen(word *screen, word color)
 {
-for (i=0;i<480;i++) clear_color(screen+scr_linelen2*i,640,color);
+for (i=0;i<480;i++) clear_color(screen+Screen_GetXSize()*i,640,color);
 }
 
 void general_engine_init()
@@ -962,7 +962,7 @@ void general_engine_init()
   create_zooming();
   clear_screen(Screen_GetAddr(),0);
   clear_screen(Screen_GetBackAddr(),0);
-  screen_buffer_size=scr_linelen2*480*2;
+  screen_buffer_size=Screen_GetXSize()*480*2;
 }
 
 void map_pos(int celx,int cely,int posx,int posy,int posz,int *x,int *y)
@@ -1086,7 +1086,7 @@ void draw_item(int celx,int cely,int posx,int posy,short *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 
@@ -1095,7 +1095,7 @@ void put_textured_bar(void *src,int x,int y,int xs,int ys,int xofs,int yofs)
   word *pos;
   word *xy;
 
-  pos=Screen_GetAddr()+x+scr_linelen2*y;
+  pos=Screen_GetAddr()+x+Screen_GetXSize()*y;
   xy=src;
   xofs=xofs%xy[0];
   yofs=yofs%xy[1];
@@ -1122,8 +1122,8 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-     if (turn) enemy_draw_mirror((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
-     else enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     if (turn) enemy_draw_mirror((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     else enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 /*void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int posz,char turn)
@@ -1268,11 +1268,11 @@ void draw_enemy(DRW_ENEMY *drw)
   clipr=rclip-x;
   if (clipr>0)
 // TODO: argument 3 changed, needs testing
-//  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
-  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
-else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
+//  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+  if (drw->mirror)enemy_draw_mirror_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
+else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),drw->palette[grcel+(secnd_shade?SHADE_STEPS:0)],last_scale,y+1,(clipr<<16)+clipl);
 // TODO: argument 3 changed, needs testing
-//else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
+//else enemy_draw_transp(drw->txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),drw->palette+grcel+(secnd_shade?SHADE_STEPS:0),last_scale,y+1,(clipr<<16)+clipl);
   if (show_lives)
      {
      char s[25];
@@ -1308,7 +1308,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   if (show_names && name!=NULL)
      {
      sd=text_width(name)/2;
@@ -1337,7 +1337,7 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw_transp((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
+  enemy_draw_transp((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
   }
 
 /*
@@ -1372,7 +1372,7 @@ void double_zoom_xicht(word x,word y,word *source)
   sr=(char *)(xpal+256);
   for(yy=0;yy<75;yy++)
      {
-     sline=Screen_GetAddr()+(y+(yy<<1))*scr_linelen2+x;
+     sline=Screen_GetAddr()+(y+(yy<<1))*Screen_GetXSize()+x;
      slline=sline;
      pline=sr+yy*54;
      for(xx=0;xx<54;xx++)
@@ -1382,10 +1382,10 @@ void double_zoom_xicht(word x,word y,word *source)
         if (xx)
            {
            sline[zz-1]=((sline[zz] & RGB555(30,30,30))+(sline[zz-2] & RGB555(30,30,30)))>>1;
-           if (yy) prumeruj(sline-640+zz-1,sline+zz-1,sline-scr_linelen+zz-1);
+           if (yy) prumeruj(sline-640+zz-1,sline+zz-1,sline-Screen_GetScan()+zz-1);
            }
         else
-           if (yy) prumeruj(sline-640,sline,sline-scr_linelen);
+           if (yy) prumeruj(sline-640,sline,sline-Screen_GetScan());
         }
      }
   }
@@ -1423,7 +1423,7 @@ void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
+  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
   }
 
 /*

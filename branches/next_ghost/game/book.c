@@ -588,7 +588,7 @@ static char *displ_picture(char *c)
   if (sh[1]+y>YMAX) return c;
   y+=YLEFT;
   x+=relpos;
-  put_8bit_clipped(sh,Screen_GetAddr()+x+scr_linelen2*y,ln,sh[0],sl);
+  put_8bit_clipped(sh,Screen_GetAddr()+x+Screen_GetXSize()*y,ln,sh[0],sl);
   return c;
   }
 

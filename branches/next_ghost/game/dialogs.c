@@ -183,7 +183,7 @@ static void dialog_anim(va_list args)
   char hid;
   int spdc=0,cntr=rep,tm,tm2;
 
-  loc_anim_render_buffer=PIC_Y*scr_linelen2+PIC_X;
+  loc_anim_render_buffer=PIC_Y*Screen_GetXSize()+PIC_X;
   mgif_install_proc(animace_kouzla);
 //  concat(ch,pathtable[SR_DIALOGS],block);
   free(block);
@@ -1337,8 +1337,8 @@ static void create_back_pic()
       *p++=*s2++;
       if (!skpx) skpx=8;else s2++,skpx--;
       }
-    s+=scr_linelen2;
-    if (!skpy) skpy=4;else s+=scr_linelen2,skpy--;
+    s+=Screen_GetXSize();
+    if (!skpy) skpy=4;else s+=Screen_GetXSize(),skpy--;
     }
   ukaz_mysku();
   }

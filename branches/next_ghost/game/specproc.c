@@ -257,10 +257,10 @@ static __inline int toInt(float fval)
 
 static void OtocObrazPodleMatice(float mx[3][2], word *picture)
   {
-  word *trg=Screen_GetAddr()+17*scr_linelen2;
+  word *trg=Screen_GetAddr()+17*Screen_GetXSize();
   int x,y;
   picture+=6;
-  for (y=0;y<360;y++,trg+=scr_linelen2)
+  for (y=0;y<360;y++,trg+=Screen_GetXSize())
 	for (x=0;x<640;x++)
 	  {
 	  int oldx=x-320;

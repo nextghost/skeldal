@@ -236,7 +236,7 @@ jp2: inc  ebx
 	for (y = 0; y < ys; y++) {
 		for (x = 0; x < xs; x++) {
 			if (barva == maska[x+y*xs]) {
-				scr[x+y*scr_linelen2] = data[x+y*xs];
+				scr[x+y*Screen_GetXSize()] = data[x+y*xs];
 			}
 		}
 	}
@@ -246,7 +246,7 @@ static void zobraz_podle_masky(char barva,char anim)
   {
   char *maska;
   word *data;
-  word *obr=Screen_GetAddr()+300*scr_linelen2+220;
+  word *obr=Screen_GetAddr()+300*Screen_GetXSize()+220;
   word xs,ys;
 
   alock(H_MENU_MASK);
@@ -504,7 +504,7 @@ static void scan_lines(word *buffer,int start,int poc)
   word *buf;
   while (pocet--)
      {
-     buf=buffer+start*scr_linelen2;
+     buf=buffer+start*Screen_GetXSize();
      first=0;
      last=0;
      for(i=0;i<640;i++) if (!(buf[i] & BGSWITCHBIT)) break;
@@ -567,7 +567,7 @@ void titles(va_list args)
   do
      {
      int skip;
-     scr=scr_linelen2*60+Screen_GetAddr();
+     scr=Screen_GetXSize()*60+Screen_GetAddr();
      buff=Screen_GetBackAddr();
      counter=Timer_GetValue();
      skip=(counter-newc)/speedscroll;
@@ -577,13 +577,13 @@ void titles(va_list args)
         newc+=skip*speedscroll;
         scan_lines(buff,360,skip);
         scroll_and_copy((word *)picture+640*60+3,buff,scr,360,skip,title_lines);
-        //memcpy(Screen_GetAddr(),buff,480*scr_linelen);
+        //memcpy(Screen_GetAddr(),buff,480*Screen_GetScan());
         get_max_extend(&l,&r);
         memmove(title_lines,&title_lines[skip],sizeof(title_lines)-skip*sizeof(int)*2);
         //showview(l,60,r-l+1,360);
         showview(0,60,639,360);        
-        buff+=scr_linelen2*359;
-        memcpy(buff,buff+scr_linelen2*skip,40*scr_linelen);
+        buff+=Screen_GetXSize()*359;
+        memcpy(buff,buff+Screen_GetXSize()*skip,40*Screen_GetScan());
         showview(0,0,640,40);
         Task_WaitEvent(E_TIMER);
         counter+=skip;

@@ -35,10 +35,11 @@
 #include "libs/memman.h"
 
 word *screen;
-word curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
-long scr_linelen;
-long scr_linelen2;
-long dx_linelen;
+//word curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
+word curcolor, charcolors[7];
+//long scr_linelen;
+//long scr_linelen2;
+//long dx_linelen;
 word *curfont,*writepos,writeposx;
 byte fontdsize=0;
 byte *palmem=NULL,*xlatmem=NULL;
@@ -60,7 +61,15 @@ void text_mode();
 
 void wait_retrace();
 
-
+void Bgraph2_Init(void) {
+	charcolors[0] = 0;
+	charcolors[1] = RGB555(0,31,0);
+	charcolors[2] = RGB555(0,28,0);
+	charcolors[3] = RGB555(0,24,0);
+	charcolors[4] = RGB555(0,20,0);
+	charcolors[5] = 0;
+	charcolors[6] = 0;
+}
 
 
 void line32(word x1,word y1, word x2, word y2)
@@ -326,7 +335,7 @@ int initmode_dx(char inwindow, char zoom, char monitor, int refresh)
   if (!Screen_Init(inwindow,zoom,monitor,refresh)) return -1;
   showview=showview_dx;
   screenstate=1;
-  scr_linelen2=scr_linelen/2;
+//  scr_linelen2=scr_linelen/2;
   return 0;
   }
 

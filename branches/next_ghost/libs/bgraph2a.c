@@ -42,7 +42,7 @@ void bar32(int x1,int y1, int x2, int y2)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+Screen_GetXSize()*i;i<=y2;i++,begline+=Screen_GetXSize())
     {
     for (j=x1;j<=x2;j++) begline[j]=curcolor;
     }
@@ -61,7 +61,7 @@ void hor_line32(int x1,int y1,int x2)
   if (x1>x2) swap_int(x1,x2);  
   if (x1<0) x1=0;
   if (x2>mx) x2=mx;
-  begline=Screen_GetAddr()+scr_linelen2*y1;
+  begline=Screen_GetAddr()+Screen_GetXSize()*y1;
   for (i=x1;i<x2;i+=2) *(unsigned long *)(begline+i)=curcolor2;
   if (i==x2) begline[i]=curcolor;
   }
@@ -77,8 +77,8 @@ void ver_line32(int x1,int y1,int y2)
   if (x1<0 || x1>mx) return;
   if (y1<0) y1=0;
   if (y2>my) y2=my;
-  begline=Screen_GetAddr()+scr_linelen2*y1+x1;
-  for (i=y1;i<=y2;i++,begline+=scr_linelen2) *begline=curcolor;
+  begline=Screen_GetAddr()+Screen_GetXSize()*y1+x1;
+  for (i=y1;i<=y2;i++,begline+=Screen_GetXSize()) *begline=curcolor;
   }
   
 void hor_line_xor(int x1,int y1,int x2)
@@ -94,7 +94,7 @@ void hor_line_xor(int x1,int y1,int x2)
   if (x1>x2) swap_int(x1,x2);  
   if (x1<0) x1=0;
   if (x2>mx) x2=mx;
-  begline=Screen_GetAddr()+scr_linelen2*y1;
+  begline=Screen_GetAddr()+Screen_GetXSize()*y1;
   for (i=x1;i<x2;i+=2) *(unsigned long *)(begline+i)^=curcolor2;
   if (i==x2) begline[i]^=curcolor;
   }
@@ -111,8 +111,8 @@ void ver_line_xor(int x1,int y1,int y2)
   if (x1<0 || x1>mx) return;
   if (y1<0) y1=0;
   if (y2>my) y2=my;
-  begline=Screen_GetAddr()+scr_linelen2*y1+x1;
-  for (i=y1;i<=y2;i++,begline+=scr_linelen2) *begline^=curcolor;
+  begline=Screen_GetAddr()+Screen_GetXSize()*y1+x1;
+  for (i=y1;i<=y2;i++,begline+=Screen_GetXSize()) *begline^=curcolor;
   }
 
 void line_32(int x,int y,int xs,int ys)
@@ -215,7 +215,7 @@ chrend:                 ;konec
 			}
 
 			if (charcolors[tmp-1] != 0xffff) {
-				posit[x+y*scr_linelen2] = charcolors[tmp-1];
+				posit[x+y*Screen_GetXSize()] = charcolors[tmp-1];
 			}
 			tmp = 0;
 		}
@@ -306,10 +306,10 @@ chr2end:              ;konec
 			}
 
 			if (charcolors[tmp-1] != 0xffff) {
-				posit[2*x+2*y*scr_linelen2] = charcolors[tmp-1];
-				posit[2*x+2*y*scr_linelen2+1] = charcolors[tmp-1];
-				posit[2*x+2*(y*scr_linelen2+1)] = charcolors[tmp-1];
-				posit[2*x+2*(y*scr_linelen2+1)+1] = charcolors[tmp-1];
+				posit[2*x+2*y*Screen_GetXSize()] = charcolors[tmp-1];
+				posit[2*x+2*y*Screen_GetXSize()+1] = charcolors[tmp-1];
+				posit[2*x+2*(y*Screen_GetXSize()+1)] = charcolors[tmp-1];
+				posit[2*x+2*(y*Screen_GetXSize()+1)+1] = charcolors[tmp-1];
 			}
 			tmp = 0;
 		}
@@ -346,7 +346,7 @@ chsend: and     eax,0ffffh
 void put_picture(word x,word y,void *p)
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
   {
-  word *adr=Screen_GetAddr()+scr_linelen2*y+x;
+  word *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
   word *data=p;
   word xs=data[0];
   word ys=data[1];
@@ -364,7 +364,7 @@ void put_picture(word x,word y,void *p)
     int i;
     int j;
     
-    for (i=0;i<yss;i++,adr+=scr_linelen2,data+=(xs-xss))
+    for (i=0;i<yss;i++,adr+=Screen_GetXSize(),data+=(xs-xss))
       for (j=0;j<xss;j++) 
         {
         adr[j]=((*data & ~0x1f)<<1) | (*data & 0x1f);
@@ -376,7 +376,7 @@ void put_picture(word x,word y,void *p)
     int i;
     int j;
     
-    for (i=0;i<yss;i++,adr+=scr_linelen2,data+=(xs-xss))
+    for (i=0;i<yss;i++,adr+=Screen_GetXSize(),data+=(xs-xss))
       for (j=0;j<xss;j++) 
         {
         adr[j]=*data;
@@ -386,15 +386,16 @@ void put_picture(word x,word y,void *p)
   if (mode==8 || mode==264)
     {
     word *table=data;
-    char *cdata=(char *)(data+(mode==264?10*256:256));
+    byte *cdata=(byte*)(data+(mode==264?10*256:256));
     int i;
     int j;
     
-    for (i=0;i<yss;i++,adr+=scr_linelen2,cdata+=(xs-xss))
+    for (i=0;i<yss;i++,adr+=Screen_GetXSize(),cdata+=(xs-xss))
       for (j=0;j<xss;j++)
         {
-        if (*cdata)
-        adr[j]=table[*cdata];
+        if (*cdata) {
+	        adr[j]=table[*cdata];
+	}
         cdata++;
         }
     }
@@ -405,7 +406,7 @@ void put_picture(word x,word y,void *p)
     int i;
     int j;
     
-    for (i=0;i<yss;i++,adr+=scr_linelen2,cdata+=(xs-xss))
+    for (i=0;i<yss;i++,adr+=Screen_GetXSize(),cdata+=(xs-xss))
       for (j=0;j<xss;j++)
         {
         if (*cdata)
@@ -416,7 +417,7 @@ void put_picture(word x,word y,void *p)
   }
 void get_picture(word x,word y,word xs,word ys,void *p)
   {
-  word *adr=Screen_GetAddr()+scr_linelen2*y+x;
+  word *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
   word *data=p;
   word xss=xs;
   word yss=ys;
@@ -432,7 +433,7 @@ void get_picture(word x,word y,word xs,word ys,void *p)
     int i;
     int j;
     
-    for (i=0;i<yss;i++,adr+=scr_linelen2)
+    for (i=0;i<yss;i++,adr+=Screen_GetXSize())
       for (j=0;j<xss;j++) 
         {
         *data=adr[j];
@@ -487,7 +488,7 @@ puti_lp:mov     ecx,ebx
 	image += start_line * line_length + 3;
 
 	for (i = 0; i < sizey; i++) {
-		memcpy(target + i*scr_linelen2, image + i*line_length, sizex * sizeof(word));
+		memcpy(target + i*Screen_GetXSize(), image + i*line_length, sizex * sizeof(word));
 	}
   }
 
@@ -555,7 +556,7 @@ ende:
 	for (y = 0; y < vely; y++) {
 		for (x = 0; x < velx; x++) {
 			if (data[x+y*line_length]) {
-				trg[x+y*scr_linelen2] = pal[data[x+y*line_length]];
+				trg[x+y*Screen_GetXSize()] = pal[data[x+y*line_length]];
 			}
 		}
 	}
@@ -650,7 +651,7 @@ ptb_skip2:
 		for (x = 0; x < xsiz; x++) {
 			int idx = ((y+yofs) % col_length) * line_length + (x+xofs) % line_length;
 			if (data[idx]) {
-				trg[x+y*scr_linelen2] = pal[data[idx]];
+				trg[x+y*Screen_GetXSize()] = pal[data[idx]];
 			}
 		}
 	}
@@ -676,7 +677,7 @@ void trans_bar(int x,int y,int xs,int ys,int barva)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+Screen_GetXSize()*i;i<=y2;i++,begline+=Screen_GetXSize())
     {
     for (j=x1;j<=x2;j++) begline[j]=MIXTRANSP(begline[j],barva);
     }
@@ -710,7 +711,7 @@ void trans_bar25(int x,int y,int xs,int ys)
   if (y1<0) y1=0;
   if (x2>mx) x2=mx;
   if (y2>my) y2=my;
-  for (i=y1,begline=Screen_GetAddr()+scr_linelen2*i;i<=y2;i++,begline+=scr_linelen2)
+  for (i=y1,begline=Screen_GetAddr()+Screen_GetXSize()*i;i<=y2;i++,begline+=Screen_GetXSize())
     {
     for (j=x1;j<=x2;j++) begline[j]=MIXTRANSP(begline[j],MIXTRANSP(begline[j],0));
     }

@@ -82,8 +82,12 @@ typedef struct staty
 
 static T_STATY cur_stats;
 
+/*
 word color_butt_on[]={0,RGB555(31,27,4),RGB555(30,26,4),RGB555(29,25,4)};
 word color_butt_off[]={0,RGB555(10,10,10),RGB555(10,10,10),RGB555(10,10,10)};
+*/
+word color_butt_on[4];
+word color_butt_off[4];
 
 
 typedef struct vlasts
@@ -218,6 +222,18 @@ TDREGISTERS char_gen_reg[]=
 char *b_texty[4];
 char b_disables;
 
+void Chargen_Init(void) {
+	color_butt_on[0] = 0;
+	color_butt_on[1] = RGB555(31,27,4);
+	color_butt_on[2] = RGB555(30,26,4);
+	color_butt_on[3] = RGB555(29,25,4);
+
+	color_butt_off[0] = 0;
+	color_butt_off[1] = RGB555(10,10,10);
+	color_butt_off[2] = RGB555(10,10,10);
+	color_butt_off[3] = RGB555(10,10,10);
+}
+
 void displ_button(char disable,char **text)
   {
   int posy[]={0,18,37,55};
@@ -230,7 +246,7 @@ void displ_button(char disable,char **text)
      {
      if (disable & 1)
         {
-        put_8bit_clipped(ablock(H_GEN_CHARGENB),(392+posy[i])*scr_linelen2+524+Screen_GetAddr(),posy[i],96,sizy[i]);
+        put_8bit_clipped(ablock(H_GEN_CHARGENB),(392+posy[i])*Screen_GetXSize()+524+Screen_GetAddr(),posy[i],96,sizy[i]);
         font_color(color_butt_off);
         }
      else
@@ -247,8 +263,8 @@ static void draw_other_bar()
   {
   int i;
   word *bbar=ablock(H_BOTTBAR);
-  word *screen=Screen_GetAddr()+(480-102)*scr_linelen2;
-  for (i=0;i<102;i++,screen+=scr_linelen2,bbar+=scr_linelen2) memcpy(screen,bbar,scr_linelen);
+  word *screen=Screen_GetAddr()+(480-102)*Screen_GetXSize();
+  for (i=0;i<102;i++,screen+=Screen_GetXSize(),bbar+=Screen_GetXSize()) memcpy(screen,bbar,Screen_GetScan());
   //put_8bit_clipped(ablock(H_GEN_OKBUTT),378*640+520+screen,0,120,102);
   displ_button(b_disables,b_texty);
   put_picture(0,0,ablock(H_GEN_TOPBAR));
@@ -312,7 +328,7 @@ static void zobraz_perlu(void)
   vypocet_perly(cur_angle,perla[0],perla[1],&x,&y);
   xs=perla[0];ys=perla[1];
   get_picture(x,y,xs,ys,pod_perlou);
-  sss=x+scr_linelen2*y+Screen_GetAddr();
+  sss=x+Screen_GetXSize()*y+Screen_GetAddr();
   p=(char *)(perla+256+3);
   b=perla+3;
   for(;ys>0;ys--)
@@ -325,7 +341,7 @@ static void zobraz_perlu(void)
            *scr=(*scr & RGB555(30,30,30))>>1;
            scr++;p++;
            }
-     sss+=scr_linelen2;
+     sss+=Screen_GetXSize();
      }
   //put_picture(x,y,perla);
   pod_perlou_x=x;

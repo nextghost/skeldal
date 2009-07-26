@@ -28,6 +28,7 @@
 /*#include "..\types.h"*/
 #include "libs/pcx.h"
 #include "libs/memman.h"
+#include "libs/system.h"
 /*#include "..\bgraph.h"*/
 
 #define SHADE_STEPS 5
@@ -91,7 +92,8 @@ void palette_shadow(char *pal1,unsigned short pal2[][256],int tr,int tg,int tb)
        r=(tr+(*(bt++)-tr)*(3*SHADE_STEPS-3*j-1)/(3*SHADE_STEPS-1))>>3;
        g=(tg+(*(bt++)-tg)*(3*SHADE_STEPS-3*j-1)/(3*SHADE_STEPS-1))>>3;
        b=(tb+(*(bt++)-tb)*(3*SHADE_STEPS-3*j-1)/(3*SHADE_STEPS-1))>>3;
-       hi=(r<<11)+(g<<6)+b;
+//       hi=(r<<11)+(g<<6)+b;
+	hi = Screen_RGB(r, g, b);
        pal2[j][i]=hi;
        }
     while (++i & 0xff);
@@ -105,7 +107,8 @@ void palette_shadow(char *pal1,unsigned short pal2[][256],int tr,int tg,int tb)
        r=((*(bt++))*(SHADE_STEPS-j)/SHADE_STEPS)>>3;
        g=((*(bt++))*(SHADE_STEPS-j)/SHADE_STEPS)>>3;
        b=((*(bt++))*(SHADE_STEPS-j)/SHADE_STEPS)>>3;
-       hi=(r<<11)+(g<<6)+b;
+//       hi=(r<<11)+(g<<6)+b;
+	hi = Screen_RGB(r, g, b);
        pal2[j+SHADE_STEPS][i]=hi;
        }
     while (++i & 0xff);
@@ -163,6 +166,7 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
   if (conv_type==A_8BIT)
      {
      memcpy(ptr1,paleta2,512);
+     Screen_FixPalette(ptr1);
      ptr1+=512;
      }
   if (conv_type==A_FADE_PAL)

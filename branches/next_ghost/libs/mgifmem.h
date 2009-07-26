@@ -41,6 +41,7 @@ typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data 
 #define SMD_256 1
 #define SMD_HICOLOR 2
 
+#pragma pack(1)
 typedef struct mgif_header
     {
     char sign[4];
@@ -53,6 +54,7 @@ typedef struct mgif_header
     short ampl_table[256];
     short reserved[32];
     }MGIF_HEADER_T;
+#pragma option align=reset
 
 
 void mgif_install_proc(MGIF_PROC proc);

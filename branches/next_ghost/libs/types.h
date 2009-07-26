@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#define byte char
+#define byte unsigned char
 #define integer signed short
 #define word unsigned short
 #define longint long 

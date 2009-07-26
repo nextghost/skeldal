@@ -53,43 +53,42 @@ static void *OpenMGFFile(const char *filename)
   }
 */
 
-static word *paleta;
+static word paleta[256];
 
 static word *picture;
 static word *anim_render_buffer;
 static void *sound;
 
-static void StretchImageHQ(word *src, word *trg, unsigned long linelen, char full)
-  {
-  word xs=src[0],ys=src[1];
-  word *s,*t;
-  int x,y;
-  src+=3;  
-  for (y=0,s=src,t=trg;y<ys;y++,t+=linelen*2,s+=xs)	
-	for (x=0;x<xs;x++) 
-	  {
-	  word val;
-	  t[x*2]=s[x]+(s[x]&0x7fe0);
-	  if (x)
-		{
-		val=((s[x-1] & 0x7bde)+(s[x] & 0x7bde))>>1;
-		t[x*2-1]=val+(val&0x7fe0);
+static void StretchImageHQ(word *src, word *trg, unsigned long linelen, char full) {
+	word xs = src[0], ys = src[1];
+	word *s, *t;
+	int x, y;
+	src += 3;  
+	for (y = 0, s = src, t = trg; y < ys; y++, t += linelen * 2, s += xs) {
+		for (x = 0; x < xs; x++) {
+			word val;
+//			t[x*2] = s[x] + (s[x] & 0x7fe0);
+			t[x*2] = s[x];
+			if (x) {
+//				val = ((s[x-1] & 0x7bde) + (s[x] & 0x7bde)) >> 1;
+//				t[x*2-1] = val + (val & 0x7fe0);
+				t[x*2-1] = Screen_ColorAvg(s[x-1], s[x]);
+			}
+			if (full) {
+				if (y) {
+//					val = ((s[x-xs] & 0x7bde) + (s[x] & 0x7bde)) >> 1;
+//					t[x*2-linelen] = val + (val & 0x7fe0);
+					t[x*2-linelen] = Screen_ColorAvg(s[x-xs], s[x]);
+				}
+				if (x && y) {
+//					val=((s[x-xs-1] & 0x7bde) + (s[x] & 0x7bde))>>1;
+//					t[x*2-linelen-1] = val + (val & 0x7fe0);
+					t[x*2-linelen-1] = Screen_ColorAvg(s[x-xs-1], s[x]);
+				}
+			}
 		}
-	  if (full)
-		{
-		if (y)
-		  {
-		  val=((s[x-xs] & 0x7bde)+(s[x] & 0x7bde))>>1;
-		  t[x*2-linelen]=val+(val&0x7fe0);
-		  }
-		if (x && y)
-		  {
-		  val=((s[x-xs-1] & 0x7bde)+(s[x] & 0x7bde))>>1;
-		  t[x*2-linelen-1]=val+(val&0x7fe0);
-		  }
-		}
-	  }
-  }
+	}
+}
 
 static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
   {
@@ -113,11 +112,13 @@ static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
 	  file=mgif_play(file);
 	  }
 //  __except(1)
+/*
   	  {
 	  SEND_LOG("(PLAYANIM) Exception raised",0,0);
 	  file=NULL;
 	  }
-	StretchImageHQ(picture, Screen_GetAddr()+ypos*scr_linelen2, scr_linelen2,full);
+*/
+	StretchImageHQ(picture, Screen_GetAddr()+ypos*Screen_GetXSize(), Screen_GetXSize(),full);
 	showview(0,ypos,0,360);
 //	if (_bios_keybrd(_KEYBRD_READY)==0) Sound_MixBack(0);
 	if (!Input_Kbhit()) Sound_MixBack(0);
@@ -139,27 +140,39 @@ void show_delta_lfb12e_dx(void *target,void *buff,void *paleta);
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta);
 
 
-void BigPlayProc(int act,void *data,int csize)
+void BigPlayProc(int act, void *data, int csize)
   {
   switch (act)
      {
      case MGIF_LZW:
-     case MGIF_COPY:show_full_lfb12e(anim_render_buffer,data,paleta);break;
-     case MGIF_DELTA:show_delta_lfb12e(anim_render_buffer,data,paleta);break;
-     case MGIF_PAL:paleta=data;break;
-	 case MGIF_SOUND: 
-	   while (LoadNextVideoFrame(sound,data,csize,mgif_header->ampl_table,mgif_accnums,&mgif_writepos)==0);
+     case MGIF_COPY:
+     	show_full_lfb12e(anim_render_buffer, data, paleta);
+	break;
+
+     case MGIF_DELTA:
+     	show_delta_lfb12e(anim_render_buffer, data, paleta);
+	break;
+
+     case MGIF_PAL:
+//     	paleta = data;
+	memcpy(paleta, data, csize);
+	Screen_FixMGIFPalette(paleta);
+	break;
+
+     case MGIF_SOUND: 
+		while (LoadNextVideoFrame(sound,data,csize,mgif_header->ampl_table,mgif_accnums,&mgif_writepos)==0);
      }
   }
 
-void play_animation(char *filename,char mode,int posy,char sound)
-  {
-  void *mgf=OpenMGFFile(filename);
-  Sound_ChangeMusic(NULL);
-  if (mgf==NULL) return;
-  PlayMGFFile(mgf,BigPlayProc,posy,mode & 0x80);
-  CloseMGFFile(mgf);
-  }
+void play_animation(char *filename, char mode, int posy, char sound) {
+	void *mgf = OpenMGFFile(filename);
+	Sound_ChangeMusic(NULL);
+	if (!mgf) {
+		return;
+	}
+	PlayMGFFile(mgf, BigPlayProc, posy, mode & 0x80);
+	CloseMGFFile(mgf);
+}
 
 void set_title_list(char **titles)
   {

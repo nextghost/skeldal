@@ -78,12 +78,20 @@ void *Screen_PrepareWalk(int ypos);
 void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
 void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
+int Screen_GetScan(void);
 
 void *Screen_PrepareTurn(int ypos);
 void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka);
 void Screen_DoneTurn(void *handle);
 void Screen_StripBlt(void *data, unsigned int startline, unsigned long width);
 void Screen_Shift(int x, int y);
+
+void Screen_FixPalette(word *pal);
+void Screen_FixMGIFPalette(word *pal);
+word Screen_RGB(unsigned r, unsigned g, unsigned b);
+word Screen_ColorMin(word c1, word c2);
+word Screen_ColorSub(word color, int sub);
+word Screen_ColorAvg(word c1, word c2);
 
 
 void ShareCPU(void);

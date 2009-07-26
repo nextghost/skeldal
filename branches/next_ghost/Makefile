@@ -1,6 +1,6 @@
-CFLAGS= -I.
-CXXFLAGS= -I.
-LDFLAGS= -lm -lSDL
+CFLAGS= -I. -g
+CXXFLAGS= -I. -g
+LDFLAGS= -lm -lSDL -g
 
 OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	game/dump.o game/enemy.o game/engine1.o game/engine2.o game/gamesave.o \
@@ -12,7 +12,7 @@ OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	libs/mgifmapmem.o libs/mgifmem.o libs/mgifplaya.o libs/pcx.o \
 	libs/strlite.o libs/swaper.o libs/wav_mem.o libs/sound.o
 
-SDLOBJS=sdl/screen.o
+SDLOBJS=sdl/screen.o sdl/timer.o
 
 UNIXOBJS=unix/init.o unix/system.o
 

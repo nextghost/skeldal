@@ -66,7 +66,8 @@
 
 #define HUMAN_ADJUST 97
 
-unsigned short barvy_skupin[POCET_POSTAV+1]=
+/*
+word barvy_skupin[POCET_POSTAV+1]=
          {
          RGB555(8,8,8),
          RGB555(31,28,00),
@@ -76,6 +77,8 @@ unsigned short barvy_skupin[POCET_POSTAV+1]=
          RGB555(28,13,31),
          RGB555(00,29,26)
          };
+*/
+word barvy_skupin[POCET_POSTAV+1];
 
 char reverse_draw=0;
 int viewsector=1,viewdir=1;
@@ -127,6 +130,15 @@ char marker=0;
 SPECTXT_ARR spectxtr;
 static char spt_ptr=0;
 
+void Builder_Init(void) {
+	barvy_skupin[0] = RGB555(8,8,8);
+	barvy_skupin[1] = RGB555(31,28,00);
+	barvy_skupin[2] = RGB555(00,23,06);
+	barvy_skupin[3] = RGB555(31,11,13);
+	barvy_skupin[4] = RGB555(22,16,31);
+	barvy_skupin[5] = RGB555(28,13,31);
+	barvy_skupin[6] = RGB555(00,29,26);
+}
 
 void add_spectxtr(word sector,word fhandle,word count,word repeat,integer xpos)
   {
@@ -230,7 +242,7 @@ void anim_sipky(int h,int mode)
        if (phase>4) i=8-phase; else i=phase;
        i=(i-2)*110;
        if (i>=0)
-       put_8bit_clipped(ablock(handle),Screen_GetAddr()+378*scr_linelen2+498,i,142,102);
+       put_8bit_clipped(ablock(handle),Screen_GetAddr()+378*Screen_GetXSize()+498,i,142,102);
        else put_picture(498,378,ablock(H_SIPKY_END));
        drw=1;
        if (mode!=-1)
@@ -286,7 +298,7 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet)
     return;
     }
 	if (phase>7) return;
-	adr=520+378*scr_linelen2+Screen_GetAddr();
+	adr=520+378*Screen_GetXSize()+Screen_GetAddr();
 	i=105*phase;
 	phase++;
   put_8bit_clipped(ablock(H_KREVMIN+block-1),adr,i,120,102);
@@ -300,9 +312,9 @@ word *bott_clear(void)
   {
   word *bott_scr;
 
-  bott_scr=(word *)getmem(scr_linelen2*104*2);
+  bott_scr=(word *)getmem(Screen_GetXSize()*104*2);
 //  memset(bott_scr,0,_msize(bott_scr));
-  memset(bott_scr,0,scr_linelen2*104*2);
+  memset(bott_scr,0,Screen_GetXSize()*104*2);
   return bott_scr;
   }
 
@@ -356,7 +368,7 @@ static void bott_draw_normal(void **pp,long *s)
         {
         z=3-((lv-1)*4/llv);if (lv==llv) z=0;
         z*=75;
-        if (p->xicht>=0)put_8bit_clipped(ablock(H_XICHTY+i),bott_scr+PIC_X+x+PIC_Y*scr_linelen2,z,54,75);
+        if (p->xicht>=0)put_8bit_clipped(ablock(H_XICHTY+i),bott_scr+PIC_X+x+PIC_Y*Screen_GetXSize(),z,54,75);
         if (p->bonus) draw_small_icone(0,PIC_X+x+1,PIC_Y+1);
         if (p->spell) draw_small_icone(1,PIC_X+x+1,PIC_Y+1);
         if (!p->voda) draw_small_icone(2,PIC_X+x+1,PIC_Y+1);
@@ -487,9 +499,9 @@ static void MaskPutPicture(int x, int y, char mask, word color, char blend, void
   {
   short *info=(short *)pic;
   char *data=(char *)(info+3+256);
-  word *pos=Screen_GetAddr()+x+y*scr_linelen2; 
+  word *pos=Screen_GetAddr()+x+y*Screen_GetXSize(); 
   if (blend) color=color & 0xF7DE;
-  for (y=0;y<info[1];y++,pos+=scr_linelen2,data+=info[0])	
+  for (y=0;y<info[1];y++,pos+=Screen_GetXSize(),data+=info[0])	
 	for (x=0;x<info[0];x++)
 	  if (data[x]==mask)
 		if (blend)		  
@@ -592,7 +604,7 @@ void draw_spell(int handle,int phase,int xicht)
      w=ablock(H_OKNO);
      x=54+w[0]*i+PIC_X;
      y=PIC_Y+378;
-     put_8bit_clipped(ablock(handle),Screen_GetAddr()+x+y*scr_linelen2,phase*75,54,75);
+     put_8bit_clipped(ablock(handle),Screen_GetAddr()+x+y*Screen_GetXSize(),phase*75,54,75);
      neco_v_pohybu=1;
      }
   }
@@ -601,7 +613,7 @@ void other_draw()
   {
 //  if (cancel_render) return;
   Screen_StripBlt(ablock(H_BOTTBAR),480-102,102);
-//  memcpy(Screen_GetAddr()+(480-102)*scr_linelen2,ablock(H_BOTTBAR),scr_linelen2*102*2);
+//  memcpy(Screen_GetAddr()+(480-102)*Screen_GetXSize(),ablock(H_BOTTBAR),Screen_GetXSize()*102*2);
   if (spell_handle)
      {
      draw_spell(spell_handle,spell_phase,spell_xicht);
@@ -617,8 +629,8 @@ void other_draw()
   show_money();
   anim_sipky(0,-1);
   draw_fx();
-  memset(Screen_GetAddr()+(SCREEN_OFFLINE-1)*scr_linelen2,0,1280);
-  memset(Screen_GetAddr()+(SCREEN_OFFLINE+360)*scr_linelen2,0,1280);
+  memset(Screen_GetAddr()+(SCREEN_OFFLINE-1)*Screen_GetXSize(),0,1280);
+  memset(Screen_GetAddr()+(SCREEN_OFFLINE+360)*Screen_GetXSize(),0,1280);
   }
 
 void display_spell_in_icone(int handle,int xicht)
@@ -1072,7 +1084,7 @@ static void zobraz_lodku(word *lodka, word *screen, int size)
 	  lodka++;
 	  size--;
 	  }
-	screen+=scr_linelen2;
+	screen+=Screen_GetXSize();
 	}
   }
 /*
@@ -1119,7 +1131,7 @@ static void trace_for_bgr(int dir)
 			{
 			if (bgr_distance==-1)
 				{
-				word *w=Screen_GetAddr();int i=scr_linelen2*480;
+				word *w=Screen_GetAddr();int i=Screen_GetXSize()*480;
 				do {if (*w>=NOSHADOW(0)) *w=back_color;w++;} while(--i);
 				}
 			zneplatnit_block(H_BGR_BUFF);
@@ -1303,7 +1315,7 @@ void draw_fx()
   c=ablock(H_FX);
   while (fx!=NULL)
      {
-     put_8bit_clipped(c,Screen_GetAddr()+fx->x+fx->y*scr_linelen2,fx->phase*16,c[0],16);
+     put_8bit_clipped(c,Screen_GetAddr()+fx->x+fx->y*Screen_GetXSize(),fx->phase*16,c[0],16);
      if (++fx->phase>14)
         {
         *last=NULL;

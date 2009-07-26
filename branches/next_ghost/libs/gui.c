@@ -252,7 +252,7 @@ void absolute_window(WINDOW *w,OBJREC *o, int *x, int *y)
 
      for (i=y;i<=y+ys;i++)
         {
-        a=Screen_GetAddr()+scr_linelen2*i+x;
+        a=Screen_GetAddr()+Screen_GetXSize()*i+x;
         for(j=x;j<=x+xs;j++)
            {
            *a=((*a & RGB555(30,30,30))+(color & RGB555(30,30,30)))>>1;

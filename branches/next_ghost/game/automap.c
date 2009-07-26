@@ -53,6 +53,7 @@
 #define MEDIUM_MAP_LINE1 RGB555(25,20,17)
 #define MEDIUM_MAP_LINE2 RGB555(31,22,6)
 
+/*
 word stairs_colors[]=
   {AUTOMAP_LINE1,
    RGB555(14,12,11),
@@ -65,6 +66,9 @@ word arrow_colors[]=
   AUTOMAP_LINE1,
   AUTOMAP_FORE
   };
+*/
+word stairs_colors[5];
+word arrow_colors[2];
 
 char shift_map(int id,int xa,int ya,int xr,int yr);
 char psani_poznamek(int id,int xa,int ya,int xr,int yr);
@@ -113,6 +117,16 @@ T_CLK_MAP clk_teleport_view[]=
   {-1,0,0,639,479,empty_clk,0xff,-1},
   };
 
+void Automap_Init(void) {
+	stairs_colors[0] = AUTOMAP_LINE1;
+	stairs_colors[1] = RGB555(14,12,11);
+	stairs_colors[2] = RGB555(15,14,12);
+	stairs_colors[3] = RGB555(16,15,12);
+	stairs_colors[4] = RGB555(17,16,13);
+
+	arrow_colors[0] = AUTOMAP_LINE1;
+	arrow_colors[1] = AUTOMAP_FORE;
+}
 
 char testclip(int x,int y)
   {
@@ -518,7 +532,7 @@ static void displ_button(char disable,char **text)
      {
      if (disable & 1)
         {
-        put_8bit_clipped(ablock(H_CHARGENB),(392+posy[i])*scr_linelen2+524+Screen_GetAddr(),posy[i],96,sizy[i]);
+        put_8bit_clipped(ablock(H_CHARGENB),(392+posy[i])*Screen_GetXSize()+524+Screen_GetAddr(),posy[i],96,sizy[i]);
         font_color(color_butt_off);
         }
      else

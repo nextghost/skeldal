@@ -113,7 +113,8 @@ long shop_hacek_size=0; //toto je jeho delka
 #define INV_LEVEL_COL1 (NOSHADOW(RGB555(0,0,15)))
 #define INV_LEVEL_COL2 (RGB555(31,24,0))
 
-unsigned short butt_plus[]={0x0,(RGB555(25,23,16)),(RGB555(18,17,14)),(RGB555(10,10,5)),(RGB555(31,27,14))};
+//unsigned short butt_plus[]={0x0,(RGB555(25,23,16)),(RGB555(18,17,14)),(RGB555(10,10,5)),(RGB555(31,27,14))};
+word butt_plus[5];
 
 #define PO_XS 194
 #define PO_YS 340
@@ -125,6 +126,14 @@ char inv_view_mode=0;
 
 void redraw_inventory();
 void zkontroluj_postavu();
+
+void Inv_Init(void) {
+	butt_plus[0] = 0;
+	butt_plus[1] = RGB555(25,23,16);
+	butt_plus[2] = RGB555(18,17,14);
+	butt_plus[3] = RGB555(10,10,5);
+	butt_plus[4] = RGB555(31,27,14);
+}
 
 void place_human_item(word *obrazek,int x,int y,int item)
   {
@@ -1252,7 +1261,7 @@ void display_items_wearing(THUMAN *h)
   int it;
   put_picture(4,TOP_OFS,ablock(H_IOBLOUK));
   zneplatnit_block(h-postavy+H_POSTAVY);
-  enemy_draw(ablock(h-postavy+H_POSTAVY),Screen_GetAddr()+HUMAN_X+HUMAN_Y*scr_linelen2,6,320,HUMAN_Y,640*65536);
+  enemy_draw(ablock(h-postavy+H_POSTAVY),Screen_GetAddr()+HUMAN_X+HUMAN_Y*Screen_GetXSize(),6,320,HUMAN_Y,640*65536);
   it=h->wearing[PO_BATOH];
   if (it)
         {
@@ -1263,7 +1272,7 @@ void display_items_wearing(THUMAN *h)
         vzhled=itt->vzhled;
         if (h->female==1) vzhled+=face_arr[2];else vzhled+=face_arr[1];
         w=ablock(vzhled);
-        enemy_draw((byte*)w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+scr_linelen2*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
+        enemy_draw((byte*)w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+Screen_GetXSize()*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
         }
   }
 

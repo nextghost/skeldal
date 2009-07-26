@@ -376,7 +376,7 @@ int set_video(int mode)
 
   default:er=-1;
   }*/
-  screen_buffer_size=scr_linelen*480;
+  screen_buffer_size=Screen_GetScan()*480;
   return er;
   }
 
@@ -497,9 +497,9 @@ void set_background(void **p,long *s)
   if (!bgr_handle) return;
   if (bgr_distance==-1) return;
   data=ablock(bgr_handle);
-  *s=scr_linelen2*360*2;
+  *s=Screen_GetXSize()*360*2;
   ptr=*p=getmem(*s);
-  counter=scr_linelen2*360;
+  counter=Screen_GetXSize()*360;
   pal=data+3+bgr_distance*256;
   pic=(char *)data+PIC_FADE_PAL_SIZE;
   do
@@ -1046,7 +1046,7 @@ SEND_LOG("(INIT) Initializing engine.",0,0);
 	d = Sys_FullPath(SR_TEMP, TEMP_FILE);
 	c = alloca((strlen(d) + 1) * sizeof (char));
 	strcpy(c, d);
-	d = Sys_FullPath(SR_DATA, "skeldal.ddl");
+	d = Sys_FullPath(SR_DATA, "SKELDAL.DDL");
 SEND_LOG("(INIT) Initializing memory manager",0,0);
   init_manager(d,c);
 SEND_LOG("(GAME) Memory manager initialized. Using DDL: '%s' Temp dir: '%s'",d,c);
@@ -1100,6 +1100,12 @@ SEND_LOG("(INIT) Loading items.",0,0);
 SEND_LOG("(INIT) Loading shops.",0,0);
   load_shops();
   Mouse_MapWheel('H','P');
+  Automap_Init();
+  Builder_Init();
+  Chargen_Init();
+  Interface_Init();
+  Inv_Init();
+  Bgraph2_Init();
   }
 
 void wire_main_functs();
@@ -1350,27 +1356,33 @@ void set_verify(char state);
                              "mov   ah,2eh"\
                              "int   21h"
 */
-void play_movie_seq(char *s,int y)
-  {
-  int hic=full_video?SMD_HICOLOR+128:SMD_HICOLOR,cc=full_video?SMD_256+128:SMD_256;
-  word *lbuffer=Screen_GetAddr();
-  set_play_attribs(lbuffer,0,banking,vmode==5);
-  switch (vmode)
-     {
-     case 1:if (!banking)
-              play_animation(s,cc,y,Sound_IsActive());
-            else
-              {
-              set_play_attribs(Screen_GetAddr(),1,0,vmode==5);
-              play_animation(s,hic,y,Sound_IsActive());
-              }
-            break;
-     case 5:
-     case 2:play_animation(s,hic,y,Sound_IsActive());break;
-     default: set_play_attribs(Screen_GetAddr(),1,0,vmode==5);
-              play_animation(s,hic,y,Sound_IsActive());break;
-     }
-  }
+void play_movie_seq(char *s,int y) {
+	int hic = full_video ? SMD_HICOLOR+128 : SMD_HICOLOR;
+	int cc = full_video ? SMD_256+128 : SMD_256;
+
+	word *lbuffer=Screen_GetAddr();
+	set_play_attribs(lbuffer, 0, banking, vmode == 5);
+
+	switch (vmode)
+	{
+	case 1:
+		if (!banking) {
+			play_animation(s, cc, y, Sound_IsActive());
+		} else {
+			set_play_attribs(Screen_GetAddr(), 1, 0, vmode == 5);
+			play_animation(s, hic, y, Sound_IsActive());
+		}
+		break;
+	case 5:
+	case 2:
+		play_animation(s, hic, y, Sound_IsActive());
+		break;
+	default:
+		set_play_attribs(Screen_GetAddr(), 1, 0, vmode == 5);
+		play_animation(s, hic, y, Sound_IsActive());
+		break;
+	}
+}
 
 
 void play_anim(int anim_num)
@@ -1632,7 +1644,8 @@ static void load_saved_game(void)
       }
   }
 
-static void start(va_list args)
+//static void start(va_list args)
+static void start()
   {
   int volba;
   char /*d,*/openning;
@@ -1758,12 +1771,15 @@ int main(int argc,char *argv[])
 
   //Task_Add(32768,check_number_1phase,argv[0]);
   SEND_LOG("(INIT) Starting game thread.",0,0);
+/*
   if (argc>=3 && rm)
      {
      Task_Add(65536,start_from_mapedit,argc,argv);
      }
   else
      Task_Add(65536,start);
+*/
+	start();
   SEND_LOG("(INIT) Main thread goes to sleep.",0,0);
 /*  position(200,200);
   set_font(H_FBIG,RGB(200,200,200));

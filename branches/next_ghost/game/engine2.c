@@ -444,10 +444,10 @@ ka_skip:add     edi,4
 			// red and green are shifted by one bit to the right
 			// to make space for skip bit 0x8000
 			color += color & 0x7fe0;
-			target[2*x+y*scr_linelen2] = color;
-			target[2*x+1+y*scr_linelen2] = color;
-			target[2*x+(y+1)*scr_linelen2] = color;
-			target[2*x+1+(y+1)*scr_linelen2] = color;
+			target[2*x+y*Screen_GetXSize()] = color;
+			target[2*x+1+y*Screen_GetXSize()] = color;
+			target[2*x+(y+1)*Screen_GetXSize()] = color;
+			target[2*x+1+(y+1)*Screen_GetXSize()] = color;
 		}
 	}
   }
@@ -501,10 +501,10 @@ kba_skip:dec     ebx
 			// red and green are shifted by one bit to the right
 			// to make space for skip bit 0x8000
 			color += color & 0x7fe0;
-			target[640-2*x+y*scr_linelen2] = color;
-			target[640-2*x+1+y*scr_linelen2] = color;
-			target[640-2*x+(y+1)*scr_linelen2] = color;
-			target[640-2*x+1+(y+1)*scr_linelen2] = color;
+			target[640-2*x+y*Screen_GetXSize()] = color;
+			target[640-2*x+1+y*Screen_GetXSize()] = color;
+			target[640-2*x+(y+1)*Screen_GetXSize()] = color;
+			target[640-2*x+1+(y+1)*Screen_GetXSize()] = color;
 		}
 	}
   }
@@ -610,7 +610,7 @@ shmad4: add     edi,scr_linelen
 		}
 
 		j -= 0xbf;
-		target = tmp + j * scr_linelen2;
+		target = tmp + j * Screen_GetXSize();
 	}
   }
 
@@ -711,8 +711,8 @@ sac_end:sub     ecx,2           ;odecti counter
 		info1 = max(lineinfo[i][1], lineinfo[shift+i][1]) - info0;
 
 		do {
-			slide[0] = slide[shift*scr_linelen2];
-			slide[1] = slide[shift*scr_linelen2+1];
+			slide[0] = slide[shift*Screen_GetXSize()];
+			slide[1] = slide[shift*Screen_GetXSize()+1];
 
 			if (((slide[1] << 16) | slide[0]) & ~BGSWITCHBIT) {
 				*scr++ = (slide[0] & 0x20) ? *pic : slide[0];
@@ -730,7 +730,7 @@ sac_end:sub     ecx,2           ;odecti counter
 
 		info1 += 640 - info0;
 		pic += info1;
-		info1 += scr_linelen2 - 640;
+		info1 += Screen_GetXSize() - 640;
 		scr += info1;
 		slide += info1;
 	}
@@ -895,9 +895,9 @@ ed_err: add     esp,ed_stack;vymaz tabulku
 			}
 
 			if (idx == 1) {
-				trg[j-i*scr_linelen2] = (trg[j-i*scr_linelen2] & 0xf7de) >> 1;
+				trg[j-i*Screen_GetXSize()] = (trg[j-i*Screen_GetXSize()] & 0xf7de) >> 1;
 			} else {
-				trg[j-i*scr_linelen2] = pal[idx];
+				trg[j-i*Screen_GetXSize()] = pal[idx];
 			}
 		}
 	}
@@ -1062,9 +1062,9 @@ et_err: add     esp,ed_stack;vymaz tabulku
 			}
 
 			if (idx & 0x80) {
-				trg[j-i*scr_linelen2] = ((trg[j-i*scr_linelen2] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
+				trg[j-i*Screen_GetXSize()] = ((trg[j-i*Screen_GetXSize()] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
 			} else {
-				trg[j-i*scr_linelen2] = shade[idx];
+				trg[j-i*Screen_GetXSize()] = shade[idx];
 			}
 		}
 	}
@@ -1224,9 +1224,9 @@ etmerr: add     esp,ed_stack;vymaz tabulku
 			}
 
 			if (idx & 0x80) {
-				trg[j-i*scr_linelen2] = ((trg[j-i*scr_linelen2] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
+				trg[j-i*Screen_GetXSize()] = ((trg[j-i*Screen_GetXSize()] & 0xf7de) + (shade[idx] & 0xf7de)) >> 1;
 			} else {
-				trg[j-i*scr_linelen2] = shade[idx];
+				trg[j-i*Screen_GetXSize()] = shade[idx];
 			}
 		}
 	}
@@ -1379,9 +1379,9 @@ edmerr: add     esp,ed_stack;vymaz tabulku
 			}
 
 			if (idx == 1) {
-				trg[j-i*scr_linelen2] = (trg[j-i*scr_linelen2] & 0xf7de) >> 1;
+				trg[j-i*Screen_GetXSize()] = (trg[j-i*Screen_GetXSize()] & 0xf7de) >> 1;
 			} else {
-				trg[j-i*scr_linelen2] = pal[idx];
+				trg[j-i*Screen_GetXSize()] = pal[idx];
 			}
 		}
 	}

@@ -238,14 +238,14 @@ konec:
 */
 
 	// TODO: needs testing
-	int i, j, k;
+	unsigned int i, j, k;
 	byte *map = buff + 4;
 	word *tmp;
-	buff += 4 + *(int*)buff;
+	buff += 4 + *(unsigned int*)buff;
 
 	for (i = 0; i < 180; i += j) {
 		tmp = target;
-		for (j = *map++; j < 0xc0; j = *map++) {
+		for (j = *map++; (j & 0xc0) != 0xc0; j = *map++) {
 			target += 2 * j;
 			for (k = 0; k < *map; k++) {
 				*target++ = paleta[*buff++];
@@ -254,7 +254,7 @@ konec:
 			map++;
 		}
 
-		j -= 0xbf;
+		j = (j & 0x3f) + 1;
 		target = tmp + j * 320;
 	}
   }

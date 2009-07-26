@@ -60,9 +60,17 @@
 static char *error_hack="....Source compiled.";
 static char shadow_enabled=1;
 
-word color_topbar[7]={0,RGB555(22,14,4),RGB555(24,16,6),RGB555(25,17,7)};
+//word color_topbar[7]={0,RGB555(22,14,4),RGB555(24,16,6),RGB555(25,17,7)};
+word color_topbar[7] = {0};
 
 int input_txtr=H_LOADTXTR;
+
+void Interface_Init(void) {
+	color_topbar[0] = 0;
+	color_topbar[1] = RGB555(22,14,4);
+	color_topbar[2] = RGB555(24,16,6);
+	color_topbar[3] = RGB555(25,17,7);
+}
 
 void create_frame(int x,int y,int xs,int ys,char clear)
    {
@@ -74,7 +82,7 @@ void create_frame(int x,int y,int xs,int ys,char clear)
    y-=VEL_RAMEC;
    xs=(xs+VEL_RAMEC-1)/VEL_RAMEC+1;
    ys=(ys+VEL_RAMEC-1)/VEL_RAMEC+1;
-   line=Screen_GetAddr()+y*scr_linelen2+x;
+   line=Screen_GetAddr()+y*Screen_GetXSize()+x;
    col=line;
    put_8bit_clipped(ablock(H_RAMECEK),col,0,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
    for(i=1;i<xs;i++)
@@ -82,12 +90,12 @@ void create_frame(int x,int y,int xs,int ys,char clear)
      put_8bit_clipped(ablock(H_RAMECEK),col,VEL_RAMEC,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
      }
   put_8bit_clipped(ablock(H_RAMECEK),col,VEL_RAMEC*2,VEL_RAMEC,VEL_RAMEC);
-  line+=scr_linelen2*VEL_RAMEC;
+  line+=Screen_GetXSize()*VEL_RAMEC;
   for(i=1;i<ys;i++)
      {
      put_8bit_clipped(ablock(H_RAMECEK),line,VEL_RAMEC*3,VEL_RAMEC,VEL_RAMEC);
      put_8bit_clipped(ablock(H_RAMECEK),line+VEL_RAMEC*xs,VEL_RAMEC*4,VEL_RAMEC,VEL_RAMEC);
-     line+=scr_linelen2*VEL_RAMEC;
+     line+=Screen_GetXSize()*VEL_RAMEC;
      }
   col=line;
   put_8bit_clipped(ablock(H_RAMECEK),col,VEL_RAMEC*5,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
@@ -942,7 +950,7 @@ static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   else
      put_picture(x1,y1,o->userptr);
   phase=(CHECK_BOX_ANIM-(*data>>1))*20;
-  put_8bit_clipped(obr,Screen_GetAddr()+x1+y1*scr_linelen2,phase,obr[0],obr[0]);
+  put_8bit_clipped(obr,Screen_GetAddr()+x1+y1*Screen_GetXSize(),phase,obr[0],obr[0]);
   }
 
 static void skeldal_checkbox_event(EVENT_MSG *msg,OBJREC *o)
@@ -1473,6 +1481,7 @@ int load_string_list_ex(TSTR_LIST *list,char *filename)
         enc_close(&fl);
         return lin;
         }
+     p=strchr(c,'\r');if (p!=NULL) *p=0;
      p=strchr(c,'\n');if (p!=NULL) *p=0;
      for(p=c;*p;p++) *p=*p=='|'?'\n':*p;
      if (str_replace(list,i,c)==NULL)
@@ -1642,10 +1651,13 @@ void show_jrc_logo(char *filename)
       if (cpalf<32)
         for (i=0;i<256;i++)
         {
+/*
         int r=(cpalf<<11),g=(cpalf<<6),b=cpalf,k;
         k=palette[i] & 0xF800;if (k>r) palw[i]=r;else palw[i]=k;
         k=palette[i] & 0x7e0;if (k>g) palw[i]|=g;else palw[i]|=k;
         k=palette[i] & 0x1f;if (k>b) palw[i]|=b;else palw[i]|=k;
+*/
+		palw[i] = Screen_ColorMin(palette[i], Screen_RGB(cpalf, cpalf, cpalf));
         }
       }
     else if (ccc!=cdiff)
@@ -1654,6 +1666,7 @@ void show_jrc_logo(char *filename)
       if (cpalf<32)
         for (i=0;i<256;i++)
         {
+/*
         int r,g,b,k=32-cpalf;
 
         b=palette[i];g=b>>5;b&=0x1f;r=g>>6;g&=0x1f;
@@ -1662,6 +1675,8 @@ void show_jrc_logo(char *filename)
         if (r<0) r=0;
         if (g<0) g=0;
         palw[i]=b | (r<<11) | (g<<6);
+*/
+		palw[i] = Screen_ColorSub(palette[i], 32-cpalf);
         }
       }
     if (!bnk) wait_retrace();put_picture(xp,yp,pcx);

@@ -122,7 +122,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 
 #define TX_LOAD 0
 
-#define LODKA_POS (SCREEN_OFFLINE+301)*scr_linelen2+Screen_GetBackAddr()
+#define LODKA_POS (SCREEN_OFFLINE+301)*Screen_GetXSize()+Screen_GetBackAddr()
 #define LODKA_SIZ 640*60
 
 
@@ -771,6 +771,13 @@ void save_leaving_places(void);
 void load_leaving_places(void);
 int set_leaving_place(void);
 int get_leaving_place(char *level_name);
+
+void Automap_Init(void);
+void Builder_Init(void);
+void Chargen_Init(void);
+void Interface_Init(void);
+void Inv_Init(void);
+void Bgraph2_Init(void);
 
 
 //click_map

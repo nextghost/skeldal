@@ -24,7 +24,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+
 #include "libs/system.h"
 #include "game/globals.h"
 
@@ -36,21 +41,31 @@ char *strupr(char *str) {
 	return str;
 }
 
-// TODO: implement these
+// FIXME: implement mouse support
 void Mouse_GetEvent(MS_EVENT *event) {
-	assert(0);
+//	assert(0);
+	event->event = 0;
+	event->x = 0;
+	event->y = 0;
+	event->tl1 = 0;
+	event->tl2 = 0;
+	event->tl3 = 0;
+	event->event_type = 0;
 }
 
+// FIXME: implement mouse support
 void Mouse_MapWheel(char up, char down) {
-	assert(0);
+//	assert(0);
 
 }
 
+// FIXME: implement keyboard support
 int Input_Kbhit(void) {
-	assert(0);
-
+//	assert(0);
+	return 0;
 }
 
+// TODO: implement these
 int Input_ReadKey(void) {
 	assert(0);
 
@@ -137,11 +152,6 @@ void Screen_Restore(void) {
 
 }
 
-void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
-	assert(0);
-
-}
-
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
 	assert(0);
 
@@ -192,8 +202,9 @@ void ShareCPU(void) {
 
 }
 
+// FIXME: implement sound backend
 char Sound_SetEffect(int filter, int data) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
@@ -207,8 +218,9 @@ char Sound_CheckEffect(int filter) {
 	return 0;
 }
 
+// FIXME: implement sound backend
 char Sound_IsActive(void) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
@@ -227,8 +239,9 @@ char Sound_GetChannelState(int channel) {
 	return 0;
 }
 
+// FIXME: implement sound backend
 int Sound_MixBack(int synchro) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
@@ -237,8 +250,9 @@ void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sf
 
 }
 
+// FIXME: implement music backend
 void Sound_ChangeMusic(char *file) {
-	assert(0);
+//	assert(0);
 
 }
 
@@ -262,13 +276,15 @@ void Sound_StopMixing(void) {
 
 }
 
+// FIXME: implement sound backend
 void Sound_StartMixing(void) {
-	assert(0);
+//	assert(0);
 
 }
 
+// FIXME: implement sound backend
 void Sound_SetMixer(int dev, int freq, ...) {
-	assert(0);
+//	assert(0);
 
 }
 
@@ -322,21 +338,6 @@ void Task_Shutdown(int id) {
 
 }
 
-int Timer_GetValue(void) {
-	assert(0);
-	return 0;
-}
-
-int Timer_GetTick(void) {
-	assert(0);
-	return 0;
-}
-
-void Timer_Sleep(int msec) {
-	assert(0);
-
-}
-
 int get_control_state(void) {
 	assert(0);
 	return 0;
@@ -353,8 +354,9 @@ void *LoadDefaultFont(void) {
 	return Sys_ReadFile(Sys_FullPath(SR_FONT, "BOLDCZ.FON"));
 }
 
+// FIXME: implement sound backend
 void *PrepareVideoSound(int mixfreq, int buffsize) {
-	assert(0);
+//	assert(0);
 	return NULL;
 }
 
@@ -363,19 +365,36 @@ void DoneVideoSound(void *buffer) {
 
 }
 
+// FIXME: implement sound backend
 char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat, short *accnums, long *writepos) {
-	assert(0);
-	return 0;
+//	assert(0);
+	return 1;
 }
 
+// FIXME: rewrite properly
+static int mgf = -1, mgf_len;
 void *OpenMGFFile(const char *filename) {
-	assert(0);
-	return NULL;
+	struct stat st;
+	void *ret;
+
+	assert(mgf == -1);
+	mgf = open(filename, O_RDONLY);
+	assert(mgf >= 0);
+
+	fstat(mgf, &st);
+	mgf_len = st.st_size;
+	ret = mmap(NULL, mgf_len, PROT_READ, MAP_SHARED, mgf, 0);
+
+	fprintf(stderr, "OpenMGFFile(): mmap'ed %p through %p\n", ret, ret + mgf_len);
+
+	return ret;
 }
 
 void CloseMGFFile(void *file) {
-	assert(0);
-
+	fprintf(stderr, "CloseMGFFile(): unmapping %p\n", file);
+	munmap(file, mgf_len);
+	close(mgf);
+	mgf = -1;
 }
 
 // FIXME: implement game launcher

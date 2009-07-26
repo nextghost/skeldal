@@ -28,8 +28,11 @@
 #define bar bar32
 #define point point32
 
-#define RGB888(r,g,b) ((unsigned short)((((r)<<8)&0xF800) | (((g)<<3) & 0x7C0) | ((b)>>3)))
-#define RGB555(r,g,b) ((unsigned short)(((r)<<11) | ((g)<<6) | (b)))
+//#define RGB888(r,g,b) ((unsigned short)((((r)<<8)&0xF800) | (((g)<<3) & 0x7C0) | ((b)>>3)))
+//#define RGB555(r,g,b) ((unsigned short)(((r)<<11) | ((g)<<6) | (b)))
+
+#define RGB888(r, g, b) Screen_RGB((r) >> 3, (g) >> 3, (b) >> 3)
+#define RGB555(r, g, b) Screen_RGB((r), (g), (b))
 
 //word *GetScreenAdr();
 //word *GetBuffer2nd();
@@ -39,9 +42,9 @@ void RedirectScreenBufferSecond();
 
 
 extern word curcolor,charcolors[7];
-extern long scr_linelen;
-extern long scr_linelen2;
-extern long dx_linelen;
+//extern long scr_linelen;
+//extern long scr_linelen2;
+//extern long dx_linelen;
 extern word *curfont,*writepos,writeposx;
 extern byte fontdsize;
 extern byte *palmem,*xlatmem;
@@ -54,7 +57,7 @@ extern char no_restore_mode;
 
 static __inline word *getadr32(longint x,longint y)
   {
-  return Screen_GetAddr()+scr_linelen2*y+x;
+  return Screen_GetAddr()+Screen_GetXSize()*y+x;
   }
 
 static __inline void point32(longint x,longint y, word color)

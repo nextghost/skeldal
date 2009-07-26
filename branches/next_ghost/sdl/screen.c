@@ -77,6 +77,78 @@ long Screen_GetSize(void) {
 	return screen->h * screen->pitch;
 }
 
+int Screen_GetScan(void) {
+	return screen->pitch;
+}
+
 unsigned short *Screen_GetBackAddr(void) {
 	return backBuffer;
+}
+
+void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
+	SDL_UpdateRect(screen, x, y, xs, ys);
+}
+
+void Screen_FixPalette(word *pal) {
+	int i, r, g, b;
+
+	for (i = 0; i < 256; i++) {
+		r = (pal[i] >> 11) & 0x1f;
+		g = (pal[i] >> 6) & 0x1f;
+		b = pal[i] & 0x1f;
+	
+		pal[i] = Screen_RGB(r, g, b);
+	}
+}
+
+
+void Screen_FixMGIFPalette(word *pal) {
+	unsigned i, r, g, b;
+
+	for (i = 0; i < 256; i++) {
+		r = (pal[i] >> 10) & 0x1f;
+		g = (pal[i] >> 5) & 0x1f;
+		b = pal[i] & 0x1f;
+	
+		pal[i] = Screen_RGB(r, g, b);
+	}
+}
+
+word Screen_RGB(unsigned r, unsigned g, unsigned b) {
+	return (r << screen->format->Rshift) | (g << screen->format->Gshift) | 
+		(b << screen->format->Bshift);
+}
+
+word Screen_ColorMin(word c1, word c2) {
+	unsigned r, g, b;
+
+	r = min(c1 & screen->format->Rmask, c2 & screen->format->Rmask);
+	g = min(c1 & screen->format->Gmask, c2 & screen->format->Gmask);
+	b = min(c1 & screen->format->Bmask, c2 & screen->format->Bmask);
+
+	return r | g | b;
+}
+
+word Screen_ColorSub(word color, int sub) {
+	int r, g, b;
+
+	r = ((color & screen->format->Rmask) >> screen->format->Rshift) - sub;
+	g = ((color & screen->format->Gmask) >> screen->format->Gshift) - sub;
+	b = ((color & screen->format->Bmask) >> screen->format->Bshift) - sub;
+
+	return Screen_RGB(r < 0 ? 0 : r, g < 0 ? 0 : g, b < 0 ? 0 : b);
+}
+
+word Screen_ColorAvg(word c1, word c2) {
+	unsigned r, g, b;
+
+	r = (c1 & screen->format->Rmask) + (c2 & screen->format->Rmask);
+	g = (c1 & screen->format->Gmask) + (c2 & screen->format->Gmask);
+	b = (c1 & screen->format->Bmask) + (c2 & screen->format->Bmask);
+
+	r = (r / 2) & screen->format->Rmask;
+	g = (g / 2) & screen->format->Gmask;
+	b = (b / 2) & screen->format->Bmask;
+
+	return r | g | b;
 }
