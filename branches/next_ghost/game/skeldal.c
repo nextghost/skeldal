@@ -1669,7 +1669,6 @@ static void start()
   do
   {
      volba=enter_menu(openning);openning=1;
-     fprintf(stderr, "Volba: %d\n", volba);
      switch (volba)
        {
        case V_KONEC:exit_wait=1;break;

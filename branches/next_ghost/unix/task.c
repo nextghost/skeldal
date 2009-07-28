@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include "libs/event.h"
+#include "libs/system.h"
 
 static long wait_target = 0;
 static EVENT_MSG wait_ret;
@@ -35,10 +36,11 @@ void *Task_WaitEvent(long event) {
 	wait_target = event;
 	do {
 		do_events();
+		Timer_Sleep(TIMERSPEED/2);
 	} while (wait_target);
 
 	--counter;
-	return &wait_ret;
+	return wait_ret.data;
 }
 
 void Task_Wakeup(EVENT_MSG *msg) {

@@ -12,7 +12,7 @@ OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 	libs/mgifmapmem.o libs/mgifmem.o libs/mgifplaya.o libs/pcx.o \
 	libs/strlite.o libs/swaper.o libs/wav_mem.o libs/sound.o
 
-SDLOBJS=sdl/screen.o sdl/timer.o
+SDLOBJS=sdl/input.o sdl/screen.o sdl/timer.o
 
 UNIXOBJS=unix/init.o unix/system.o unix/task.o
 

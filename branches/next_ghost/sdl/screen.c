@@ -36,6 +36,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	}
 
 	screen = SDL_SetVideoMode(640, 480, 15, SDL_SWSURFACE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	if (!screen) {
 		return 0;
@@ -57,6 +58,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 }
 
 void Screen_Shutdown(void) {
+	SDL_ShowCursor(SDL_ENABLE);
 	free(backBuffer);
 	SDL_Quit();
 }

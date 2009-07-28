@@ -42,18 +42,6 @@ char *strupr(char *str) {
 }
 
 // FIXME: implement mouse support
-void Mouse_GetEvent(MS_EVENT *event) {
-//	assert(0);
-	event->event = 0;
-	event->x = 0;
-	event->y = 0;
-	event->tl1 = 0;
-	event->tl2 = 0;
-	event->tl3 = 0;
-	event->event_type = 0;
-}
-
-// FIXME: implement mouse support
 void Mouse_MapWheel(char up, char down) {
 //	assert(0);
 
@@ -88,7 +76,6 @@ void Sys_InfoBox(const char *msg) {
 
 void Sys_Shutdown(void) {
 	Screen_Shutdown();
-	assert(0);
 }
 
 void Sys_SetEnv(const char *name, const char *value) {
@@ -271,8 +258,9 @@ void Sound_Mute(int channel) {
 
 }
 
+// FIXME: implement sound backend
 void Sound_StopMixing(void) {
-	assert(0);
+//	assert(0);
 
 }
 
