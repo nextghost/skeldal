@@ -298,11 +298,6 @@ void *Task_Sleep(void *data) {
 	return NULL;
 }
 
-void *Task_WaitEvent(long event) {
-	assert(0);
-	return NULL;
-}
-
 char Task_IsMaster(void) {
 	assert(0);
 	return 0;
@@ -311,11 +306,6 @@ char Task_IsMaster(void) {
 int Task_Count(void) {
 	assert(0);
 	return 0;
-}
-
-void Task_Wakeup(EVENT_MSG *msg) {
-	assert(0);
-
 }
 
 void Task_Term(int id) {
@@ -360,8 +350,9 @@ void *PrepareVideoSound(int mixfreq, int buffsize) {
 	return NULL;
 }
 
+// FIXME: implement sound backend
 void DoneVideoSound(void *buffer) {
-	assert(0);
+//	assert(0);
 
 }
 
@@ -385,13 +376,10 @@ void *OpenMGFFile(const char *filename) {
 	mgf_len = st.st_size;
 	ret = mmap(NULL, mgf_len, PROT_READ, MAP_SHARED, mgf, 0);
 
-	fprintf(stderr, "OpenMGFFile(): mmap'ed %p through %p\n", ret, ret + mgf_len);
-
 	return ret;
 }
 
 void CloseMGFFile(void *file) {
-	fprintf(stderr, "CloseMGFFile(): unmapping %p\n", file);
 	munmap(file, mgf_len);
 	close(mgf);
 	mgf = -1;

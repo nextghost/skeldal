@@ -433,8 +433,9 @@ void tasker(EVENT_MSG *msg,void **data)
      case E_WATCH:
      case E_IDLE:
      default:
-           if (Task_Count()>=1)
-              Task_Sleep(NULL);
+// FIXME: rewrite?
+//           if (Task_Count()>=1)
+//              Task_Sleep(NULL);
            break;
      case E_DONE:
            {
@@ -490,8 +491,9 @@ static char do_events_called=0;
 void do_events()
   {
   do_events_called=1;
-  if (!Task_IsMaster()) Task_Sleep(NULL);
-  else
+// FIXME: rewrite?
+//  if (!Task_IsMaster()) Task_Sleep(NULL);
+//  else
      {
      send_message(E_WATCH);
      send_message(E_IDLE);

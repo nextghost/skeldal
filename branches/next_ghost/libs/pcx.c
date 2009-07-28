@@ -121,7 +121,7 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
   {
   unsigned short paleta2[256];
   char *paleta1;
-  char *ptr1;unsigned short *ptr2;
+  byte *ptr1;unsigned short *ptr2;
   char *ptr3;
   int i;
   PCXHEADER pcxdata;
@@ -133,13 +133,17 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
   ptr1=paleta1;ptr2=paleta2;
   if (get_palette_ptr!=NULL)
      memcpy(get_palette_ptr,ptr1,768);
-  for (i=0;i<256;i++)
-     {
+
+	for (i = 0; i < 256; i++) {
+		*ptr2++ = Screen_RGB(ptr1[0] >> 3, ptr1[1] >> 3, ptr1[2] >> 3);
+		ptr1 += 3;
+/*
      *ptr2=*(ptr1++)>>3;
      *ptr2=(*ptr2<<5)+(*(ptr1++)>>3);
      *ptr2=(*ptr2<<6)+(*(ptr1++)>>3);
      ptr2++;
-     }
+*/
+	}
 
   memcpy(&pcxdata,pcx,sizeof(pcxdata));
   xsize=pcxdata.xmax-pcxdata.xmin+1;
@@ -166,7 +170,6 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
   if (conv_type==A_8BIT)
      {
      memcpy(ptr1,paleta2,512);
-     Screen_FixPalette(ptr1);
      ptr1+=512;
      }
   if (conv_type==A_FADE_PAL)

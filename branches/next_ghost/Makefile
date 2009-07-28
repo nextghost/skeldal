@@ -14,7 +14,7 @@ OBJS=cztable.o game/automap.o game/builder.o game/clk_map.o game/dialogs.o \
 
 SDLOBJS=sdl/screen.o sdl/timer.o
 
-UNIXOBJS=unix/init.o unix/system.o
+UNIXOBJS=unix/init.o unix/system.o unix/task.o
 
 .PHONY: all clean
 

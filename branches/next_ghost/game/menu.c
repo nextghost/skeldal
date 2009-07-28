@@ -294,8 +294,8 @@ static void prehraj_animaci_v_menu(EVENT_MSG *msg,char **unused)
   }
 
 
-static void preload_anim(va_list args)
-  {
+//static void preload_anim(va_list args)
+static void preload_anim(void) {
   int i;
 
   low_mem=0;
@@ -303,7 +303,7 @@ static void preload_anim(va_list args)
   for(i=0;i<30;i+=2)
      {
      apreload(H_ANIM+i);
-     Task_Sleep(NULL);
+//     Task_Sleep(NULL);
      }
   for(i=1;i<30;i+=2)
      {
@@ -316,15 +316,15 @@ static void preload_anim(va_list args)
         break;
         }
      apreload(H_ANIM+i);
-     Task_Sleep(NULL);
+//     Task_Sleep(NULL);
      }
   for(i=0;i<5;i++)
      {
      apreload(H_MENU_ANIM+i);
-     Task_Sleep(NULL);
+//     Task_Sleep(NULL);
      }
   apreload(H_MENU_MASK);
-  Task_WaitEvent(E_TIMER);
+//  Task_WaitEvent(E_TIMER);
   load_ok=1;
   }
 
@@ -355,9 +355,10 @@ int enter_menu(char open)
   char c;
   char *d;
   init_menu_entries();
-  Task_Add(2048,preload_anim);
-  load_ok=0;
-  while(!load_ok) Task_Sleep(NULL);
+//  Task_Add(2048,preload_anim);
+//  load_ok=0;
+//  while(!load_ok) Task_Sleep(NULL);
+  preload_anim();
   if (!open)
     {
     play_next_music(&d);

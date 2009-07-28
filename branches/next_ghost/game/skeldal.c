@@ -1331,11 +1331,12 @@ static update_config()
   SEND_LOG("(GAME) Updating config. file '%s'",CONFIG_NAME,NULL);
   add_field_num(&cur_config,sinit[1].heslo,zoom_speed(-1));
   add_field_num(&cur_config,sinit[2].heslo,turn_speed(-1));
-  if (Sound_CheckEffect(SND_MUSIC)) add_field_num(&cur_config,sinit[3].heslo,Sound_GetEffect(SND_MUSIC));
-  if (Sound_CheckEffect(SND_GFX)) add_field_num(&cur_config,sinit[4].heslo,Sound_GetEffect(SND_GFX));
+// FIXME: rewrite
+//  if (Sound_CheckEffect(SND_MUSIC)) add_field_num(&cur_config,sinit[3].heslo,Sound_GetEffect(SND_MUSIC));
+//  if (Sound_CheckEffect(SND_GFX)) add_field_num(&cur_config,sinit[4].heslo,Sound_GetEffect(SND_GFX));
   add_field_num(&cur_config,sinit[9].heslo,level_preload);
   add_field_num(&cur_config,sinit[13].heslo,autosave_enabled);
-  save_config(cur_config,CONFIG_NAME);
+  save_config(cur_config,Sys_FullPath(SR_WORK, CONFIG_NAME));
   SEND_LOG("(GAME) Config. file was saved",0,0);
   }
 
@@ -1668,6 +1669,7 @@ static void start()
   do
   {
      volba=enter_menu(openning);openning=1;
+     fprintf(stderr, "Volba: %d\n", volba);
      switch (volba)
        {
        case V_KONEC:exit_wait=1;break;
@@ -1785,7 +1787,7 @@ int main(int argc,char *argv[])
   set_font(H_FBIG,RGB(200,200,200));
   outtext("Ahoj lidi");
   showview(0,0,0,0);*/  
-  escape();
+//  escape();
   update_config();
   closemode();
   return 0;
