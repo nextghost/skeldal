@@ -1109,9 +1109,10 @@ static void redraw_story_bar(int pos)
   }
 
 //#pragma aux read_story_task parm []
-static void read_story_task(va_list args)
-  {
-  int slot=va_arg(args,int);
+//static void read_story_task(va_list args)
+//  {
+//  int slot=va_arg(args,int);
+static void read_story_task(int slot) {
 
   TSTR_LIST ls;
   void *text_data;
@@ -1161,7 +1162,8 @@ static void read_story(int slot)
 
   if (task_num!=-1) Task_Term(task_num);
   if (slot!=-1)
-     task_num=Task_Add(8196,read_story_task,slot);
+//     task_num=Task_Add(8196,read_story_task,slot);
+     read_story_task(slot);
   }
 
 

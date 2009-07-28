@@ -849,7 +849,8 @@ char enter_generator()
 
   znova:
   del_mode=0;
-  stop_edit_name();
+// FIXME: rewrite?
+//  stop_edit_name();
   b_texty[0]=texty[170];
   b_texty[1]=texty[171];
   b_texty[2]=texty[172];

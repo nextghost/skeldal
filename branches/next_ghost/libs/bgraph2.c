@@ -90,11 +90,11 @@ void rel_position_x(word x)
   }
 
 
-void outtext(char *text)
+void outtext(byte *text)
   {
   byte pos;
 
-  if (fontdsize)
+  if (fontdsize) {
      while (*text)
      {
      char2_32(writepos,curfont,*text);
@@ -102,7 +102,7 @@ void outtext(char *text)
      writepos+=pos;
      writeposx+=pos;text++;
      }
-  else
+  } else {
    while (*text)
      {
      char_32(writepos,curfont,*text);
@@ -110,6 +110,7 @@ void outtext(char *text)
      writepos+=pos;
      writeposx+=pos;text++;
      }
+  }
   }
 
 /*MODEinfo vesadata[3];

@@ -139,69 +139,25 @@ void line_32(int x,int y,int xs,int ys)
   }
 
 // draw character
-void char_32(word *posit,word *font,char znak)
-//#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
+void char_32(word *posit,word *font,byte znak)
   {
-/*
-  __asm
-    {
-        mov     edi,posit;
-        mov     esi,font;
-        mov     al,znak
-                        ;edi - pozice na obrazovce
-                        ;esi - ukazatel na font
-                        ;al - znak
-        and     eax,0ffh
-        mov     ax,[esi][eax*2]
-        or      ax,ax
-        jz      chrend
-        add     esi,eax
-        lodsw
-        xor     dl,dl   ;dl - je citac transparetnich pozic
-        mov     cx,ax  ;cl - XRES, ch - YRES
-chr6:   mov     ebx,edi ;ebx - ukazuje po radcich v jednom sloupci
-        mov     dh,ch   ;dh - bude citac radku
-chr5:   or      dl,dl   ;pokud je dl = 0 pak se cte dalsi bajt
-        jnz     chr1    ;jinak je dalsi bod jenom transparetni
-        lodsb           ;cti barvu
-        or      al,al   ;pokud je 0 pak je transparetni
-        jz      chr2    ;preskoc kresleni
-        cmp     al,8    ;8 a vice jsou informace o opakovanych transparetnich bodech
-        jnc     chr3    ;(viz FONTEDIT.DOC). Pak se podle toho zarid
-        and     eax,0ffh;v eax jen dolnich 8 bitu
-        dec     al
-        mov     ax,short ptr charcolors[EAX*2] ;vyjmi barvu
-        cmp     ax,0xffff ;0xffff je barva ktera se nekresli;
-        jz      chr4    ;
-        mov     [ebx],ax;zobraz ji na obrazovce
-        jmp     chr4    ;a skoc na konec smycky
-chr3:   cmp     al,0ffh ;pokud je al=255 pak jsme narazily na terminator.
-        jz      chrend  ;V tom pripade KONEC
-        sub     al,6    ;odecti do al 6. Ziskas pocet transparetnich pozic
-        mov     dl,al   ;uloz je do citace
-chr1:   dec     dl      ;pro kazdou pozici to dl odecti dokud neni 0
-chr2:
-chr4:   add     ebx,scr_linelen;dalsi radka
-        dec     dh      ;odecti citac radek
-        jnz     chr5    ;dokud neni nula
-        add     edi,2   ;dalsi sloupec
-        dec     cl      ;odecti citac sloupcu
-        jnz     chr6    ;dokud neni nula
-chrend:                 ;konec
-    }
-*/
+	if (!font[znak]) {
+		return;
+	}
 
-	// TODO: needs testing
-	if (!font[znak]) return;
 	int x,y;
-	word zstart = font[znak];
-	unsigned char tmp = 0, *data = (unsigned char *)font;
+	word size, zstart = font[znak];
+	byte tmp = 0, *data = (byte*)font;
 
-	data += zstart + 2;
+	data += zstart;
+	size = *(word*)data;
+	data += 2;
 
-	for (x = 0; x < font[zstart] & 0xff; x++) {
-		for (y = 0; y < (font[zstart] >> 8); y++) {
-			while (tmp--) continue;
+	for (x = 0; x < (size & 0xff); x++) {
+		for (y = 0; y < (size >> 8); y++) {
+			if (tmp--) {
+				continue;
+			}
 
 			tmp = *data++;
 
@@ -223,7 +179,7 @@ chrend:                 ;konec
   }
 
 // Draw double sized character
-void char2_32(word *posit,word *font,char znak)
+void char2_32(word *posit,word *font,byte znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
 /*
@@ -285,14 +241,16 @@ chr2end:              ;konec
 	// TODO: needs testing
 	if (!font[znak]) return;
 	int x,y;
-	word zstart = font[znak];
+	word size, zstart = font[znak];
 	unsigned char tmp = 0, *data = (unsigned char *)font;
 
-	data += zstart + 2;
+	data += zstart;
+	size = *(word*)font;
+	data += 2;
 
-	for (x = 0; x < font[zstart] & 0xff; x++) {
-		for (y = 0; y < (font[zstart] >> 8); y++) {
-			while (tmp--) continue;
+	for (x = 0; x < (size & 0xff); x++) {
+		for (y = 0; y < (size >> 8); y++) {
+			if (tmp--) continue;
 
 			tmp = *data++;
 
@@ -317,7 +275,7 @@ chr2end:              ;konec
   }
 
 // get size word of selected character
-word charsize(word *font,char znak)
+word charsize(word *font,byte znak)
   {
 //#pragma aux charsize parm [esi] [eax]
 /*

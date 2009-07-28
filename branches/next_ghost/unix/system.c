@@ -124,17 +124,7 @@ void *Sys_ReadFile(const char *file) {
 	return ret;
 }
 
-void Screen_SetAddr(unsigned short *addr) {
-	assert(0);
-
-}
-
 void Screen_SetBackAddr() {
-	assert(0);
-
-}
-
-void Screen_Restore(void) {
 	assert(0);
 
 }
@@ -253,8 +243,9 @@ void Sound_BreakExt(int channel, void *sample, long size) {
 
 }
 
+// FIXME: implement sound backend
 void Sound_Mute(int channel) {
-	assert(0);
+//	assert(0);
 
 }
 

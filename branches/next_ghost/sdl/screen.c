@@ -28,7 +28,7 @@
 #include "libs/system.h"
 
 SDL_Surface *screen;
-void *backBuffer;
+void *backBuffer, *frontBuffer;
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -52,6 +52,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	}
 */
 
+	frontBuffer = screen->pixels;
 	backBuffer = malloc(screen->h * screen->pitch);
 
 	return 1;
@@ -72,7 +73,7 @@ int Screen_GetYSize(void) {
 }
 
 unsigned short *Screen_GetAddr(void) {
-	return screen->pixels;
+	return frontBuffer;
 }
 
 long Screen_GetSize(void) {
@@ -85,6 +86,14 @@ int Screen_GetScan(void) {
 
 unsigned short *Screen_GetBackAddr(void) {
 	return backBuffer;
+}
+
+void Screen_SetAddr(unsigned short *addr) {
+	frontBuffer = addr;
+}
+
+void Screen_Restore(void) {
+	frontBuffer = screen->pixels;
 }
 
 void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {

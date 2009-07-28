@@ -76,11 +76,11 @@ void ver_line_xor(int x1,int y1,int y2);
 //#pragma aux ver_line_xor parm [eSi] [eAX] [eCX] modify [eDX];
 void line_32(int x,int y,int xs,int ys);
 //#pragma aux line_32 parm [esi] [eax] [ecx] [ebx] modify [edx edi]
-void char_32(word *posit,word *font,char znak);
+void char_32(word *posit,word *font,byte znak);
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
-void char2_32(word *posit,word *font,char znak);
+void char2_32(word *posit,word *font,byte znak);
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
-word charsize(word *font,char znak);
+word charsize(word *font,byte znak);
 //#pragma aux charsize parm [esi] [eax]
 void put_picture(word x,word y,void *p);
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
@@ -127,7 +127,6 @@ void redrawbox16(word xs,word ys,void *screen,void *lbuffer,byte *xlat);
 void showview32(word x,word y,word xs,word ys);
 void showview256(word x,word y,word xs,word ys);
 void showview_lo(word x,word y,word xs,word ys);
-void outtext(char *text);
 int initmode_dx(char inwindow, char zoom, char monitor, int refresh);
 int initmode32();
 int initmode32b();
@@ -141,7 +140,7 @@ void *create_hixlat();
 void closemode();
 void line32(word x1,word y1, word x2, word y2);
 void position(word x,word y);
-void outtext(char *text);
+void outtext(byte *text);
 void show_ms_cursor(integer x,integer y);
 void *register_ms_cursor(void *cursor);
 void move_ms_cursor(integer newx,integer newy,char nodraw);

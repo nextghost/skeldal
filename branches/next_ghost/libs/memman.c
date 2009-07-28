@@ -155,7 +155,8 @@ void *load_file(char *filename)
   f=fopen(filename, "rb");
   if (!f) load_error(filename);
 //  size=filelength(f);
-  size = fseek(f, 0, SEEK_END);
+  fseek(f, 0, SEEK_END);
+  size = ftell(f);
   fseek(f, 0, SEEK_SET);
   p=(void *)getmem(size);
 //  if (read(f,p,size)!=size) load_error(filename);
