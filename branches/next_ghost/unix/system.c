@@ -307,8 +307,8 @@ void Task_Shutdown(int id) {
 
 }
 
+// FIXME: implement keyboard input
 int get_control_state(void) {
-	assert(0);
 	return 0;
 }
 

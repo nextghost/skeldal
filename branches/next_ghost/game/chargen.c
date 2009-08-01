@@ -737,10 +737,12 @@ char potvrzeno(char *text,void (*redraw)())
   {
   int i;
   unwire_proc=empty_proc;
-  stop_edit_name();
+// FIXME: rewrite
+//  stop_edit_name();
   i=message(2,0,1,texty[118],text,texty[114],texty[115])==0;
   redraw();
-  edit_name();
+// FIXME: rewrite
+//  edit_name();
   return i;
   }
 
@@ -873,7 +875,8 @@ char enter_generator()
      vypocet_vlastnosti(cur_angle,&cur_vls);
      b_disables=0x7;
      redraw_generator(rep);if (!rep)effect_show(NULL);rep=1;
-     edit_name();
+// FIXME: rewrite
+//     edit_name();
      change_click_map(clk_page1,CLK_PAGE1);
      was_enter=0;
      do

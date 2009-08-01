@@ -66,6 +66,7 @@ static FILE *story=NULL;
 static char load_another;
 char reset_mobiles=0;
 
+#pragma pack(1)
 typedef struct s_save
   {
   int viewsector;
@@ -98,12 +99,13 @@ typedef struct s_save
   int sleep_long;
 	int game_flags;
   }S_SAVE;
+#pragma option align=reset
 
 #define ZAKLAD_CRC 0xC005
 
 static int get_list_count();
 
-static word vypocet_crc(char *data,long delka)
+static word vypocet_crc(byte *data,long delka)
   {
   unsigned long l=0;
   do
@@ -607,7 +609,8 @@ int pack_status_file(FILE *f,char *status_name)
 //  stt=fopen(fullnam,"rb");
 	stt = fopen(Sys_FullPath(SR_TEMP, status_name), "rb");
 //  fsz=filelength(stt);
-  fsz = fseek(stt, 0, SEEK_END);
+  fseek(stt, 0, SEEK_END);
+  fsz = ftell(stt);
   fseek(stt, 0, SEEK_SET);
   c=buffer=getmem(fsz+12+4+2);
   strcpy(c,status_name);c+=12;
@@ -974,8 +977,8 @@ static void load_specific_file(int slot_num,char *filename,void **out,long *size
   fread(fname,1,12,slot);
   while(fname[0] && !succes)
      {
-     Task_Sleep(NULL);
-     if (Task_QuitMsg()) break;
+//     Task_Sleep(NULL);
+//     if (Task_QuitMsg()) break;
      fread(&siz,1,4,slot);
      if (!strncmp(fname,filename,12)) succes=1; else
            {

@@ -615,7 +615,8 @@ ptb_skip2:
 	}
   }
 
-#define MIXTRANSP(a,b) ((((a) & 0xF7DE)+((b) & 0xF7DE))>>1)
+//#define MIXTRANSP(a,b) ((((a) & 0xF7DE)+((b) & 0xF7DE))>>1)
+#define MIXTRANSP(a,b) Screen_ColorAvg((a), (b))
 
 void trans_bar(int x,int y,int xs,int ys,int barva)
   {

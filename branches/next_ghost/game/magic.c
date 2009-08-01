@@ -149,6 +149,7 @@ typedef struct tteleportlocation
 
 static TTELEPLOCATION TelepLocation;
 
+#pragma pack(1)
 typedef struct tkouzlo
   {
   word num,um,mge;
@@ -164,6 +165,7 @@ typedef struct tkouzlo
   char spellname[28];
   word teleport_target;
   }TKOUZLO;
+#pragma option align=reset
 
 TKOUZLO *spell_table[MAX_SPELLS];
 short *vls_table[MAX_SPELLS];   //nove vlastnosti postav
