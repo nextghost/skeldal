@@ -51,6 +51,7 @@
 #define SHADE_STEPS 5
 #define SHADE_PAL (SHADE_STEPS*512*2)
 
+#pragma pack(1)
 
 void general_engine_init(void);
 void draw_floor_ceil(int celx,int cely,char f_c,void *txtr);
@@ -184,5 +185,6 @@ void set_backgrnd_mode(int mode);
 
 int get_item_top(int celx,int cely,int posx,int posy,word *txtr,int index);
  //vraci nejnizsi souradnici y predmetu leziciho na zemi v celx, cely na pozici posx,posy;
+#pragma option align=reset
 
 #endif

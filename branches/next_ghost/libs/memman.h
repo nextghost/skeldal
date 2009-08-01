@@ -26,6 +26,8 @@
 
 #include <stdio.h>
 
+#pragma pack(1)
+
 #define _MEMMAN_H_
 #define freemem(size) free(size);
 //#define malloc(size) getmem(size)
@@ -140,4 +142,7 @@ int q_current_task();
 #define SEND_LOG(format,parm1,parm2)
 #define CLOSE_LOG()
 #endif
+
+#pragma option align=reset
+
 #endif

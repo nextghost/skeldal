@@ -393,7 +393,7 @@ void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize)
         {
         mobs[i]=b[j];
         if (~mobs[i].vlajky & MOB_MOBILE) mob_map[data[0]]=i+MOB_START;
-        if (mobs[i].palette>=0)mobs[i].palette=rnd(mobs[i].palette);else mobs[i].palette=abs(mobs[i].palette);
+        if (mobs[i].palette>0)mobs[i].palette=rnd(mobs[i].palette);else mobs[i].palette=abs(mobs[i].palette);
         mobs[i].sector=data[0];
         mobs[i].dir=(data[1]>>14)&0x3;
         mobs[i].home_pos=data[0];

@@ -23,6 +23,9 @@
 #ifndef _WAV_H
 
 #define _WAV_H
+
+#pragma pack(1)
+
 #define WAV_RIFF "RIFF"
 #define WAV_WAVE "WAVE"
 #define WAV_FMT  "fmt "
@@ -38,5 +41,6 @@ int find_chunk(FILE *riff,char *name); //-1 neuspech, jinak pozice
 int get_chunk_size(FILE *riff);       //velikost
 int read_chunk(FILE *riff,void *mem); // 1 neuspech
 
+#pragma option align=reset
 
 #endif

@@ -201,8 +201,9 @@ char Sound_IsActive(void) {
 	return 0;
 }
 
+// FIXME: implement sound backend
 void Sound_SetVolume(int channel, int left, int right) {
-	assert(0);
+//	assert(0);
 
 }
 

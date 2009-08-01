@@ -23,6 +23,9 @@
 #ifndef _WAV_H
 
 #define _WAV_H
+
+#pragma pack(1)
+
 #define WAV_RIFF "RIFF"
 #define WAV_WAVE "WAVE"
 #define WAV_FMT  "fmt "
@@ -38,5 +41,6 @@ char *find_chunk(char *wav,char *name);
 int get_chunk_size(char *wav);
 int read_chunk(char *wav,void *mem);
 
+#pragma option align=reset
 
 #endif

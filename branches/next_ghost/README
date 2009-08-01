@@ -1,0 +1,31 @@
+The plan:
+1) Port the engine to Linux
+2) ???
+3) Profit!
+
+Now seriously, milestones for this branch:
+1) Get the game at least partially working on x86 Linux (30% done)
+2) Change the engine from task based to frame based (0% done)
+3) Write a proper build system and fix ugly hacks in backend code (0% done)
+4) Separate game code, libs, renderer, generic sound subsystem and backends
+   (0% done)
+5) Completely rewrite the remaining code to C++ (0% done)
+
+Tasks for the next milestone:
+1) Make it compile (100% done)
+2) Play intro movie (50% done, the rest is sound, timing and keyboard input)
+3) Main menu (75% done, no music or keyboard input)
+4) Party generator (25% done, renders properly but name input needs rewrite)
+5) Saved game loader (50% done, game is loaded but renderer then segfaults)
+6) Developer credits (0% done)
+7) Basic gameplay (0% done)
+8) Combat (0% done)
+9) Shopping (0% done)
+10) Storytelling (0% done)
+
+Savegame writer will be fixed later when the code doesn't use x86 specific
+features and write tons of temp files. I'd have no motivation to make a proper
+rewrite otherwise ;-)
+
+If you have any questions or patches to share, feel free to write me to
+next_ghost()users.sourceforge.net

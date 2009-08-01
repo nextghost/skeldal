@@ -29,6 +29,7 @@
 #define POCET_POSTAV 6
 #define HODINA 360
 
+#pragma pack(1)
 
 #define A_SIDEMAP 0x8001
 #define A_SECTMAP 0x8002
@@ -895,7 +896,6 @@ void draw_placed_items_normal(int celx,int cely,int sect,int side);
 
 #define MAX_SLEEP 4320
 
-#pragma pack(1)
 typedef struct titem
   {
   char jmeno[32];   //32        Jmeno predmetu
@@ -970,7 +970,6 @@ typedef struct thuman
   int voda;    //max 20000      //pocet kol o zizny zbyvajicich
   struct thuman *demon_save;    //ukazatel na postavu ulozenou behem kouzla demon
   }THUMAN;
-#pragma option align=reset
 
 extern TITEM *glob_items;             //tabulka predmetu
 extern int ikon_libs;
@@ -1021,7 +1020,6 @@ int weigth_defect(THUMAN *p);
 #define SHP_TYPE 0x80     //objekt je popis typu
 #define SHP_NOEDIT 0x40   //objekt se nenahrava do editoru.
 
-#pragma pack(1)
 typedef struct tproduct
   {
   short item;          //cislo predmetu ktere nabizi
@@ -1042,7 +1040,6 @@ typedef struct tshop
   short spec_max;     //maximalni pocet specialnich predmetu
   TPRODUCT *list;
   }TSHOP;
-#pragma option align=reset
 
 
 void enter_shop(int shopid);
@@ -1464,7 +1461,6 @@ char enable_sound(char enbl);
 #define MOB_LIVE 0x80    //potvora zije
 #define MOB_CASTING 0x20
 
-#pragma pack(1)
 typedef struct tmob
   {
   char name[30];           //jmeno moba
@@ -1505,7 +1501,6 @@ typedef struct tmob
   word dostal;             //pocet zivotu, ktere mu byly ubrany poslednim zasahem
   unsigned char user_data;         //data uzivatelem definovane - treba pro spec.
   }TMOB;
-#pragma option align=reset
 
 
 extern TMOB mobs[MAX_MOBS];
@@ -1766,6 +1761,7 @@ static __inline char TimerEvents(int sector, int side, long time)
   }
   return 1;
 }
+#pragma option align=reset
 
 //extras
 #include "game/extras.h"

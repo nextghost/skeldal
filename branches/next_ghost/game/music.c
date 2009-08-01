@@ -459,7 +459,7 @@ void play_next_music(char **c)
   if (!remain_play)
      for(i=0;cur_playlist[i]!=NULL;remain_play++,i++) cur_playlist[i][0]=32;
   if (play_list_mode==PL_RANDOM)
-     step=rand()*(playlist_size-1)/32768+1;
+	step = rnd(playlist_size);
   else
      step=1;
   i=playing_track;

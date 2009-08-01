@@ -22,6 +22,9 @@
  */
 #ifndef _STRLITE_H_
 #define _STRLITE_H_
+
+#pragma pack(1)
+
 typedef char **TSTR_LIST;
 
 typedef struct ptrmap
@@ -53,5 +56,7 @@ void pl_delete_item(PTRMAP **p,void *key,int keysize);
 void pl_delete_all(PTRMAP **p);
 
 int load_string_list(TSTR_LIST *list,const char *filename);
+
+#pragma option align=reset
 
 #endif 

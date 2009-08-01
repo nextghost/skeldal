@@ -23,6 +23,7 @@
 //!!!! POZOR, NUTNE LINKOVAT SOUBOR LZWA.ASM
 #ifndef _MGIFMEM_H
 
+#pragma pack(1)
 typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data akce
 
 #define _MGIFMEM_H
@@ -41,7 +42,6 @@ typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data 
 #define SMD_256 1
 #define SMD_HICOLOR 2
 
-#pragma pack(1)
 typedef struct mgif_header
     {
     char sign[4];
@@ -54,11 +54,11 @@ typedef struct mgif_header
     short ampl_table[256];
     short reserved[32];
     }MGIF_HEADER_T;
-#pragma option align=reset
 
 
 void mgif_install_proc(MGIF_PROC proc);
 void *open_mgif(void *mgif); //vraci ukazatel na prvni frame
 void *mgif_play(void *mgif); //dekoduje a zobrazi frame
 void close_mgif();           //dealokuje buffery pro prehravani
+#pragma option align=reset
 #endif

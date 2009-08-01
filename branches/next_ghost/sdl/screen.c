@@ -100,10 +100,10 @@ void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsi
 	SDL_UpdateRect(screen, x, y, xs, ys);
 }
 
-void Screen_FixPalette(word *pal) {
+void Screen_FixPalette(word *pal, int size) {
 	int i, r, g, b;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < size; i++) {
 		r = (pal[i] >> 11) & 0x1f;
 		g = (pal[i] >> 6) & 0x1f;
 		b = pal[i] & 0x1f;

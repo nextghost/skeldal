@@ -86,7 +86,7 @@ void Screen_DoneTurn(void *handle);
 void Screen_StripBlt(void *data, unsigned int startline, unsigned long width);
 void Screen_Shift(int x, int y);
 
-void Screen_FixPalette(word *pal);
+void Screen_FixPalette(word *pal, int size);
 void Screen_FixMGIFPalette(word *pal, int size);
 word Screen_RGB(unsigned r, unsigned g, unsigned b);
 word Screen_ColorMin(word c1, word c2);

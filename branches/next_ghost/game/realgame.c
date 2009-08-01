@@ -220,6 +220,7 @@ void show_loading_picture(char *filename)
   long s;
 
   p=afile(filename,SR_BGRAFIKA,&s);
+  Screen_FixPalette(p + 6, s/2 - 3);
   put_picture(0,0,p);
   showview(0,0,0,0);
   free(p);

@@ -25,6 +25,8 @@
 
 #include "types.h"
 #include "event.h"
+
+#pragma pack(1)
 typedef struct tms_basic_info
   {
         int mouse_event;
@@ -54,4 +56,5 @@ extern char ms_fake_mode;
 int lock_region (void *address, unsigned length);
 void keyboard(EVENT_MSG *msg,void *user_data);
 char ms_get_keycount();
+#pragma option align=reset
 #endif

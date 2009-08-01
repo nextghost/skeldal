@@ -380,11 +380,11 @@ fcdraw_:mov     esi,[eax+12]
 
 	// TODO: needs testing
 	do {
-		source += table->lineofs;
-		target += table->txtrofs;
-		memcpy(target, source, table->linesize * sizeof(word));
-		source += table->linesize * sizeof(word);
-		target += table->linesize * sizeof(word);
+//		source += table->lineofs;
+//		target += table->txtrofs;
+		memcpy(target + table->txtrofs, source + table->lineofs, table->linesize * sizeof(word));
+//		source += table->linesize * sizeof(word);
+//		target += table->linesize * sizeof(word);
 	} while ((table++)->counter);
   }
 
