@@ -22,6 +22,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <assert.h>
 #include <sys/mman.h>
@@ -164,9 +165,16 @@ void Screen_DoneTurn(void *handle) {
 
 }
 
-void Screen_StripBlt(void *data, unsigned int startline, unsigned long wihtd) {
-	assert(0);
+// FIXME: move this to generic renderer
+void Screen_StripBlt(word *data, unsigned int startline, unsigned long width) {
+	int i;
+	word *dst = Screen_GetAddr() + startline * Screen_GetXSize();
 
+	for (i = 0; i < width; i++) {
+		memcpy(dst, data, 640 * sizeof(word));
+		data += 640;
+		dst += Screen_GetXSize();
+	}
 }
 
 void Screen_Shift(int x, int y) {

@@ -657,7 +657,8 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
-  zoom.line_len=Screen_GetScan();
+//  zoom.line_len=Screen_GetScan();
+  zoom.line_len=Screen_GetXSize();
 // TODO: what's this?
 //  __try
 	{
@@ -728,7 +729,8 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
-  zoom.line_len=Screen_GetScan();
+//  zoom.line_len=Screen_GetScan();
+  zoom.line_len=Screen_GetXSize();
   if (rev==2) sikma_zprava(); else sikma_zleva();
   }
 
