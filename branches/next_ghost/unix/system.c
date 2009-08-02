@@ -182,8 +182,9 @@ void Screen_Shift(int x, int y) {
 
 }
 
+// FIXME: rewrite
 void ShareCPU(void) {
-	assert(0);
+//	assert(0);
 
 }
 
@@ -193,13 +194,15 @@ char Sound_SetEffect(int filter, int data) {
 	return 0;
 }
 
+// FIXME: implement sound backend
 int Sound_GetEffect(int filter) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
+// FIXME: implement sound backend
 char Sound_CheckEffect(int filter) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
@@ -220,8 +223,9 @@ void Sound_GetVolume(int channel, int *left, int *right) {
 
 }
 
+// FIXME: implement sound backend
 char Sound_GetChannelState(int channel) {
-	assert(0);
+//	assert(0);
 	return 0;
 }
 
@@ -231,8 +235,9 @@ int Sound_MixBack(int synchro) {
 	return 0;
 }
 
+// FIXME: implement sound backend
 void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
-	assert(0);
+//	assert(0);
 
 }
 

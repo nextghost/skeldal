@@ -761,7 +761,8 @@ static char view_another_click2(int id,int xa,int ya,int xr,int yr)
   bott_draw(1);
   human_selected=postavy+id;
   cur_edited=id;
-  edit_name();
+// FIXME: rewrite
+//  edit_name();
   redraw_page3();
   if (del_mode)
      if (potvrzeno(texty[117],redraw_page3))
@@ -924,7 +925,8 @@ char enter_generator()
            for(cur_edited=0;postavy[cur_edited].used;cur_edited++);
        }
      while (error_text!=NULL);
-     stop_edit_name();
+// FIXME: rewrite
+//     stop_edit_name();
      }
   while (i!=1);
   disable_click_map();
