@@ -741,7 +741,7 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
   int y;
 
   if (nofloors) return;
-  txtr=(void *)((word *)txtr+3);
+  txtr=(void *)(((word *)txtr)+3);
   if (f_c==0) //podlaha
      {
      y=(VIEW_SIZE_Y-MIDDLE_Y)-points[0][0][cely].y+1;

@@ -132,12 +132,12 @@ static char spt_ptr=0;
 
 void Builder_Init(void) {
 	barvy_skupin[0] = RGB555(8,8,8);
-	barvy_skupin[1] = RGB555(31,28,00);
-	barvy_skupin[2] = RGB555(00,23,06);
+	barvy_skupin[1] = RGB555(31,28,0);
+	barvy_skupin[2] = RGB555(0,23,6);
 	barvy_skupin[3] = RGB555(31,11,13);
 	barvy_skupin[4] = RGB555(22,16,31);
 	barvy_skupin[5] = RGB555(28,13,31);
-	barvy_skupin[6] = RGB555(00,29,26);
+	barvy_skupin[6] = RGB555(0,29,26);
 }
 
 void add_spectxtr(word sector,word fhandle,word count,word repeat,integer xpos)
@@ -760,7 +760,7 @@ static void *check_autofade(void *image, char ceil, int dark)
 	{
 	  word *imgdata=xy+3;
 	  int br=back_color>>11;
-	  int bg=(back_color>>5) & 0x3F;
+	  int bg=(back_color>>5) & 0x1F;
 	  int bb=back_color & 0x1F;
 	  int y;
 
@@ -780,7 +780,8 @@ static void *check_autofade(void *image, char ceil, int dark)
 		  r=toInt(r+factor*(br-r));
 		  g=toInt(g+factor*(bg-g));
 		  b=toInt(b+factor*(bb-b));
-		  *imgdata=(r<<11)|(g<<5)|b;
+//		  *imgdata=(r<<11)|(g<<5)|b;
+		  *imgdata = Screen_RGB(r, g, b);
 		  imgdata++;
 		}
 	  }

@@ -347,46 +347,11 @@ l32b:   add     ebp,4
   }
 */
 
-void fcdraw(void *source,void *target, T_FLOOR_MAP *table)
-//#pragma aux fcdraw parm [EDX][EBX][EAX] modify [ECX ESI EDI];
-  {
-/*  __asm
-    {
-        mov     edx,source
-        mov     ebx,target
-        mov     eax,table
-                                ;Kresli strop nebo podlahu podle draw_table
-                                ;EDX - sourceTxt
-                                ;EBX - TargerTxt - LineOfset
-                                ;  (Lineofs je pocet bajtu odpovidajici
-                                ;  souradnicim [0,184] pro podlahu nebo [0,0]
-                                ; pro strop)
-                                ;EAX - draw_table
-fcdraw_:mov     esi,[eax+12]
-        mov     edi,[eax]
-        add     edi,ebx
-        add     esi,edx
-        mov     ecx,[eax+4]
-        shr     ecx,1
-        rep     movsd
-        rcl     ecx,1
-        rep     movsw
-        mov     ecx,[eax+8]
-        add     eax,16
-        or      ecx,ecx
-        jnz     fcdraw_
-    }
-*/
-
-	// TODO: needs testing
+void fcdraw(void *source,void *target, T_FLOOR_MAP *table) {
 	do {
-//		source += table->lineofs;
-//		target += table->txtrofs;
-		memcpy(target + table->txtrofs, source + table->lineofs, table->linesize * sizeof(word));
-//		source += table->linesize * sizeof(word);
-//		target += table->linesize * sizeof(word);
+		memcpy(target + table->lineofs, source + table->txtrofs, table->linesize * sizeof(word));
 	} while ((table++)->counter);
-  }
+}
 
 static void klicovani_anm_back(word *target,word *source);
 void klicovani_anm(word *target,word *source,char mirror)
