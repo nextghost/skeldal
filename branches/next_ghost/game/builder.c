@@ -1142,7 +1142,7 @@ static void trace_for_bgr(int dir)
 	}
 
 
-void render_scene(sector,smer)
+void render_scene(int sector, int smer)
   {
   int i,j,s;
 

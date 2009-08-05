@@ -28,7 +28,7 @@
 #include "libs/system.h"
 
 SDL_Surface *screen;
-void *backBuffer, *frontBuffer;
+void *backBuffer, *frontBuffer, *curFront;
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -52,7 +52,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	}
 */
 
-	frontBuffer = screen->pixels;
+	curFront = frontBuffer = malloc(screen->h * screen->pitch);
 	backBuffer = malloc(screen->h * screen->pitch);
 
 	return 1;
@@ -60,6 +60,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 
 void Screen_Shutdown(void) {
 	SDL_ShowCursor(SDL_ENABLE);
+	free(frontBuffer);
 	free(backBuffer);
 	SDL_Quit();
 }
@@ -73,7 +74,7 @@ int Screen_GetYSize(void) {
 }
 
 unsigned short *Screen_GetAddr(void) {
-	return frontBuffer;
+	return curFront;
 }
 
 long Screen_GetSize(void) {
@@ -89,15 +90,22 @@ unsigned short *Screen_GetBackAddr(void) {
 }
 
 void Screen_SetAddr(unsigned short *addr) {
-	frontBuffer = addr;
+	curFront = addr;
+}
+
+void Screen_SetBackAddr() {
+	curFront = backBuffer;
 }
 
 void Screen_Restore(void) {
-	frontBuffer = screen->pixels;
+	curFront = frontBuffer;
 }
 
 void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
+	SDL_LockSurface(screen);
+	memcpy(screen->pixels, frontBuffer, Screen_GetSize());
 	SDL_UpdateRect(screen, x, y, xs, ys);
+	SDL_UnlockSurface(screen);
 }
 
 void Screen_FixPalette(word *pal, int size) {

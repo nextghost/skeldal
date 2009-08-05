@@ -125,11 +125,6 @@ void *Sys_ReadFile(const char *file) {
 	return ret;
 }
 
-void Screen_SetBackAddr() {
-	assert(0);
-
-}
-
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
 	assert(0);
 

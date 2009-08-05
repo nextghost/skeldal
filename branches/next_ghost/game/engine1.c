@@ -466,12 +466,13 @@ void create_zooming(void)
      }
   }
 
+// FIXME: rewrite
 static void zooming_forward_backward(word *background,char back)
   {
   if (!zooming_step) return;  
     {
     long tmp=Timer_GetValue();
-    void *buffer=Screen_PrepareWalk(SCREEN_OFFLINE);
+//    void *buffer=Screen_PrepareWalk(SCREEN_OFFLINE);
     int tpoints[4]={90,31,90+460,31+259};
 
     int maxtime=5*zoom_speed(-1);
@@ -484,11 +485,11 @@ static void zooming_forward_backward(word *background,char back)
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
       if (back) phase=1.0-phase;
-      Screen_ZoomWalk(buffer, SCREEN_OFFLINE, tpoints,phase, NULL);
+//      Screen_ZoomWalk(buffer, SCREEN_OFFLINE, tpoints,phase, NULL);
       do_events();
       }
     while (curtime<maxtime);
-    Screen_DoneWalk(buffer);
+//    Screen_DoneWalk(buffer);
     }
   }
 
@@ -530,13 +531,14 @@ void zooming_backward(word *background)
 
 */
 
+// FIXME: rewrite
 static void turn_left_right(char right)
   {
   {
   if (!rot_phases) return;  
     {
     long tmp=Timer_GetValue();
-    void *buffer=Screen_PrepareTurn(SCREEN_OFFLINE);
+//    void *buffer=Screen_PrepareTurn(SCREEN_OFFLINE);
 
 	int maxtime=5*rot_phases;
     int curtime;
@@ -548,11 +550,11 @@ static void turn_left_right(char right)
       curtime=Timer_GetValue()-tmp;
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
-      Screen_Turn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
+//      Screen_Turn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
       do_events();
       }
     while (curtime<maxtime);
-	Screen_DoneTurn(buffer);
+//	Screen_DoneTurn(buffer);
     }
   }
 
