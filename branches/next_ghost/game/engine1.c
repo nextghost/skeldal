@@ -466,18 +466,42 @@ void create_zooming(void)
      }
   }
 
-// FIXME: rewrite
+static void stepzoom(word *dst, word *src, float phase, int *points, int width, int height) {
+	int pts[4], i, j;
+	float xcoef, ycoef;
+
+	phase = phase < 0 ? 0 : phase;
+	phase = phase > 1 ? 1 : phase;
+	pts[0] = phase * points[0];
+	pts[1] = phase * points[1];
+	pts[2] = width * (1.0f - phase) + phase * points[2];
+	pts[3] = height * (1.0f - phase) + phase * points[3];
+
+	xcoef = (float)(pts[2] - pts[0]) / (float)width;
+	ycoef = (float)(pts[3] - pts[1]) / (float)height;
+
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < width; j++) {
+			dst[j + i*width] = src[pts[0] + (int)(j*xcoef) + (pts[1] + (int)(i * ycoef)) * width];
+		}
+	}
+}
+
 static void zooming_forward_backward(word *background,char back)
   {
   if (!zooming_step) return;  
     {
     long tmp=Timer_GetValue();
-//    void *buffer=Screen_PrepareWalk(SCREEN_OFFLINE);
+	word *scr, *buffer;
     int tpoints[4]={90,31,90+460,31+259};
 
     int maxtime=5*zoom_speed(-1);
     int curtime;
     float phase;
+
+	scr = Screen_GetAddr() + SCREEN_OFFSET;
+	buffer = malloc(Screen_GetScan() * 360);
+	memcpy(buffer, scr, Screen_GetScan() * 360);
 
     do 
       {
@@ -485,11 +509,12 @@ static void zooming_forward_backward(word *background,char back)
       phase=(curtime)*(1.0f/(float)maxtime);
       //phase=(float)sin(3.14159265*0.5f*phase);
       if (back) phase=1.0-phase;
-//      Screen_ZoomWalk(buffer, SCREEN_OFFLINE, tpoints,phase, NULL);
+	stepzoom(scr, buffer, phase, tpoints, Screen_GetXSize(), 360);
+	Screen_DrawRect(0, SCREEN_OFFLINE, Screen_GetXSize(), 360);
       do_events();
       }
     while (curtime<maxtime);
-//    Screen_DoneWalk(buffer);
+	free(buffer);
     }
   }
 
@@ -544,14 +569,12 @@ static void joinpics(word *dst, word *left, word *right, float shift, int border
 	}
 }
 
-// FIXME: rewrite
 static void turn_left_right(char right)
   {
   {
   if (!rot_phases) return;  
     {
     long tmp=Timer_GetValue();
-//    void *buffer=Screen_PrepareTurn(SCREEN_OFFLINE);
 	word *scr, *back, *buffer;
 
 	int maxtime=5*rot_phases;
@@ -570,13 +593,11 @@ static void turn_left_right(char right)
       phase=(curtime)*(1.0f/(float)maxtime);
       if (right) phase = 1.0f - phase;
       //phase=(float)sin(3.14159265*0.5f*phase);
-//      Screen_Turn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
 	joinpics(scr, right? back : buffer, right ? buffer : back, phase, 90, Screen_GetXSize(), 360);
-	Screen_DrawRect(0, 0, Screen_GetXSize(), Screen_GetYSize());
+	Screen_DrawRect(0, SCREEN_OFFLINE, Screen_GetXSize(), 360);
       do_events();
       }
     while (curtime<maxtime);
-//	Screen_DoneTurn(buffer);
 	free(buffer);
     }
   }
