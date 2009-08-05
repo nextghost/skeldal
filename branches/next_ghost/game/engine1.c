@@ -531,6 +531,19 @@ void zooming_backward(word *background)
 
 */
 
+static void joinpics(word *dst, word *left, word *right, float shift, int border, int width, int height) {
+	int i, xpos;
+
+	shift = shift < 0 ? 0 : shift;
+	shift = shift > 1 ? 1 : shift;
+	xpos = (width - 2 * border) * shift;
+
+	for (i = 0; i < height; i++) {
+		memcpy(dst + i * width, left + xpos + i * width, (width - xpos - border) * sizeof(word));
+		memcpy(dst + width - xpos - border + i * width, right + border + i * width, (xpos + border) * sizeof(word));
+	}
+}
+
 // FIXME: rewrite
 static void turn_left_right(char right)
   {
@@ -539,22 +552,32 @@ static void turn_left_right(char right)
     {
     long tmp=Timer_GetValue();
 //    void *buffer=Screen_PrepareTurn(SCREEN_OFFLINE);
+	word *scr, *back, *buffer;
 
 	int maxtime=5*rot_phases;
     int curtime;
     float phase;
     int last=90;
 
+	scr = Screen_GetAddr() + SCREEN_OFFSET;
+	back = Screen_GetBackAddr() + SCREEN_OFFSET;
+	buffer = malloc(Screen_GetScan() * 360);
+	memcpy(buffer, scr, Screen_GetScan() * 360);
+
     do 
       {
       curtime=Timer_GetValue()-tmp;
       phase=(curtime)*(1.0f/(float)maxtime);
+      if (right) phase = 1.0f - phase;
       //phase=(float)sin(3.14159265*0.5f*phase);
 //      Screen_Turn(buffer,right,SCREEN_OFFLINE,90,phase,NULL);
+	joinpics(scr, right? back : buffer, right ? buffer : back, phase, 90, Screen_GetXSize(), 360);
+	Screen_DrawRect(0, 0, Screen_GetXSize(), Screen_GetYSize());
       do_events();
       }
     while (curtime<maxtime);
 //	Screen_DoneTurn(buffer);
+	free(buffer);
     }
   }
 

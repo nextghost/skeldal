@@ -145,21 +145,6 @@ void Screen_DoneWalk(void *handle) {
 
 }
 
-void *Screen_PrepareTurn(int ypos) {
-	assert(0);
-	return NULL;
-}
-
-void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka) {
-	assert(0);
-
-}
-
-void Screen_DoneTurn(void *handle) {
-	assert(0);
-
-}
-
 // FIXME: move this to generic renderer
 void Screen_StripBlt(word *data, unsigned int startline, unsigned long width) {
 	int i;

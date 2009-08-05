@@ -80,9 +80,6 @@ void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
 int Screen_GetScan(void);
 
-void *Screen_PrepareTurn(int ypos);
-void Screen_Turn(void *handle, char right, int ypos,int border, float phase, void *lodka);
-void Screen_DoneTurn(void *handle);
 void Screen_StripBlt(word *data, unsigned int startline, unsigned long width);
 void Screen_Shift(int x, int y);
 
