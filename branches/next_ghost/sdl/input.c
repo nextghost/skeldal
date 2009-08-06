@@ -23,9 +23,13 @@
 
 #include <stdio.h>
 #include <SDL/SDL.h>
-#include "libs/devices.h"
+#include "libs/bmouse.h"
+#include "libs/event.h"
 
 void Mouse_GetEvent(MS_EVENT *event) {
+	*event = ms_last_event;
+	event->event = 0;
+/*
 	static Uint8 oldstate = 0;
 	static int oldx = 0, oldy = 0;
 	Uint8 newstate, diff;
@@ -67,4 +71,49 @@ void Mouse_GetEvent(MS_EVENT *event) {
 	event->tl1 = !!(newstate & SDL_BUTTON(1));	// left
 	event->tl2 = !!(newstate & SDL_BUTTON(3));	// right
 	event->tl3 = !!(newstate & SDL_BUTTON(2));	// middle
+*/
+}
+
+void Sys_ProcessEvents(void) {
+	SDL_Event event;
+
+	while (SDL_PollEvent(&event)) {
+		switch (event.type) {
+		case SDL_KEYDOWN:
+			send_message(E_KEYBOARD, event.key.keysym.sym);
+			break;
+
+		case SDL_MOUSEMOTION:
+			ms_last_event.event = 1;
+			ms_last_event.x = event.motion.x;
+			ms_last_event.y = event.motion.y;
+			ms_last_event.tl1 = !!(event.motion.state & SDL_BUTTON(1));
+			ms_last_event.tl2 = !!(event.motion.state & SDL_BUTTON(3));
+			ms_last_event.tl3 = !!(event.motion.state & SDL_BUTTON(2));
+			ms_last_event.event_type = 0x1;
+
+			send_message(E_MOUSE, &ms_last_event);
+			break;
+
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP:
+			ms_last_event.event = 1;
+			ms_last_event.x = event.button.x;
+			ms_last_event.y = event.button.y;
+
+			if (event.button.button == SDL_BUTTON_LEFT) {
+				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x2 : 0x4;
+				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
+			} else if (event.button.button == SDL_BUTTON_MIDDLE) {
+				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x8 : 0x10;
+				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
+			} else if (event.button.button == SDL_BUTTON_RIGHT) {
+				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x20 : 0x40;
+				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
+			}
+
+			send_message(E_MOUSE, &ms_last_event);
+			break;
+		}
+	}
 }

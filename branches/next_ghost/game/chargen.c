@@ -135,7 +135,7 @@ static char shut_downing_text=0;
 static int save_values[POCET_POSTAV][2];
 static char del_mode=0;
 static char was_enter=0;
-
+static int close_ret = 0;
 
 #define PERLA_STRED_X (INV_DESK+189)
 #define PERLA_STRED_Y (INV_DESK_Y+217)
@@ -625,6 +625,7 @@ static char go_next_page(int id,int xa,int ya,int xr,int yr)
   if (!*b) return 1;
   id=*b-1;
   if (b_disables & (1<<id)) return 1;
+	close_ret = id;
   send_message(E_CLOSE_GEN,id);
   return 1;
   }
@@ -770,6 +771,7 @@ static char view_another_click2(int id,int xa,int ya,int xr,int yr)
      del_mode=0;
      postavy[cur_edited].used=0;
      disable[postavy[cur_edited].xicht]=0;
+	close_ret = 0;
      send_message(E_CLOSE_GEN,0);
      }
   return 0;
@@ -834,6 +836,7 @@ char gen_exit_editor(int id,int xa,int ya,int xr,int yr)
   shut_downing_text=1;send_message(E_KEYBOARD,13);shut_downing_text=0;
   if (message(2,0,1,texty[118],texty[113],texty[114],texty[115])==0)
      {
+	close_ret = 255;
      send_message(E_CLOSE_GEN,255);
      }
   else
@@ -883,7 +886,8 @@ char enter_generator()
      do
        {
        send_message(E_ADD,E_KEYBOARD,enter_reaction);
-       i=*(char *)Task_WaitEvent(E_CLOSE_GEN);
+       Task_WaitEvent(E_CLOSE_GEN);
+       i = close_ret;
        send_message(E_DONE,E_KEYBOARD,enter_reaction);
        if (i==3 && potvrzeno(texty[116],redraw_generator)) goto znova;
        if (i==255) return 1;
@@ -904,7 +908,8 @@ char enter_generator()
        do
         {
         send_message(E_ADD,E_KEYBOARD,enter_reaction2);
-        i=*(char *)Task_WaitEvent(E_CLOSE_GEN);
+        Task_WaitEvent(E_CLOSE_GEN);
+	i = close_ret;
         send_message(E_DONE,E_KEYBOARD,enter_reaction2);
         if (i==3 && potvrzeno(texty[116],redraw_svitek)) goto znova;
         if (i==2)

@@ -386,6 +386,7 @@ void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg)
 
 }
 
+// FIXME: this needs a BIG rewrite
 void send_message(long message,...)
   {
   long *p;
@@ -495,6 +496,7 @@ void do_events()
 //  if (!Task_IsMaster()) Task_Sleep(NULL);
 //  else
      {
+     Sys_ProcessEvents();
      send_message(E_WATCH);
      send_message(E_IDLE);
      }
@@ -514,6 +516,7 @@ void escape()
   exit_wait=0;
   do
      {
+     Sys_ProcessEvents();
      send_message(E_WATCH);
      send_message(E_IDLE);
      if (do_events_called==0)  ShareCPU();

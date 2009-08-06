@@ -34,6 +34,7 @@ void *Task_WaitEvent(long event) {
 	assert(++counter <= 1 && "Only one task can wait for events");
 
 	wait_target = event;
+
 	do {
 		do_events();
 		Timer_Sleep(TIMERSPEED/2);

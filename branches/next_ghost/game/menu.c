@@ -61,8 +61,9 @@ int speedscroll=3;
 char low_mem=0;
 static volatile char load_ok=0;
 
-static cur_pos[]={0,0,0,0,0};
-static cur_dir[]={UNSELECT,UNSELECT,UNSELECT,UNSELECT,UNSELECT};
+static int cur_pos[]={0,0,0,0,0};
+static int cur_dir[]={UNSELECT,UNSELECT,UNSELECT,UNSELECT,UNSELECT};
+static int cur_click = 0;
 
 static titlefont=H_FBIG;
 
@@ -104,7 +105,10 @@ static char click(int id,int xa,int ya,int xr,int yr)
 
   id,xa,ya,xr,yr;
   for(i=0;i<5;i++) if (cur_dir[i]==SELECT) break;
-  if (i!=5) send_message(E_MENU_SELECT,i);
+	if (i != 5) {
+		cur_click = i;
+		send_message(E_MENU_SELECT,i);
+	}
   return 1;
   }
 
@@ -352,7 +356,7 @@ static void klavesnice(EVENT_MSG *msg,void **unused)
 
 int enter_menu(char open)
   {
-  char c;
+  int c;
   char *d;
   init_menu_entries();
 //  Task_Add(2048,preload_anim);
@@ -376,8 +380,8 @@ int enter_menu(char open)
   send_message(E_ADD,E_KEYBOARD,klavesnice);
   ms_last_event.event_type=0x1;
   send_message(E_MOUSE,&ms_last_event);
-  d=Task_WaitEvent(E_MENU_SELECT);
-  c=*d;
+  Task_WaitEvent(E_MENU_SELECT);
+	c = cur_click;
   disable_click_map();
   send_message(E_DONE,E_KEYBOARD,klavesnice);
   cur_dir[c]=UNSELECT;

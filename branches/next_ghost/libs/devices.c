@@ -38,6 +38,13 @@ char cz_table_2[]=" !\"#$%&'()*+,-./0123456789:;<=>?@BCDFGH‹JKŠMN•PQ«ST—VWXZ[
 char cz_table_3[]=" !\"#$%&'()*+,-./0123456789:;<=>?@AB€…‰FGHIJKœM¥§PQ›†¦VWXY’[\\]^_`ab‡ƒˆfghijkŒm¤“pq©¨Ÿ–vwxy‘{|}~ ";
 char *cz_key_tabs[]={cz_table_1,cz_table_2,cz_table_3};
 
+void keyboard(EVENT_MSG *msg,void *user_data) {
+	if (msg->msg == E_WATCH) {
+		Sys_ProcessEvents();
+	}
+}
+
+/*
 void keyboard(EVENT_MSG *msg,void *user_data)
   {
   int i;
@@ -69,6 +76,7 @@ void keyboard(EVENT_MSG *msg,void *user_data)
 
      }
   }
+*/
 
 char ms_get_keycount()
   {
