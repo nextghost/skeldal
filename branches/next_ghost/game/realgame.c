@@ -83,7 +83,7 @@ TSECTOR *map_sectors;
 TVYKLENEK *map_vyk;         //mapa vyklenku
 word vyk_max;               //pocet vyklenku v mape
 short **map_items;
-char *flag_map;
+byte *flag_map;
 TMAP_EDIT_INFO *map_coord;
 TSTR_LIST level_texts;
 int mapsize;
@@ -740,63 +740,99 @@ void calc_fly()
 extern long sound_side_flags;
 
 
-void calc_animations()
-  {
-  int i;
+void calc_animations() {
+	int i;
+	
+	for (i = 0; i < mapsize * 4; i++) {
+		TSTENA *p;
+		int pj, pk, sj, sk;
+		
+		p = &map_sides[i];
+		sound_side_flags = p->flags;
+		pj = p->prim_anim >> 4;
+		pk = p->prim_anim & 15;
+		sj = p->sec_anim >> 4;
+		sk = p->sec_anim & 15;
+		if (!pk && !sk) continue;
+		if (p->flags & SD_PRIM_ANIM) {
+			if (p->flags & SD_PRIM_GAB) {
+				if (pj==0 || pj==pk)
+					p->flags ^= SD_PRIM_FORV;
+			}
 
-  for (i=0;i<mapsize*4;i++)
-     {
-     TSTENA *p;
-     int pj,pk,sj,sk;
+			if (p->flags & SD_PRIM_FORV) {
+				pj++;
+			} else {
+				pj--;
+			}
 
-     p=&map_sides[i];
-     sound_side_flags=p->flags;
-     pj=p->prim_anim>>4;pk=p->prim_anim & 15;
-     sj=p->sec_anim>>4;sk=p->sec_anim & 15;
-     if (!pk && !sk) continue;
-     if (p->flags & SD_PRIM_ANIM)
-        {
-        if (p->flags & SD_PRIM_GAB)
-           if (pj==0 || pj==pk) p->flags^=SD_PRIM_FORV;
-        if (p->flags & SD_PRIM_FORV) pj++; else pj--;
-        if (pj>pk) pj=0;
-        if (pj<0) pj=pk;
-        }
-      else
-       {
-        if (p->flags & SD_PRIM_FORV) pj++; else pj--;
-        if (pk && (pj+(!(p->flags & SD_PRIM_FORV))==pk))
-           {p->flags&=~0xff;p->flags|=flag_map[i];}
-        if (pj>pk) pj=pk;
-        else if (pj<0) pj=0;
-        else call_macro(i,MC_ANIM|((pj & 1)?MC_ANIM2:0)|(pj?0:MC_CLOSEDOOR)|(pj==pk?MC_OPENDOOR:0));
-        if (pk==pj && p->flags & SD_PRIM_GAB)
-           p->flags&=~SD_PRIM_FORV;
-       }
-    if (p->flags & SD_SEC_ANIM)
-        {
-        if (p->flags & SD_SEC_GAB)
-           if (sj==0 || sj==sk) p->flags^=SD_SEC_FORV;
-        if (p->flags & SD_SEC_FORV) sj++; else sj--;
-        if (sj>sk) sj=0;
-        if (sj<0) sj=sk;
-        }
-      else
-       {
-        if (p->flags & SD_SEC_FORV) sj++; else sj--;
-        if (!pk && sk && (sj+(!(p->flags & SD_SEC_FORV))==sk))
-           {p->flags&=~0xff;p->flags|=flag_map[i];}
-        if (sj>sk) sj=sk;
-        else if (sj<0) sj=0;
-        else if (!pk) call_macro(i,MC_ANIM|((sj & 1)?MC_ANIM2:0)|(pj?0:MC_CLOSEDOOR));
-        if (sk==sj && p->flags & SD_SEC_GAB)
-           p->flags&=~SD_SEC_FORV;
-       }
-     p->prim_anim=(pj<<4)+pk;
-     p->sec_anim=(sj<<4)+sk;
-     }
-  sound_side_flags=0;
-  }
+			if (pj > pk) pj = 0;
+			if (pj < 0) pj = pk;
+		} else {
+			if (p->flags & SD_PRIM_FORV) {
+				pj++;
+			} else {
+				pj--;
+			}
+
+			if (pk && (pj+(!(p->flags & SD_PRIM_FORV))==pk)) {
+				p->flags &= ~0xff;
+				p->flags |= flag_map[i];
+			}
+
+			if (pj > pk) {
+				pj = pk;
+			} else if (pj < 0) {
+				pj=0;
+			} else {
+				call_macro(i, MC_ANIM | ((pj & 1) ? MC_ANIM2 : 0) | (pj ? 0 : MC_CLOSEDOOR) | (pj == pk ? MC_OPENDOOR : 0));
+			}
+
+			if (pk == pj && p->flags & SD_PRIM_GAB) {
+				p->flags &= ~SD_PRIM_FORV;
+			}
+		}
+		if (p->flags & SD_SEC_ANIM) {
+			if (p->flags & SD_SEC_GAB) {
+				if (sj == 0 || sj == sk) p->flags ^= SD_SEC_FORV;
+			}
+
+			if (p->flags & SD_SEC_FORV) {
+				sj++;
+			} else {
+				sj--;
+			}
+			if (sj > sk) sj = 0;
+			if (sj < 0) sj = sk;
+		} else {
+			if (p->flags & SD_SEC_FORV) {
+				sj++;
+			} else {
+				sj--;
+			}
+
+			if (!pk && sk && (sj + (!(p->flags & SD_SEC_FORV)) == sk)) {
+				p->flags &= ~0xff;
+				p->flags |= flag_map[i];
+			}
+
+			if (sj > sk) {
+				sj = sk;
+			} else if (sj < 0) {
+				sj = 0;
+			} else if (!pk) {
+				call_macro(i, MC_ANIM | ((sj & 1) ? MC_ANIM2 : 0) | (pj ? 0 : MC_CLOSEDOOR));
+			}
+
+			if (sk == sj && p->flags & SD_SEC_GAB) {
+				p->flags &= ~SD_SEC_FORV;
+			}
+		}
+		p->prim_anim = (pj << 4) + pk;
+		p->sec_anim= (sj << 4) + sk;
+	}
+	sound_side_flags=0;
+}
 
 
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay)
@@ -841,7 +877,7 @@ void check_codelock_log(int sector,unsigned long flags)
   }
 
 
-int do_action(action_numb,sector,direct,flags,nosend)
+int do_action(int action_numb,int sector,int direct,int flags,int nosend)
   {
   TSTENA *q;
   TSECTOR *s;
@@ -1615,133 +1651,159 @@ static char test_can_walk(int grp)
   return 1;
   }
 
-void step_zoom(char smer)
-  {
-  char nopass,drs;
-  int sid,nsect,sect;
-  char can_go=1;
+void step_zoom(char smer) {
+	char nopass, drs;
+	int sid, nsect, sect;
+	char can_go=1;
+	
+	if (running_anm) return;
+	if (pass_zavora) return;
+	if (lodka && (smer == 1 || smer == 3)) return;
 
-  if (running_anm) return;
-  if (pass_zavora) return;
-  if (lodka && (smer==1 || smer==3)) return;
-  cancel_pass=0;
-  drs=(viewdir+smer)&3;
-  sid=viewsector*4+drs;
-  sect=viewsector;
-  call_macro(sid,MC_EXIT);
-  nopass=(map_sides[sid].flags & SD_PLAY_IMPS);
-  if (nopass) call_macro(sid,MC_PASSFAIL);else call_macro(sid,MC_PASSSUC);
-  if (cur_mode==MD_PRESUN)
-     {
-     select_player=moving_player;
-     if(!postavy[select_player].actions) nopass=1;
-     }
-  else can_go=test_can_walk(cur_group);
-  if (!can_go)
-    {
-    bott_disp_text(texty[220]);
-    return;
-    }
-  if (force_start_dialog) cancel_pass=1;
-  if (cancel_pass) return;
-  if (!GlobEvent(MAGLOB_ONSTEP,viewsector,viewdir)) return;
-  if (viewsector!=sect) nsect=viewsector,viewsector=sect;else nsect=map_sectors[viewsector].step_next[drs];
-  if (map_sectors[nsect].sector_type==S_SCHODY)
-     {
-     int i;
-     viewdir=(viewdir+map_sectors[nsect].side_tag) & 3;
-     nsect=map_sectors[nsect].sector_tag;
-     i=mob_map[nsect];
-     while (i!=0)
-        {
-        i--;
-        mobs[i].sector=mobs[i].home_pos;
-        i=mobs[i].next;
-        }
-     mob_map[nsect]=0;
-     }
-  else if (mob_map[nsect] && !nopass)
-     if (!battle){ if (!mob_alter(nsect)) return; }
-     else return;
-  if (map_sectors[nsect].sector_type==S_LODKA)
-     {
-     int i;
-     THUMAN *h;
-     group_all();can_go=1;
-     for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->groupnum!=cur_group && h->lives) break;
-     if (i!=POCET_POSTAV)
-        {
-        bott_disp_text(texty[66]);
-        return;
-        }
-     }
-  pass_zavora=1;
-  norefresh=1;
-  schovej_mysku();
-  anim_sipky(H_SIPKY_S+smer,1);
-  anim_sipky(0,255);
-  hide_ms_at(385);
-  ukaz_mysku();
-  if (set_halucination) do_halucinace();
-  if (loadlevel.name[0])
-     {
-     if (!battle)
-        {
-        pass_zavora=0;
-        return;
-        }
-     nopass=1;
-     loadlevel.name[0]=0;
-     exit_wait=0;
-     }
-  if (!can_go) nopass=1;
-  if (!nopass)
-     {
-     a_pass(viewsector,drs);
-     viewsector=nsect;
-     move_lodka(sect,nsect);
-     chod_s_postavama(1);
-     send_message(E_KROK);
-     }
-  if (!cancel_pass)
-     {
-     render_scene(viewsector,viewdir);
-    if (smer==2)
-       {
-       OutBuffer2nd();
-       if (!nopass) shift_zoom(smer);
-       }
-    else
-       {
-       shift_zoom(smer);
-       OutBuffer2nd();
-       if (nopass) shift_zoom(smer+2);
-       }
-    if (battle || (game_extras & EX_ALWAYS_MINIMAP)) draw_medium_map();
-    sort_groups();
-    bott_draw(0);
-    other_draw();
-     }
-  update_mysky();
-  ukaz_mysku();
-  if (!cancel_render) showview(0,0,0,0);
-  norefresh=0;
-  cancel_render=1;
-  Sound_MixBack(0);
-  viewsector=postavy_propadnout(viewsector);
-  check_postavy_teleport();
-  recheck_button(sect,1);
-  recheck_button(viewsector,1);
-  check_players_place(1);
-  cancel_pass=0;
-  pass_zavora=0;
-  if (force_start_dialog)
-     {
-     force_start_dialog=0;
-     call_dialog(start_dialog_number,start_dialog_mob);
-     }
-  if (cur_mode==MD_GAME) recalc_volumes(viewsector,viewdir);
-  }
+	cancel_pass = 0;
+	drs = (viewdir + smer) & 3;
+	sid = viewsector * 4 + drs;
+	sect = viewsector;
+	call_macro(sid, MC_EXIT);
+	nopass = (map_sides[sid].flags & SD_PLAY_IMPS);
+
+	if (nopass) {
+		call_macro(sid, MC_PASSFAIL);
+	} else {
+		call_macro(sid, MC_PASSSUC);
+	}
+
+	if (cur_mode == MD_PRESUN) {
+		select_player = moving_player;
+		if (!postavy[select_player].actions) {
+			nopass = 1;
+		}
+	} else {
+		can_go = test_can_walk(cur_group);
+	}
+
+	if (!can_go) {
+		bott_disp_text(texty[220]);
+		return;
+	}
+
+	if (force_start_dialog) cancel_pass = 1;
+	if (cancel_pass) return;
+	if (!GlobEvent(MAGLOB_ONSTEP, viewsector, viewdir)) return;
+
+	if (viewsector != sect) {
+		nsect = viewsector;
+		viewsector = sect;
+	} else {
+		nsect = map_sectors[viewsector].step_next[drs];
+	}
+
+	if (map_sectors[nsect].sector_type == S_SCHODY) {
+		int i;
+		viewdir = (viewdir + map_sectors[nsect].side_tag) & 3;
+		nsect = map_sectors[nsect].sector_tag;
+		i = mob_map[nsect];
+
+		while (i != 0) {
+			i--;
+			mobs[i].sector=mobs[i].home_pos;
+			i=mobs[i].next;
+		}
+
+		mob_map[nsect]=0;
+	} else if (mob_map[nsect] && !nopass) {
+		if (!battle) {
+			if (!mob_alter(nsect)) return;
+		} else {
+			return;
+		}
+	}
+
+	if (map_sectors[nsect].sector_type == S_LODKA) {
+		int i;
+		THUMAN *h;
+		group_all();
+		can_go=1;
+
+		for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+			if (h->groupnum != cur_group && h->lives) break;
+		}
+
+		if (i != POCET_POSTAV) {
+			bott_disp_text(texty[66]);
+			return;
+		}
+	}
+
+	pass_zavora=1;
+	norefresh=1;
+	schovej_mysku();
+	anim_sipky(H_SIPKY_S+smer,1);
+	anim_sipky(0,255);
+	hide_ms_at(385);
+	ukaz_mysku();
+
+	if (set_halucination) do_halucinace();
+	if (loadlevel.name[0]) {
+		if (!battle) {
+			pass_zavora=0;
+			return;
+		}
+
+		nopass=1;
+		loadlevel.name[0]=0;
+		exit_wait=0;
+	}
+
+	if (!can_go) {
+		nopass=1;
+	}
+
+	if (!nopass) {
+		a_pass(viewsector, drs);
+		viewsector = nsect;
+		move_lodka(sect, nsect);
+		chod_s_postavama(1);
+		send_message(E_KROK);
+	}
+
+	if (!cancel_pass) {
+		render_scene(viewsector, viewdir);
+		if (smer == 2) {
+			OutBuffer2nd();
+			if (!nopass) shift_zoom(smer);
+		} else {
+			shift_zoom(smer);
+			OutBuffer2nd();
+			if (nopass) shift_zoom(smer + 2);
+		}
+		if (battle || (game_extras & EX_ALWAYS_MINIMAP)) draw_medium_map();
+		sort_groups();
+		bott_draw(0);
+		other_draw();
+	}
+
+	update_mysky();
+	ukaz_mysku();
+
+	if (!cancel_render) showview(0,0,0,0);
+
+	norefresh=0;
+	cancel_render=1;
+	Sound_MixBack(0);
+	viewsector = postavy_propadnout(viewsector);
+	check_postavy_teleport();
+	recheck_button(sect, 1);
+	recheck_button(viewsector, 1);
+	check_players_place(1);
+	cancel_pass = 0;
+	pass_zavora = 0;
+	if (force_start_dialog) {
+		force_start_dialog = 0;
+		call_dialog(start_dialog_number, start_dialog_mob);
+	}
+	if (cur_mode == MD_GAME) recalc_volumes(viewsector, viewdir);
+}
 
 void turn_zoom(int smer)
   {

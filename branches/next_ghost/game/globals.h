@@ -545,7 +545,7 @@ extern TSTENA *map_sides;          //popisy jednotlivych sten (map_sides[(sector
 extern TSECTOR *map_sectors;       //popisy sektoru map_sectors[sector]
 extern TVYKLENEK *map_vyk;         //mapa vyklenku
 extern word vyk_max;               //pocet vyklenku v mape
-extern char *flag_map;             //mapa prenasenych flagu
+extern byte *flag_map;             //mapa prenasenych flagu
 extern TMAP_EDIT_INFO *map_coord;  //mapa souradnic a flagu
 extern int viewsector;             //aktualni sektor vyhledu
 extern int viewdir;                //aktualni smer vyhledu
