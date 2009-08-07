@@ -700,6 +700,7 @@ void check_postavy_teleport();  //je-li viewsector=teleport pak presune postavy
 
 extern char bott_display; //cislo udava co je zobrazeno v dolni casti
 extern int vmode;
+extern int map_ret;
 extern char runes[5];
 
 

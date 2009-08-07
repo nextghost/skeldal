@@ -30,6 +30,8 @@
 SDL_Surface *screen;
 void *backBuffer, *frontBuffer, *curFront;
 
+extern word scancodes[];
+
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		return 0;
@@ -37,6 +39,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 
 	screen = SDL_SetVideoMode(640, 480, 15, SDL_SWSURFACE);
 	SDL_ShowCursor(SDL_DISABLE);
+	SDL_EnableUNICODE(1);
 
 	if (!screen) {
 		return 0;
@@ -55,10 +58,29 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	curFront = frontBuffer = malloc(screen->h * screen->pitch);
 	backBuffer = malloc(screen->h * screen->pitch);
 
+	scancodes[SDLK_TAB] = 0x0f00;
+	scancodes[SDLK_RETURN] = 0x1c00;
+	scancodes[SDLK_ESCAPE] = 0x0100;
+	scancodes[SDLK_SPACE] = 0x3900;
+	scancodes[SDLK_UP] = 0x4800;
+	scancodes[SDLK_DOWN] = 0x5000;
+	scancodes[SDLK_RIGHT] = 0x4d00;
+	scancodes[SDLK_LEFT] = 0x4b00;
+	scancodes[SDLK_f] = 0x2100;
+	scancodes[SDLK_i] = 0x1700;
+	scancodes[SDLK_m] = 0x3200;
+	scancodes[SDLK_INSERT] = 0x5200;
+	scancodes[SDLK_END] = 0x7300;
+	scancodes[SDLK_PAGEDOWN] = 0x7400;
+	scancodes[SDLK_F2] = 0x3c00;
+	scancodes[SDLK_F3] = 0x3d00;
+	scancodes[SDLK_F4] = 0x3e00;
+
 	return 1;
 }
 
 void Screen_Shutdown(void) {
+	SDL_EnableUNICODE(0);
 	SDL_ShowCursor(SDL_ENABLE);
 	free(frontBuffer);
 	free(backBuffer);

@@ -26,6 +26,8 @@
 #include "libs/bmouse.h"
 #include "libs/event.h"
 
+word scancodes[SDLK_LAST] = {0};
+
 void Mouse_GetEvent(MS_EVENT *event) {
 	*event = ms_last_event;
 	event->event = 0;
@@ -76,11 +78,17 @@ void Mouse_GetEvent(MS_EVENT *event) {
 
 void Sys_ProcessEvents(void) {
 	SDL_Event event;
+	word keycode;
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
-			send_message(E_KEYBOARD, event.key.keysym.sym);
+			keycode = scancodes[event.key.keysym.sym];
+			if (!(event.key.keysym.unicode & 0xff80)) {
+				keycode |= event.key.keysym.unicode;
+			}
+
+			send_message(E_KEYBOARD, keycode);
 			break;
 
 		case SDL_MOUSEMOTION:
@@ -104,12 +112,12 @@ void Sys_ProcessEvents(void) {
 			if (event.button.button == SDL_BUTTON_LEFT) {
 				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x2 : 0x4;
 				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
-			} else if (event.button.button == SDL_BUTTON_MIDDLE) {
-				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x8 : 0x10;
-				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
 			} else if (event.button.button == SDL_BUTTON_RIGHT) {
+				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x8 : 0x10;
+				ms_last_event.tl2 = event.button.state == SDL_PRESSED;
+			} else if (event.button.button == SDL_BUTTON_MIDDLE) {
 				ms_last_event.event_type = event.button.state == SDL_PRESSED ? 0x20 : 0x40;
-				ms_last_event.tl1 = event.button.state == SDL_PRESSED;
+				ms_last_event.tl3 = event.button.state == SDL_PRESSED;
 			}
 
 			send_message(E_MOUSE, &ms_last_event);

@@ -337,6 +337,7 @@ INIS sinit[]=
 #define CESTY_POS 27
 int last_ms_cursor=-1;
 int vmode=2;
+int map_ret = 0;
 
 int set_video(int mode)
   {
@@ -1198,7 +1199,8 @@ void enter_game()
   set_game_click_map();
   SEND_LOG("(GAME) --------- Waiting for E_CLOSE_MAP ------------\n",0,0);
   send_message(E_ADD,E_RELOADMAP,reload_map_handler);
-  end=*(int *)Task_WaitEvent(E_CLOSE_MAP);
+  Task_WaitEvent(E_CLOSE_MAP);
+	end = map_ret;
   send_message(E_DONE,E_RELOADMAP,reload_map_handler);
   SEND_LOG("(GAME) --------- E_CLOSE_MAP triggered, leaving map------------\n",0,0);
   unwire_main_functs();
@@ -1603,6 +1605,7 @@ static EVENT_PROC(load_error_report)
 
 static void wire_load_saved()
   {
+	map_ret = -1;
   send_message(E_CLOSE_MAP,-1);
   }
 
@@ -1619,7 +1622,8 @@ static void load_saved_game(void)
   wire_save_load(4);
   ukaz_mysku();
   update_mysky();
-  game=*((char *)Task_WaitEvent(E_CLOSE_MAP));
+  Task_WaitEvent(E_CLOSE_MAP);
+  game = map_ret;
   unwire_proc();
   disable_click_map();
   Task_WaitEvent(E_TIMER);

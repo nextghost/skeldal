@@ -756,7 +756,11 @@ void call_macro_ex(int side,int flags, int runatside)
           case MA_PICKI:c=ma_picki(&z->twop,program_counter);break;
           case MA_WBOOK:ma_wbook(&z->loadlev);break;
           case MA_RANDJ:c=ma_randjmp(&z->twop,program_counter);break;
-          case MA_ENDGM:unwire_proc();send_message(E_CLOSE_MAP,(void *)255);break;
+          case MA_ENDGM:
+	  	unwire_proc();
+		map_ret = 255;
+		send_message(E_CLOSE_MAP,(void *)255);
+		break;
           case MA_GOMOB:ma_control_mob(z->twop.parm1,z->twop.parm2);break;
 		  case MA_SHRMA:call_macro_ex(side,flags,z->twop.parm1*4+z->twop.parm2);break;
 		  case MA_MUSIC:macro_change_music(z->text.textindex);break;

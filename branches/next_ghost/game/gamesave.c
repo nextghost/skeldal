@@ -1274,6 +1274,7 @@ static char close_saveload(int id,int xa,int ya,int xr,int yr)
 char clk_load_konec(int id,int xa,int ya,int xr,int yr)
   {
   id;xa;ya;xr;yr;
+	map_ret = -1;
   send_message(E_CLOSE_MAP,-1);
   return 1;
   }
@@ -1295,8 +1296,10 @@ static char clk_load_proc_menu(int id,int xa,int ya,int xr,int yr)
   {
   id=bright_slot(yr-18);
   xa;ya;xr;yr;
-  if (ms_last_event.event_type & 0x2 && id>=0 && used_pos[id])
-     send_message(E_CLOSE_MAP,id);
+	if (ms_last_event.event_type & 0x2 && id>=0 && used_pos[id]) {
+		map_ret = id;
+		send_message(E_CLOSE_MAP,id);
+	}
   return 1;
   }
 
