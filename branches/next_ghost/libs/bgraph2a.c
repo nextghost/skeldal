@@ -451,69 +451,19 @@ puti_lp:mov     ecx,ebx
   }
 
 // src: 8bit image with simple palette
-void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely)
-//#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
-  {
-  if (src==NULL) return;
-/*
-  __asm
-    {
-        mov     esi,src
-        mov     edi,trg
-        mov     eax,startline
-        mov     ebx,velx
-        mov     edx,vely
-                          ;ESI - obrazek
-                         ;EDI - obrazovka
-                         ;EAX - startline
-                         ;EBX - velikostx
-                         ;EDX - velikosty
+void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely) {
+	if (src==NULL) {
+		return;
+	}
 
-        push    ebp
-        mov     ebp,ebx
-        xor     ecx,ecx
-        mov     cx,[esi]
-        imul    eax,ecx
-        lea     ebx,[esi+6];
-        add     esi,6+512
-        add     esi,eax
-        mov     eax,ecx
-put8_lp:mov     ecx,ebp
-        push    eax
-put8lp2:xor     eax,eax
-        lodsb
-        or      eax,eax
-        jz      put8_trns
-        mov     eax,[ebx+eax*2]
-        stosw
-put8nxt:dec     ecx
-        jnz     put8lp2
-        pop     eax
-        mov     ecx,eax
-        sub     ecx,ebp
-        add     esi,ecx
-        sub     edi,ebp
-        sub     edi,ebp
-        add     edi,scr_linelen
-        dec     edx
-        jnz     put8_lp
-        pop     ebp
-        jmp     ende
-put8_trns:
-        add     edi,2
-        jmp     put8nxt
-ende:
-    }
-*/
-
-	// TODO: needs testing
 	int x, y, line_length = *src;
 	word *pal = src + 3;
 	byte *data = (byte*)(src + 259);
+	data += startline * line_length;
 
 	for (y = 0; y < vely; y++) {
 		for (x = 0; x < velx; x++) {
-			if (data[x+y*line_length]) {
+			if (data[x + y * line_length]) {
 				trg[x+y*Screen_GetXSize()] = pal[data[x+y*line_length]];
 			}
 		}
