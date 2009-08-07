@@ -1494,6 +1494,7 @@ static void game_big_circle(char enforced)
   SEND_LOG("\n(GAME) --------- Entering big loop ------------",0,0);
   purge_playlist();
   s[12]=0;strncpy(s,loadlevel.name,12);
+	strupr(s);
   err=load_map(s);
   if (!enforced)
      {
@@ -1543,6 +1544,7 @@ static void game_big_circle(char enforced)
     SEND_LOG("(GAME) --------- Leaving game ------------\n",0,0);
     leave_current_map();
     s[12]=0;strncpy(s,loadlevel.name,12);
+	strupr(s);
     if (s[0]!=0)err=load_map(s);
     memset(GlobEventList,0,sizeof(GlobEventList));
 

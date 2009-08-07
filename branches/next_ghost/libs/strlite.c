@@ -156,8 +156,12 @@ void str_delfreelines(TSTR_LIST *list)
   for(i=0;i<count;i++)
      if ((*list)[i]!=NULL) (*list)[j++]=(*list)[i];
   if (j==0) j++;
-  p=(TSTR_LIST)realloc(*list,j*sizeof(*p));
-  if (p!=NULL) *list=p;
+	p = realloc(*list, (j + 1) * sizeof(*p));
+	if (p != NULL) {
+		*list = p;
+		count = j;
+		p[j] = &nil;
+	}
 //  count=_msize(*list)/sizeof(*p);
   for(i=j;i<count;i++) (*list)[i]=NULL;
   }

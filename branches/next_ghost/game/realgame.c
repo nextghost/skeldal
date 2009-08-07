@@ -1226,7 +1226,7 @@ void calc_game()
      }
   }
 
-void a_touch(sector,dir)
+void a_touch(int sector, int dir)
   {
   TSTENA *q;
   int sid;
