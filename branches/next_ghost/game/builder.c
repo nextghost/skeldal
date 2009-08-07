@@ -1284,6 +1284,8 @@ void redraw_scene()
   ukaz_mysku();
   global_anim_counter++;
   send_message(E_KOUZLO_ANM);
+	// originally done by a task woken by the message above
+	play_big_mgif_frame();
   }
 
 void refresh_scene()

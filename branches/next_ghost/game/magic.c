@@ -179,7 +179,7 @@ char twins;
 
 static short rand_value;
 
-static word *paleta;
+//static word *paleta;
 
 void show_full_lfb12e(void *target,void *buff,void *paleta);
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
@@ -191,6 +191,7 @@ void call_spell(int i);
 static int calculatePhaseDoor(int sector, int dir, int um);
 
 
+/*
 static void animace_kouzla(int act,void *data, int ssize)
   {
   switch (act)
@@ -248,6 +249,7 @@ void play_big_mgif_animation(int block)
   Task_Add(2048,play_anim,block);
   Task_Sleep(NULL);
   }
+*/
 
 int get_spell_mana(int num)
   {
@@ -325,7 +327,8 @@ void spell_anim(char *name)
   i=find_handle(name,NULL);
   if (i==-1) i=end_ptr++;
   def_handle(i,name,NULL,SR_ITEMS);
-  Task_Add(8196,play_anim,i);
+//  Task_Add(8196,play_anim,i);
+	play_big_mgif_animation(i);
   }
 
 void spell_sound(char *name)

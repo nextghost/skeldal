@@ -185,6 +185,10 @@ void set_backgrnd_mode(int mode);
 
 int get_item_top(int celx,int cely,int posx,int posy,word *txtr,int index);
  //vraci nejnizsi souradnici y predmetu leziciho na zemi v celx, cely na pozici posx,posy;
+
+void play_big_mgif_animation(int block);
+void play_big_mgif_frame(void);
+
 #pragma option align=reset
 
 #endif

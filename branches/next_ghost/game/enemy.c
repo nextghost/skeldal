@@ -1905,8 +1905,8 @@ char akce_moba_zac(TMOB *m)
   dper=m->dostal*100/(m->lives+m->dostal);
   corlives=m->vlastnosti[VLS_MAXHIT]-m->flee_num*(m->vlastnosti[VLS_MAXHIT]-m->lives)/100;
   perlives=(100-m->flee_num)*corlives*q_kolik_je_potvor(m->sector)/(m->vlastnosti[VLS_MAXHIT]);
-  perlives+=rnd(m->flee_num);
-  dper+=rnd(m->flee_num);
+  perlives += m->flee_num ? rnd(m->flee_num) : 0;
+  dper += m->flee_num ? rnd(m->flee_num) : 0;
   flee=dper>perlives || m->vlastnosti[VLS_KOUZLA] & SPL_FEAR;
      if (flee)
         {

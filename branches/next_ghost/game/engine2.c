@@ -355,42 +355,7 @@ void fcdraw(void *source,void *target, T_FLOOR_MAP *table) {
 
 static void klicovani_anm_back(word *target,word *source);
 void klicovani_anm(word *target,word *source,char mirror)
-//#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
   {
-/*  if (mirror) klicovani_anm_back(target,source);
-  else
-  __asm
-    {
-        mov     edi,target
-        mov     esi,source
-
-        mov     cl,180
-ka_lp2: mov     ebx,320
-ka_lp1: lodsw
-        movzx   eax,ax
-        test    eax,0x8000
-        jnz     ka_skip        
-        mov     edx,eax
-        and     edx,0x7FE0
-        add     eax,edx
-        mov     edx,eax
-        shl     edx,16
-        add     edi,scr_linelen
-        or      eax,edx        
-        mov     [edi],eax
-        sub     edi,scr_linelen
-        mov     [edi],eax
-ka_skip:add     edi,4
-        dec     ebx
-        jnz     ka_lp1
-		sub		edi,1280
-        add     edi,scr_linelen
-        add     edi,scr_linelen
-        dec     cl
-        jnz     ka_lp2
-    }
-*/
-
 	if (mirror) {
 		klicovani_anm_back(target,source);
 		return;
@@ -408,11 +373,11 @@ ka_skip:add     edi,4
 
 			// red and green are shifted by one bit to the right
 			// to make space for skip bit 0x8000
-			color += color & 0x7fe0;
-			target[2*x+y*Screen_GetXSize()] = color;
-			target[2*x+1+y*Screen_GetXSize()] = color;
-			target[2*x+(y+1)*Screen_GetXSize()] = color;
-			target[2*x+1+(y+1)*Screen_GetXSize()] = color;
+			color = Screen_RGB((color >> 10) & 0x1f, (color >> 5) & 0x1f, color & 0x1f);
+			target[2*x+2*y*Screen_GetXSize()] = color;
+			target[2*x+1+2*y*Screen_GetXSize()] = color;
+			target[2*x+(2*y+1)*Screen_GetXSize()] = color;
+			target[2*x+1+(2*y+1)*Screen_GetXSize()] = color;
 		}
 	}
   }

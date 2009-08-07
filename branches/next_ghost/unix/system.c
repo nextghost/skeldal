@@ -227,8 +227,9 @@ void Sound_ChangeMusic(char *file) {
 
 }
 
+// FIXME: implement sound backend
 void Sound_BreakLoop(int channel) {
-	assert(0);
+//	assert(0);
 
 }
 

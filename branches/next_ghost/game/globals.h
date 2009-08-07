@@ -1621,7 +1621,6 @@ void area_cast(int num,int sector,int owner,char noanim);
 int select_teleport_target();
 char get_spell_teleport(int num);
 void spell_throw(int cil,int what); //to je procedura ktera umoznuje potvoram strilet
-void play_big_mgif_animation(int block);
 void unaffect_demon(int cil); //ukonci demona pri jeho smrti
 char *get_rune_name(int strnum);
 void spell_sound(char *name);

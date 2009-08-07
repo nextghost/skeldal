@@ -26,11 +26,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 //#include "libs/mem.h"
 //#include "libs/bios.h"
 #include "libs/memman.h"
 #include "libs/bgraph.h"
 #include "libs/event.h"
+#include "libs/mgifmem.h"
 //#include "libs/zvuk.h"
 //#include "math.h"
 #include "game/globals.h"
@@ -1543,3 +1545,65 @@ int get_item_top(int celx,int cely,int posx,int posy,word *txtr,int index)
   if (txtr!=NULL) return y-(txtr[1]*last_scale)/320+SCREEN_OFFLINE;
   else return y+SCREEN_OFFLINE;
   }
+
+#define ANIM_SIZE (320*180)
+
+static word *paleta;
+static void *anm = NULL;
+static int blk = 0;
+
+static void animace_kouzla(int act,void *data, int ssize) {
+	switch (act) {
+	case MGIF_LZW:
+	case MGIF_COPY:
+		show_full_lfb12e(anim_render_buffer, data, paleta);
+		break;
+
+	case MGIF_DELTA:
+		show_delta_lfb12e(anim_render_buffer, data, paleta);
+		break;
+
+	case MGIF_PAL:
+		paleta = data;
+		*paleta |= 0x8000;
+		break;
+	}
+}
+
+void play_big_mgif_animation(int block) {
+	int i;
+
+	assert(anim_render_buffer == NULL && "Another animation is being played");
+
+	SEND_LOG("(ANIM) Running animation number %xh", block, 0);
+	anim_render_buffer = getmem(ANIM_SIZE * sizeof(word));
+	mgif_install_proc(animace_kouzla);
+	running_anm = 1;
+
+	for (i = 0; i < ANIM_SIZE; i++) {
+		anim_render_buffer[i] = 0x8000;
+	}
+
+	blk = block;
+	alock(blk);
+	anm = open_mgif(ablock(blk));
+	SEND_LOG("(ANIM) Buffer is now ready...",0,0);
+}
+
+void play_big_mgif_frame(void) {
+	if (!running_anm) {
+		return;
+	}
+
+	if (!anm) {
+		close_mgif();
+		free(anim_render_buffer);
+		anim_render_buffer = NULL;
+		running_anm = 0;
+		aunlock(blk);
+		return;
+	}
+
+	anm = mgif_play(anm);
+	neco_v_pohybu = 1;
+}
