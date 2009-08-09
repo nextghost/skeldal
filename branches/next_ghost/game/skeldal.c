@@ -481,8 +481,11 @@ void hi_8bit_correct(void **p,long *s)
   {
 	for (i=0;i<256;i++)
 	{
-	  ptr[i+3]=((ptr[i+3] & ~0x1F)+ptr[i+3]);
+//	  ptr[i+3]=((ptr[i+3] & ~0x1F)+ptr[i+3]);
+	  ptr[i+3] = Screen_RGB((ptr[i+3] >> 10) & 0x1f, (ptr[i+3] >> 5) & 0x1f, ptr[i+3] & 0x1f);
 	}
+  } else if (ptr[2] == 15) {
+	Screen_FixPalette(ptr+3, ptr[0] * ptr[1]);
   }
 }
 
