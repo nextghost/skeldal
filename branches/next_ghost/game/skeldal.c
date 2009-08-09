@@ -1051,7 +1051,7 @@ SEND_LOG("(INIT) Initializing engine.",0,0);
 SEND_LOG("(INIT) Initializing memory manager",0,0);
   init_manager(d,c);
 SEND_LOG("(GAME) Memory manager initialized. Using DDL: '%s' Temp dir: '%s'",d,c);
-	texty_knihy=find_map_path("kniha.txt");
+	texty_knihy=find_map_path("KNIHA.TXT");
 SEND_LOG("(INIT) Installing GUI",0,0);
   install_gui();
 SEND_LOG("(INIT) Attaching patch.",0,0);

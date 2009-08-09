@@ -193,3 +193,33 @@ word Screen_ColorAvg(word c1, word c2) {
 
 	return r | g | b;
 }
+
+word Screen_ColorBlend(word c1, word c2, float factor) {
+	unsigned r1, g1, b1, r2, g2, b2;
+	
+	r1 = ((c1 & screen->format->Rmask) >> screen->format->Rshift);
+	g1 = ((c1 & screen->format->Gmask) >> screen->format->Gshift);
+	b1 = ((c1 & screen->format->Bmask) >> screen->format->Bshift);
+
+	r2 = ((c2 & screen->format->Rmask) >> screen->format->Rshift);
+	g2 = ((c2 & screen->format->Gmask) >> screen->format->Gshift);
+	b2 = ((c2 & screen->format->Bmask) >> screen->format->Bshift);
+
+	r1 = r1 + factor * (r2 - r1);
+	g1 = g1 + factor * (g2 - g1);
+	b1 = b1 + factor * (b2 - b1);
+
+	return Screen_RGB(r1, g1, b1);
+}
+
+unsigned Screen_ColorR(word c) {
+	return (c & screen->format->Rmask) >> screen->format->Rshift;
+}
+
+unsigned Screen_ColorG(word c) {
+	return (c & screen->format->Gmask) >> screen->format->Gshift;
+}
+
+unsigned Screen_ColorB(word c) {
+	return (c & screen->format->Bmask) >> screen->format->Bshift;
+}

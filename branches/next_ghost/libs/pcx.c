@@ -76,10 +76,10 @@ void decomprimate_line_hi(unsigned char *src,unsigned short *trg,unsigned short 
   *srcstep=src-srcsave;
   }
 
-void palette_shadow(char *pal1,unsigned short pal2[][256],int tr,int tg,int tb)
+void palette_shadow(unsigned char *pal1,unsigned short pal2[][256],int tr,int tg,int tb)
   {
   int i,j;
-  char *bt;
+  unsigned char *bt;
   int r,g,b;
   short hi;
 

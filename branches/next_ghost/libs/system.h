@@ -90,6 +90,11 @@ word Screen_RGB(unsigned r, unsigned g, unsigned b);
 word Screen_ColorMin(word c1, word c2);
 word Screen_ColorSub(word color, int sub);
 word Screen_ColorAvg(word c1, word c2);
+word Screen_ColorBlend(word c1, word c2, float factor);
+
+unsigned Screen_ColorR(word c);
+unsigned Screen_ColorG(word c);
+unsigned Screen_ColorB(word c);
 
 
 void ShareCPU(void);

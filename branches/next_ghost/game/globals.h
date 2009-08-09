@@ -131,10 +131,14 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define COL_RAMEC RGB555(31,31,26) //((31*32+31)*32+26)
 
 #undef RGB
-#define RGB(r,g,b) (((r)>>3)*2048+((g)>>3)*64+((b)>>3))
-#define GET_R_COLOR(col) ((col & 0xF800)>>8)
-#define GET_G_COLOR(col) ((col & 0x07E0)>>3)
-#define GET_B_COLOR(col) ((col & 0x001F)<<3)
+//#define RGB(r,g,b) (((r)>>3)*2048+((g)>>3)*64+((b)>>3))
+//#define GET_R_COLOR(col) ((col & 0xF800)>>8)
+//#define GET_G_COLOR(col) ((col & 0x07E0)>>3)
+//#define GET_B_COLOR(col) ((col & 0x001F)<<3)
+#define RGB(r,g,b) Screen_RGB((r) >> 3, (g) >> 3, (b) >> 3)
+#define GET_R_COLOR(col) Screen_ColorR(col)
+#define GET_G_COLOR(col) Screen_ColorG(col)
+#define GET_B_COLOR(col) Screen_ColorB(col)
 
 #define BGSWITCHBIT 0x0020
 #define NOSHADOW(x) ((x)|BGSWITCHBIT)
@@ -1709,7 +1713,7 @@ void prekodovat(unsigned char *c);
 
 //menu
 int enter_menu(char open); //task!
-void titles(va_list args); //task!
+//void titles(va_list args); //task!
 void run_titles(va_list args); //task!
 void effect_show(va_list args); //effektni zobrazeni // task!
 void konec_hry();

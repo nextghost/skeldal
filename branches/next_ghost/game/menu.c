@@ -436,193 +436,219 @@ char *get_next_title(char control,char *filename)
 
 static int title_lines[640][2];
 
-static int insert_next_line(int ztrata)
-  {
-  char *c;
-  int ll=-1;
-  Screen_SetBackAddr();
-  do
-     {
-     if (title_mode!=TITLE_KONEC) c=get_next_title(0,NULL);else c[0]=0;
-     if (c[0]=='*')
-        {
-        strupr(c);
-        if (!strcmp(c+1,"HEAD"))
-           {
-           title_mode=TITLE_HEAD;
-           set_font(titlefont,RGB(146,187,142));
-           }
-        else if (!strcmp(c+1,"NAME"))
-           {
-           title_mode=TITLE_NAME;
-           set_font(titlefont,RGB(186,227,182));
-           }
-        else if (!strcmp(c+1,"CENTER"))
-           {
-           title_mode=TITLE_CENTER;
-           set_font(titlefont,RGB(255,248,240));
-           }
-        else if (!strcmp(c+1,"TEXT"))
-           {
-           title_mode=TITLE_TEXT;
-           set_font(titlefont,RGB(255,248,240));
-           }
-        else if (!strcmp(c+1,"KONEC"))
-           {
-           title_mode=TITLE_KONEC;
-           }
-        else if (!strncmp(c+1,"LINE",4))
-           {
-           sscanf(c+5,"%d",&title_line);
-           }
-        else if (!strncmp(c+1,"SMALL",5)) titlefont=H_FBOLD;
-        else if (!strncmp(c+1,"BIG",3)) titlefont=H_FBIG;
-        else if (!strncmp(c+1,"SPEED",5)) sscanf(c+6,"%d",&speedscroll);
-        }
-     else
-        {
-        ll=text_height(c);
-        if (ll==0) ll=text_height("W");
-        if (ll<title_line) ll=title_line;
-        curcolor=BGSWITCHBIT;
-        charcolors[0]=RGB555(0,0,1);
-        bar(0,360+ztrata,639,360+ztrata+ll);
-        switch(title_mode)
-           {
-           case TITLE_TEXT:
-           case TITLE_HEAD:position(50,360+ztrata);break;
-           case TITLE_NAME:set_aligned_position(100,360+ztrata,0,0,c);break;
-           case TITLE_CENTER:set_aligned_position(320,360+ztrata,1,0,c);break;
-           }
-        outtext(c);
-        }
-     }
-  while (c[0]=='*');
-  Screen_Restore();
-  if (title_mode==TITLE_KONEC) ll=-1;
-  return ll;
-  }
+static int insert_next_line(int ztrata) {
+	char *c;
+	int ll = -1;
+	Screen_SetBackAddr();
 
-static void scan_lines(word *buffer,int start,int poc)
-  {
-  int first, last,i,pocet=poc;
-  word *buf;
-  while (pocet--)
-     {
-     buf=buffer+start*Screen_GetXSize();
-     first=0;
-     last=0;
-     for(i=0;i<640;i++) if (!(buf[i] & BGSWITCHBIT)) break;
-     if (i!=640)
-        {
-        first=i;
-        last=i;
-        for(;i<640;i++) if (!(buf[i] & BGSWITCHBIT)) last=i;
-        }
-     first&=~1;if (last)last+=2;last&=~1;
-     title_lines[start][0]=first;
-     title_lines[start][1]=last;
-     start++;
-     }
-  }
+	do {
+		if (title_mode != TITLE_KONEC) {
+			c = get_next_title(0, NULL);
+		} else {
+			c[0] = 0;
+		}
 
-static void get_max_extend(int *l,int *r)
-  {
-  int left=640;
-  int right=0;
-  int i;
+		if (c[0] == '*') {
+			strupr(c);
+			if (!strcmp(c+1, "HEAD")) {
+				title_mode = TITLE_HEAD;
+				set_font(titlefont, RGB(146, 187, 142));
+			} else if (!strcmp(c+1, "NAME")) {
+				title_mode = TITLE_NAME;
+				set_font(titlefont, RGB(186, 227, 182));
+			} else if (!strcmp(c+1, "CENTER")) {
+				title_mode = TITLE_CENTER;
+				set_font(titlefont, RGB(255, 248, 240));
+			} else if (!strcmp(c+1, "TEXT")) {
+				title_mode = TITLE_TEXT;
+				set_font(titlefont, RGB(255, 248, 240));
+			} else if (!strcmp(c+1, "KONEC")) {
+				title_mode = TITLE_KONEC;
+			} else if (!strncmp(c+1, "LINE", 4)) {
+				sscanf(c+5, "%d", &title_line);
+			} else if (!strncmp(c+1, "SMALL", 5)) {
+				titlefont = H_FBOLD;
+			} else if (!strncmp(c+1, "BIG", 3)) {
+				titlefont = H_FBIG;
+			} else if (!strncmp(c+1, "SPEED", 5)) {
+				sscanf(c+6,"%d",&speedscroll);
+			}
+		} else {
+			ll = text_height(c);
+			if (ll == 0) ll = text_height("W");
+			if (ll < title_line) ll = title_line;
+			curcolor = BGSWITCHBIT;
+			charcolors[0] = RGB555(0, 0, 1);
+			bar(0, 360 + ztrata, 639, 360 + ztrata + ll);
+			switch (title_mode) {
+			case TITLE_TEXT:
+			case TITLE_HEAD:
+				position(50, 360 + ztrata);
+				break;
 
-  for(i=0;i<360;i++)
-     {
-     left=min(title_lines[i][0],left);
-     right=max(title_lines[i][1],right);
-     }
-  *l=left;
-  *r=right;
-  }
+			case TITLE_NAME:
+				set_aligned_position(100, 360 + ztrata, 0, 0, c);
+				break;
 
+			case TITLE_CENTER:
+				set_aligned_position(320, 360 + ztrata, 1, 0, c);
+				break;
+			}
+
+			outtext(c);
+		}
+	} while (c[0] == '*');
+
+	Screen_Restore();
+	if (title_mode == TITLE_KONEC) ll = -1;
+	return ll;
+}
+
+static void scan_lines(word *buffer,int start,int poc) {
+	int first, last, i, pocet = poc;
+	word *buf;
+	while (pocet--) {
+		buf = buffer + start * Screen_GetXSize();
+		first = 0;
+		last = 0;
+		for (i = 0; i < 640; i++) {
+			if (!(buf[i] & BGSWITCHBIT)) {
+				break;
+			}
+		}
+
+		if (i != 640) {
+			first = i;
+			last = i;
+			for(; i < 640; i++) {
+				if (!(buf[i] & BGSWITCHBIT)) {
+					last = i;
+				}
+			}
+		}
+
+		first &= ~1;
+
+		if (last) {
+			last += 2;
+			last &= ~1;
+		}
+
+		title_lines[start][0] = first;
+		title_lines[start][1] = last;
+		start++;
+	}
+}
+
+static void get_max_extend(int *l,int *r) {
+	int left = 640;
+	int right = 0;
+	int i;
+
+	for(i = 0; i < 360; i++) {
+		left = min(title_lines[i][0], left);
+		right = max(title_lines[i][1], right);
+	}
+
+	*l = left;
+	*r = right;
+}
+
+/*
 void titles(va_list args)
 //#pragma aux titles parm[]
   {
   int send_back=va_arg(args,int);
   char *textname=va_arg(args,char *);
+*/
 
-  void *picture;
-  word *scr,*buff;
-  int counter,newc;
-  int lcounter=1;
-  char end=0;
-  int l,r;
+void titles(int send_back, char *textname) {
+	void *picture;
+	word *scr, *buff;
+	int counter, newc;
+	int lcounter = 1;
+	char end = 0;
+	int l, r;
+	
+	title_mode = TITLE_CENTER;
+	if (get_next_title(1, textname) == NULL) return;
+	schovej_mysku();
+	speedscroll = 4;
+	curcolor = BGSWITCHBIT;
+	bar(0,0,639,479);
+	Screen_SetBackAddr();
+	bar(0,0,639,479);
+	Screen_Restore();
+	memset(title_lines, 0, sizeof(title_lines));
+	def_handle(H_PICTURE, "titulky.pcx", pcx_15bit_decomp, SR_BGRAFIKA);
+	alock(H_PICTURE);
+	picture = ablock(H_PICTURE);
+	put_picture(0, 0, picture);
+	effect_show(NULL);
+	titlefont = H_FBIG;
+	set_font(titlefont, RGB(158, 210, 25));
+	charcolors[1] = 0;
+	counter = Timer_GetValue();
+	newc = counter;
+	do {
+		int skip;
+		scr = Screen_GetXSize() * 60 + Screen_GetAddr();
+		buff = Screen_GetBackAddr();
+		counter = Timer_GetValue();
+		skip = (counter - newc) / speedscroll;
+		if (skip > 0) {
+			if (skip > 10) skip = 10;
 
-  title_mode=TITLE_CENTER;
-  if (get_next_title(1,textname)==NULL) return;
-  schovej_mysku();
-  speedscroll=4;
-  curcolor=BGSWITCHBIT ; bar(0,0,639,479);
-  Screen_SetBackAddr();bar(0,0,639,479);Screen_Restore();
-  memset(title_lines,0,sizeof(title_lines));
-  def_handle(H_PICTURE,"titulky.pcx",pcx_15bit_decomp,SR_BGRAFIKA);
-  alock(H_PICTURE);
-  picture=ablock(H_PICTURE);
-  put_picture(0,0,picture);
-  effect_show(NULL);
-  titlefont=H_FBIG;
-  set_font(titlefont,RGB(158,210,25));charcolors[1]=0;
-  counter=Timer_GetValue();newc=counter;
-  do
-     {
-     int skip;
-     scr=Screen_GetXSize()*60+Screen_GetAddr();
-     buff=Screen_GetBackAddr();
-     counter=Timer_GetValue();
-     skip=(counter-newc)/speedscroll;
-     if (skip>0)
-        {
-        if (skip>10) skip=10;
-        newc+=skip*speedscroll;
-        scan_lines(buff,360,skip);
-        scroll_and_copy((word *)picture+640*60+3,buff,scr,360,skip,title_lines);
-        //memcpy(Screen_GetAddr(),buff,480*Screen_GetScan());
-        get_max_extend(&l,&r);
-        memmove(title_lines,&title_lines[skip],sizeof(title_lines)-skip*sizeof(int)*2);
-        //showview(l,60,r-l+1,360);
-        showview(0,60,639,360);        
-        buff+=Screen_GetXSize()*359;
-        memcpy(buff,buff+Screen_GetXSize()*skip,40*Screen_GetScan());
-        showview(0,0,640,40);
-        Task_WaitEvent(E_TIMER);
-        counter+=skip;
-        lcounter-=skip;
-        }
-     else
-        if (skip<0) counter=skip;
-     while (lcounter<=0 && !end)
-        {
-        int c;
-        c=insert_next_line(lcounter);
-        scan_lines(Screen_GetBackAddr(),360+lcounter,-lcounter);
-        if (c==-1)
-           {
-           end=1;
-           lcounter=360;
-           }
-        else
-           lcounter+=c;
-        }
-     }
-  while (!(Task_QuitMsg() || (end && lcounter<=0)));
-  ukaz_mysku();
-  get_next_title(-1,NULL);
-  aunlock(H_PICTURE);
-  if (send_back)send_message(E_KEYBOARD,27);
-  }
+			newc += skip * speedscroll;
+			scan_lines(buff, 360, skip);
+			scroll_and_copy((word *)picture + 640 * 60 + 3, buff, scr, 360, skip, title_lines);
+			//memcpy(Screen_GetAddr(),buff,480*Screen_GetScan());
+			get_max_extend(&l, &r);
+			memmove(title_lines, &title_lines[skip], sizeof(title_lines) - skip * sizeof(int) * 2);
+			//showview(l,60,r-l+1,360);
+			showview(0, 60, 639, 360);
+			buff += Screen_GetXSize() * 359;
+			memcpy(buff, buff + Screen_GetXSize() * skip, 40 * Screen_GetScan());
+			showview(0, 0, 640, 40);
+			Task_WaitEvent(E_TIMER);
+			counter += skip;
+			lcounter -= skip;
+		} else if (skip < 0) {
+			counter = skip;
+		}
+
+		while (lcounter <= 0 && !end) {
+			int c;
+			c = insert_next_line(lcounter);
+			scan_lines(Screen_GetBackAddr(), 360 + lcounter, -lcounter);
+			if (c == -1) {
+				end = 1;
+				lcounter = 360;
+			} else {
+				lcounter += c;
+			}
+		}
+	} while (!(end && lcounter<=0));
+//  while (!(Task_QuitMsg() || (end && lcounter<=0)));
+	ukaz_mysku();
+	get_next_title(-1, NULL);
+	aunlock(H_PICTURE);
+
+	if (!send_back) {
+		Task_WaitEvent(E_KEYBOARD);
+	}
+//  if (send_back)send_message(E_KEYBOARD,27);
+}
 
 void run_titles(va_list args)
   {
+/*
   int task_id;
   task_id=Task_Add(8196,titles,1,"titulky.TXT");
   Task_WaitEvent(E_KEYBOARD);
   Task_Term(task_id);
+*/
+	titles(1, "TITULKY.TXT");
   }
 
 void konec_hry()
@@ -640,14 +666,20 @@ void konec_hry()
   Sound_ChangeMusic(d);
   timer=Timer_GetValue();
   while (Timer_GetValue()-timer<150) Task_Sleep(NULL);
+/*
   task_id=Task_Add(8196,titles,1,"ENDTEXT.TXT");
   Task_WaitEvent(E_KEYBOARD);
   if (Task_IsRunning(task_id)) Task_Term(task_id);
+*/
+	titles(1, "ENDTEXT.TXT");
   Task_WaitEvent(E_TIMER);
   Task_WaitEvent(E_TIMER);
+/*
   task_id=Task_Add(8196,titles,0,"TITULKY.TXT");
   Task_WaitEvent(E_KEYBOARD);
   if (Task_IsRunning(task_id)) Task_Term(task_id);
+*/
+	titles(0, "TITULKY.TXT");
   Sound_ChangeMusic("?");
   curcolor=0;
   bar(0,0,639,479);

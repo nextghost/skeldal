@@ -500,14 +500,16 @@ static void MaskPutPicture(int x, int y, char mask, word color, char blend, void
   short *info=(short *)pic;
   char *data=(char *)(info+3+256);
   word *pos=Screen_GetAddr()+x+y*Screen_GetXSize(); 
-  if (blend) color=color & 0xF7DE;
+//  if (blend) color=color & 0xF7DE;
   for (y=0;y<info[1];y++,pos+=Screen_GetXSize(),data+=info[0])	
 	for (x=0;x<info[0];x++)
 	  if (data[x]==mask)
-		if (blend)		  
-		  pos[x]=((pos[x] & 0xF7DE)+color)>>1;
-		else
-		  pos[x]=color;	
+		if (blend) {
+//		  pos[x]=((pos[x] & 0xF7DE)+color)>>1;
+		  pos[x] = Screen_ColorAvg(pos[x], color);
+		} else {
+		  pos[x]=color;
+		}
   }
 
 
@@ -759,12 +761,14 @@ static void *check_autofade(void *image, char ceil, int dark)
 	if (mglob.map_autofadefc==1)
 	{
 	  word *imgdata=xy+3;
+/*
 	  int br=back_color>>11;
 	  int bg=(back_color>>5) & 0x1F;
 	  int bb=back_color & 0x1F;
+*/
 	  int y;
 
-      if (dark) br=bg=bb=0;
+//      if (dark) br=bg=bb=0;
 
 	  for(y=0;y<xy[1];y++)
 	  {
@@ -774,14 +778,17 @@ static void *check_autofade(void *image, char ceil, int dark)
 		factor=factor*factor;
 		for (x=0;x<xy[0];x++)
 		{
+/*
 		  int r=*imgdata>>11;
 		  int g=(*imgdata>>5) & 0x3F;
 		  int b=*imgdata & 0x1F;
 		  r=toInt(r+factor*(br-r));
 		  g=toInt(g+factor*(bg-g));
 		  b=toInt(b+factor*(bb-b));
+*/
 //		  *imgdata=(r<<11)|(g<<5)|b;
-		  *imgdata = Screen_RGB(r, g, b);
+//		  *imgdata = Screen_RGB(r, g, b);
+			*imgdata = Screen_ColorBlend(*imgdata, dark ? 0 : back_color, factor);
 		  imgdata++;
 		}
 	  }
