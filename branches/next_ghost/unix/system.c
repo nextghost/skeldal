@@ -244,24 +244,6 @@ void Sound_Mute(int channel) {
 
 }
 
-// FIXME: implement sound backend
-void Sound_StopMixing(void) {
-//	assert(0);
-
-}
-
-// FIXME: implement sound backend
-void Sound_StartMixing(void) {
-//	assert(0);
-
-}
-
-// FIXME: implement sound backend
-void Sound_SetMixer(int dev, int freq, ...) {
-//	assert(0);
-
-}
-
 int Task_Add(int stack, TaskerFunctionName func, ...) {
 	assert(0);
 	return 0;

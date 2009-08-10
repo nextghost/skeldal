@@ -137,7 +137,7 @@ int get_shift_state(void);
 void *LoadDefaultFont(void);
 void *PrepareVideoSound(int mixfreq, int buffsize);
 void DoneVideoSound(void *buffer);
-char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat, short *accnums, long *writepos);
+char LoadNextVideoFrame(void *buffer, byte *data, int size, short *xlat, short *accnums, long *writepos);
 
 char OtevriUvodniOkno();
 char SelectAdventure();

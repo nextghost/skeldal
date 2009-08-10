@@ -133,7 +133,7 @@ THE_TIMER timer_tree;
 int hl_ptr=H_FIRST_FREE;
 int debug_enabled=0;
 char sound_detection=1;
-int snd_devnum,snd_parm1,snd_parm2,snd_parm3,snd_mixing=22000;
+int snd_devnum,snd_parm1,snd_parm2,snd_parm3,snd_mixing=22050;
 char gamespeed=6;
 char gamespeedbattle=0;
 char level_preload=1;

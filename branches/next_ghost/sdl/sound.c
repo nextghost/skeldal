@@ -24,6 +24,7 @@
 #include <string.h>
 #include <assert.h>
 #include <SDL/SDL.h>
+#include "libs/system.h"
 #include "libs/types.h"
 
 typedef struct {
@@ -65,6 +66,9 @@ void *PrepareVideoSound(int mixfreq, int buffsize) {
 	ringbuffer_t *ret = malloc(sizeof(ringbuffer_t));
 	SDL_AudioSpec want, *got = malloc(sizeof(SDL_AudioSpec));
 
+	// stupid sound buffer video timing, we can't use SDL mixer here...
+	Sound_StopMixing();
+
 	want.freq = mixfreq;
 	want.format = AUDIO_S16SYS;
 	want.channels = 2;
@@ -72,6 +76,7 @@ void *PrepareVideoSound(int mixfreq, int buffsize) {
 	want.callback = Sound_Callback;
 	want.userdata = ret;
 
+	// start low level audio instead
 	if (SDL_OpenAudio(&want, got) < 0) {
 		assert(0 && "Failed to open audio");
 	}
@@ -125,4 +130,6 @@ void DoneVideoSound(void *ptr) {
 	free(buff->buff);
 	free(buff->hw);
 	free(buff);
+
+	Sound_StartMixing();
 }
