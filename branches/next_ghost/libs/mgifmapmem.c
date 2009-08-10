@@ -160,7 +160,9 @@ void BigPlayProc(int act, void *data, int csize)
 	break;
 
      case MGIF_SOUND: 
-		while (LoadNextVideoFrame(sound,data,csize,mgif_header->ampl_table,mgif_accnums,&mgif_writepos)==0);
+		while (LoadNextVideoFrame(sound,data,csize,mgif_header->ampl_table,mgif_accnums,&mgif_writepos)==0) {
+			Timer_Sleep(5);
+		}
      }
   }
 

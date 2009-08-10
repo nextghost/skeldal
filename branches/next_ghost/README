@@ -4,7 +4,7 @@ The plan:
 3) Profit!
 
 Now seriously, milestones for this branch:
-1) Get the game at least partially working on x86 Linux (58% done)
+1) Get the game at least partially working on x86 Linux (62% done)
 2) Change the engine from task based to frame based (0% done)
 3) Write a proper build system and fix ugly hacks in backend code (0% done)
 4) Separate game code, libs, renderer, generic sound subsystem and backends
@@ -13,7 +13,7 @@ Now seriously, milestones for this branch:
 
 Tasks for the next milestone:
 1) Make it compile (100% done)
-2) Play intro movie (50% done, the rest is sound, timing and keyboard input)
+2) Play intro movie (90% done, only keyboard input left)
 3) Main menu (75% done, no music or keyboard input)
 4) Party generator (75% done, name input needs rewrite)
 5) Saved game loader (75% done, game is loaded and runs but it still needs

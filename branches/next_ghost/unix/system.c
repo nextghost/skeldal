@@ -318,24 +318,6 @@ void *LoadDefaultFont(void) {
 	return Sys_ReadFile(Sys_FullPath(SR_FONT, "BOLDCZ.FON"));
 }
 
-// FIXME: implement sound backend
-void *PrepareVideoSound(int mixfreq, int buffsize) {
-//	assert(0);
-	return NULL;
-}
-
-// FIXME: implement sound backend
-void DoneVideoSound(void *buffer) {
-//	assert(0);
-
-}
-
-// FIXME: implement sound backend
-char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat, short *accnums, long *writepos) {
-//	assert(0);
-	return 1;
-}
-
 // FIXME: rewrite properly
 static int mgf = -1, mgf_len;
 void *OpenMGFFile(const char *filename) {

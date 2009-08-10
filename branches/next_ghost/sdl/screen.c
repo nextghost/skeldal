@@ -33,7 +33,7 @@ void *backBuffer, *frontBuffer, *curFront;
 extern word scancodes[];
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
 		return 0;
 	}
 
@@ -44,6 +44,8 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (!screen) {
 		return 0;
 	}
+
+	SDL_WM_SetCaption("Gates of Skeldal", "Gates of Skeldal");
 
 /*
 	fprintf(stderr, "Masks: %02x %02x %02x\n", screen->format->Rmask, screen->format->Gmask, screen->format->Bmask);
