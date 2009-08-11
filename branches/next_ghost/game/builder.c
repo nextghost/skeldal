@@ -85,7 +85,7 @@ int viewsector=1,viewdir=1;
 char norefresh=0,cancel_render=0,map_state=0;
 int cur_sector; //sektor aktualni pozice
 int back_color;
-char global_anim_counter=0;
+byte global_anim_counter=0;
 char one_buffer=0;
 char set_halucination=0;
 int hal_sector;

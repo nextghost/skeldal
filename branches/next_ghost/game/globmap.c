@@ -156,6 +156,7 @@ static int cti_oddelovac(void)//cte prvni oddelovac - preskakuje mezery
   do
      {
      c=getc(glbm);
+     if (c=='\r') c = getc(glbm);
      if (c==OD_COMMENT) while((c=getc(glbm))!='\n');
      if (c=='\n') linecounter++;
      if (strchr(oddelovace,c)!=NULL || c==EOF) return c;

@@ -586,7 +586,7 @@ extern char battle_mode;          //rezim bitvy 0=programovani
 extern char neco_v_pohybu;          //jednicka znaci ze se nektere potvory jeste hejbou
 extern short select_player;         //vybrana postava nebo -1
 extern char group_sort[POCET_POSTAV]; //pretrideni skupin
-extern char global_anim_counter;
+extern byte global_anim_counter;
 extern char one_buffer;            //1 zapina pouziti pouze jednoho bufferu pro render
 extern char save_map;     //1 oznamuje ze pri opusteni levelu je nutne ulozit stav mapy
 extern long money;           //stav konta hracu
