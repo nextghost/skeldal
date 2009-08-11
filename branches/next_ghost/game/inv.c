@@ -3007,7 +3007,7 @@ static void reroll_shop(TSHOP *p)
      r=rnd(poc_spec)+1;
      for(j=0;i<r;j++) if (pr[j].trade_flags & SHP_SPECIAL) i++;
      j--;
-     pr[j].pocet=rnd(pr[j].max_pocet)+1;
+     pr[j].pocet=pr[j].max_pocet ? rnd(pr[j].max_pocet)+1 : 1;
      }
   }
 

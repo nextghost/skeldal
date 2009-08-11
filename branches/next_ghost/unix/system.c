@@ -192,21 +192,10 @@ char Sound_IsActive(void) {
 	return 0;
 }
 
-// FIXME: implement sound backend
-void Sound_SetVolume(int channel, int left, int right) {
-//	assert(0);
-
-}
-
 void Sound_GetVolume(int channel, int *left, int *right) {
-	assert(0);
-
-}
-
-// FIXME: implement sound backend
-char Sound_GetChannelState(int channel) {
+	*left = *right = 0;
 //	assert(0);
-	return 0;
+
 }
 
 // FIXME: implement sound backend
@@ -215,31 +204,8 @@ int Sound_MixBack(int synchro) {
 	return 0;
 }
 
-// FIXME: implement sound backend
-void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
-//	assert(0);
-
-}
-
 // FIXME: implement music backend
 void Sound_ChangeMusic(char *file) {
-//	assert(0);
-
-}
-
-// FIXME: implement sound backend
-void Sound_BreakLoop(int channel) {
-//	assert(0);
-
-}
-
-void Sound_BreakExt(int channel, void *sample, long size) {
-	assert(0);
-
-}
-
-// FIXME: implement sound backend
-void Sound_Mute(int channel) {
 //	assert(0);
 
 }

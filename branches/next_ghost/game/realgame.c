@@ -263,7 +263,6 @@ int load_map(char *filename)
   if (f==NULL) return -1;
 // TODO: rewrite properly
 //  if (snd_devnum==DEV_DAC) Sound_StopMixing();
-  Sound_StopMixing();
   do
      {
      r=load_section(f,&temp,&sect,&size);
@@ -413,7 +412,6 @@ int load_map(char *filename)
   doNotLoadMapState=0;
 // TODO: rewrite properly
 //  if (snd_devnum==DEV_DAC) Sound_StartMixing();
-  Sound_StartMixing();
   return suc;
   }
 
