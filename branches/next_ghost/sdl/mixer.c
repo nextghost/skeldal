@@ -24,12 +24,16 @@
 #include <assert.h>
 #include <stdio.h>
 #include <SDL/SDL_mixer.h>
+#include "libs/sound.h"
 
 #define CHANNELS 32
 #define SND_EFF_MAXVOL 32000
+#define GFX_MAXVOL 255
+#define MUSIC_MAXVOL 255
 
 static int freq = 22050;
 static Mix_Chunk chunks[CHANNELS] = {0};
+static int swapped = 0;
 
 void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
@@ -105,4 +109,69 @@ void Sound_SetVolume(int channel, int left, int right) {
 	left = (left * 255) / SND_EFF_MAXVOL;
 	right = (right * 255) / SND_EFF_MAXVOL;
 	Mix_SetPanning(channel, left, right);
+}
+
+char Sound_IsActive(void) {
+	int f, ch;
+	Uint16 form;
+
+	return Mix_QuerySpec(&f, &form, &ch) != 0;
+}
+
+char Sound_SetEffect(int filter, int data) {
+	switch (filter) {
+	case SND_PING:
+		return 1;
+
+	case SND_SWAP:
+		if (Mix_SetReverseStereo(MIX_CHANNEL_POST, data & 1)) {
+			swapped = data & 1;
+			return 1;
+		}
+
+		return 0;
+
+	case SND_GFX:
+		Mix_Volume(-1, (data * MIX_MAX_VOLUME) / GFX_MAXVOL);
+		return 1;
+
+	case SND_MUSIC:
+		Mix_VolumeMusic((data * MIX_MAX_VOLUME) / MUSIC_MAXVOL);
+		return 1;
+
+	default:
+		return 0;
+	}
+}
+
+int Sound_GetEffect(int filter) {
+	switch (filter) {
+	case SND_PING:
+		return 1;
+
+	case SND_SWAP:
+		return swapped;
+
+	case SND_GFX:
+		return (Mix_Volume(-1, -1) * GFX_MAXVOL) / MIX_MAX_VOLUME;
+
+	case SND_MUSIC:
+		return (Mix_VolumeMusic(-1) * MUSIC_MAXVOL) / MIX_MAX_VOLUME;
+
+	default:
+		return 0;
+	}
+}
+
+char Sound_CheckEffect(int filter) {
+	switch (filter) {
+	case SND_PING:
+	case SND_SWAP:
+	case SND_GFX:
+	case SND_MUSIC:
+		return 1;
+
+	default:
+		return 0;
+	}
 }

@@ -696,7 +696,7 @@ char pick_item_(int id,int xa,int ya,int xr,int yr)
      if (id>1 || ya>=get_top_of_next(sect,id))
         {
 //		if ((game_extras & EX_BAG_EXTENDED) && (GetKeyState(VK_CONTROL) & 0x80) &&
-		if ((game_extras & EX_BAG_EXTENDED) && (get_control_state() & 0x80) &&
+		if ((game_extras & EX_BAG_EXTENDED) && get_control_state() &&
 		  (glob_items[*picked_item-1].nosnost>0))
 		  {
 		  int curinside=count_items_inside(picked_item);
@@ -2706,7 +2706,7 @@ static char shop_keeper_click(int id, int xa, int ya,int xr,int yr)
         redraw_keepers_items();
         ukaz_mysku();
         update_mysky();
-		if ((get_control_state() & 0x80) && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item)<=money)
+		if (get_control_state() && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item)<=money)
 		  {
           play_sample_at_channel(H_SND_OBCHOD,1,100);
 	      money-=get_sell_price(*picked_item);
@@ -2793,7 +2793,7 @@ static char shop_bag_click(int id,int xa,int ya,int xr,int yr)
      {
      id=bag_click(id,xa,ya,xr,yr);
      cur_owner=picked_item!=NULL;
-	 if (picked_item!=NULL && picked_item[1]==0 && (game_extras & EX_FAST_TRADE) && (get_control_state() & 0x80))
+	 if (picked_item!=NULL && picked_item[1]==0 && (game_extras & EX_FAST_TRADE) && get_control_state())
 	   {
 	   short z;
        price=make_offer(z=picked_item[0]);

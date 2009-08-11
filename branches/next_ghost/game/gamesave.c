@@ -82,8 +82,8 @@ typedef struct s_save
   char zoom_speed;
   char turn_speed;
   char autoattack;
-  char music_vol;
-  char sample_vol;
+  byte music_vol;
+  byte sample_vol;
   char xbass;
   char bass;
   char treble;
@@ -951,7 +951,7 @@ int load_game(int slotnum)
   for(t=0;t<POCET_POSTAV;t++) postavy[t].zvolene_akce=NULL;
   SEND_LOG("(SAVELOAD) Game loaded.... Result %d",r,0);
 //  if (GetKeyState(VK_CONTROL) & 0x80) correct_level();
-  if (get_control_state() & 0x80) correct_level();
+  if (get_control_state()) correct_level();
   return r;
   }
 

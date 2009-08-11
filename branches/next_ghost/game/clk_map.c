@@ -33,7 +33,7 @@
 #include "game/engine1.h"
 #include "libs/system.h"
 
-#define get_shift_state() ((GetKeyState(VK_SHIFT) & 0x80)!=0)
+//#define get_shift_state() ((GetKeyState(VK_SHIFT) & 0x80)!=0)
 int default_ms_cursor=0;
 
 char spell_cast=0;
@@ -276,7 +276,7 @@ char start_invetory(int id,int xa,int ya,int xr,int yr)
         if (ms_last_event.event_type & 0x2)
            {
 //         if (GetKeyState(VK_CONTROL) & 0x80)
-           if (get_control_state() & 0x80)
+           if (get_control_state())
               {
               if (p->sektor==viewsector)
                  {

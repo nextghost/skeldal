@@ -2020,13 +2020,13 @@ void *game_keyboard(EVENT_MSG *msg,void **usr)
         case 'H':step_zoom(0);break;
         case 'P':step_zoom(2);break;
 //        case 'M':if (GetKeyState(VK_CONTROL) & 0x80)
-        case 'M':if (get_control_state() & 0x80)
+        case 'M':if (get_control_state())
             step_zoom(1);
           else
             turn_zoom(1);
           break;
 //        case 'K':if (GetKeyState(VK_CONTROL) & 0x80)
-        case 'K':if (get_control_state() & 0x80)
+        case 'K':if (get_control_state())
             step_zoom(3);
           else
             turn_zoom(-1);

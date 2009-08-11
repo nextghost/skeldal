@@ -1908,7 +1908,7 @@ void souboje_turn(char smer)
   hold_timer(TM_BACK_MUSIC,1);
                  viewdir=(viewdir+smer)&3;
 //                 if (GetKeyState(VK_SHIFT) & 0x80) fix_group_direction();
-                 if (get_shift_state() & 0x80) fix_group_direction();
+                 if (get_shift_state()) fix_group_direction();
                  else postavy[select_player].direction=viewdir;
                  render_scene(viewsector,viewdir);
                  hide_ms_at(387);

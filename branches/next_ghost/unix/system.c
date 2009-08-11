@@ -118,6 +118,7 @@ void *Sys_ReadFile(const char *file) {
 	}
 
 	len = fseek(fr, 0, SEEK_END);
+	len = ftell(fr);
 	fseek(fr, 0, SEEK_SET);
 
 	ret = malloc(len);
@@ -126,21 +127,6 @@ void *Sys_ReadFile(const char *file) {
 }
 
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
-	assert(0);
-
-}
-
-void *Screen_PrepareWalk(int ypos) {
-	assert(0);
-	return NULL;
-}
-
-void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka) {
-	assert(0);
-
-}
-
-void Screen_DoneWalk(void *handle) {
 	assert(0);
 
 }
@@ -166,30 +152,6 @@ void Screen_Shift(int x, int y) {
 void ShareCPU(void) {
 //	assert(0);
 
-}
-
-// FIXME: implement sound backend
-char Sound_SetEffect(int filter, int data) {
-//	assert(0);
-	return 0;
-}
-
-// FIXME: implement sound backend
-int Sound_GetEffect(int filter) {
-//	assert(0);
-	return 0;
-}
-
-// FIXME: implement sound backend
-char Sound_CheckEffect(int filter) {
-//	assert(0);
-	return 0;
-}
-
-// FIXME: implement sound backend
-char Sound_IsActive(void) {
-//	assert(0);
-	return 0;
 }
 
 void Sound_GetVolume(int channel, int *left, int *right) {
@@ -248,16 +210,6 @@ char Task_QuitMsg() {
 void Task_Shutdown(int id) {
 	assert(0);
 
-}
-
-// FIXME: implement keyboard input
-int get_control_state(void) {
-	return 0;
-}
-
-int get_shift_state(void) {
-	assert(0);
-	return 0;
 }
 
 void *LoadDefaultFont(void) {

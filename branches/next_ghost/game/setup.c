@@ -70,7 +70,7 @@ static int effects[]={SND_GVOLUME,SND_MUSIC,SND_GFX,SND_TREBL,SND_BASS,SND_XBASS
 
 static void do_setup_change()
   {
-  char c;
+  int c;
 
   c=f_get_value(0,o_aktual->id);
   switch (o_aktual->id)

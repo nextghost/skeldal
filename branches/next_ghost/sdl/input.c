@@ -76,6 +76,18 @@ void Mouse_GetEvent(MS_EVENT *event) {
 */
 }
 
+int get_control_state(void) {
+	SDL_PumpEvents();
+
+	return (SDL_GetModState() & KMOD_CTRL) != 0;
+}
+
+int get_shift_state(void) {
+	SDL_PumpEvents();
+
+	return (SDL_GetModState() & KMOD_SHIFT) != 0;
+}
+
 void Sys_ProcessEvents(void) {
 	SDL_Event event;
 	word keycode;
