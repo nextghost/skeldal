@@ -2870,7 +2870,7 @@ void wire_shop()
   {
   long size;
   static TSHOP *last_shop=NULL;
-  static void *pic=NULL;
+  static word *pic=NULL;
   mute_all_tracks(0);
   old_inv_view_mode=inv_view_mode;
   inv_view_mode=0;
@@ -2878,7 +2878,13 @@ void wire_shop()
   schovej_mysku();
   if (last_shop!=cur_shop)
      {
-     free(pic);pic=afile(cur_shop->picture,SR_DIALOGS,&size);
+     free(pic);
+     pic=afile(cur_shop->picture,SR_DIALOGS,&size);
+     if (pic[2] == 15) {
+	Screen_FixPalette(pic+3, pic[0] * pic[1]);
+     } else {
+	fprintf(stderr, "wire_shop(): Unexpected image type %d\n", pic[2]);
+     }
      last_shop=cur_shop;
      }
   if (cur_shop->picture[0]) put_picture(5,SCREEN_OFFLINE,pic);
