@@ -90,7 +90,7 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_SAVES, Sys_FullPath(SR_WORK, "save/"));
 	Sys_SetPath(SR_CD, DATA_PATH);
 	Sys_SetPath(SR_MAP2, DATA_PATH);
-	Sys_SetPath(SR_ORGMUSIC, DATA_PATH);
+	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "music/");
 }
 
 // FIXME: implement properly

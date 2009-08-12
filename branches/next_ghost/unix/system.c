@@ -160,18 +160,6 @@ void Sound_GetVolume(int channel, int *left, int *right) {
 
 }
 
-// FIXME: implement sound backend
-int Sound_MixBack(int synchro) {
-//	assert(0);
-	return 0;
-}
-
-// FIXME: implement music backend
-void Sound_ChangeMusic(char *file) {
-//	assert(0);
-
-}
-
 int Task_Add(int stack, TaskerFunctionName func, ...) {
 	assert(0);
 	return 0;

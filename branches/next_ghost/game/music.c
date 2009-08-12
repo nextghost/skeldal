@@ -433,6 +433,7 @@ void create_playlist(char *playlist)
      char d[PATH_MAX+2]="!";
      strncat(d,c+j,PATH_MAX);d[PATH_MAX+1]=0;j=1;
      if ((e=strchr(d,32))!=NULL) *e=0;
+     strupr(d);
      str_add(&cur_playlist,d);
      }
   if (play_list_mode==PL_FIRST)

@@ -23,8 +23,10 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include <SDL/SDL_mixer.h>
 #include "libs/sound.h"
+#include "libs/system.h"
 
 #define CHANNELS 32
 #define SND_EFF_MAXVOL 32000
@@ -34,6 +36,8 @@
 static int freq = 22050;
 static Mix_Chunk chunks[CHANNELS] = {0};
 static int swapped = 0;
+static int play_music = 0;
+static Mix_Music *cur_music = NULL, *next_music = NULL;
 
 void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
@@ -48,6 +52,24 @@ void Sound_StartMixing(void) {
 }
 
 void Sound_StopMixing(void) {
+	int i;
+
+	// clean up resampled buffers
+	for (i = 0; i < CHANNELS; i++) {
+		Sound_Mute(i);
+	}
+
+	// close music files
+	Mix_HaltMusic();
+	if (cur_music) {
+		Mix_FreeMusic(cur_music);
+	}
+
+	if (next_music) {
+		Mix_FreeMusic(next_music);
+	}
+
+	// shut down subsystem
 	Mix_CloseAudio();
 }
 
@@ -58,9 +80,8 @@ void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sf
 	assert(channel >= 0 && channel < CHANNELS && "Invalid channel");
 	assert(((lstart == 0) || (lstart == size)) && "Lead-in not supported");
 
-	if (Mix_Playing(channel)) {
-		Mix_HaltChannel(channel);
-	}
+	// clean up resampled buffers
+	Sound_Mute(channel);
 
 	if (!SDL_BuildAudioCVT(&cvt, type == 1 ? AUDIO_U8 : AUDIO_S16SYS, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
 		fprintf(stderr, "Resample from %dHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
@@ -174,4 +195,77 @@ char Sound_CheckEffect(int filter) {
 	default:
 		return 0;
 	}
+}
+
+// load SDL music descriptor
+static Mix_Music *Sound_LoadFile(const char *file) {
+	Mix_Music *ret;
+	char *tmp, *buf;
+
+	if (!file) {
+		return NULL;
+	}
+
+	buf = malloc((strlen(file) + 5) * sizeof(char));
+	strcpy(buf, file);
+	tmp = strrchr(buf, '.');
+
+	if (tmp) {
+		strcpy(tmp, ".mp3");
+	} else {
+		strcat(buf, ".mp3");
+	}
+
+	ret = Mix_LoadMUS(buf);
+
+	if (!ret) {
+		fprintf(stderr, "Could not load music file %s...\n", buf);
+	}
+
+	free(buf);
+	return ret;
+}
+
+// fade out any playing music and schedule next one
+void Sound_ChangeMusic(char *file) {
+	if (next_music) {
+		Mix_FreeMusic(next_music);
+		next_music = NULL;
+	}
+
+	if (!file || !strcmp(file, "?")) {
+		play_music = 0;
+	} else {
+		next_music = Sound_LoadFile(file);
+		play_music = 1;
+	}
+
+	Mix_FadeOutMusic(1000);
+}
+
+// start next music when the last one finished
+int Sound_MixBack(int sync) {
+	char *buf;
+
+	if (!play_music || Mix_PlayingMusic()) {
+		return 0;
+	}
+
+	if (cur_music) {
+		Mix_FreeMusic(cur_music);
+	}
+
+	if (!next_music) {
+		konec_skladby(&buf);
+		cur_music = Sound_LoadFile(buf);
+	} else {
+		cur_music = next_music;
+		next_music = NULL;
+	}
+
+	if (cur_music) {
+		Mix_FadeInMusic(cur_music, 1, 1000);
+	}
+
+	return 0;
 }
