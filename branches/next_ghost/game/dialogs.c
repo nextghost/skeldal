@@ -1193,7 +1193,9 @@ static char isall()
 
 static void spat(int hodin)
   {
-  sleep_ticks=hodin*HODINA;Task_Add(16384,sleep_players);
+  sleep_ticks=hodin*HODINA;
+//  Task_Add(16384,sleep_players);
+  sleep_players();
   insleep=1;
   while (insleep) do_events();
   }

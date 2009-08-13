@@ -1004,7 +1004,8 @@ void real_regeneration(); //regenerace postav behem hry v realu (pouze kondice a
 char sleep_regenerace(THUMAN *p);  //regenerace postav behem spani
 char check_jidlo_voda(THUMAN *p);
 void prepocitat_postavu(THUMAN *human_selected);
-void sleep_players(va_list args); //Pozor !!! TASK
+//void sleep_players(va_list args); //Pozor !!! TASK
+void sleep_players(void); //Pozor !!! TASK
 void item_sound_event(int item,int sector);
 short create_item_money(int obnos);  //vytvori predmet penize s urcitym obnosem
 char check_map_specials(THUMAN *p);

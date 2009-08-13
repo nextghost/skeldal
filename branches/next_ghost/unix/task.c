@@ -25,30 +25,39 @@
 #include "libs/event.h"
 #include "libs/system.h"
 
-static long wait_target = 0;
-static EVENT_MSG wait_ret;
+#define MAX_WAITS 10	// 10 event waits should be enough for everyone
+
+static int wait_used[MAX_WAITS] = {0};
+static long wait_target[MAX_WAITS] = {0};
+static EVENT_MSG wait_ret[MAX_WAITS];
 
 void *Task_WaitEvent(long event) {
-	static int counter = 0;
+	int counter;
 
-	assert(++counter <= 1 && "Only one task can wait for events");
+	// find empty wait slot
+	for (counter = 0; counter < MAX_WAITS && wait_used[counter]; counter++);
 
-	wait_target = event;
+	assert(counter < MAX_WAITS && "Too many waits for event");
+
+	wait_used[counter] = 1;
+	wait_target[counter] = event;
 
 	do {
 		do_events();
 		Timer_Sleep(TIMERSPEED/2);
-	} while (wait_target);
+	} while (wait_target[counter]);
 
-	--counter;
-	return wait_ret.data;
+	wait_used[counter] = 0;
+	return wait_ret[counter].data;	// luckily, this game is not threaded
 }
 
 void Task_Wakeup(EVENT_MSG *msg) {
-	if (msg->msg != wait_target) {
-		return;
-	}
+	int i;
 
-	wait_ret = *msg;
-	wait_target = 0;
+	for (i = 0; i < MAX_WAITS; i++) {
+		if (wait_target[i] == msg->msg) {
+			wait_ret[i] = *msg;
+			wait_target[i] = 0;
+		}
+	}
 }

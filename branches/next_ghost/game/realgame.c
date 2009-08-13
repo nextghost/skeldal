@@ -1934,73 +1934,82 @@ void key_break_sleep(EVENT_MSG *msg,void **unused)
      }
   }
 
-void sleep_players(va_list args)
-  {
-  int i;
-  int hours=0;
-  char reg;
-  char enablity;
+//void sleep_players(va_list args) {
+void sleep_players(void) {
+	int i;
+	int hours=0;
+	char reg;
+	char enablity;
+	
+	if (!sleep_ticks) return;
+	if (!GlobEvent(MAGLOB_STARTSLEEP,viewsector,viewdir)) return;
 
-  if (!sleep_ticks) return;
-  if (!GlobEvent(MAGLOB_STARTSLEEP,viewsector,viewdir)) return;
-  enablity=enable_sound(0);
-  mute_all_tracks(0);
-  autosave();
-  insleep=1;
-  update_mysky();
-  schovej_mysku();
-  curcolor=0;bar(0,17,639,360+16);
-  send_message(E_ADD,E_KEYBOARD,key_break_sleep);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  unwire_proc();
-  break_sleep=0;
-  while (sleep_ticks && !break_sleep)
-     {
-     reg=0;
-     if (!(sleep_ticks%6))
-       {
-       if ((reg=(sleep_ticks%HODINA==0))==1)
-           {
-           char s[50];
-           for(i=0;i<POCET_POSTAV;i++)
-           break_sleep|=sleep_regenerace(&postavy[i]);
-           update_mysky();
-           schovej_mysku();
-           bott_draw(0);
-           curcolor=0;bar(0,120,639,140);
-           sprintf(s,texty[71],hours++);
-           set_font(H_FBOLD,RGB555(31,31,0));
-           set_aligned_position(320,130,1,1,s);outtext(s);
-           other_draw();
-           ukaz_mysku();
-           showview(0,120,640,20);
-           showview(0,378,640,102);
-           Task_WaitEvent(E_TIMER);
-           Task_WaitEvent(E_TIMER);
-           Task_WaitEvent(E_TIMER);
-           Task_WaitEvent(E_TIMER);
-           }
-       sleep_enemy(reg);
-       check_players_place(0);
-       }
-     if (battle) break_sleep|=1;
-     for(i=0;i<POCET_POSTAV;i++)
-        {
-        break_sleep|=check_jidlo_voda(&postavy[i])|check_map_specials(&postavy[i]);
-        }
-     send_message(E_KOUZLO_KOLO);
-     sleep_ticks--;
-     tick_tack(1);
-     if (!TimerEvents(viewsector,viewdir,game_time)) break;
-     }
-  send_message(E_DONE,E_KEYBOARD,key_break_sleep);
-  wire_proc();
-  bott_draw(1);
-  insleep=0;
-  enable_sound(enablity);
-  GlobEvent(MAGLOB_ENDSLEEP,viewsector,viewdir);
-  }
+	enablity=enable_sound(0);
+	mute_all_tracks(0);
+	autosave();
+	insleep=1;
+	update_mysky();
+	schovej_mysku();
+	curcolor=0;bar(0,17,639,360+16);
+	send_message(E_ADD,E_KEYBOARD,key_break_sleep);
+	ukaz_mysku();
+	showview(0,0,0,0);
+	unwire_proc();
+	break_sleep=0;
+
+	while (sleep_ticks && !break_sleep) {
+		reg=0;
+		if (!(sleep_ticks%6)) {
+			if ((reg=(sleep_ticks%HODINA==0))==1) {
+				char s[50];
+				for(i=0;i<POCET_POSTAV;i++) {
+					break_sleep |= sleep_regenerace(&postavy[i]);
+				}
+
+				update_mysky();
+				schovej_mysku();
+				bott_draw(0);
+				curcolor=0;bar(0,120,639,140);
+				sprintf(s,texty[71],hours++);
+				set_font(H_FBOLD,RGB555(31,31,0));
+				set_aligned_position(320,130,1,1,s);outtext(s);
+				other_draw();
+				ukaz_mysku();
+				showview(0,120,640,20);
+				showview(0,378,640,102);
+				Task_WaitEvent(E_TIMER);
+				Task_WaitEvent(E_TIMER);
+				Task_WaitEvent(E_TIMER);
+				Task_WaitEvent(E_TIMER);
+			}
+
+			sleep_enemy(reg);
+			check_players_place(0);
+		}
+
+		if (battle) {
+			break_sleep|=1;
+		}
+
+		for(i=0;i<POCET_POSTAV;i++) {
+			break_sleep |= check_jidlo_voda(&postavy[i]) | check_map_specials(&postavy[i]);
+		}
+
+		send_message(E_KOUZLO_KOLO);
+		sleep_ticks--;
+		tick_tack(1);
+		if (!TimerEvents(viewsector,viewdir,game_time)) {
+			break;
+		}
+	}
+
+	send_message(E_DONE,E_KEYBOARD,key_break_sleep);
+	wire_proc();
+	bott_draw(1);
+	insleep=0;
+	enable_sound(enablity);
+	GlobEvent(MAGLOB_ENDSLEEP,viewsector,viewdir);
+}
 
 
 void *game_keyboard(EVENT_MSG *msg,void **usr)
