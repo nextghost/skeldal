@@ -154,12 +154,6 @@ void ShareCPU(void) {
 
 }
 
-void Sound_GetVolume(int channel, int *left, int *right) {
-	*left = *right = 0;
-//	assert(0);
-
-}
-
 int Task_Add(int stack, TaskerFunctionName func, ...) {
 	assert(0);
 	return 0;

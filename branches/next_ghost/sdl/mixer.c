@@ -33,8 +33,14 @@
 #define GFX_MAXVOL 255
 #define MUSIC_MAXVOL 255
 
+typedef struct {
+	int lvolume, rvolume, looping, leadout;
+	SDL_AudioCVT cvt;
+	Mix_Chunk current, next;
+} channel_t;
+
 static int freq = 22050;
-static Mix_Chunk chunks[CHANNELS] = {0};
+static channel_t chans[CHANNELS] = {0};
 static int swapped = 0;
 static int play_music = 0;
 static Mix_Music *cur_music = NULL, *next_music = NULL;
@@ -43,12 +49,32 @@ void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
 }
 
+static void Channel_Callback(int channel) {
+	// start next loop of current sample
+	if (chans[channel].looping) {
+		Mix_PlayChannel(channel, &chans[channel].current, 0);
+	// start leadout if present
+	} else if (chans[channel].leadout) {
+		chans[channel].leadout = 0;
+		free(chans[channel].current.abuf);
+		chans[channel].current.abuf = NULL;
+		chans[channel].current.allocated = 0;
+
+		chans[channel].current = chans[channel].next;
+		chans[channel].next.abuf = NULL;
+		chans[channel].next.allocated = 0;
+
+		Mix_PlayChannel(channel, &chans[channel].current, 0);
+	}
+}
+
 void Sound_StartMixing(void) {
 	if (Mix_OpenAudio(freq, AUDIO_S16SYS, 2, 1024) < 0) {
 		assert(0 && "Failed to start mixer");
 	}
 
 	Mix_AllocateChannels(CHANNELS);
+	Mix_ChannelFinished(Channel_Callback);
 }
 
 void Sound_StopMixing(void) {
@@ -75,51 +101,96 @@ void Sound_StopMixing(void) {
 
 // FIXME: resample when loading the sound file
 void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
-	SDL_AudioCVT cvt;
-
 	assert(channel >= 0 && channel < CHANNELS && "Invalid channel");
 	assert(((lstart == 0) || (lstart == size)) && "Lead-in not supported");
 
 	// clean up resampled buffers
 	Sound_Mute(channel);
 
-	if (!SDL_BuildAudioCVT(&cvt, type == 1 ? AUDIO_U8 : AUDIO_S16SYS, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
+	if (!SDL_BuildAudioCVT(&chans[channel].cvt, type == 1 ? AUDIO_U8 : AUDIO_S16SYS, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
 		fprintf(stderr, "Resample from %dHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
 		return;
 	}
 
-	cvt.buf = malloc(size * cvt.len_mult);
-	cvt.len = size;
-	memcpy(cvt.buf, sample, size);
+	chans[channel].cvt.buf = malloc(size * chans[channel].cvt.len_mult);
+	chans[channel].cvt.len = size;
+	memcpy(chans[channel].cvt.buf, sample, size);
 
-	SDL_ConvertAudio(&cvt);
+	SDL_ConvertAudio(&chans[channel].cvt);
 
-	chunks[channel].allocated = 1;
-	chunks[channel].abuf = cvt.buf;
-	chunks[channel].alen = cvt.len_cvt;
-	chunks[channel].volume = 128;
+	chans[channel].current.allocated = 1;
+	chans[channel].current.abuf = chans[channel].cvt.buf;
+	chans[channel].current.alen = chans[channel].cvt.len_cvt;
+	chans[channel].current.volume = 128;
+	chans[channel].looping = lstart == 0;
+	chans[channel].leadout = 0;
 
-	Mix_PlayChannel(channel, chunks + channel, lstart == 0 ? -1 : 0);
+	Mix_PlayChannel(channel, &chans[channel].current, 0);
 }
 
-// FIXME: make the channel finnish loop
-void Sound_BreakLoop(int channel) {
+// stop channel and free resampled buffers
+void Sound_Mute(int channel) {
+	// kill the callback for this channel
+	chans[channel].looping = 0;
+	chans[channel].leadout = 0;
+
+	// stop the channel
 	Mix_HaltChannel(channel);
 
-	if (chunks[channel].abuf && chunks[channel].allocated) {
-		free(chunks[channel].abuf);
-		chunks[channel].abuf = NULL;
-		chunks[channel].allocated = 0;
+	// free resampled buffers
+	if (chans[channel].current.abuf && chans[channel].current.allocated) {
+		free(chans[channel].current.abuf);
+		chans[channel].current.abuf = NULL;
+		chans[channel].current.allocated = 0;
 	}
+
+	if (chans[channel].next.abuf && chans[channel].next.allocated) {
+		free(chans[channel].next.abuf);
+		chans[channel].next.abuf = NULL;
+		chans[channel].next.allocated = 0;
+	}
+
 }
 
-// FIXME: add lead-out playback
 void Sound_BreakExt(int channel, void *sample, long size) {
-	Sound_BreakLoop(channel);
+	// check if the channel has valid resampling info
+	if (!Mix_Playing(channel)) {
+		return;
+	}
+
+	// warn about possible race condition with channel stopping callback
+	if (!chans[channel].looping) {
+		fprintf(stderr, "Warning: Sound_BreakExt() called on non-looping channel\n");
+	}
+
+	// free any resampled buffers
+	if (chans[channel].next.abuf && chans[channel].next.allocated) {
+		free(chans[channel].next.abuf);
+		chans[channel].next.abuf = NULL;
+		chans[channel].next.allocated = 0;
+	}
+
+	// resample lead-out
+	chans[channel].cvt.buf = malloc(size * chans[channel].cvt.len_mult);
+	chans[channel].cvt.len = size;
+	memcpy(chans[channel].cvt.buf, sample, size);
+
+	SDL_ConvertAudio(&chans[channel].cvt);
+
+	// load it in
+	chans[channel].next.allocated = 1;
+	chans[channel].next.abuf = chans[channel].cvt.buf;
+	chans[channel].next.alen = chans[channel].cvt.len_cvt;
+	chans[channel].next.volume = 128;
+
+	// break the loop
+	chans[channel].leadout = 1;
+	chans[channel].looping = 0;
 }
 
-void Sound_Mute(int channel) {
-	Sound_BreakLoop(channel);
+void Sound_BreakLoop(int channel) {
+	chans[channel].looping = 0;
+	chans[channel].leadout = 0;
 }
 
 char Sound_GetChannelState(int channel) {
@@ -127,9 +198,17 @@ char Sound_GetChannelState(int channel) {
 }
 
 void Sound_SetVolume(int channel, int left, int right) {
+	chans[channel].lvolume = left;
+	chans[channel].rvolume = right;
+
 	left = (left * 255) / SND_EFF_MAXVOL;
 	right = (right * 255) / SND_EFF_MAXVOL;
 	Mix_SetPanning(channel, left, right);
+}
+
+void Sound_GetVolume(int channel, int *left, int *right) {
+	*left = chans[channel].lvolume;
+	*right = chans[channel].rvolume;
 }
 
 char Sound_IsActive(void) {
