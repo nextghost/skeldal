@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include "libs/system.h"
 #include "game/globals.h"
@@ -94,8 +95,31 @@ int Sys_LatestFile(char *mask, int offset) {
 }
 
 // FIXME: get rid of temps
-void Sys_PurgeTemps(char z) {
-//	assert(0);
+void Sys_PurgeTemps(char all) {
+	DIR *dir;
+	struct dirent *ent;
+	char *ptr, buf[PATH_MAX], *cat;
+
+	strcpy(buf, Sys_FullPath(SR_TEMP, ""));
+	cat = buf + strlen(buf);
+	dir = opendir(buf);
+
+	while ((ent = readdir(dir))) {
+		ptr = strrchr(ent->d_name, '.');
+
+		if (!ptr || strcasecmp(ptr, ".tmp")) {
+			continue;
+		}
+
+		if ((ent->d_name[0] == '~') && !all) {
+			continue;
+		}
+
+		strcpy(cat, ent->d_name);
+		unlink(buf);
+	}
+
+	closedir(dir);
 }
 
 int Sys_PackStatus(FILE *f) {
