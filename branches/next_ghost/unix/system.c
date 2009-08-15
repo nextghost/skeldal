@@ -123,7 +123,34 @@ void Sys_PurgeTemps(char all) {
 }
 
 int Sys_PackStatus(FILE *f) {
-	assert(0);
+	DIR *dir;
+	struct dirent *ent;
+	char *ptr, buf[PATH_MAX], *cat;
+	int ret;
+
+	strcpy(buf, Sys_FullPath(SR_TEMP, ""));
+	cat = buf + strlen(buf);
+	dir = opendir(buf);
+
+	while ((ent = readdir(dir))) {
+		ptr = strrchr(ent->d_name, '.');
+
+		if (!ptr || strcasecmp(ptr, ".tmp") || (ent->d_name[0] == '~')) {
+			continue;
+		}
+
+		ret = pack_status_file(f, ent->d_name);
+
+		if (ret) {
+			return ret;
+		}
+	}
+
+	closedir(dir);
+
+	memset(buf, 0, 12);
+	fwrite(buf, 1, 12, f);
+
 	return 0;
 }
 

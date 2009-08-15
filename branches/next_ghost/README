@@ -4,7 +4,7 @@ The plan:
 3) Profit!
 
 Now seriously, milestones for this branch:
-1) Get the game at least partially working on x86 Linux (66% done)
+1) Get the game at least partially working on x86 Linux (71% done)
 2) Change the engine from task based to frame based (0% done)
 3) Write a proper build system and fix ugly hacks in backend code (0% done)
 4) Separate game code, libs, renderer, generic sound subsystem and backends
@@ -14,21 +14,16 @@ Now seriously, milestones for this branch:
 Tasks for the next milestone:
 1) Make it compile (100% done)
 2) Play intro movie (90% done, only keyboard input left)
-3) Main menu (75% done, no music or keyboard input)
-4) Party generator (75% done, name input needs rewrite)
+3) Main menu (75% done, no keyboard input)
+4) Party generator (90% done, needs testing)
 5) Saved game loader (75% done, game is loaded and runs but it still needs
    gameplay testing)
 6) Developer credits (25% done, it almost works but font colors need fixing,
    no keyboard input)
-7) Basic gameplay (90% done, game is playable, simple sound)
-8) Combat (75% done, you can fight but there might be some glitches here
-   and there)
-9) Shopping (50% done, needs proper testing)
+7) Basic gameplay (90% done, game is playable, needs testing)
+8) Combat (90% done, needs testing)
+9) Shopping (75% done, needs proper testing)
 10) Storytelling (0% done)
-
-Savegame writer will be fixed later when the code doesn't use x86 specific
-features and write tons of temp files. I'd have no motivation to make a proper
-rewrite otherwise ;-)
 
 If you have any questions or patches to share, feel free to write me to
 next_ghost()users.sourceforge.net
