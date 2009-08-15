@@ -325,202 +325,348 @@ int message(int butts,char def,char canc,char *keys,...)
 
 //------------------
 
-void type_text(EVENT_MSG *msg,void **data)
-  {
-  static int x,y;
-  static char text[255],index;
-  static char *source;
-  static int max_size,max_chars;
+typedef void (*type_text_exit_proc)(char);
 
-  data;
-  if (msg->msg==E_INIT)
-     {
-     int *p;
-     char *c;
+void type_text(EVENT_MSG *msg,void **data) {
+	static int x, y, xs, ys;
+	static char text[255], index, len;
+	static char *source;
+	static int max_size, max_chars;
+	static int font, color, edit, tw;
+	static type_text_exit_proc exit_proc;
+	static word *back_pic;
+	int i, px, ok = 0;
 
-     set_font(H_FBOLD,RGB555(31,31,31));
-     p=msg->data;
-     x=p[0];
-     y=p[1];
-     c=*(char **)(p+2);
-     max_size=*(int *)(p+3);
-     max_chars=*(int *)(p+4);
-     strcpy(text,c);
-     source=c;
-     index=strchr(text,0)-text;
-     strcat(text,"_");
-        schovej_mysku();
-        put_textured_bar(ablock(input_txtr),x,y,max_size,text_height(text),0,0);
-        position(x,y);outtext(text);
-        ukaz_mysku();
-        showview(x,y,max_size,20);
-     }
-  else
-  if (msg->msg==E_MOUSE)
-     {
-     MS_EVENT *ms;
+	if (msg->msg == E_INIT) {
+		int *p;
+		char *c;
 
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x8) send_message(E_KEYBOARD,27);
-     if (ms->event_type & 0x2) send_message(E_KEYBOARD,13);
-     }
-  else if (msg->msg==E_KEYBOARD)
-     {
-     char c;
+		// load arguments (yuck)
+		p = msg->data;
+		c = *(char **)p;
+		x = p[1];
+		y = p[2];
+		max_size = p[3];
+		max_chars = p[4];
+		font = p[5];
+		color = p[6];
+		exit_proc = *(type_text_exit_proc*)(p+7);
 
-     c=*(char *)msg->data;
-     set_font(H_FBOLD,RGB555(31,31,31));
-     if (c)
-        {
-        switch (c)
-           {
-           case 8:if (index) index--; text[index]='_';text[index+1]=0;break;
-           case 13:text[index]=0;strcpy(source,text);
-           case 27:send_message(E_DONE,E_MOUSE,type_text);
-                   send_message(E_DONE,E_KEYBOARD,type_text);
-                   return;
-           default:if (c>=32)
-              {
-              text[index]=c;index++;
-              text[index]='_';
-              text[index+1]=0;
-              if (text_width(text)>max_size || strlen(text)>(unsigned)max_chars) text[--index]=0;
-              }
-           }
-        schovej_mysku();
-        put_textured_bar(ablock(input_txtr),x,y,max_size,text_height(text),0,0);
-        position(x,y);outtext(text);
-        ukaz_mysku();
-        showview(x,y,max_size,20);
-        }
-     msg->msg=-1;
-     }
-  }
+		// prepare buffer
+		for (i = 0; i < 254; i++) {
+			text[i] = i + 1;
+		}
+	
+		text[i] = 0;
+		ys = text_height(text) + 5;
+		edit = 0;
+
+		strcpy(text, c);
+		source = c;
+		tw = text_width(text);
+		len = index = strlen(text);
+		xs = max_size + text_width("_");
+		back_pic = getmem(xs * ys * 2 + 6);
+		get_picture(x, y, xs, ys, back_pic);
+
+		// render string
+		schovej_mysku();
+		set_font(font, color);
+		position(x, y);
+		outtext(text);
+		position(tw + x, y + 3);
+		outtext("_");
+		ukaz_mysku();
+		showview(x, y, xs, ys);
+	} else if (msg->msg == E_KEYBOARD) {
+		char sz[2] = " ";
+		word c;
+
+		c=*(word *)msg->data;
+		set_font(font, color);
+
+		switch (c & 0xff) {
+		case 8:
+			if (index) {
+				index--;
+				memmove(text + index, text + index + 1, len-index);
+				len--;
+			}
+
+			break;
+
+		case 13:
+			strcpy(source, text);
+			ok = 1;
+
+		case 27:
+			send_message(E_DONE, E_KEYBOARD, type_text);
+			exit_proc(ok);
+			return;
+
+		case 0:
+			switch (c >> 8) {
+			// left arrow
+			case 0x4b:
+				if (index > 0) {
+					index--;
+				}
+				break;
+
+			// right arrow
+			case 0x4d:
+				if (index < len) {
+					index++;
+				}
+				break;
+
+			// home
+			case 0x47:
+				index = 0;
+				break;
+
+			// ???
+			case 0x4f:
+				index = len;
+				break;
+
+			// delete
+			case 0x53:
+				if (len > index) {
+					memmove(text + index, text + index + 1, len - index);
+					len--;
+				}
+				break;
+
+			// page down?
+			case 0x74:
+				while (index < len) {
+					index++;
+					if (text[index] == ' ') {
+						break;
+					}
+				}
+				break;
+
+			// end?
+			case 0x73:
+				while (index > 0) {
+					index--;
+					if (text[index] == ' ') {
+						break;
+					}
+				}
+				break;
+			}
+			break;
+
+		default:
+			sz[0] = c & 0xff;
+
+			if (edit) {
+				if (sz[0] < 32 || tw + text_width(sz) > max_size || len >= max_chars) {
+					break;
+				}
+
+				memmove(&text[index+1], &text[index], len - index + 1);
+				text[index] = sz[0];
+				len++;
+				index++;
+			} else {
+				text[0] = sz[0];
+				text[1] = 0;
+				len = 1;
+				index = 1;
+			}
+			break;
+		}
+
+		tw = text_width(text);
+		edit = c ? 1 : edit;	// Shift makes a keypress now too
+
+		put_picture(x, y, back_pic);
+		position(x, y);
+		set_font(font, color);
+		outtext(text);
+		sz[0] = text[index];
+		text[index] = 0;
+		px = text_width(text);
+		text[index] = sz[0];
+		position(px + x, y + 3);
+		outtext("_");
+		ukaz_mysku();
+		showview(x, y, xs, ys);
+	} else if (msg->msg == E_DONE) {
+		free(back_pic);
+	}
+}
 
 #define COL_SIZE 776
 
-typedef void (*type_text_exit_proc)(char);
-
-void type_text_v2(va_list args)
 //rutina je pro vstup radky, po ukonceni zavola proceduru exit_proc pokud uzivatel stiskne ENTER
 //volat jako task
 //#pragma aux type_text_v2 parm []
-  {
-  char *text_buffer=va_arg(args,char *);
-  int x=va_arg(args,int);
-  int y=va_arg(args,int);
-  int max_size=va_arg(args,int);
-  int max_chars=va_arg(args,int);
-  int font=va_arg(args,int);
-  int color=va_arg(args,int);
-  type_text_exit_proc exit_proc=va_arg(args,type_text_exit_proc);
+void type_text_v2(va_list args) {
+	char *text_buffer = va_arg(args, char *);
+	int x = va_arg(args, int);
+	int y = va_arg(args, int);
+	int max_size = va_arg(args, int);
+	int max_chars = va_arg(args, int);
+	int font = va_arg(args, int);
+	int color = va_arg(args, int);
+	type_text_exit_proc exit_proc = va_arg(args, type_text_exit_proc);
 
-  int xs,ys,tw;
-  char *text,pos,len;
-  char wait_loop=1,ok=0,edit=0;
-  short *back_pic;
-  int i;
+	int xs, ys, tw;
+	char *text, pos, len;
+	char wait_loop = 1, ok = 0, edit = 0;
+	short *back_pic;
+	int i;
 
-  Task_Sleep(NULL);
-  schovej_mysku();
-  set_font(font,color);
-  xs=max_size+text_width("_");
-  if (max_chars<257) text=alloca(257); else text=alloca(max_chars);
-  for(i=0;i<255;i++) text[i]=i+1;
-  text[i]=0;ys=text_height(text)+5;
-  strcpy(text,text_buffer);
-  back_pic=getmem(xs*ys*2+6);
-  get_picture(x,y,xs,ys,back_pic);
-  pos=strlen(text);
-  len=pos;
-  tw=text_width(text);
-  do
-     {
-     char sz[2]=" ";
-     word znak,px;
+	Task_Sleep(NULL);
+	schovej_mysku();
+	set_font(font, color);
+	xs = max_size + text_width("_");
 
-     put_picture(x,y,back_pic);
-     position(x,y);
-     set_font(font,color);
-     outtext(text);
-     sz[0]=text[pos];text[pos]=0;
-     px=text_width(text);text[pos]=sz[0];
-     position(px+x,y+3);outtext("_");
-     ukaz_mysku();
-     showview(x,y,xs,ys);
-     znak=*(word *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
-     schovej_mysku();
-     if (Task_QuitMsg()==1) znak=27;
-     switch(znak & 0xff)
-        {
-        case 8:if (pos>0)
-                 {
-                 pos--;
-                 strcpy(&text[pos],&text[pos+1]);
-                 len--;
-                 }
-              break;
-        case 13:strcpy(text_buffer,text);
-                 ok=1;
-        case 27:wait_loop=0;
-                break;
-        case 0:switch(znak>>8)
-                {
-                case 'K': if (pos>0) pos--;break;
-                case 'M': if (pos<len) pos++;break;
-                case 'G':pos=0;break;
-                case 'O':pos=len;break;
-                case 'S':if (len>pos)
-                             {
-                             strcpy(text+pos,text+pos+1);
-                             len--;
-                             }
-                          break;
-                case 't':while (pos<len)
-                          {
-                          pos++;
-                          if (text[pos]==' ') break;
-                          }
-                         break;
-                case 's':while(pos>0)
-                          {
-                          pos--;
-                          if (text[pos]==' ') break;
-                          }
-                         break;
-                }
-                break;
-        default:sz[0]=znak & 0xff;
-                if (edit)
-                 {
-                 if (sz[0]<32 || tw+text_width(sz)>max_size || len>=max_chars) break;
-                 memmove(&text[pos+1],&text[pos],len-pos+1);
-                 text[pos]=sz[0];
-                 len++;
-                 pos++;
-                 }
-                else
-                 {
-                 text[0]=sz[0];
-                 text[1]=0;
-                 len=1;
-                 pos=1;
-                 }
-                break;
-        }
-     tw=text_width(text);
-     edit=1;
-     }
-  while (wait_loop);
-  put_picture(x,y,back_pic);
-  position(x,y);
-  set_font(font,color);
-  outtext(text);
-  ukaz_mysku();
-  showview(x,y,xs,ys);
-  free(back_pic);
-  exit_proc(ok);
-  }
+	if (max_chars < 257) {
+		text = alloca(257);
+	} else {
+		text = alloca(max_chars);
+	}
+
+	for (i = 0; i < 255; i++) {
+		text[i] = i + 1;
+	}
+
+	text[i] = 0;
+	ys = text_height(text) + 5;
+	strcpy(text, text_buffer);
+	back_pic = getmem(xs * ys * 2 + 6);
+	get_picture(x, y, xs, ys, back_pic);
+	pos = strlen(text);
+	len = pos;
+	tw = text_width(text);
+	do {
+		char sz[2] = " ";
+		word znak, px;
+		
+		put_picture(x, y, back_pic);
+		position(x, y);
+		set_font(font, color);
+		outtext(text);
+		sz[0] = text[pos];
+		text[pos] = 0;
+		px = text_width(text);
+		text[pos] = sz[0];
+		position(px + x, y + 3);
+		outtext("_");
+		ukaz_mysku();
+		showview(x, y, xs, ys);
+		znak=*(word *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
+		schovej_mysku();
+
+		if (Task_QuitMsg() == 1) {
+			znak = 27;
+		}
+
+		switch(znak & 0xff) {
+		case 8:
+			if (pos > 0) {
+				pos--;
+				// WRONG! strcpy() arguments must not overlap!
+				strcpy(&text[pos], &text[pos+1]);
+				len--;
+			}
+			break;
+
+		case 13:
+			strcpy(text_buffer, text);
+			ok = 1;
+
+		case 27:
+			wait_loop=0;
+			break;
+
+		case 0:
+			switch (znak >> 8) {
+			case 'K':
+				if (pos > 0) {
+					pos--;
+				}
+				break;
+
+			case 'M':
+				if (pos < len) {
+					pos++;
+				}
+				break;
+
+			case 'G':
+				pos = 0;
+				break;
+
+			case 'O':
+				pos = len;
+				break;
+
+			case 'S':
+				if (len > pos) {
+					strcpy(text + pos, text + pos + 1);
+					len--;
+				}
+				break;
+			case 't':
+				while (pos < len) {
+					pos++;
+					if (text[pos] == ' ') {
+						break;
+					}
+				}
+				break;
+
+			case 's':
+				while (pos > 0) {
+					pos--;
+					if (text[pos] == ' ') {
+						break;
+					}
+				}
+				break;
+			}
+			break;
+
+		default:
+			sz[0] = znak & 0xff;
+			if (edit) {
+				if (sz[0] < 32 || tw + text_width(sz) > max_size || len >= max_chars) {
+					break;
+				}
+
+				memmove(&text[pos+1], &text[pos], len - pos + 1);
+				text[pos] = sz[0];
+				len++;
+				pos++;
+			} else {
+				text[0] = sz[0];
+				text[1] = 0;
+				len = 1;
+				pos = 1;
+			}
+			break;
+		}
+
+		tw = text_width(text);
+		edit = 1;
+	} while (wait_loop);
+
+	put_picture(x, y, back_pic);
+	position(x, y);
+	set_font(font, color);
+	outtext(text);
+	ukaz_mysku();
+	showview(x, y, xs, ys);
+	free(back_pic);
+	exit_proc(ok);
+}
 
 
 void col_load(void **data,long *size)

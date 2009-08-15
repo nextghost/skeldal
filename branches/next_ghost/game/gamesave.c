@@ -1426,7 +1426,8 @@ void wire_ask_gamename(int id)
   schovej_mysku();
   put_picture(x,y,ablock(H_LOADTXTR));
   strcpy(global_gamename,slot_list[id]);
-  clk_ask_name[0].id=Task_Add(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
+//  clk_ask_name[0].id=Task_Add(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
+  send_message(E_ADD, E_KEYBOARD, type_text,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
   change_click_map(clk_ask_name,CLK_ASK_NAME);
   ukaz_mysku();
   }

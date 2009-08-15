@@ -539,22 +539,25 @@ static char vol_vlastnosti(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-static int edit_task=-1;
+//static int edit_task=-1;
 
 static void edit_name()
   {
   if (shut_downing_text) return;
   curcolor=0;bar(120,2,120+104,16);
-  edit_task=Task_Add(16384,type_text_v2,postavy[cur_edited].jmeno,120,2,104,
+//  edit_task=Task_Add(16384,type_text_v2,postavy[cur_edited].jmeno,120,2,104,
+//     sizeof(postavy[cur_edited].jmeno)-1,H_FONT6,RGB555(31,31,0),edit_name);
+  send_message(E_ADD, E_KEYBOARD, type_text,postavy[cur_edited].jmeno,120,2,104,
      sizeof(postavy[cur_edited].jmeno)-1,H_FONT6,RGB555(31,31,0),edit_name);
   }
 
 static void stop_edit_name()
   {
-  shut_downing_text=1;send_message(E_KEYBOARD,13);
-  Task_Sleep(NULL);
-  if (edit_task>0 && Task_IsRunning(edit_task)) 
-    Task_Shutdown(edit_task);
+  shut_downing_text=1;
+  send_message(E_KEYBOARD,13);
+//  Task_Sleep(NULL);
+//  if (edit_task>0 && Task_IsRunning(edit_task)) 
+//    Task_Shutdown(edit_task);
   shut_downing_text=0;
   }
 
@@ -738,12 +741,10 @@ char potvrzeno(char *text,void (*redraw)())
   {
   int i;
   unwire_proc=empty_proc;
-// FIXME: rewrite
-//  stop_edit_name();
+  stop_edit_name();
   i=message(2,0,1,texty[118],text,texty[114],texty[115])==0;
   redraw();
-// FIXME: rewrite
-//  edit_name();
+  edit_name();
   return i;
   }
 
@@ -762,8 +763,7 @@ static char view_another_click2(int id,int xa,int ya,int xr,int yr)
   bott_draw(1);
   human_selected=postavy+id;
   cur_edited=id;
-// FIXME: rewrite
-//  edit_name();
+  edit_name();
   redraw_page3();
   if (del_mode)
      if (potvrzeno(texty[117],redraw_page3))
@@ -803,7 +803,10 @@ static void enter_reaction(EVENT_MSG *msg,void **unused)
         redraw_generator(1);
         msg->msg=-1;
         }
-     was_enter=1;
+
+	if (*(char*)(msg->data) != 0) {
+		was_enter=1;
+	}
      }
   }
 
@@ -855,8 +858,7 @@ char enter_generator()
 
   znova:
   del_mode=0;
-// FIXME: rewrite?
-//  stop_edit_name();
+  stop_edit_name();
   b_texty[0]=texty[170];
   b_texty[1]=texty[171];
   b_texty[2]=texty[172];
@@ -879,8 +881,7 @@ char enter_generator()
      vypocet_vlastnosti(cur_angle,&cur_vls);
      b_disables=0x7;
      redraw_generator(rep);if (!rep)effect_show(NULL);rep=1;
-// FIXME: rewrite
-//     edit_name();
+     edit_name();
      change_click_map(clk_page1,CLK_PAGE1);
      was_enter=0;
      do
@@ -930,8 +931,7 @@ char enter_generator()
            for(cur_edited=0;postavy[cur_edited].used;cur_edited++);
        }
      while (error_text!=NULL);
-// FIXME: rewrite
-//     stop_edit_name();
+     stop_edit_name();
      }
   while (i!=1);
   disable_click_map();

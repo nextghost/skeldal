@@ -60,6 +60,8 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	curFront = frontBuffer = malloc(screen->h * screen->pitch);
 	backBuffer = malloc(screen->h * screen->pitch);
 
+	// FIXME: mapped to mimic original DOS version behavior in DOSBox
+	// on a notebook keyboard, should be double checked
 	scancodes[SDLK_TAB] = 0x0f00;
 	scancodes[SDLK_RETURN] = 0x1c00;
 	scancodes[SDLK_ESCAPE] = 0x0100;
@@ -71,7 +73,9 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	scancodes[SDLK_f] = 0x2100;
 	scancodes[SDLK_i] = 0x1700;
 	scancodes[SDLK_m] = 0x3200;
+	scancodes[SDLK_DELETE] = 0x5300;
 	scancodes[SDLK_INSERT] = 0x5200;
+	scancodes[SDLK_HOME] = 0x4700;
 	scancodes[SDLK_END] = 0x7300;
 	scancodes[SDLK_PAGEDOWN] = 0x7400;
 	scancodes[SDLK_F2] = 0x3c00;
