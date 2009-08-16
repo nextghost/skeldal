@@ -44,6 +44,7 @@ void Mouse_GetEvent(MS_EVENT *event);
 void Mouse_MapWheel(char up, char down);
 
 int Input_Kbhit(void);
+// Note: do not use for reading keys, set event handler instead
 int Input_ReadKey(void);
 
 void Sys_ErrorBox(const char *msg);

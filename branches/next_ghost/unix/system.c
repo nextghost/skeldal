@@ -49,18 +49,6 @@ void Mouse_MapWheel(char up, char down) {
 
 }
 
-// FIXME: implement keyboard support
-int Input_Kbhit(void) {
-//	assert(0);
-	return 0;
-}
-
-// TODO: implement these
-int Input_ReadKey(void) {
-	assert(0);
-
-}
-
 // FIXME: Implement in GUI
 void Sys_ErrorBox(const char *msg) {
 	fprintf(stderr, "Error: %s", msg);

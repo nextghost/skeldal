@@ -646,6 +646,13 @@ void titles(int send_back, char *textname) {
 				lcounter += c;
 			}
 		}
+
+		// quit on keypress
+		if (Input_Kbhit()) {
+			Input_ReadKey();
+			send_back = 1;
+			break;
+		}
 	} while (!(end && lcounter<=0));
 //  while (!(Task_QuitMsg() || (end && lcounter<=0)));
 	ukaz_mysku();

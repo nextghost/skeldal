@@ -1832,7 +1832,6 @@ void show_jrc_logo(char *filename)
     }
 //  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));
   while (cdiff<SHOWDELAY && !Input_Kbhit());
-  while (cdiff<SHOWDELAY);
   curcolor=0;bar(0,0,639,479);
   showview(0,0,0,0);
   free(pcx);

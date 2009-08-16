@@ -27,65 +27,36 @@
 #include "libs/event.h"
 
 word scancodes[SDLK_LAST] = {0};
+static int kbhit = 0;
 
+// FIXME: change game input system
 void Mouse_GetEvent(MS_EVENT *event) {
 	*event = ms_last_event;
 	event->event = 0;
-/*
-	static Uint8 oldstate = 0;
-	static int oldx = 0, oldy = 0;
-	Uint8 newstate, diff;
-	int x, y;
-
-	SDL_PumpEvents();
-	newstate = SDL_GetMouseState(&x, &y);
-
-//	fprintf(stderr, "oldstate %02x, newstate %02x, x %d, y %d, oldx %d, oldy %d\n", oldstate, newstate, x, y, oldx, oldy);
-	diff = oldstate ^ newstate;
-
-	event->event_type = 0;
-	event->x = x;
-	event->y = y;
-
-	if (x != oldx || y != oldy) {
-		event->event_type |= 0x1;
-		oldx = x;
-		oldy = y;
-	}
-
-	if (diff & SDL_BUTTON(1)) {
-		event->event_type |= newstate & SDL_BUTTON(1) ? 0x2 : 0x4;
-	}
-
-	if (diff & SDL_BUTTON(3)) {
-		event->event_type |= newstate & SDL_BUTTON(3) ? 0x8 : 0x10;
-	}
-
-	if (diff & SDL_BUTTON(2)) {
-		event->event_type |= newstate & SDL_BUTTON(2) ? 0x20 : 0x40;
-	}
-
-	oldstate = newstate;
-
-//	fprintf(stderr, "event_type %02x\n", event->event_type);
-
-	event->event = event->event_type != 0;
-	event->tl1 = !!(newstate & SDL_BUTTON(1));	// left
-	event->tl2 = !!(newstate & SDL_BUTTON(3));	// right
-	event->tl3 = !!(newstate & SDL_BUTTON(2));	// middle
-*/
 }
 
+// FIXME: change game input system
 int get_control_state(void) {
 	SDL_PumpEvents();
 
 	return (SDL_GetModState() & KMOD_CTRL) != 0;
 }
 
+// FIXME: change game input system
 int get_shift_state(void) {
 	SDL_PumpEvents();
 
 	return (SDL_GetModState() & KMOD_SHIFT) != 0;
+}
+
+int Input_Kbhit(void) {
+	Sys_ProcessEvents();
+	return kbhit != 0;
+}
+
+int Input_ReadKey(void) {
+	kbhit = 0;
+	return 0;
 }
 
 void Sys_ProcessEvents(void) {
@@ -95,6 +66,7 @@ void Sys_ProcessEvents(void) {
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
+			kbhit = 1;
 			keycode = scancodes[event.key.keysym.sym];
 			if (!(event.key.keysym.unicode & 0xff80)) {
 				keycode |= event.key.keysym.unicode;
