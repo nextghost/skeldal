@@ -425,9 +425,27 @@ char *get_next_title(char control,char *filename)
 
 		// FIXME: this is disgusting
 		return (char *)titles;
-     case 0:if (titles!=NULL)fgets(buffer,80,titles);
-            c=strchr(buffer,'\n');if (c!=NULL) *c=0;
-            return buffer;
+     case 0:
+     	if (titles != NULL) {
+		fgets(buffer, 80, titles);
+	}
+
+        c = strchr(buffer, '\n');
+	if (c != NULL) {
+		if (c != buffer && c[-1] == '\r') {
+			c[-1] = 0;
+		} else {
+			*c = 0;
+		}
+	}
+
+	// fix some garbage at the end of credits ENC file
+        c = strchr(buffer, 0x1a);
+	if (c != NULL) {
+		*c = 0;
+	}
+
+        return buffer;
      case -1:if (titles!=NULL)enc_close(&fl);
             break;
      }
