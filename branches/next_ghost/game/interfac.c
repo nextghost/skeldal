@@ -363,6 +363,7 @@ void type_text(EVENT_MSG *msg,void **data) {
 
 		strcpy(text, c);
 		source = c;
+		set_font(font, color);
 		tw = text_width(text);
 		len = index = strlen(text);
 		xs = max_size + text_width("_");
@@ -371,7 +372,6 @@ void type_text(EVENT_MSG *msg,void **data) {
 
 		// render string
 		schovej_mysku();
-		set_font(font, color);
 		position(x, y);
 		outtext(text);
 		position(tw + x, y + 3);
