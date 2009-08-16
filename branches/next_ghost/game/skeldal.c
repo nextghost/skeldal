@@ -1017,13 +1017,17 @@ static void patch_error(int err)
 	showview(0,460,640,20);
 	}
 
+void *LoadDefaultFont(void) {
+	long tmp;
+	return afile("BOLDCZ.FON", SR_FONT, &tmp);
+}
+
 void init_skeldal(void)
   {
 //  char c[200],d[200];
 	char *c, *d;
   int verr;
 
-  boldcz=LoadDefaultFont();
 SEND_LOG("(INIT) Reading texts.",0,0);
   cti_texty();
   timer_tree.next=NULL;
@@ -1053,6 +1057,7 @@ SEND_LOG("(INIT) Initializing engine.",0,0);
 	d = Sys_FullPath(SR_DATA, "SKELDAL.DDL");
 SEND_LOG("(INIT) Initializing memory manager",0,0);
   init_manager(d,c);
+  boldcz=LoadDefaultFont();
 SEND_LOG("(GAME) Memory manager initialized. Using DDL: '%s' Temp dir: '%s'",d,c);
 	texty_knihy=find_map_path("KNIHA.TXT");
 SEND_LOG("(INIT) Installing GUI",0,0);

@@ -78,19 +78,19 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_GRAFIKA, DATA_PATH "graphics/");
 	Sys_SetPath(SR_ZVUKY, DATA_PATH "samples/");
 	Sys_SetPath(SR_FONT, DATA_PATH "font/");
-	Sys_SetPath(SR_MAP, DATA_PATH "maps/");
-	Sys_SetPath(SR_MUSIC, DATA_PATH "music/");
+	Sys_SetPath(SR_MAP, DATA_PATH "MAPS/");
+	Sys_SetPath(SR_MUSIC, DATA_PATH "MUSIC/");
 	Sys_SetPath(SR_WORK, home);
 	Sys_SetPath(SR_TEMP, Sys_FullPath(SR_WORK, "temp/"));
 	Sys_SetPath(SR_BGRAFIKA, DATA_PATH "graphics/basic/");
 	Sys_SetPath(SR_ITEMS, DATA_PATH "graphics/items/");
 	Sys_SetPath(SR_ENEMIES, DATA_PATH "graphics/enemies/");
-	Sys_SetPath(SR_VIDEO, DATA_PATH "video/");
+	Sys_SetPath(SR_VIDEO, DATA_PATH "VIDEO/");
 	Sys_SetPath(SR_DIALOGS, DATA_PATH "graphics/dialogs/");
 	Sys_SetPath(SR_SAVES, Sys_FullPath(SR_WORK, "save/"));
 	Sys_SetPath(SR_CD, DATA_PATH);
 	Sys_SetPath(SR_MAP2, DATA_PATH);
-	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "music/");
+	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "MUSIC/");
 }
 
 // FIXME: implement properly

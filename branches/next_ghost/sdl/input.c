@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <SDL/SDL.h>
+#include "libs/system.h"
 #include "libs/bmouse.h"
 #include "libs/event.h"
 

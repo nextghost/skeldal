@@ -34,6 +34,7 @@
 
 #include "libs/system.h"
 #include "game/globals.h"
+#include "libs/memman.h"
 
 char *strupr(char *str) {
 	int i;
@@ -231,12 +232,6 @@ char Task_QuitMsg() {
 void Task_Shutdown(int id) {
 	assert(0);
 
-}
-
-void *LoadDefaultFont(void) {
-//	assert(0);
-//	return NULL;
-	return Sys_ReadFile(Sys_FullPath(SR_FONT, "BOLDCZ.FON"));
 }
 
 // FIXME: rewrite properly

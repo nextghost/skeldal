@@ -169,9 +169,9 @@ void preload_objects(int ofsts)
 
   for(i=1;i<mapsize;i++) if (map_sectors[i].sector_type==S_LODKA) break;
   if (i==mapsize) lodka=0;
-//  sprintf(c,"%sLOADING.MUS",pathtable[SR_WORK]);
+//  sprintf(c,"%sLOADING.MUS",pathtable[SR_DATA]);
 //  Sound_ChangeMusic(c);
-//  Sound_ChangeMusic(Sys_FullPath(SR_WORK, "LOADING.MUS"));
+//  Sound_ChangeMusic(Sys_FullPath(SR_DATA, "LOADING.MUS"));
   trans_bar(0,460,640,20,0);
   position(0,460);
   set_font(H_FBOLD,RGB555(0,31,0));
