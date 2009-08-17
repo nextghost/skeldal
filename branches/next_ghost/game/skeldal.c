@@ -1329,7 +1329,7 @@ static void configure(char *filename)
      sprintf(s,"\nNemohu precist konfiguracni soubor \"%s\".\n",filename);
      SEND_LOG("(ERROR) %s",s,NULL);
      puts(s);
-     exit(1);
+//     exit(1);
      }
   SEND_LOG("(GAME) Configuring game...",0,0);
   process_ini(cur_config,config_skeldal);
