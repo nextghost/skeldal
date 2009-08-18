@@ -20,11 +20,9 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/memman.h"
-//#include "libs/mem.h"
 #include "libs/mgifmem.h"
 
 #define MGIF "MGIF"
@@ -38,7 +36,7 @@ static int cur_frame;
 
 typedef struct double_s
   {
-  short group,chr,first,next;
+  int16_t group,chr,first,next;
   }DOUBLE_S;
 
 typedef DOUBLE_S CODE_TABLE[LZW_MAX_CODES];
@@ -122,7 +120,7 @@ void close_mgif()           //dealokuje buffery pro prehravani
   }
 
 
-unsigned input_code(byte *source,long *bitepos,int bitsize,int mask) {
+unsigned input_code(uint8_t *source,long *bitepos,int bitsize,int mask) {
 	unsigned ret = *(unsigned *)(source + (*bitepos >> 3));
 	ret >>= *bitepos & 0x7;
 	*bitepos += bitsize;
@@ -145,7 +143,7 @@ int de_add_code(int group,int chr,int mask)
   }
 
 
-char fast_expand_code(int code, byte **target) {
+char fast_expand_code(int code, uint8_t **target) {
 	if (code < 256) {
 		old_value = **target = (code + old_value) & 0xff;
 		++*target;
@@ -175,7 +173,7 @@ char fast_expand_code(int code, byte **target) {
 	return ret;
 }
 
-void lzw_decode(void *source,byte *target)
+void lzw_decode(void *source,uint8_t *target)
   {
   long bitpos=0;
   register int code;
@@ -224,7 +222,7 @@ void lzw_decode(void *source,byte *target)
 
 //dekoduje a zobrazi frame
 void *mgif_play(void *mgif) {
-	byte *pf, *pc, *ff;
+	uint8_t *pf, *pc, *ff;
 	int acts, size, act, csize;
 	void *scr_sav;
 	int scr_act = -1;

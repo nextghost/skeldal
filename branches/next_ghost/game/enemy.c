@@ -20,18 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/bgraph.h"
-//#include "libs/zvuk.h"
 #include "libs/system.h"
 #include "game/engine1.h"
 #include "game/globals.h"
@@ -74,8 +70,8 @@ short konv_x[]={1,1,-1,-1};
 short konv_y[]={-1,1,1,-1};
 char going[]={0,0,1,0,1,1};
 
-static word *mob_paths[MAX_MOBS];
-static word *mob_path_ptr[MAX_MOBS];
+static uint16_t *mob_paths[MAX_MOBS];
+static uint16_t *mob_path_ptr[MAX_MOBS];
 static int monster_block;
 
 void *sound_template=NULL;
@@ -87,14 +83,14 @@ char nohassle=0;
 
 typedef struct tmobsavedata
 {
-  short anim_counter;        //citac animaci
-  char anim_phase;            //cinnost kterou mob dela
-  char dir;
+  int16_t anim_counter;        //citac animaci
+  int8_t anim_phase;            //cinnost kterou mob dela
+  int8_t dir;
 }TMOBSAVEDATA;
 
 static TMOBSAVEDATA **mobsavedata=0;
 
-static void register_mob_path(int mob,word *path) //registruje cestu pro potvoru
+static void register_mob_path(int mob,uint16_t *path) //registruje cestu pro potvoru
   {
   mob_paths[mob]=path;
   mob_path_ptr[mob]=path;
@@ -107,7 +103,7 @@ static void free_path(int mob)      //vymaze cestu potvore
   mob_path_ptr[mob]=NULL;
   }
 
-void send_mob_to(int m,word *path)
+void send_mob_to(int m,uint16_t *path)
   {
   if (mob_paths[m]!=NULL)
     {
@@ -133,7 +129,7 @@ void smeruj_moba(TMOB *m,int smer)
 void save_enemy_paths(FILE *f)
   {
   int i,s;
-  word *w;
+  uint16_t *w;
 
   for(i=0;i<MAX_MOBS;i++) if (mob_paths[i]!=NULL)
     {
@@ -151,14 +147,14 @@ int load_enemy_paths(FILE *f)
   {
   short i=-1;
   int s;
-  word *w;
+  uint16_t *w;
 
   for(i=0;i<MAX_MOBS;i++) free_path(i);
   fread(&i,2,1,f);
   while(i!=-1)
     {
     fread(&s,1,sizeof(s),f);
-    w=NewArr(word,s);
+    w=NewArr(uint16_t,s);
     fread(w,s,2,f);
     register_mob_path(i,w);
     if (fread(&i,2,1,f)==0) return 1;
@@ -278,7 +274,7 @@ static void register_mob_graphics(int num,char *name_part,char *anims,char *seq)
 
 
 
-static void register_mob_sounds(int hlptr,word *sounds)
+static void register_mob_sounds(int hlptr,uint16_t *sounds)
   {
   int i,z;
 
@@ -760,7 +756,7 @@ char mob_test_na_bitvu(TMOB *p)
 
 char return_home(TMOB *p,int *smer)
   {
-  word *path;
+  uint16_t *path;
   int i;
 
   i=p->dir;
@@ -782,7 +778,7 @@ char return_home(TMOB *p,int *smer)
 static int jdi_po_ceste(int old,TMOB *p)
   {
   int i,s;
-  word *c;
+  uint16_t *c;
 
   if (p->mode==MBA_FLEE && !p->actions--)   //v pride uteku pocitej kroky
      {
@@ -1690,11 +1686,11 @@ int q_kolik_je_potvor(int sector)
   return 0;
   }
 
-void najdi_cestu(word start,word konec,int flag,word **cesta, int iamcnt)
+void najdi_cestu(uint16_t start,uint16_t konec,int flag,uint16_t **cesta, int iamcnt)
   {
-  longint *stack;
-  longint *stk_free;
-  longint *stk_cur;
+  int32_t *stack;
+  int32_t *stk_free;
+  int32_t *stk_cur;
   char *ok_flags;
 
   *cesta=NULL;
@@ -1703,12 +1699,12 @@ void najdi_cestu(word start,word konec,int flag,word **cesta, int iamcnt)
   ok_flags[start>>3]|=1<<(start & 0x7);
   for(*stk_free++=start;stk_free!=stk_cur;stk_cur++)
      {
-     char i;word s,d=0xFFFF,ss;
+     char i;uint16_t s,d=0xFFFF,ss;
      s=(ss=Lo(*stk_cur))<<2;
      for(i=0;i<4;i++) if (!(map_sides[s+i].flags & flag))
         {
         char c;
-        word w;
+        uint16_t w;
         d=map_sectors[ss].step_next[i];
         c=1<<(d & 0x7);
         w=d>>3;
@@ -1724,8 +1720,8 @@ void najdi_cestu(word start,word konec,int flag,word **cesta, int iamcnt)
   if (stk_free!=stk_cur)
      {
      int count=0;
-     longint *p,*z;
-     word *x;
+     int32_t *p,*z;
+     uint16_t *x;
 
      z=p=stk_free-1;
      while (Lo(*p)!=start)
@@ -1740,7 +1736,7 @@ void najdi_cestu(word start,word konec,int flag,word **cesta, int iamcnt)
      z++;
      while (count--)
         {
-        *x++=(word)(*z++);
+        *x++=(uint16_t)(*z++);
         }
      *x++=0;
      }
@@ -1762,11 +1758,11 @@ void reakce_na_hluk(int mob,int smer)
      }
   }
 
-void sirit_zvuk(word start)
+void sirit_zvuk(uint16_t start)
   {
-  longint *stack;
-  longint *stk_free;
-  longint *stk_cur;
+  int32_t *stack;
+  int32_t *stk_free;
+  int32_t *stk_cur;
   char *ok_flags;
 
   stk_free=stk_cur=stack=getmem(4*(mapsize+2));
@@ -1774,12 +1770,12 @@ void sirit_zvuk(word start)
   ok_flags[start>>3]|=1<<(start & 0x7);
   for(*stk_free++=start;stk_free!=stk_cur;stk_cur++)
      {
-     char i;word s,d,ss;
+     char i;uint16_t s,d,ss;
      s=(ss=Lo(*stk_cur))<<2;
      for(i=0;i<4;i++) if (!(map_sides[s+i].flags & SD_SOUND_IMPS))
         {
         char c;
-        word w;
+        uint16_t w;
         d=map_sectors[ss].step_next[i];
         c=1<<(d & 0x7);
         w=d>>3;
@@ -1847,10 +1843,10 @@ char track_mob(int sect,int dir)
 //---------------------------------------------------------------------
 /* Nasledujici procedury a funkce se volaji pro chovani potvory v bitve */
 
-static word last_sector;
+static uint16_t last_sector;
 static TMOB *fleeing_mob;
 
-static char valid_sectors(word sector)
+static char valid_sectors(uint16_t sector)
   {
   int pp;
 
@@ -1869,7 +1865,7 @@ char flee_monster_zac(TMOB *m)
   {
   int ss,s;
   int i,j;
-  word *cesta,*c,cntr;
+  uint16_t *cesta,*c,cntr;
   for(j=0;j<POCET_POSTAV;j++)
      if (postavy[j].used && postavy[j].lives)
      {
@@ -1978,7 +1974,7 @@ char akce_moba_zac(TMOB *m)
         }
      else
          {
-         word *cesta;
+         uint16_t *cesta;
 
          najdi_cestu(m->sector,postavy[i].sektor,SD_MONST_IMPS,&cesta,(m->stay_strategy & MOB_BIG)?1:2);
          if (cesta!=NULL)

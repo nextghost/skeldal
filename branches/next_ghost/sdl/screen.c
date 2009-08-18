@@ -30,7 +30,7 @@
 SDL_Surface *screen;
 void *backBuffer, *frontBuffer, *curFront;
 
-extern word scancodes[];
+extern uint16_t scancodes[];
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -136,7 +136,7 @@ void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsi
 	SDL_UnlockSurface(screen);
 }
 
-void Screen_FixPalette(word *pal, int size) {
+void Screen_FixPalette(uint16_t *pal, int size) {
 	int i, r, g, b;
 
 	for (i = 0; i < size; i++) {
@@ -149,7 +149,7 @@ void Screen_FixPalette(word *pal, int size) {
 }
 
 
-void Screen_FixMGIFPalette(word *pal, int size) {
+void Screen_FixMGIFPalette(uint16_t *pal, int size) {
 	unsigned i, r, g, b;
 
 	for (i = 0; i < size; i++) {
@@ -161,12 +161,12 @@ void Screen_FixMGIFPalette(word *pal, int size) {
 	}
 }
 
-word Screen_RGB(unsigned r, unsigned g, unsigned b) {
+uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b) {
 	return (r << screen->format->Rshift) | (g << screen->format->Gshift) | 
 		(b << screen->format->Bshift);
 }
 
-word Screen_ColorMin(word c1, word c2) {
+uint16_t Screen_ColorMin(uint16_t c1, uint16_t c2) {
 	unsigned r, g, b;
 
 	r = min(c1 & screen->format->Rmask, c2 & screen->format->Rmask);
@@ -176,7 +176,7 @@ word Screen_ColorMin(word c1, word c2) {
 	return r | g | b;
 }
 
-word Screen_ColorSub(word color, int sub) {
+uint16_t Screen_ColorSub(uint16_t color, int sub) {
 	int r, g, b;
 
 	r = ((color & screen->format->Rmask) >> screen->format->Rshift) - sub;
@@ -186,7 +186,7 @@ word Screen_ColorSub(word color, int sub) {
 	return Screen_RGB(r < 0 ? 0 : r, g < 0 ? 0 : g, b < 0 ? 0 : b);
 }
 
-word Screen_ColorAvg(word c1, word c2) {
+uint16_t Screen_ColorAvg(uint16_t c1, uint16_t c2) {
 	unsigned r, g, b;
 
 	r = (c1 & screen->format->Rmask) + (c2 & screen->format->Rmask);
@@ -200,7 +200,7 @@ word Screen_ColorAvg(word c1, word c2) {
 	return r | g | b;
 }
 
-word Screen_ColorBlend(word c1, word c2, float factor) {
+uint16_t Screen_ColorBlend(uint16_t c1, uint16_t c2, float factor) {
 	unsigned r1, g1, b1, r2, g2, b2;
 	
 	r1 = ((c1 & screen->format->Rmask) >> screen->format->Rshift);
@@ -218,14 +218,14 @@ word Screen_ColorBlend(word c1, word c2, float factor) {
 	return Screen_RGB(r1, g1, b1);
 }
 
-unsigned Screen_ColorR(word c) {
+unsigned Screen_ColorR(uint16_t c) {
 	return (c & screen->format->Rmask) >> screen->format->Rshift;
 }
 
-unsigned Screen_ColorG(word c) {
+unsigned Screen_ColorG(uint16_t c) {
 	return (c & screen->format->Gmask) >> screen->format->Gshift;
 }
 
-unsigned Screen_ColorB(word c) {
+unsigned Screen_ColorB(uint16_t c) {
 	return (c & screen->format->Bmask) >> screen->format->Bshift;
 }

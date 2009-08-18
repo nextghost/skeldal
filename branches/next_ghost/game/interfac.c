@@ -20,21 +20,13 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <dos.h>
-//#include "libs/bios.h"
 #include <stdlib.h>
-//#include <io.h>
-//#include <direct.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <dpmi.h>
-//#include <conio.h>
 #include <malloc.h>
-//#include "libs/mem.h"
 #include "libs/pcx.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/bgraph.h"
 #include "libs/event.h"
 #include "libs/devices.h"
@@ -48,7 +40,6 @@
 #include <time.h>
 #include "libs/mgfplay.h"
 #include "libs/wav.h"
-//#include <io.h>
 #include <fcntl.h>
 #include <errno.h>
 #include "game/globals.h"
@@ -60,8 +51,8 @@
 static char *error_hack="....Source compiled.";
 static char shadow_enabled=1;
 
-//word color_topbar[7]={0,RGB555(22,14,4),RGB555(24,16,6),RGB555(25,17,7)};
-word color_topbar[7] = {0};
+//uint16_t color_topbar[7]={0,RGB555(22,14,4),RGB555(24,16,6),RGB555(25,17,7)};
+uint16_t color_topbar[7] = {0};
 
 int input_txtr=H_LOADTXTR;
 
@@ -74,8 +65,8 @@ void Interface_Init(void) {
 
 void create_frame(int x,int y,int xs,int ys,char clear)
    {
-   word *line;
-   word *col;
+   uint16_t *line;
+   uint16_t *col;
    int i;
 
    x-=VEL_RAMEC;
@@ -334,7 +325,7 @@ void type_text(EVENT_MSG *msg,void **data) {
 	static int max_size, max_chars;
 	static int font, color, edit, tw;
 	static type_text_exit_proc exit_proc;
-	static word *back_pic;
+	static uint16_t *back_pic;
 	int i, px, ok = 0;
 
 	if (msg->msg == E_INIT) {
@@ -380,9 +371,9 @@ void type_text(EVENT_MSG *msg,void **data) {
 		showview(x, y, xs, ys);
 	} else if (msg->msg == E_KEYBOARD) {
 		char sz[2] = " ";
-		word c;
+		uint16_t c;
 
-		c=*(word *)msg->data;
+		c=*(uint16_t *)msg->data;
 		set_font(font, color);
 
 		switch (c & 0xff) {
@@ -547,7 +538,7 @@ void type_text_v2(va_list args) {
 	tw = text_width(text);
 	do {
 		char sz[2] = " ";
-		word znak, px;
+		uint16_t znak, px;
 		
 		put_picture(x, y, back_pic);
 		position(x, y);
@@ -561,7 +552,7 @@ void type_text_v2(va_list args) {
 		outtext("_");
 		ukaz_mysku();
 		showview(x, y, xs, ys);
-		znak=*(word *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
+		znak=*(uint16_t *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
 		schovej_mysku();
 
 		if (Task_QuitMsg() == 1) {
@@ -691,11 +682,11 @@ void col_load(void **data,long *size)
 #define Lo(x) ((x)& 0xffff)
 
 
-char labyrinth_find_path(word start,word konec,int flag,char (*proc)(word),word **cesta)
+char labyrinth_find_path(uint16_t start,uint16_t konec,int flag,char (*proc)(uint16_t),uint16_t **cesta)
   {
-  longint *stack;
-  longint *stk_free;
-  longint *stk_cur;
+  int32_t *stack;
+  int32_t *stk_free;
+  int32_t *stk_cur;
   char *ok_flags;
   char vysl;
 
@@ -705,12 +696,12 @@ char labyrinth_find_path(word start,word konec,int flag,char (*proc)(word),word 
   ok_flags[start>>3]|=1<<(start & 0x7);
   for(*stk_free++=start;stk_free!=stk_cur;stk_cur++)
      {
-     char i;word s,d,ss;
+     char i;uint16_t s,d,ss;
      s=(ss=Lo(*stk_cur))<<2;
      for(i=0;i<4;i++) if (!(map_sides[s+i].flags & flag))
         {
         char c;
-        word w;
+        uint16_t w;
         d=map_sectors[ss].step_next[i];
         c=1<<(d & 0x7);
         w=d>>3;
@@ -729,8 +720,8 @@ char labyrinth_find_path(word start,word konec,int flag,char (*proc)(word),word 
      if (cesta!=NULL)
         {
         int count=0;
-        longint *p,*z;
-        word *x;
+        int32_t *p,*z;
+        uint16_t *x;
 
         z=p=stk_free-1;
         while (Lo(*p)!=start)
@@ -745,7 +736,7 @@ char labyrinth_find_path(word start,word konec,int flag,char (*proc)(word),word 
         z++;
         while (count--)
            {
-           *x++=(word)*z++;
+           *x++=(uint16_t)*z++;
            }
         *x++=0;
         }
@@ -947,15 +938,15 @@ void start_check()
 typedef struct dos_extra_block
   {
   long sector;
-  word pocet;
-  word buffer_ofs;
-  word buffer_seg;
+  uint16_t pocet;
+  uint16_t buffer_ofs;
+  uint16_t buffer_seg;
   };
 
 
 typedef struct disk_label
   {
-  word nula;
+  uint16_t nula;
   long serial;
   char label[11];
   char type[8];
@@ -963,10 +954,10 @@ typedef struct disk_label
 */
 /*static void read_1st_sector(char drive,char *sector)
   {
-  word segment;
-  word selector;
-  word exseg;
-  word exbuf;
+  uint16_t segment;
+  uint16_t selector;
+  uint16_t exseg;
+  uint16_t exbuf;
   void *ptr;
   struct dos_extra_block *data;
 
@@ -994,8 +985,8 @@ typedef struct disk_label
 /*
 long read_serial(char drive)
   {
-  word segment;
-  word selector;
+  uint16_t segment;
+  uint16_t selector;
   struct disk_label *p;
   RMREGS regs;
   long serial;
@@ -1080,7 +1071,7 @@ void check_number_1phase(char *exename) //check serial number!
 */
 static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   {
-  word *obr;
+  uint16_t *obr;
   char *data;
   int phase;
 
@@ -1089,7 +1080,7 @@ static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   obr=ablock(H_CHECKBOX);
   if (o->userptr==NULL)
      {
-     o->userptr=NewArr(word,obr[0]*obr[0]+3);
+     o->userptr=NewArr(uint16_t,obr[0]*obr[0]+3);
      obr=ablock(H_CHECKBOX);
      get_picture(x1,y1,obr[0],obr[0],o->userptr);
      }
@@ -1166,8 +1157,8 @@ static void setup_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   char *s;
   char data;
   void **z;
-  word *pic;
-  word *bb;
+  uint16_t *pic;
+  uint16_t *bb;
   int x,y;
 
   z=(void **)o->userptr;
@@ -1175,7 +1166,7 @@ static void setup_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   bb=ablock(H_SETUPOK);
   pic=z[1];if (pic==NULL)
      {
-     pic=NewArr(word,bb[0]*bb[1]+3);
+     pic=NewArr(uint16_t,bb[0]*bb[1]+3);
      bb=ablock(H_SETUPOK);
      get_picture(x1,y1,bb[0],bb[1],pic);
      }
@@ -1245,8 +1236,8 @@ static void skeldal_soupak_draw (int x1,int y1,int x2,int y2,OBJREC *o)
   void **z;
   int rozsah;
   int value;
-  word *pic;
-  word *back;
+  uint16_t *pic;
+  uint16_t *back;
   int total;
   int xpos;
 
@@ -1259,7 +1250,7 @@ static void skeldal_soupak_draw (int x1,int y1,int x2,int y2,OBJREC *o)
   back=z[1];
   if (back==NULL)
      {
-     back=NewArr(word,(x2-x1+1)*(y2-y1+1)+3);
+     back=NewArr(uint16_t,(x2-x1+1)*(y2-y1+1)+3);
      get_picture(x1,y1,(x2-x1+1),(y2-y1+1),back);
      z[1]=back;
      pic=ablock(H_SOUPAK);
@@ -1277,7 +1268,7 @@ static skeldal_soupak_event(EVENT_MSG *msg,OBJREC *o)
      int *z;
      int rozsah;
      int total;
-     word *pic;
+     uint16_t *pic;
      int ypos,newvalue;
 
      ms=get_mouse(msg);
@@ -1766,10 +1757,11 @@ typedef struct _hicolpal
 void show_jrc_logo(char *filename)
   {
   char *s;
-  char *pcx;word *pcxw;
+  int8_t *pcx;
+  uint16_t *pcxw;
   char bnk=1;
   int xp,yp,i;
-  word palette[256],*palw;
+  uint16_t palette[256],*palw;
   int cntr,cdiff,cpalf,ccc;
 
   Sound_ChangeMusic("?");
@@ -1780,12 +1772,12 @@ void show_jrc_logo(char *filename)
 	if (open_pcx(Sys_FullPath(SR_VIDEO, filename), A_8BIT, &pcx)) {
 		return;
 	}
-  pcxw=(word *)pcx;
+  pcxw=(uint16_t *)pcx;
   xp=pcxw[0];
   yp=pcxw[1];
   palw=pcxw+3;
-  memcpy(palette,palw,256*sizeof(word));
-  memset(palw,0,256*sizeof(word));
+  memcpy(palette,palw,256*sizeof(uint16_t));
+  memset(palw,0,256*sizeof(uint16_t));
   xp/=2;yp/=2;xp=320-xp;yp=240-yp;
   cntr=Timer_GetValue();ccc=0;
   do

@@ -20,16 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <malloc.h>
-//#include "libs/mem.h"
 #include <stdio.h>
 #include <string.h>
-/*#include "..\types.h"*/
 #include "libs/pcx.h"
 #include "libs/memman.h"
 #include "libs/system.h"
-/*#include "..\bgraph.h"*/
 
 #define SHADE_STEPS 5
 #define SHADE_PAL (SHADE_STEPS*512*2)
@@ -37,9 +33,9 @@
 void *get_palette_ptr=NULL;
 
 
-void decomprimate_line_256(unsigned char *src,char *trg,int linelen,int *srcstep)
+void decomprimate_line_256(uint8_t *src,int8_t *trg,int linelen,int *srcstep)
   {
-  unsigned char *srcsave;
+  uint8_t *srcsave;
 
   srcsave=src;
   while (linelen--)
@@ -55,9 +51,9 @@ void decomprimate_line_256(unsigned char *src,char *trg,int linelen,int *srcstep
      }
   *srcstep=src-srcsave;
   }
-void decomprimate_line_hi(unsigned char *src,unsigned short *trg,unsigned short *paleta,int linelen,int *srcstep)
+void decomprimate_line_hi(uint8_t *src,uint16_t *trg,uint16_t *paleta,int linelen,int *srcstep)
   {
-  unsigned char *srcsave;
+  uint8_t *srcsave;
 
   srcsave=src;
   while (linelen--)
@@ -76,12 +72,12 @@ void decomprimate_line_hi(unsigned char *src,unsigned short *trg,unsigned short 
   *srcstep=src-srcsave;
   }
 
-void palette_shadow(unsigned char *pal1,unsigned short pal2[][256],int tr,int tg,int tb)
+void palette_shadow(uint8_t *pal1,uint16_t pal2[][256],int tr,int tg,int tb)
   {
   int i,j;
-  unsigned char *bt;
+  uint8_t *bt;
   int r,g,b;
-  short hi;
+  uint16_t hi;
 
   for (j=0;j<SHADE_STEPS;j++)
      {
@@ -116,13 +112,13 @@ void palette_shadow(unsigned char *pal1,unsigned short pal2[][256],int tr,int tg
   }
 
 
-int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
+int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... )
   //dale nasleduji int hodnoty poctu prechodu a R,G,B barvy
   {
-  unsigned short paleta2[256];
-  char *paleta1;
-  byte *ptr1;unsigned short *ptr2;
-  char *ptr3;
+  uint16_t paleta2[256];
+  int8_t *paleta1;
+  uint8_t *ptr1;uint16_t *ptr2;
+  int8_t *ptr3;
   int i;
   PCXHEADER pcxdata;
   int xsize,ysize;
@@ -150,17 +146,17 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
   ysize=pcxdata.ymax-pcxdata.ymin+1;
   switch (conv_type)
      {
-     case A_8BIT: *buffer=(char *)getmem(xsize*ysize+512+16);break;
-     case A_16BIT: *buffer=(char *)getmem(xsize*ysize*2+16);break;
-     case A_FADE_PAL: *buffer=(char *)getmem(xsize*ysize+SHADE_PAL+16);break;
-     case A_8BIT_NOPAL: *buffer=(char *)getmem(xsize*ysize+16);break;
-     case A_NORMAL_PAL: *buffer=(char *)getmem(xsize*ysize+16+768);break;
+     case A_8BIT: *buffer=(int8_t *)getmem(xsize*ysize+512+16);break;
+     case A_16BIT: *buffer=(int8_t *)getmem(xsize*ysize*2+16);break;
+     case A_FADE_PAL: *buffer=(int8_t *)getmem(xsize*ysize+SHADE_PAL+16);break;
+     case A_8BIT_NOPAL: *buffer=(int8_t *)getmem(xsize*ysize+16);break;
+     case A_NORMAL_PAL: *buffer=(int8_t *)getmem(xsize*ysize+16+768);break;
      default: return -2; //invalid type specificied
      }
   ptr1=*buffer;
-  *(unsigned short *)ptr1++=xsize;ptr1++;
-  *(unsigned short *)ptr1++=ysize;ptr1++;
-  *(unsigned short *)ptr1++=conv_type;ptr1++;
+  *(uint16_t *)ptr1++=xsize;ptr1++;
+  *(uint16_t *)ptr1++=ysize;ptr1++;
+  *(uint16_t *)ptr1++=conv_type;ptr1++;
   pcx+=sizeof(pcxdata);ptr3=pcx;
   if (conv_type==A_NORMAL_PAL)
      {
@@ -178,7 +174,7 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
 
      i=(int *)&buffer;i++;
      tr=*i++;tg=*i++;tb=*i++;
-     palette_shadow(paleta1,(unsigned short (*)[256])ptr1,tr,tg,tb);
+     palette_shadow(paleta1,(uint16_t (*)[256])ptr1,tr,tg,tb);
      ptr1+=SHADE_PAL;
      }
   ysize++;
@@ -187,7 +183,7 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
      int step;
      if (conv_type==A_16BIT)
         {
-        decomprimate_line_hi(ptr3,(unsigned short *)ptr1,paleta2,pcxdata.bytesperline,&step);
+        decomprimate_line_hi(ptr3,(uint16_t *)ptr1,paleta2,pcxdata.bytesperline,&step);
         ptr1+=2*xsize;
         }
      else
@@ -201,10 +197,10 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
 
 }
 
-int open_pcx(char *filename,int type,char **buffer,...)
+int open_pcx(char *filename,int type,int8_t **buffer,...)
   {
   FILE *pcx;
-  char *src;
+  int8_t *src;
   long fsize;
 
   pcx=fopen(filename,"rb");
@@ -212,7 +208,7 @@ int open_pcx(char *filename,int type,char **buffer,...)
   fseek(pcx,0,SEEK_END);
   fsize=ftell(pcx);
   fseek(pcx,0,SEEK_SET);
-  src=(char *)getmem(fsize);
+  src=(int8_t *)getmem(fsize);
   fread(src,1,fsize,pcx);
   fsize=load_pcx(src,fsize,type,buffer,*((int *)&buffer+1),*((int *)&buffer+2),*((int *)&buffer+3));
   fclose(pcx);
@@ -224,7 +220,7 @@ int open_pcx(char *filename,int type,char **buffer,...)
 
 main()
   {
-  char *buf;
+  int8_t *buf;
 
   initmode32b();
   open_pcx("DESK.pcx",A_8BIT,&buf,0,0,0);

@@ -20,17 +20,15 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "libs/bgraph.h"
 #include <malloc.h>
 #include <string.h>
 #include "libs/memman.h"
-//#include "libs/mem.h"
 #include "libs/mgifmem.h"
 #include "libs/event.h"
-//#include <i86.h>
 #include <math.h>
 #include "libs/bmouse.h"
 #include "game/engine1.h"
@@ -126,7 +124,7 @@
 #define FLG_SCORE      0x80000 //zapnute ukazovani score nad potvorama.
 #define FLG_HALUCINACE 0x100000 // zapne halucinaci
 
-#define GET_WORD(c) *(word *)c;c+=2
+#define GET_WORD(c) *(uint16_t *)c;c+=2
 
 #define MAX_SPELLS 500
 
@@ -134,17 +132,17 @@ char running_anm=0;
 
 char hlubina_level=0;
 
-word *anim_render_buffer;
+uint16_t *anim_render_buffer;
 
 short teleport_target=0; //cil teleportace
 
 typedef struct tteleportlocation
 {
-  short loc_x;
-  short loc_y;
+  int16_t loc_x;
+  int16_t loc_y;
   const char *map;
-  word sector;
-  word dir;
+  uint16_t sector;
+  uint16_t dir;
 }TTELEPLOCATION;
 
 static TTELEPLOCATION TelepLocation;
@@ -152,18 +150,18 @@ static TTELEPLOCATION TelepLocation;
 #pragma pack(1)
 typedef struct tkouzlo
   {
-  word num,um,mge;
-  word pc;
-  short owner,accnum;     //accnum = akumulacni cislo, owner = kdo kouzlo seslal
-  int start;
-  short cil;    //kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
-  char povaha;
-  word backfire; //backfire / 1 = demon , 0 = bez demona
-  word wait;   //wait - cekani pocet animaci
-  word delay;  //delay - cekani pocet kol
-  char traceon;    //jinak noanim - neprehravaji se animace a zvuky
+  uint16_t num,um,mge;
+  uint16_t pc;
+  int16_t owner,accnum;     //accnum = akumulacni cislo, owner = kdo kouzlo seslal
+  int32_t start;
+  int16_t cil;    //kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
+  int8_t povaha;
+  uint16_t backfire; //backfire / 1 = demon , 0 = bez demona
+  uint16_t wait;   //wait - cekani pocet animaci
+  uint16_t delay;  //delay - cekani pocet kol
+  int8_t traceon;    //jinak noanim - neprehravaji se animace a zvuky
   char spellname[28];
-  word teleport_target;
+  uint16_t teleport_target;
   }TKOUZLO;
 #pragma option align=reset
 
@@ -179,7 +177,7 @@ char twins;
 
 static short rand_value;
 
-//static word *paleta;
+//static uint16_t *paleta;
 
 void show_full_lfb12e(void *target,void *buff,void *paleta);
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
@@ -340,7 +338,7 @@ void spell_sound(char *name)
   play_sample_at_channel(i,0,100);
   }
 
-void get_sector_dir(int cil,word *sector,char *dir)
+void get_sector_dir(int cil,uint16_t *sector,char *dir)
   {
   if (cil>0)
      {
@@ -451,7 +449,7 @@ static void spell_vzplanuti(int cil,int count,int hit,char mode,char zivel)
 
 void spell_create(int cil,int what)
   {
-  word sector=0;
+  uint16_t sector=0;
   char dir;
   short p[2];
 
@@ -484,7 +482,7 @@ void spell_create_weapon(int cil,int what)
 
 void spell_throw(int cil,int what)
   {
-  word sector=0;
+  uint16_t sector=0;
   char dir;
   LETICI_VEC *fly;
 
@@ -1624,9 +1622,9 @@ char ask_who(int num)
   return 0;
   }
 
-static word last_sector;
+static uint16_t last_sector;
 
-static char get_valid_sector(word sector)
+static char get_valid_sector(uint16_t sector)
   {
 
   last_sector=sector;

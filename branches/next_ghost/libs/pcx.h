@@ -23,6 +23,8 @@
 #ifndef _PCX_H_
 #define _PCX_H_
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,24 +39,24 @@ extern "C" {
 
   typedef struct pcxrecord
      {
-     unsigned short id;
-     char encoding;
-     char bitperpixel;
-     unsigned short xmin,ymin,xmax,ymax;
-     unsigned short hdpi,vdpi;
-     char colormap[48];
-     char reserved;
-     char mplanes;
-     unsigned short bytesperline;
-     unsigned short paleteinfo;
-     unsigned short hscreen,vscreen;
-     char filler[54];
+     uint16_t id;
+     int8_t encoding;
+     int8_t bitperpixel;
+     uint16_t xmin,ymin,xmax,ymax;
+     uint16_t hdpi,vdpi;
+     int8_t colormap[48];
+     int8_t reserved;
+     int8_t mplanes;
+     uint16_t bytesperline;
+     uint16_t paleteinfo;
+     uint16_t hscreen,vscreen;
+     int8_t filler[54];
      }PCXHEADER;
 
 
-int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... );
-int open_pcx(char *filename,int type,char **buffer,...);
-void palette_shadow(unsigned char *pal1,unsigned short pal2[][256],int tr,int tg,int tb);
+int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... );
+int open_pcx(char *filename,int type,int8_t **buffer,...);
+void palette_shadow(uint8_t *pal1,uint16_t pal2[][256],int tr,int tg,int tb);
 extern void *get_palette_ptr;
 
 #pragma option align=reset

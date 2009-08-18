@@ -22,11 +22,13 @@
  */
 //!!!! POZOR, NUTNE LINKOVAT SOUBOR LZWA.ASM
 #ifndef _MGIFMEM_H
+#define _MGIFMEM_H
+
+#include <inttypes.h>
 
 #pragma pack(1)
 typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data akce
 
-#define _MGIFMEM_H
 #define MGIF "MGIF"
 #define MGIF_Y "97"
 #define VER 0x100
@@ -46,13 +48,13 @@ typedef struct mgif_header
     {
     char sign[4];
     char year[2];
-    char eof;
-    word ver;
-    long frames;
-    word snd_chans;
-    int snd_freq;
-    short ampl_table[256];
-    short reserved[32];
+    int8_t eof;
+    uint16_t ver;
+    int32_t frames;
+    uint16_t snd_chans;
+    int32_t snd_freq;
+    int16_t ampl_table[256];
+    int16_t reserved[32];
     }MGIF_HEADER_T;
 
 

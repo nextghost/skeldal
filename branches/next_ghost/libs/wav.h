@@ -33,8 +33,8 @@
 
 typedef struct t_wave
   {
-  unsigned short wav_mode,chans;
-  long freq,bps;
+  uint16_t wav_mode,chans;
+  int32_t freq,bps;
   }T_WAVE;
 
 int find_chunk(FILE *riff,char *name); //-1 neuspech, jinak pozice

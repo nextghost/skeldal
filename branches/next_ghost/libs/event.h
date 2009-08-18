@@ -22,6 +22,9 @@
  */
 #ifndef __EVENT_H
 #define __EVENT_H
+
+#include <inttypes.h>
+
 //#define nodebug  // 0 znamena ze se nealokuje udalost pro chybu
 // Tato knihovna definuje zakladni systemove konstanty
 // pro system hlaseni a udalosti
@@ -93,24 +96,24 @@ typedef struct t_event_point
   {
   EV_PROC proc;
   void *user_data;
-  char nezavora;
-  char nezavirat;
-  int calls;
+  int8_t nezavora;
+  int8_t nezavirat;
+  int32_t calls;
   struct t_event_point *next;
   }T_EVENT_POINT;
 
 
 typedef struct t_event_root
   {
-  int event_msg;
-  int used;
+  int32_t event_msg;
+  int32_t used;
   struct t_event_root *next;
   T_EVENT_POINT *list;
   }T_EVENT_ROOT;
 
 typedef struct event_msg
   {
-  long msg;
+  int32_t msg;
   void *data;
   }EVENT_MSG;
 

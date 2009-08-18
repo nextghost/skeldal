@@ -20,11 +20,9 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 //Gui system - object system + graphic
-#include "libs/types.h"
+#include <inttypes.h>
 #include <stdio.h>
-//#include "libs/mem.h"
 #include <malloc.h>
 #include <string.h>
 #include "libs/memman.h"
@@ -45,10 +43,10 @@ WINDOW *desktop={NULL},*waktual={NULL};;
 OBJREC *o_aktual={NULL},*o_end={NULL},*o_start={NULL};
 CTL3D noneborder={0,0,0,0};
 FC_TABLE f_default;
-word desktop_y_size;
+uint16_t desktop_y_size;
 char force_redraw_desktop=0;
 static char change_flag=0,f_cancel_event=0;
-word *default_font;
+uint16_t *default_font;
 void empty()
   {
   }
@@ -72,9 +70,9 @@ void empty2(int x1,int y1,int x2,int y2,OBJREC *o)
 
 
 
-void draw_border(integer x,integer y,integer xs,integer ys,CTL3D *btype)
+void draw_border(int16_t x,int16_t y,int16_t xs,int16_t ys,CTL3D *btype)
   {
-  word i,j,c;
+  uint16_t i,j,c;
 
   c=curcolor;
   j=btype->ctldef;
@@ -116,7 +114,7 @@ void draw_cl_window(WINDOW *o)
 
 
 
-WINDOW *create_window(int x,int y, int xs, int ys, word color, CTL3D *okraj)
+WINDOW *create_window(int x,int y, int xs, int ys, uint16_t color, CTL3D *okraj)
   {
   WINDOW *p;
 
@@ -245,10 +243,10 @@ void absolute_window(WINDOW *w,OBJREC *o, int *x, int *y)
      }
   }
 
-  void disable_bar(int x,int y,int xs,int ys,word color)
+  void disable_bar(int x,int y,int xs,int ys,uint16_t color)
      {
      int i,j;
-     word *a;
+     uint16_t *a;
 
      for (i=y;i<=y+ys;i++)
         {
@@ -389,7 +387,7 @@ void define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC 
   add_to_idlist(o);
   }
 
-CTL3D *border(word light,word shadow, word bsize, word btype)
+CTL3D *border(uint16_t light,uint16_t shadow, uint16_t bsize, uint16_t btype)
   {
   static CTL3D p;
 
@@ -397,7 +395,7 @@ CTL3D *border(word light,word shadow, word bsize, word btype)
   return &p;
   }
 
-void property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color)
+void property(CTL3D *ctl,uint16_t *font,FC_TABLE *fcolor,uint16_t color)
   {
   if (ctl!=NULL) memcpy(&o_end->border3d,ctl,sizeof(CTL3D));
   if (font!=NULL) o_end->font=font;
@@ -405,7 +403,7 @@ void property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color)
   if (color!=0xffff) o_end->color=color;
   }
 
-FC_TABLE *flat_color(word color)
+FC_TABLE *flat_color(uint16_t color)
   {
   static FC_TABLE p;
 
@@ -613,7 +611,7 @@ void do_it_events(EVENT_MSG *msg,void **user_data)
   MS_EVENT *msev;
   EVENT_MSG msg2;
   char b;
-  static word cursor_tick=CURSOR_SPEED
+  static uint16_t cursor_tick=CURSOR_SPEED
   OBJREC *p;
   char *oz=otevri_zavoru;
 

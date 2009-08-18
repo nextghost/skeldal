@@ -20,23 +20,19 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <debug.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
-//#include "libs/mem.h"
+#include <inttypes.h>
 #include "libs/memman.h"
 #include "libs/sound.h"
 #include "libs/wav_mem.h"
 #include "libs/event.h"
 #include "game/globals.h"
 #include <math.h>
-//#include <i86.h>  //Sound and Nosound
 #include "libs/strlite.h"
 #include "libs/system.h"
-//#include <io.h>
 
 #define PL_RANDOM 1
 #define PL_FORWARD 2
@@ -54,8 +50,8 @@ typedef unsigned short SND_FIND_TABLE[2];
 typedef struct snd_info
   {
   TMA_SOUND *data;              //4
-  short xpos,ypos,side;         //10
-  word volume,block;            //14
+  int16_t xpos,ypos,side;         //10
+  uint16_t volume,block;            //14
   }SND_INFO;
 
 static short chan_state[CHANNELS];
@@ -69,7 +65,7 @@ static char sound_enabled=1;
 
 SND_INFO tracks[TRACKS];
 SND_INFO playings[CHANNELS];
-static word locks[32];
+static uint16_t locks[32];
 
 TSTR_LIST cur_playlist=NULL;
 TSTR_LIST sound_table=NULL;

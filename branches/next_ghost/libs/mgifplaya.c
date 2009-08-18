@@ -20,15 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdlib.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/mgfplay.h"
 #include "libs/bgraph.h"
 
 
 
-void show_full_interl_lfb(byte *source,word *target,word *palette, long linelen)
+void show_full_interl_lfb(uint8_t *source,uint16_t *target,uint16_t *palette, long linelen)
   {  
   int sslinelen=2*linelen-1280;
 /*
@@ -73,7 +72,7 @@ shfif1: lodsb
   }
 //#pragma aux show_full_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
 /*
-void show_delta_interl_lfb(byte *source,word *target,word *palette, long linelen)
+void show_delta_interl_lfb(uint8_t *source,uint16_t *target,uint16_t *palette, long linelen)
   {  
   int sslinelen=2*linelen;
   __asm
@@ -140,7 +139,7 @@ konec:
 */
 //#pragma aux show_delta_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
 
-void show_full_lfb12e(word *target,byte *buff,word *paleta)
+void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta)
   {
 /*
   __asm
@@ -179,7 +178,7 @@ shfl1:  lodsw
   }   
 // show_delta_lfb12e() is similar to small_anm_delta in game/engine2.c - merge?
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
-void show_delta_lfb12e(word *target,byte *buff,word *paleta)
+void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta)
   {
 /*
   __asm
@@ -239,8 +238,8 @@ konec:
 
 	// TODO: needs testing
 	unsigned int i, j, k;
-	byte *map = buff + 4;
-	word *tmp;
+	uint8_t *map = buff + 4;
+	uint16_t *tmp;
 	buff += 4 + *(unsigned int*)buff;
 
 	for (i = 0; i < 180; i += j) {

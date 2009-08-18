@@ -20,22 +20,17 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <conio.h>
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -67,7 +62,7 @@
 #define HUMAN_ADJUST 97
 
 /*
-word barvy_skupin[POCET_POSTAV+1]=
+uint16_t barvy_skupin[POCET_POSTAV+1]=
          {
          RGB555(8,8,8),
          RGB555(31,28,00),
@@ -78,14 +73,14 @@ word barvy_skupin[POCET_POSTAV+1]=
          RGB555(00,29,26)
          };
 */
-word barvy_skupin[POCET_POSTAV+1];
+uint16_t barvy_skupin[POCET_POSTAV+1];
 
 char reverse_draw=0;
 int viewsector=1,viewdir=1;
 char norefresh=0,cancel_render=0,map_state=0;
 int cur_sector; //sektor aktualni pozice
 int back_color;
-byte global_anim_counter=0;
+uint8_t global_anim_counter=0;
 char one_buffer=0;
 char set_halucination=0;
 int hal_sector;
@@ -110,7 +105,7 @@ static int showruneitem=0;
 
 
 char dirs[10];
-word minimap[VIEW3D_Z+1][VIEW3D_X*2+1];
+uint16_t minimap[VIEW3D_Z+1][VIEW3D_X*2+1];
 
 
 
@@ -140,7 +135,7 @@ void Builder_Init(void) {
 	barvy_skupin[6] = RGB555(0,29,26);
 }
 
-void add_spectxtr(word sector,word fhandle,word count,word repeat,integer xpos)
+void add_spectxtr(uint16_t sector,uint16_t fhandle,uint16_t count,uint16_t repeat,int16_t xpos)
   {
   SPECTXTR *sp=spectxtr+spt_ptr;
 
@@ -169,7 +164,7 @@ void calc_spectxtrs(void)
      }
   }
 
-static void draw_spectxtrs(word sector,int celx,int cely)
+static void draw_spectxtrs(uint16_t sector,int celx,int cely)
   {
   int i;
   char a=1;
@@ -287,7 +282,7 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet)
 	static int block;
 	static int dostal;
 	char s[20];
-	word *adr;
+	uint16_t *adr;
 	int i;
 
 	mob_dostal_pocet;
@@ -308,11 +303,11 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet)
 	set_aligned_position(60+520,51+378,1,1,s);outtext(s);
 	}
 
-word *bott_clear(void)
+uint16_t *bott_clear(void)
   {
-  word *bott_scr;
+  uint16_t *bott_scr;
 
-  bott_scr=(word *)getmem(Screen_GetXSize()*104*2);
+  bott_scr=(uint16_t *)getmem(Screen_GetXSize()*104*2);
 //  memset(bott_scr,0,_msize(bott_scr));
   memset(bott_scr,0,Screen_GetXSize()*104*2);
   return bott_scr;
@@ -320,7 +315,7 @@ word *bott_clear(void)
 
 static void draw_small_icone(int num,int x,int y)
   {
-  word *pic;
+  uint16_t *pic;
 
   pic=ablock(H_POSTUP);
   num*=13;x+=num;
@@ -329,7 +324,7 @@ static void draw_small_icone(int num,int x,int y)
 
 static void bott_fletna_normal(void **pp,long *s)
   {
-  word *bott_scr;
+  uint16_t *bott_scr;
   int i,x;
   bott_scr=bott_clear();
   Screen_SetAddr(bott_scr);
@@ -349,7 +344,7 @@ static void bott_fletna_normal(void **pp,long *s)
 static void bott_draw_normal(void **pp,long *s)
   {
   int i,j;int x,xs=0,y;
-  word *bott_scr;
+  uint16_t *bott_scr;
   THUMAN *p;
 
   bott_scr=bott_clear();
@@ -426,7 +421,7 @@ static void bott_draw_normal(void **pp,long *s)
      }
 /*  if (mob_dostal)
         {
-        word *w;
+        uint16_t *w;
         char s[40];
 
         w=ablock(H_MZASAH1+mob_dostal-1);
@@ -495,11 +490,11 @@ void bott_disp_text(char *text)
   strcpy(bott_text,text);
   }
 
-static void MaskPutPicture(int x, int y, char mask, word color, char blend, void *pic)
+static void MaskPutPicture(int x, int y, char mask, uint16_t color, char blend, void *pic)
   {
   short *info=(short *)pic;
   char *data=(char *)(info+3+256);
-  word *pos=Screen_GetAddr()+x+y*Screen_GetXSize(); 
+  uint16_t *pos=Screen_GetAddr()+x+y*Screen_GetXSize(); 
 //  if (blend) color=color & 0xF7DE;
   for (y=0;y<info[1];y++,pos+=Screen_GetXSize(),data+=info[0])	
 	for (x=0;x<info[0];x++)
@@ -597,7 +592,7 @@ void bott_draw_fletna()
 void draw_spell(int handle,int phase,int xicht)
   {
   int x,y,i;
-  word *w;
+  uint16_t *w;
 
   if (bott_display!=BOTT_NORMAL) bott_draw(1);
   for(i=0;i<POCET_POSTAV;i++)
@@ -757,10 +752,10 @@ static void *check_autofade(void *image, char ceil, int dark)
   unsigned char *data=image;
   if (data[5]==0x80) 
   {
-    word *xy=(word *)image;
+    uint16_t *xy=(uint16_t *)image;
 	if (mglob.map_autofadefc==1)
 	{
-	  word *imgdata=xy+3;
+	  uint16_t *imgdata=xy+3;
 /*
 	  int br=back_color>>11;
 	  int bg=(back_color>>5) & 0x1F;
@@ -1081,7 +1076,7 @@ static  char set_blind(void)
 
 extern char folow_mode;
 
-static void zobraz_lodku(word *lodka, word *screen, int size)
+static void zobraz_lodku(uint16_t *lodka, uint16_t *screen, int size)
   {
   int x;
   while (size)
@@ -1096,7 +1091,7 @@ static void zobraz_lodku(word *lodka, word *screen, int size)
 	}
   }
 /*
-static __inline void zobraz_lodku(word *data,word *scr,int _size)
+static __inline void zobraz_lodku(uint16_t *data,uint16_t *scr,int _size)
   {
   __asm
     {
@@ -1139,7 +1134,7 @@ static void trace_for_bgr(int dir)
 			{
 			if (bgr_distance==-1)
 				{
-				word *w=Screen_GetAddr();int i=Screen_GetXSize()*480;
+				uint16_t *w=Screen_GetAddr();int i=Screen_GetXSize()*480;
 				do {if (*w>=NOSHADOW(0)) *w=back_color;w++;} while(--i);
 				}
 			zneplatnit_block(H_BGR_BUFF);
@@ -1188,7 +1183,7 @@ void render_scene(int sector, int smer)
   else*/
   for(i=VIEW3D_Z-1;i>=0;i--)
      {
-        word *p;
+        uint16_t *p;
 
         p=minimap[i];
         left_shiftup=0;right_shiftup=0;
@@ -1308,7 +1303,7 @@ void refresh_scene()
 
 typedef struct fx_play
   {
-  int x,y,phase;
+  int32_t x,y,phase;
   struct fx_play *next;
   }FX_PLAY;
 
@@ -1316,7 +1311,7 @@ static FX_PLAY *fx_data=NULL;
 
 void draw_fx()
   {
-  word *c;
+  uint16_t *c;
   FX_PLAY *fx;
   FX_PLAY **last;
 
@@ -1352,8 +1347,8 @@ void play_fx(int x,int y)
 
 void play_fx_at(int where)
   {
-  static word polex[]={313,290,362};
-  static word poley[]={1,1,1};
+  static uint16_t polex[]={313,290,362};
+  static uint16_t poley[]={1,1,1};
 
   play_fx(polex[where],poley[where]);
   }

@@ -20,17 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <bios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "libs/event.h"
-//#include <conio.h>
 #include "libs/sound.h"
 #include "libs/bgraph.h"
 #include "libs/bmouse.h"
-//#include "libs/mem.h"
 #include <malloc.h>
 #include "libs/memman.h"
 #include <math.h>
@@ -103,7 +100,7 @@ long level_map[]=
 
 #define MAX_WEAPON_SKILL 10
 
-word weapon_skill[]=         //tabulka poctu uspesnych zasahu pro kazdy level
+uint16_t weapon_skill[]=         //tabulka poctu uspesnych zasahu pro kazdy level
    {
    20,    //level 1
    40,        //  2
@@ -1109,8 +1106,8 @@ void pouzij_zbran(THUMAN *p,int ruka)
   bott_draw(0);
   }
 
-static word last_sector;
-static char valid_sectors(word sector)
+static uint16_t last_sector;
+static char valid_sectors(uint16_t sector)
   {
   int pp;
   int i;
@@ -1126,7 +1123,7 @@ static char valid_sectors(word sector)
 
 static char StrachPostavy(THUMAN *p)
 {
-  word *cesta;
+  uint16_t *cesta;
   int i;
   int ln;
   int wf=weigth_defect(p)+1;
@@ -1347,7 +1344,7 @@ void fill_rune(char *d,int i)
   dd=((char *)d)+6+512;
         for(y=378;y<480;y++)
            {
-           word *z;
+           uint16_t *z;
            z=Screen_GetAddr()+y*Screen_GetXSize();
            for(x=520;x<640;x++)
               if (*dd++==i) z[x]=z[x]-((z[x] & RGB555(28,28,28))>>2);
@@ -1437,7 +1434,7 @@ char ask_who_proc(int id,int xa,int ya,int xr,int yr)
   {
   THUMAN *p;
   int i;
-  word *xs;
+  uint16_t *xs;
 
   xs=ablock(H_OKNO);
   i=xr/xs[0];yr;xa;ya;id;
@@ -1770,10 +1767,10 @@ char mask_click_help(int id,int xa,int ya,int xr,int yr)
   {
   char *c;
   int d;
-  word *mask;
+  uint16_t *mask;
 
   id;xa;ya;
-  mask=(word *)ablock(H_BATTLE_MASK);
+  mask=(uint16_t *)ablock(H_BATTLE_MASK);
   c=(char *)mask+6+512;
   c+=yr*mask[0]+xr;
   d=*c;
@@ -1847,10 +1844,10 @@ char mask_click(int id,int xa,int ya,int xr,int yr)
   {
   char *c;
   int d;
-  word *mask;
+  uint16_t *mask;
 
   id;xa;ya;
-  mask=(word *)ablock(H_BATTLE_MASK);
+  mask=(uint16_t *)ablock(H_BATTLE_MASK);
   c=(char *)mask+6+512;
   c+=yr*mask[0]+xr;
   d=*c;

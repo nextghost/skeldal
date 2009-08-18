@@ -26,15 +26,12 @@
 #include <math.h>
 #include <string.h>
 #include "game/engine1.h"
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "libs/pcx.h"
 #include "globals.h"
@@ -54,21 +51,21 @@
 #define MEDIUM_MAP_LINE2 RGB555(31,22,6)
 
 /*
-word stairs_colors[]=
+uint16_t stairs_colors[]=
   {AUTOMAP_LINE1,
    RGB555(14,12,11),
    RGB555(15,14,12),
    RGB555(16,15,12),
    RGB555(17,16,13)};
 
-word arrow_colors[]=
+uint16_t arrow_colors[]=
   {
   AUTOMAP_LINE1,
   AUTOMAP_FORE
   };
 */
-word stairs_colors[5];
-word arrow_colors[2];
+uint16_t stairs_colors[5];
+uint16_t arrow_colors[2];
 
 char shift_map(int id,int xa,int ya,int xr,int yr);
 char psani_poznamek(int id,int xa,int ya,int xr,int yr);
@@ -516,8 +513,8 @@ static void zobraz_herni_cas(void)
   }
 
 
-extern word color_butt_on[];
-extern word color_butt_off[];
+extern uint16_t color_butt_on[];
+extern uint16_t color_butt_off[];
 
 static void displ_button(char disable,char **text)
   {
@@ -552,7 +549,7 @@ void draw_automap(int xr,int yr)
   int i,k,x,y,xp,yp;
   int depth;
   TSTENA *q;
-  word *s;
+  uint16_t *s;
 
   update_mysky();
   schovej_mysku();
@@ -806,7 +803,7 @@ static void wire_glob_map_control()
 char map_menu(int id,int xa,int ya,int xr,int yr)
   {
   char *s;
-  word *c;
+  uint16_t *c;
 
   ya;xa;id;
   id=set_select_mode(0);
@@ -938,7 +935,7 @@ void map_teleport_keyboard(EVENT_MSG *msg,void **usr)
   }
 
 
-static char path_ok(word sector)
+static char path_ok(uint16_t sector)
   {
   map_coord[sector].flags|=MC_MARKED;
   return 1;

@@ -20,17 +20,15 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/bgraph.h"
-//#include <debug.h>
 
 
 void bar32(int x1,int y1, int x2, int y2)
   {
-  word *begline;
+  uint16_t *begline;
   int i,j;
 
   int mx =  Screen_GetXSize() - 1;
@@ -50,7 +48,7 @@ void bar32(int x1,int y1, int x2, int y2)
 
 void hor_line32(int x1,int y1,int x2)
   {
-  word *begline;
+  uint16_t *begline;
   int i;
   unsigned long curcolor2=curcolor | (curcolor<<16);
 
@@ -71,7 +69,7 @@ void ver_line32(int x1,int y1,int y2)
   int mx =  Screen_GetXSize() - 1;
   int my =  Screen_GetYSize() - 1;
 
-  word *begline;
+  uint16_t *begline;
   int i;
   if (y1>y2) swap_int(y1,y2);
   if (x1<0 || x1>mx) return;
@@ -83,7 +81,7 @@ void ver_line32(int x1,int y1,int y2)
   
 void hor_line_xor(int x1,int y1,int x2)
   {
-  word *begline;
+  uint16_t *begline;
   int i;
   unsigned long curcolor2=curcolor | (curcolor<<16);
 
@@ -101,7 +99,7 @@ void hor_line_xor(int x1,int y1,int x2)
 
 void ver_line_xor(int x1,int y1,int y2)
   {
-  word *begline;
+  uint16_t *begline;
   int i;
 
   int mx =  Screen_GetXSize() - 1;
@@ -139,18 +137,18 @@ void line_32(int x,int y,int xs,int ys)
   }
 
 // draw character
-void char_32(word *posit,word *font,byte znak)
+void char_32(uint16_t *posit,uint16_t *font,uint8_t znak)
   {
 	if (!font[znak]) {
 		return;
 	}
 
 	int x,y;
-	word size, zstart = font[znak];
-	byte tmp = 0, *data = (byte*)font;
+	uint16_t size, zstart = font[znak];
+	uint8_t tmp = 0, *data = (uint8_t*)font;
 
 	data += zstart;
-	size = *(word*)data;
+	size = *(uint16_t*)data;
 	data += 2;
 
 	for (x = 0; x < (size & 0xff); x++) {
@@ -179,7 +177,7 @@ void char_32(word *posit,word *font,byte znak)
   }
 
 // Draw double sized character
-void char2_32(word *posit,word *font,byte znak)
+void char2_32(uint16_t *posit,uint16_t *font,uint8_t znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
 /*
@@ -241,11 +239,11 @@ chr2end:              ;konec
 	// TODO: needs testing
 	if (!font[znak]) return;
 	int x,y;
-	word size, zstart = font[znak];
+	uint16_t size, zstart = font[znak];
 	unsigned char tmp = 0, *data = (unsigned char *)font;
 
 	data += zstart;
-	size = *(word*)font;
+	size = *(uint16_t*)font;
 	data += 2;
 
 	for (x = 0; x < (size & 0xff); x++) {
@@ -274,8 +272,8 @@ chr2end:              ;konec
 	}
   }
 
-// get size word of selected character
-word charsize(word *font,byte znak)
+// get size uint16_t of selected character
+uint16_t charsize(uint16_t *font,uint8_t znak)
   {
 //#pragma aux charsize parm [esi] [eax]
 /*
@@ -298,19 +296,19 @@ chsend: and     eax,0ffffh
 
 	// TODO: needs testing
 	unsigned char *data = (unsigned char *)font;
-	return font[znak] ? *(word*)(data+font[znak]) : 0;
+	return font[znak] ? *(uint16_t*)(data+font[znak]) : 0;
   }
 
-void put_picture(word x,word y,void *p)
+void put_picture(uint16_t x,uint16_t y,void *p)
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
   {
-  word *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
-  word *data=p;
-  word xs=data[0];
-  word ys=data[1];
-  word mode=data[2];
-  word xss=xs;
-  word yss=ys;
+  uint16_t *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
+  uint16_t *data=p;
+  uint16_t xs=data[0];
+  uint16_t ys=data[1];
+  uint16_t mode=data[2];
+  uint16_t xss=xs;
+  uint16_t yss=ys;
 
   if (x+xss>=Screen_GetXSize()) xss=Screen_GetXSize()-x;
   if (y+yss>=Screen_GetYSize()) yss=Screen_GetYSize()-y;
@@ -343,8 +341,8 @@ void put_picture(word x,word y,void *p)
     }
   if (mode==8 || mode==264)
     {
-    word *table=data;
-    byte *cdata=(byte*)(data+(mode==264?10*256:256));
+    uint16_t *table=data;
+    uint8_t *cdata=(uint8_t*)(data+(mode==264?10*256:256));
     int i;
     int j;
     
@@ -359,7 +357,7 @@ void put_picture(word x,word y,void *p)
     }
   else if (mode==512 )
     {
-    word *table=data;
+    uint16_t *table=data;
     char *cdata=(char *)(data+256);
     int i;
     int j;
@@ -373,12 +371,12 @@ void put_picture(word x,word y,void *p)
         }
     }
   }
-void get_picture(word x,word y,word xs,word ys,void *p)
+void get_picture(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys,void *p)
   {
-  word *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
-  word *data=p;
-  word xss=xs;
-  word yss=ys;
+  uint16_t *adr=Screen_GetAddr()+Screen_GetXSize()*y+x;
+  uint16_t *data=p;
+  uint16_t xss=xs;
+  uint16_t yss=ys;
 
   if (x+xss>=Screen_GetXSize()) xss=Screen_GetXSize()-x;
   if (y+yss>=Screen_GetYSize()) yss=Screen_GetYSize()-y;
@@ -401,7 +399,7 @@ void get_picture(word x,word y,word xs,word ys,void *p)
   }
 
 // image: 16bit full color
-void put_image(word *image,word *target,int start_line,int sizex,int sizey)
+void put_image(uint16_t *image,uint16_t *target,int start_line,int sizex,int sizey)
 //#pragma aux put_image parm [ESI][EDI][EAX][EBX][EDX] modify [ECX]
   {
 /*
@@ -446,19 +444,19 @@ puti_lp:mov     ecx,ebx
 	image += start_line * line_length + 3;
 
 	for (i = 0; i < sizey; i++) {
-		memcpy(target + i*Screen_GetXSize(), image + i*line_length, sizex * sizeof(word));
+		memcpy(target + i*Screen_GetXSize(), image + i*line_length, sizex * sizeof(uint16_t));
 	}
   }
 
 // src: 8bit image with simple palette
-void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely) {
+void put_8bit_clipped(uint16_t *src,uint16_t *trg,int startline,int velx,int vely) {
 	if (src==NULL) {
 		return;
 	}
 
 	int x, y, line_length = *src;
-	word *pal = src + 3;
-	byte *data = (byte*)(src + 259);
+	uint16_t *pal = src + 3;
+	uint8_t *data = (uint8_t*)(src + 259);
 	data += startline * line_length;
 
 	for (y = 0; y < vely; y++) {
@@ -471,7 +469,7 @@ void put_8bit_clipped(word *src,word *trg,int startline,int velx,int vely) {
   }
 
 // src: 8bit image with simple palette
-void put_textured_bar_(word *src,word *trg,int xsiz,int ysiz,int xofs,int yofs)
+void put_textured_bar_(uint16_t *src,uint16_t *trg,int xsiz,int ysiz,int xofs,int yofs)
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
   {
 /*
@@ -552,8 +550,8 @@ ptb_skip2:
 
 	// TODO: needs testing
 	int x, y, line_length = *src, col_length = *(src+1);
-	word *pal = src + 3;
-	byte *data = (byte*)(src + 259);
+	uint16_t *pal = src + 3;
+	uint8_t *data = (uint8_t*)(src + 259);
 
 	for (y = 0; y < ysiz; y++) {
 		for (x = 0; x < xsiz; x++) {
@@ -570,7 +568,7 @@ ptb_skip2:
 
 void trans_bar(int x,int y,int xs,int ys,int barva)
   {
-  word *begline;
+  uint16_t *begline;
   int x1=x;
   int y1=y;
   int x2=x+xs-1;
@@ -604,7 +602,7 @@ void trans_line_y(int x,int y,int ys,int barva)
 
 void trans_bar25(int x,int y,int xs,int ys)
   {
-  word *begline;
+  uint16_t *begline;
   int x1=x;
   int y1=y;
   int x2=x+xs-1;
@@ -636,7 +634,7 @@ void wait_retrace()
 
 // target: 8bit image with shade palette (10*256 colors)
 // source: 8bit image with shade palette
-void put_picture2picture(word *source,word *target,int xp,int yp)
+void put_picture2picture(uint16_t *source,uint16_t *target,int xp,int yp)
 //#pragma aux put_picture2picture parm [ESI][EDI][EAX][EDX] modify [ECX]
   {
 /*
@@ -677,7 +675,7 @@ ppp_trn:inc     edi                             ;dalsi bod
 
 	// TODO: needs testing
 	int x, y, targ_line = *target, line_length = *source, col_length = source[1];
-	byte *src = (byte*)(source + 2563), *dst = (byte*)(target + 2563);
+	uint8_t *src = (uint8_t*)(source + 2563), *dst = (uint8_t*)(target + 2563);
 	dst += targ_line * yp + xp;
 
 	for (y = 0; y < col_length; y++) {

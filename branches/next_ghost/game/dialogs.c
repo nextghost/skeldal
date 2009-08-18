@@ -20,22 +20,18 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include <ctype.h>
 #include "libs/memman.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
-//#include "libs/zvuk.h"
 #include "libs/strlite.h"
 #include "libs/mgifmem.h"
 #include "game/engine1.h"
@@ -49,7 +45,7 @@ typedef struct t_paragraph
   unsigned alt:15;
   unsigned visited:1;
   unsigned first:1;
-  long position;
+  int32_t position;
   }T_PARAGRAPH;
 
 #define STR_BUFF_SIZ 4096
@@ -89,7 +85,7 @@ static char sn_nums[SAVE_POSTS];
 static char sn_nams[SAVE_POSTS][32];
 static char sn_rods[SAVE_POSTS];
 
-static word *back_pic;
+static uint16_t *back_pic;
 static char back_pic_enable=0;
 
 static char showed=0;
@@ -148,18 +144,18 @@ static int glob_y;
 
 static int last_pgf;
 
-static word *paleta;
+static uint16_t *paleta;
 static long loc_anim_render_buffer;
 static short task_num=-1;
 
-void small_anm_buff(word *target,byte *buff,word *paleta);
+void small_anm_buff(uint16_t *target,uint8_t *buff,uint16_t *paleta);
 //#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
-void small_anm_delta(word *target,byte *buff,word *paleta);
+void small_anm_delta(uint16_t *target,uint8_t *buff,uint16_t *paleta);
 //#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
 
 static void animace_kouzla(int act,void *data,int csize)
   {
-  word *p=Screen_GetAddr()+loc_anim_render_buffer;
+  uint16_t *p=Screen_GetAddr()+loc_anim_render_buffer;
   switch (act)
      {
      case MGIF_LZW:
@@ -510,8 +506,8 @@ static void echo(char *c)
      }
   }
 
-#define TEXT_UNSELECT *((word *)ablock(H_DIALOG)+3+254)
-#define TEXT_SELECT *((word *)ablock(H_DIALOG)+3+255)
+#define TEXT_UNSELECT *((uint16_t *)ablock(H_DIALOG)+3+254)
+#define TEXT_SELECT *((uint16_t *)ablock(H_DIALOG)+3+255)
 
 static void redraw_text()
   {
@@ -1008,7 +1004,7 @@ static char ask_who_proc(int id,int xa,int ya,int xr,int yr)
   {
   THUMAN *p;
   int i;
-  word *xs;
+  uint16_t *xs;
 
   if (id==2)
      {
@@ -1055,7 +1051,7 @@ static dlg_ask_who()
   return 0;
   }
 
-extern word weapon_skill[];
+extern uint16_t weapon_skill[];
 
 static void pract(h,vls,how,max)
   {
@@ -1324,10 +1320,10 @@ void do_dialog()
 static void create_back_pic()
   {
   int skpx=4,skpy=5,xp,yp;
-  word *p,*s=Screen_GetAddr()+SCREEN_OFFSET,*s2;
+  uint16_t *p,*s=Screen_GetAddr()+SCREEN_OFFSET,*s2;
 
   schovej_mysku();
-  p=back_pic=NewArr(word,3+340*200);
+  p=back_pic=NewArr(uint16_t,3+340*200);
   *p++=340;
   *p++=200;
   *p++=A_16BIT;

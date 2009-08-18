@@ -25,10 +25,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
-//#include <math.h>
-//#include <bios.h>
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -431,7 +428,7 @@ static char monster_in_game(void)
 
 static char monster_test;
 
-static char is_monster(word sector)
+static char is_monster(uint16_t sector)
   {
   int m1,m2;
   m1=mob_map[sector]-1;
@@ -621,7 +618,7 @@ static ma_play_anim(char *filename,char cls)
   wire_main_functs();
   }
 
-static char ma_control_mob_control(word sector)
+static char ma_control_mob_control(uint16_t sector)
   {
   sector;
   return 1;
@@ -629,7 +626,7 @@ static char ma_control_mob_control(word sector)
 
 static void ma_control_mob(int from,int to)
   {
-  word *path;
+  uint16_t *path;
   int m;
 
   if (mob_map[from]==0) return;

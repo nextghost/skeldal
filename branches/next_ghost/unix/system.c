@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <inttypes.h>
 
 #include "libs/system.h"
 #include "game/globals.h"
@@ -172,12 +173,12 @@ void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs,
 }
 
 // FIXME: move this to generic renderer
-void Screen_StripBlt(word *data, unsigned int startline, unsigned long width) {
+void Screen_StripBlt(uint16_t *data, unsigned int startline, unsigned long width) {
 	int i;
-	word *dst = Screen_GetAddr() + startline * Screen_GetXSize();
+	uint16_t *dst = Screen_GetAddr() + startline * Screen_GetXSize();
 
 	for (i = 0; i < width; i++) {
-		memcpy(dst, data, 640 * sizeof(word));
+		memcpy(dst, data, 640 * sizeof(uint16_t));
 		data += 640;
 		dst += Screen_GetXSize();
 	}

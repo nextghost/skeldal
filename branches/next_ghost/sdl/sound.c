@@ -23,12 +23,12 @@
 
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 #include <SDL/SDL.h>
 #include "libs/system.h"
-#include "libs/types.h"
 
 typedef struct {
-	short *buff;
+	int16_t *buff;
 	unsigned size, readoff, writeoff;
 	SDL_AudioSpec *hw;
 } ringbuffer_t;
@@ -96,7 +96,7 @@ void *PrepareVideoSound(int mixfreq, int buffsize) {
 	return ret;
 }
 
-char LoadNextVideoFrame(void *ptr, byte *data, int size, short *samples, short *accnums, long *writepos) {
+char LoadNextVideoFrame(void *ptr, uint8_t *data, int size, int16_t *samples, int16_t *accnums, long *writepos) {
 	ringbuffer_t *buff = ptr;
 	int len, i, val;
 

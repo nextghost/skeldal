@@ -20,14 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include "libs/bgraph.h"
-//#include "libs/bgraph2dx.h"
 #include <stdio.h>
 #include <string.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/memman.h"
-//#include "libs/mem.h"
 #include "libs/mgifmem.h"
 #include "libs/sound.h"
 #include "libs/system.h"
@@ -53,20 +50,20 @@ static void *OpenMGFFile(const char *filename)
   }
 */
 
-static word paleta[256];
+static uint16_t paleta[256];
 
-static word *picture;
-static word *anim_render_buffer;
+static uint16_t *picture;
+static uint16_t *anim_render_buffer;
 static void *sound;
 
-static void StretchImageHQ(word *src, word *trg, unsigned long linelen, char full) {
-	word xs = src[0], ys = src[1];
-	word *s, *t;
+static void StretchImageHQ(uint16_t *src, uint16_t *trg, unsigned long linelen, char full) {
+	uint16_t xs = src[0], ys = src[1];
+	uint16_t *s, *t;
 	int x, y;
 	src += 3;  
 	for (y = 0, s = src, t = trg; y < ys; y++, t += linelen * 2, s += xs) {
 		for (x = 0; x < xs; x++) {
-			word val;
+			uint16_t val;
 //			t[x*2] = s[x] + (s[x] & 0x7fe0);
 			t[x*2] = s[x];
 			if (x) {
@@ -134,8 +131,8 @@ static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
   free(picture);
   }
 
-void show_full_lfb12e(word *target,byte *buff,word *paleta);
-void show_delta_lfb12e(word *target,byte *buff,word *paleta);
+void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
+void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
 void show_delta_lfb12e_dx(void *target,void *buff,void *paleta);
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta);
 

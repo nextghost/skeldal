@@ -21,9 +21,9 @@
  *  Last commit made by: $Id$
  */
 //Toto je hlavni soubor specialnich procedur pro hru BRANY SKELDALU
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/strlite.h"
 #include "libs/bgraph.h"
@@ -32,7 +32,6 @@
 #include "libs/bmouse.h"
 #include "libs/system.h"
 #include <math.h>
-//#include "i86.h"
 
 #define MOB_GO(m) if (m->dir & 1)m->headx=mob_go_x[m->dir];else m->heady=mob_go_y[m->dir]
 
@@ -96,10 +95,10 @@ MAP_PROC(map_teleport)
   }
 
 /*
-static void otoc_obraz1(word *source,word *target)
+static void otoc_obraz1(uint16_t *source,uint16_t *target)
   {
-  word *p,*q;
-  word *sp,*sq;
+  uint16_t *p,*q;
+  uint16_t *sp,*sq;
   int x,y;
 
   sp=source+320-180;
@@ -121,7 +120,7 @@ static void otoc_obraz1(word *source,word *target)
      }
   }
 
-void swap_screen(word *_p,word *_q)
+void swap_screen(uint16_t *_p,uint16_t *_q)
   {
   __asm
     {
@@ -142,14 +141,14 @@ void swap_screen(word *_p,word *_q)
   }
 //  #pragma aux swap_screen parm [esi][edi]=\ modify [ecx eax]
 
-static void otoc_obraz2(word *source)
+static void otoc_obraz2(uint16_t *source)
   {
   swap_screen(source,source+scr_linelen2*360-2);
   }
 
-static void otoc_obraz3(word *source,word *target,short smer)
+static void otoc_obraz3(uint16_t *source,uint16_t *target,short smer)
   {
-  word *tt,*ss;
+  uint16_t *tt,*ss;
   int x,y,xs,ys;
   int xp,yp;
 
@@ -192,7 +191,7 @@ static void otoc_obraz3(word *source,word *target,short smer)
 
 static void show_liane(THE_TIMER *t)
   {
-  word *bt,*bs;
+  uint16_t *bt,*bs;
   static int counter=0;
 
   schovej_mysku();
@@ -232,7 +231,7 @@ static void show_liane(THE_TIMER *t)
      THUMAN *h;
      int i;
 
-     save_load_trigger((word)(t->userdata[0]));
+     save_load_trigger((uint16_t)(t->userdata[0]));
      for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (get_player_triggered(i))
         {
         player_hit(h,h->lives,0);
@@ -255,9 +254,9 @@ static __inline int toInt(float fval)
 	return ( (*(int *)&fval)&0x007fffff ) - 0x00400000;
   }
 
-static void OtocObrazPodleMatice(float mx[3][2], word *picture)
+static void OtocObrazPodleMatice(float mx[3][2], uint16_t *picture)
   {
-  word *trg=Screen_GetAddr()+17*Screen_GetXSize();
+  uint16_t *trg=Screen_GetAddr()+17*Screen_GetXSize();
   int x,y;
   picture+=6;
   for (y=0;y<360;y++,trg+=Screen_GetXSize())
@@ -276,7 +275,7 @@ static void OtocObrazPodleMatice(float mx[3][2], word *picture)
 
 static void OtaceniObrazu()
   {
-  word *picture=(word *)malloc(640*360*2+16);
+  uint16_t *picture=(uint16_t *)malloc(640*360*2+16);
   float mx[3][2];
 
   int maxtime=500;

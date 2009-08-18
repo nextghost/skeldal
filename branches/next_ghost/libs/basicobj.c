@@ -23,7 +23,7 @@
 //#include <skeldal_win.h>
 // toto je include soubor, jenz je pouzit v knihovne GUI.C
 
-#include "libs/types.h"
+#include <inttypes.h>
 #include <stdio.h>
 //#include "libs/mem.h"
 #include <malloc.h>
@@ -43,7 +43,7 @@
 
 //FC_TABLE f_bila={0xffff,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 
-void highlight(CTL3D *c,word color)
+void highlight(CTL3D *c,uint16_t color)
   {
   c->light=color<<1;
   if (c->light & 0x0020) {c->light&=~RGB555(0,0,31);c->light|=RGB555(0,0,31);}
@@ -220,11 +220,11 @@ void button2(OBJREC *o)
 
 void draw_status_line(char *c)
   {
-  static word *font;
+  static uint16_t *font;
   static FC_TABLE color;
-  static word backgr;
-  static word ysmax=0,y;
-  word ysize;
+  static uint16_t backgr;
+  static uint16_t ysmax=0,y;
+  uint16_t ysize;
   CTL3D ctl;
 
   if (c==NULL)
@@ -404,7 +404,7 @@ void win_label_move(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
   static char run=0;
-  static word xref,yref;
+  static uint16_t xref,yref;
   static WINDOW w;
   static moved=0;
   static drawed=0;
@@ -866,8 +866,8 @@ void mid_label(OBJREC *o)
 
 typedef struct scr_button
   {
-  int step;
-  int maxvalue;
+  int32_t step;
+  int32_t maxvalue;
   char *title;
   }SCR_BUTTON;
 
@@ -948,12 +948,12 @@ void scroll_button(OBJREC *o)
 //-------------------------------------------------------------
 typedef struct scr_bar
   {
-  int minvalue;
-  int maxvalue;
-  int parview;
-  int bgcolor;
-  int barsize;
-  int stepsize;
+  int32_t minvalue;
+  int32_t maxvalue;
+  int32_t parview;
+  int32_t bgcolor;
+  int32_t barsize;
+  int32_t stepsize;
   }SCR_BAR;
 
 void scroll_bar_init(OBJREC *o,int *param)
@@ -1175,8 +1175,8 @@ void scroll_bar_h_event(EVENT_MSG *msg,OBJREC *o)
 #define MSG_COLOR RGB555(15,0,0)
 #define MSG_F_COLOR RGB555(31,31,0)
 
-word *msg_box_font;
-word *msg_icn_font;
+uint16_t *msg_box_font;
+uint16_t *msg_icn_font;
 
 
 int msg_box(char *title, char icone, char *text, ... )
@@ -1278,7 +1278,7 @@ void resizer_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
   static char run=0;
-  static word xref,yref;
+  static uint16_t xref,yref;
   static WINDOW w;
   static moved=0;
   static drawed=0;

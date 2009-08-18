@@ -21,12 +21,13 @@
  *  Last commit made by: $Id$
  */
 #include <stdio.h>
+#include <inttypes.h>
 
 #define SWAP_FREE_LIST 8192
 
 typedef struct sw_free_block
   {
-  long size,seek;
+  int32_t size,seek;
   }SW_FREE_BLOCK;
 
 SW_FREE_BLOCK swp_list[SWAP_FREE_LIST];

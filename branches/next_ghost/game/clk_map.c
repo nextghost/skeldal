@@ -20,10 +20,9 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/devices.h"
 #include "libs/bgraph.h"
@@ -90,7 +89,7 @@ char clk_touch_vyk(int sector,int side,int xr,int yr)
      else
         {
         int fc;
-        word *w;
+        uint16_t *w;
         for(i=0;v->items[i];i++);if (i==8)
            {
            bott_disp_text(texty[36]);
@@ -117,7 +116,7 @@ char clk_touch_vyk(int sector,int side,int xr,int yr)
 char clk_touch(int id,int xa,int ya,int xr,int yr)
   {
   int x1,y1,x2,y2;
-  word *p;
+  uint16_t *p;
   int ext=0;
 
   xa;ya;id;
@@ -129,7 +128,7 @@ char clk_touch(int id,int xa,int ya,int xr,int yr)
      {
      xa=map_sides[id].xsec<<1;
      ya=320-(map_sides[id].ysec<<1);
-     p=(word *)ablock(map_sides[id].sec+num_ofsets[MAIN_NUM]);
+     p=(uint16_t *)ablock(map_sides[id].sec+num_ofsets[MAIN_NUM]);
      x1=*p++;y1=*p++;
      x2=xa+x1/2;y2=ya+y1/2;y1=y2-y1;x1=x2-x1;
      x1+=MIDDLE_X-points[0][1][1].x;
@@ -253,7 +252,7 @@ char start_invetory(int id,int xa,int ya,int xr,int yr)
   {
   THUMAN *p;
   int i;
-  word *xs;
+  uint16_t *xs;
 
   id;xa;ya;yr;
   if (cur_mode==MD_ANOTHER_MAP) unwire_proc(),wire_proc();
@@ -403,7 +402,7 @@ char empty_clk(int id,int xa,int ya,int xr,int yr) //tato udalost slouzi ke zrus
 static char sing_song_clk(int id,int xa,int ya,int xr,int yr)
   {
   char *xadr;
-  word *xs;
+  uint16_t *xs;
   static char playing=0;
   char standardflute=map_sectors[viewsector].sector_type>=S_FLT_SMER &&
             map_sectors[viewsector].sector_type<S_FLT_SMER+4;
@@ -413,7 +412,7 @@ static char sing_song_clk(int id,int xa,int ya,int xr,int yr)
 
   if (bott_display!=BOTT_FLETNA) return 0;
   xadr=ablock(H_FLETNA_MASK);
-  xs=(word *)xadr;
+  xs=(uint16_t *)xadr;
   xadr+=6;
   xadr+=*xs*yr+xr;
   id=*xadr;

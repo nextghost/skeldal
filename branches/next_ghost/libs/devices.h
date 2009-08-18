@@ -23,27 +23,27 @@
 #ifndef __DEVICES_H
 #define __DEVICES_H
 
-#include "types.h"
-#include "event.h"
+#include <inttypes.h>
+#include "libs/event.h"
 
 #pragma pack(1)
 typedef struct tms_basic_info
   {
-        int mouse_event;
-        unsigned short mouse_code;
-        unsigned short mouse_bx;
-        unsigned short mouse_cx;
-        unsigned short mouse_dx;
-        signed short mouse_si;
-        signed short mouse_di;
+        int32_t mouse_event;
+        uint16_t mouse_code;
+        uint16_t mouse_bx;
+        uint16_t mouse_cx;
+        uint16_t mouse_dx;
+        int16_t mouse_si;
+        int16_t mouse_di;
   }TMS_BASIC_INFO;
 
 typedef struct ms_event
   {
-   char event;
-   word x,y;
-   char tl1,tl2,tl3;
-   word event_type;
+   int8_t event;
+   uint16_t x,y;
+   int8_t tl1,tl2,tl3;
+   uint16_t event_type;
   }MS_EVENT;
 
 extern TMS_BASIC_INFO ms_basic_info;

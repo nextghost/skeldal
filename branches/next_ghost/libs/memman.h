@@ -23,12 +23,13 @@
 //#define LOGFILE
 
 #ifndef _MEMMAN_H_
+#define _MEMMAN_H_
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #pragma pack(1)
 
-#define _MEMMAN_H_
 #define freemem(size) free(size);
 //#define malloc(size) getmem(size)
 #define New(typ) (typ *)getmem(sizeof(typ))
@@ -51,15 +52,15 @@ typedef struct meminfo {
 typedef struct thandle_data
   {
   char src_file[12];  //12
-  long seekpos;       //16
+  int32_t seekpos;       //16
   void *blockdata;    //20
-  char flags;        //21
-  char path;        //22
-  short status;
+  int8_t flags;        //21
+  int8_t path;        //22
+  int16_t status;
   void (*loadproc)(void **data,long *size);//28
-  unsigned short lockcount;               //32
-  unsigned long counter;
-  unsigned long size;
+  uint16_t lockcount;               //32
+  uint32_t counter;
+  uint32_t size;
   }THANDLE_DATA;
 
 #define BK_MAJOR_HANDLES 256 // maximalni pocet skupin rukojeti

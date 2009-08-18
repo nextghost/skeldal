@@ -20,16 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <conio.h>
 #include <malloc.h>
 #include <string.h>
-//#include <math.h>
-//#include <bios.h>
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -37,7 +32,6 @@
 #include "libs/bgraph.h"
 #include "libs/sound.h"
 #include "libs/strlite.h"
-//#include <vesa.h>
 #include "game/engine1.h"
 #include "libs/pcx.h"
 #include "game/globals.h"
@@ -89,9 +83,9 @@ static char vymacknout(int id,int xa,int ya,int xr,int yr)
 static char promacknuti(int id,int xa,int ya,int xr,int yr)
   {
   char *z;
-  word *w;
+  uint16_t *w;
 
-  z=ablock(H_MENU_MASK);w=(word *)z;
+  z=ablock(H_MENU_MASK);w=(uint16_t *)z;
   z+=6+512;
   z+=xr+yr*w[0];
   vymacknout(id,xa,ya,xr,yr);
@@ -121,7 +115,7 @@ T_CLK_MAP clk_main_menu[]=
   {-1,0,0,639,479,empty_clk,0xff,H_MS_DEFAULT},
   };
 
-void rozdily(byte *orign,byte *obr,word *hicolor,word *xtab,int pocet)
+void rozdily(uint8_t *orign,uint8_t *obr,uint16_t *hicolor,uint16_t *xtab,int pocet)
 //#pragma aux rozdily parm[EDX][ESI][EDI][EBX][ECX]=
 {
 /*
@@ -154,14 +148,14 @@ jp1:lodsb
 static void nahraj_rozdilovy_pcx(void **pp,long *s)
   {
   char *org,*pos;
-  char *vysl;
-  word *size,*paltab;
-  word *hicolor,*p;
+  int8_t *vysl;
+  uint16_t *size,*paltab;
+  uint16_t *hicolor,*p;
   void *origin;
   int siz;
 
   load_pcx((char *)*pp,*s,A_8BIT,&vysl);
-  size=(word *)vysl;
+  size=(uint16_t *)vysl;
   free(*pp);
   siz=size[0]*size[1];
   *s = siz * 2 + 12;
@@ -173,7 +167,7 @@ static void nahraj_rozdilovy_pcx(void **pp,long *s)
   origin=ablock(H_ANIM_ORIGN);
   org=(char *)origin+6+512;
   pos=(char *)vysl+6+512;
-  paltab=(word *)vysl+3;
+  paltab=(uint16_t *)vysl+3;
   rozdily(org,pos,hicolor+3,paltab,siz);
   free(vysl);
   *pp=hicolor;
@@ -202,7 +196,7 @@ static void init_menu_entries(void)
      }
   }
 
-void zobraz_podle_masky_asm(byte barva,word *scr,word *data, byte *maska,int xs,int ys)
+void zobraz_podle_masky_asm(uint8_t barva,uint16_t *scr,uint16_t *data, uint8_t *maska,int xs,int ys)
 //#pragma aux zobraz_podle_masky_asm parm[al][edi][esi][ebx][edx][ecx]=
   {
 /*
@@ -249,9 +243,9 @@ jp2: inc  ebx
 static void zobraz_podle_masky(char barva,char anim)
   {
   char *maska;
-  word *data;
-  word *obr=Screen_GetAddr()+300*Screen_GetXSize()+220;
-  word xs,ys;
+  uint16_t *data;
+  uint16_t *obr=Screen_GetAddr()+300*Screen_GetXSize()+220;
+  uint16_t xs,ys;
 
   alock(H_MENU_MASK);
   maska=ablock(H_MENU_MASK);
@@ -522,9 +516,9 @@ static int insert_next_line(int ztrata) {
 	return ll;
 }
 
-static void scan_lines(word *buffer,int start,int poc) {
+static void scan_lines(uint16_t *buffer,int start,int poc) {
 	int first, last, i, pocet = poc;
-	word *buf;
+	uint16_t *buf;
 	while (pocet--) {
 		buf = buffer + start * Screen_GetXSize();
 		first = 0;
@@ -582,7 +576,7 @@ void titles(va_list args)
 
 void titles(int send_back, char *textname) {
 	void *picture;
-	word *scr, *buff;
+	uint16_t *scr, *buff;
 	int counter, newc;
 	int lcounter = 1;
 	char end = 0;
@@ -619,7 +613,7 @@ void titles(int send_back, char *textname) {
 
 			newc += skip * speedscroll;
 			scan_lines(buff, 360, skip);
-			scroll_and_copy((word *)picture + 640 * 60 + 3, buff, scr, 360, skip, title_lines);
+			scroll_and_copy((uint16_t *)picture + 640 * 60 + 3, buff, scr, 360, skip, title_lines);
 			//memcpy(Screen_GetAddr(),buff,480*Screen_GetScan());
 			get_max_extend(&l, &r);
 			memmove(title_lines, &title_lines[skip], sizeof(title_lines) - skip * sizeof(int) * 2);

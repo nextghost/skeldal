@@ -20,8 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/bgraph.h"
 #include "libs/event.h"
 #include "libs/devices.h"
@@ -30,7 +29,7 @@
 
 char visible=0;
 MS_EVENT ms_last_event;
-integer h_x,h_y=0;
+int16_t h_x,h_y=0;
 
 
 void ukaz_mysku()

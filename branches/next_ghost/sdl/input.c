@@ -24,10 +24,11 @@
 #include <stdio.h>
 #include <SDL/SDL.h>
 #include "libs/system.h"
+#include "libs/system.h"
 #include "libs/bmouse.h"
 #include "libs/event.h"
 
-word scancodes[SDLK_LAST] = {0};
+uint16_t scancodes[SDLK_LAST] = {0};
 static int kbhit = 0;
 
 // FIXME: change game input system
@@ -62,7 +63,7 @@ int Input_ReadKey(void) {
 
 void Sys_ProcessEvents(void) {
 	SDL_Event event;
-	word keycode;
+	uint16_t keycode;
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {

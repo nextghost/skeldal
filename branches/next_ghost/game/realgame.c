@@ -20,15 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
-//#include <math.h>
-//#include <bios.h>
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -81,9 +77,9 @@ MAPGLOBAL mglob={
 TSTENA *map_sides;
 TSECTOR *map_sectors;
 TVYKLENEK *map_vyk;         //mapa vyklenku
-word vyk_max;               //pocet vyklenku v mape
+uint16_t vyk_max;               //pocet vyklenku v mape
 short **map_items;
-byte *flag_map;
+uint8_t *flag_map;
 TMAP_EDIT_INFO *map_coord;
 TSTR_LIST level_texts;
 int mapsize;
@@ -1842,9 +1838,9 @@ void turn_zoom(int smer)
   pass_zavora=0;
   }
 
-int check_path(word **path,word tosect)
+int check_path(uint16_t **path,uint16_t tosect)
   {
-  word *p,*n,ss;
+  uint16_t *p,*n,ss;
   char ok;
   int i;
 
@@ -1880,7 +1876,7 @@ int check_path(word **path,word tosect)
   return tosect;
   }
 
-static unsigned path_length(word *path) {
+static unsigned path_length(uint16_t *path) {
 	unsigned i;
 	for (i = 0; path[i]; i++);
 	return i;
@@ -1889,7 +1885,7 @@ static unsigned path_length(word *path) {
 void recall()
   {
   int tosect,max,i,j;
-  word *paths[POCET_POSTAV];
+  uint16_t *paths[POCET_POSTAV];
 
   for(i=0;i<POCET_POSTAV;i++)
      {

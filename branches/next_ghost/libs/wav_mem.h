@@ -21,8 +21,9 @@
  *  Last commit made by: $Id$
  */
 #ifndef _WAV_H
-
 #define _WAV_H
+
+#include <inttypes.h>
 
 #pragma pack(1)
 
@@ -33,8 +34,8 @@
 
 typedef struct t_wave
   {
-  unsigned short wav_mode,chans;
-  long freq,bps;
+  uint16_t wav_mode,chans;
+  int32_t freq,bps;
   }T_WAVE;
 
 char *find_chunk(char *wav,char *name);

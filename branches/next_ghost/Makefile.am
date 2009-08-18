@@ -14,6 +14,6 @@ skeldal_SOURCES = cztable.cpp game/automap.c game/builder.c game/clk_map.c \
 	game/wizard.h game/version.h libs/devices.h libs/mgfplay.h \
 	libs/gui.h libs/pcx.h libs/wav.h libs/strlite.h libs/sound.h \
 	libs/wav_mem.h libs/mgifmem.h libs/event.h libs/bmouse.h \
-	libs/types.h libs/basicobj.h libs/system.h libs/mgifmapmem.h \
+	libs/basicobj.h libs/system.h libs/mgifmapmem.h \
 	libs/bgraph.h libs/strlists.h libs/inicfg.h libs/memman.h \
 	unix/system.h lzwc.h cztable.h

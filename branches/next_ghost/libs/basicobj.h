@@ -20,17 +20,23 @@
  *  
  *  Last commit made by: $Id$
  */
+
+#ifndef _BASICOBJ_H_
+#define _BASICOBJ_H_
+
+#include <inttypes.h>
+
 #define MEMTEXT "Pamˆt: "
 
 #define E_STATUS_LINE 60
 
-extern word *msg_box_font;
-extern word *msg_icn_font;
+extern uint16_t *msg_box_font;
+extern uint16_t *msg_icn_font;
 
 int msg_box(char *title, char icone, char *text, ... );
 
 
-void highlight(CTL3D *c,word color);
+void highlight(CTL3D *c,uint16_t color);
 CTL3D *def_border(int btype,int color);
 void xor_rectangle(int x,int y,int xs,int ys);
 
@@ -57,4 +63,4 @@ void scroll_bar_h(OBJREC *o);
 void button2(OBJREC *o);
 void resizer(OBJREC *o);
 
-
+#endif

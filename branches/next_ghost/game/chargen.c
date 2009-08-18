@@ -21,15 +21,12 @@
  *  Last commit made by: $Id$
  */
 //CHARACTER GENERATOR
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -71,38 +68,38 @@ void write_human_big_name(char *c);
 
 typedef struct staty
   {
-  int zivl;
-  int zivh;
-  int manl;
-  int manh;
-  int konl;
-  int konh;
-  int akc;
+  int32_t zivl;
+  int32_t zivh;
+  int32_t manl;
+  int32_t manh;
+  int32_t konl;
+  int32_t konh;
+  int32_t akc;
   }T_STATY;
 
 static T_STATY cur_stats;
 
 /*
-word color_butt_on[]={0,RGB555(31,27,4),RGB555(30,26,4),RGB555(29,25,4)};
-word color_butt_off[]={0,RGB555(10,10,10),RGB555(10,10,10),RGB555(10,10,10)};
+uint16_t color_butt_on[]={0,RGB555(31,27,4),RGB555(30,26,4),RGB555(29,25,4)};
+uint16_t color_butt_off[]={0,RGB555(10,10,10),RGB555(10,10,10),RGB555(10,10,10)};
 */
-word color_butt_on[4];
-word color_butt_off[4];
+uint16_t color_butt_on[4];
+uint16_t color_butt_off[4];
 
 
 typedef struct vlasts
   {
-  int sill;
-  int silh;
-  int smgl;
-  int smgh;
-  int pohl;
-  int pohh;
-  int obrl;
-  int obrh;
-  int hpreg;
-  int mpreg;
-  int vpreg;
+  int32_t sill;
+  int32_t silh;
+  int32_t smgl;
+  int32_t smgh;
+  int32_t pohl;
+  int32_t pohh;
+  int32_t obrl;
+  int32_t obrh;
+  int32_t hpreg;
+  int32_t mpreg;
+  int32_t vpreg;
   }T_VLASTS;
 
 static T_VLASTS cur_vls;
@@ -262,8 +259,8 @@ void displ_button(char disable,char **text)
 static void draw_other_bar()
   {
   int i;
-  word *bbar=ablock(H_BOTTBAR);
-  word *screen=Screen_GetAddr()+(480-102)*Screen_GetXSize();
+  uint16_t *bbar=ablock(H_BOTTBAR);
+  uint16_t *screen=Screen_GetAddr()+(480-102)*Screen_GetXSize();
   for (i=0;i<102;i++,screen+=Screen_GetXSize(),bbar+=Screen_GetXSize()) memcpy(screen,bbar,Screen_GetScan());
   //put_8bit_clipped(ablock(H_GEN_OKBUTT),378*640+520+screen,0,120,102);
   displ_button(b_disables,b_texty);
@@ -274,7 +271,7 @@ static void draw_other_bar()
 
 static void display_character(THUMAN *p,char i)
   {
-  word *w;
+  uint16_t *w;
  put_picture(4,SCREEN_OFFLINE,ablock(H_IOBLOUK));
  if (p->used)
      {
@@ -312,11 +309,11 @@ static void vypocet_perly(int angle,int xp,int yp,int *x,int *y)
 
 static void zobraz_perlu(void)
   {
-  word *perla;
+  uint16_t *perla;
   int x,y;
-  word *scr,*sss;
+  uint16_t *scr,*sss;
   unsigned char *p;
-  word *b;
+  uint16_t *b;
   int xs,ys,xxs;
 
   alock(H_GEN_PERLA);
@@ -618,7 +615,7 @@ static void def_entries()
 
 static char go_next_page(int id,int xa,int ya,int xr,int yr)
   {
-  word *w;
+  uint16_t *w;
   char *b;
 
   xa,ya;

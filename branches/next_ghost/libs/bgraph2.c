@@ -20,30 +20,23 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-#include "libs/types.h"
-//#include <vesa.h>
-//#include <dpmi.h>
-//#include <i86.h>
-//#include "libs/mem.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-//#include <graph.h>
-//#include <conio.h>
 #include "libs/bgraph.h"
 #include "libs/memman.h"
 
-word *screen;
-//word curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
-word curcolor, charcolors[7];
+//uint16_t *screen;
+//uint16_t curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
+uint16_t curcolor, charcolors[7];
 //long scr_linelen;
 //long scr_linelen2;
 //long dx_linelen;
-word *curfont,*writepos,writeposx;
-byte fontdsize=0;
-byte *palmem=NULL,*xlatmem=NULL;
-void (*showview)(word,word,word,word);
+uint16_t *curfont,*writepos,writeposx;
+uint8_t fontdsize=0;
+uint8_t *palmem=NULL,*xlatmem=NULL;
+void (*showview)(uint16_t,uint16_t,uint16_t,uint16_t);
 char line480=0;
 long screen_buffer_size=0;
 char banking=0;
@@ -52,8 +45,8 @@ char __skip_change_line_test=0;
 char no_restore_mode=0;
 
 void *mscursor,*mssavebuffer=NULL;
-integer mscuroldx=0,mscuroldy=0;
-integer mscuroldxs=1,mscuroldys=1;
+int16_t mscuroldx=0,mscuroldy=0;
+int16_t mscuroldxs=1,mscuroldys=1;
 char write_window=0;
 long pictlen; // Tato promenna je pouze pouzita v BGRAPH1.ASM
 
@@ -72,27 +65,27 @@ void Bgraph2_Init(void) {
 }
 
 
-void line32(word x1,word y1, word x2, word y2)
+void line32(uint16_t x1,uint16_t y1, uint16_t x2, uint16_t y2)
   {
   line_32(x1,y1,(x2-x1),(y2-y1));
   }
 
-void position(word x,word y)
+void position(uint16_t x,uint16_t y)
   {
   writeposx=x;
   writepos=getadr32(x,y);
   }
 
-void rel_position_x(word x)
+void rel_position_x(uint16_t x)
   {
   writeposx+=x;
   writepos+=x;
   }
 
 
-void outtext(byte *text)
+void outtext(uint8_t *text)
   {
-  byte pos;
+  uint8_t pos;
 
   if (fontdsize) {
      while (*text)
@@ -118,10 +111,10 @@ SVGAinfo svgadata[3];
 int lastbank=0;
 int granuality=0;
 int gran_mask=0;
-word gr_page_end=0;
+uint16_t gr_page_end=0;
 int gr_end_screen=0;
 
-word *mapvesaadr(word *a);
+uint16_t *mapvesaadr(uint16_t *a);
 #pragma aux mapvesaadr parm [edi] value [edi]
 
 void write_vesa_info(int mode)
@@ -162,9 +155,9 @@ void write_vesa_info(int mode)
   delay(300);
   }
 */
-static void showview_dx(word x,word y,word xs,word ys);
-//void showview64b(word x,word y,word xs,word ys);
-/*void showview32b(word x,word y,word xs,word ys)
+static void showview_dx(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys);
+//void showview64b(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys);
+/*void showview32b(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   register longint a,b;
 
@@ -203,12 +196,12 @@ int get_scan_line();
 
 void *create_hixlat()
   {
-  word *s;
-  word i;
+  uint16_t *s;
+  uint16_t i;
 
-  s=NewArr(word,32768);
+  s=NewArr(uint16_t,32768);
   for (i=0;i<32768;i++) s[i]=((i & ~0x1f)<<1) | (i & 0x1f);
-  return (byte *)s;
+  return (uint8_t *)s;
   }
 
 int initmode64b(void *paletefile)
@@ -228,7 +221,7 @@ int initmode64b(void *paletefile)
   gr_end_screen=0xa0000+gran_mask+1;
   gr_page_end=gran_mask+1;
   setvesamode(0x111,-1);
-  lbuffer=(word *)0xa0000;
+  lbuffer=(uint16_t *)0xa0000;
   screen=lbuffer;
   linelen=640*2;
   showview=showview64b;
@@ -256,7 +249,7 @@ int initmode32b()
   gr_end_screen=0xa0000+gran_mask+1;
   gr_page_end=gran_mask+1;
   setvesamode(0x110,-1);
-  lbuffer=(word *)0xa0000;
+  lbuffer=(uint16_t *)0xa0000;
   screen=lbuffer;
   linelen=640*2;
   showview=showview32b;
@@ -287,7 +280,7 @@ int initmode32bb()
      text_mode();
      return -10;
      }
-  lbuffer=(word *)0xa0000;
+  lbuffer=(uint16_t *)0xa0000;
   screen=lbuffer;
   linelen=640*2;
   showview=showview32b;
@@ -299,9 +292,9 @@ int initmode32bb()
 
 
 
-word *mapvesaadr1(word *a)
+uint16_t *mapvesaadr1(uint16_t *a)
   {
-  word bank;
+  uint16_t bank;
 
   bank=(long)a>>16;
   if (bank!=lastbank)
@@ -316,10 +309,10 @@ word *mapvesaadr1(word *a)
            int386 (0x10,&regs,&regs); // window A
           }
      }
- return (word *)(((long)a & 0xffff)+0xa0000);
+ return (uint16_t *)(((long)a & 0xffff)+0xa0000);
 }
 
-void switchvesabank(word bank)
+void switchvesabank(uint16_t bank)
 #pragma aux switchvesabank parm [eax]
   {
            union REGS regs;
@@ -351,7 +344,7 @@ int initmode256(void *paletefile)
   if (!(data.modeattr & MA_LINEARFBUF)) return initmode256b(paletefile);
   //write_vesa_info(0x101);
   setvesamode(0x4101,-1);
-  if (lbuffer==NULL)lbuffer=(word *)physicalalloc((long)data.linearbuffer,screen_buffer_size>>1);
+  if (lbuffer==NULL)lbuffer=(uint16_t *)physicalalloc((long)data.linearbuffer,screen_buffer_size>>1);
   screen=lbuffer;
   linelen=640*2;
   palmem=(char *)paletefile;
@@ -365,7 +358,7 @@ int initmode256(void *paletefile)
   }
 
 
-void showview256b(word x,word y,word xs,word ys)
+void showview256b(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   register longint a,b;
 
@@ -406,7 +399,7 @@ int initmode256b(void *paletefile)
   gr_end_screen=0xa0000+gran_mask+1;
   gr_page_end=gran_mask+1;
   setvesamode(0x101,-1);
-  lbuffer=(word *)0xa0000;
+  lbuffer=(uint16_t *)0xa0000;
   screen=lbuffer;
   palmem=(char *)paletefile;
   xlatmem=palmem+768;
@@ -451,7 +444,7 @@ void closemode()
 
   }
 
-static void showview_dx(word x,word y,word xs,word ys)
+static void showview_dx(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
 //  register longint a;
 
@@ -464,7 +457,7 @@ static void showview_dx(word x,word y,word xs,word ys)
   Screen_DrawRect(x,y,xs,ys);  
   }
 /*
-static void showview64b(word x,word y,word xs,word ys)
+static void showview64b(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   register longint a;
 
@@ -484,7 +477,7 @@ static void showview64b(word x,word y,word xs,word ys)
   }
 
 
-void showview256(word x,word y,word xs,word ys)
+void showview256(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   register longint a;
 
@@ -503,7 +496,7 @@ void showview256(word x,word y,word xs,word ys)
   redrawbox256(xs,ys,(void *)((char *)screen+a),(void *)((char *)lbuffer+(a>>1)),xlatmem);
   }
 
-void showview_lo(word x,word y,word xs,word ys)
+void showview_lo(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   register longint a,b;
 
@@ -526,9 +519,9 @@ void showview_lo(word x,word y,word xs,word ys)
 
 
 */
-void show_ms_cursor(integer x,integer y)
+void show_ms_cursor(int16_t x,int16_t y)
   {
-  integer xs,ys;
+  int16_t xs,ys;
 
   int mx =  Screen_GetXSize() - 1;
   int my =  Screen_GetYSize() - 1;
@@ -537,8 +530,8 @@ void show_ms_cursor(integer x,integer y)
   if (x>mx) x=mx;
   if (y<0) y=0;
   if (y>my) y=my;
-  xs=*(integer *)mscursor;
-  ys=*((integer *)mscursor+1);
+  xs=*(int16_t *)mscursor;
+  ys=*((int16_t *)mscursor+1);
   get_picture(x,y,xs,ys,mssavebuffer);
   put_picture(x,y,mscursor);
   mscuroldx=x;
@@ -552,25 +545,25 @@ void hide_ms_cursor()
 
 void *register_ms_cursor(void *cursor)
   {
-  integer xs,ys;
+  int16_t xs,ys;
 
   mscursor=cursor;
-  xs=*(integer *)mscursor;
-  ys=*((integer *)mscursor+1);
+  xs=*(int16_t *)mscursor;
+  ys=*((int16_t *)mscursor+1);
   if (mssavebuffer!=NULL) free(mssavebuffer);
   mssavebuffer=malloc(xs*ys*2+10);//5 bajtu pro strejcka prihodu
   return mssavebuffer;
   }
 
-void move_ms_cursor(integer newx,integer newy,char nodraw)
+void move_ms_cursor(int16_t newx,int16_t newy,char nodraw)
   {
-  integer xs,ys;
+  int16_t xs,ys;
   int mx =  Screen_GetXSize() - 1;
   int my =  Screen_GetYSize() - 1;
-  static integer msshowx=0,msshowy=0;
+  static int16_t msshowx=0,msshowy=0;
 
-  xs=*(integer *)mscursor;
-  ys=*((integer *)mscursor+1);
+  xs=*(int16_t *)mscursor;
+  ys=*((int16_t *)mscursor+1);
   if (nodraw)
      {
      showview(msshowx,msshowy,xs,ys);
@@ -630,7 +623,7 @@ void set_aligned_position(int x,int y,char alignx,char aligny,char *text)
 /*void pal_optimize()
   {
   long *stattable;
-  word *c;
+  uint16_t *c;
   char *d;
   int i;
   long maxr,maxg,maxb,max;
@@ -648,13 +641,13 @@ void set_aligned_position(int x,int y,char alignx,char aligny,char *text)
      for (i=0;i<32768;i++)
         if (stattable[i]>max)
            {
-           *((word *)xlatmem+j)=i;
+           *((uint16_t *)xlatmem+j)=i;
            max=stattable[i];
            }
-     stattable[*((word *)xlatmem+j)]=-1;
+     stattable[*((uint16_t *)xlatmem+j)]=-1;
      }
   d=palmem;
-  c=(word *)xlatmem;
+  c=(uint16_t *)xlatmem;
   for(i=0;i<256;i++)
      {
      j=*c++;
@@ -776,7 +769,7 @@ void *create_blw_palette16()
   return z;
   }
 /*
-void showview16(word x,word y,word xs,word ys)
+void showview16(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
   int x1,x2;
   if (x>640 || y>480) return;
@@ -803,7 +796,7 @@ int initmode16(void *palette)
   {
   palette;
   init16colors();
-  lbuffer=(word *)0xa0000;
+  lbuffer=(uint16_t *)0xa0000;
   screen=lbuffer;
   linelen=640*2;
   showview=showview16;

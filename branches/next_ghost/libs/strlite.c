@@ -20,15 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include "libs/strlite.h"
 #include <stdlib.h>
 #include <stdio.h>
-//#include "libs/mem.h"
 #include <malloc.h>
 #include <string.h>
-//#include <dos.h>
-#include "libs/types.h"
 #include "libs/memman.h"
 
 static char nil; // TSTR_LIST terminator

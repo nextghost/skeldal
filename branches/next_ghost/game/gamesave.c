@@ -20,25 +20,18 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <debug.h>
-//#include <dos.h>
-//#include "libs/bios.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-//#include <conio.h>
 #include <malloc.h>
-//#include "libs/mem.h"
 #include "libs/pcx.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/bgraph.h"
 #include "libs/event.h"
 #include "libs/strlite.h"
 #include "libs/devices.h"
 #include "libs/bmouse.h"
 #include "libs/memman.h"
-//#include <io.h>
 #include "libs/sound.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -69,35 +62,35 @@ char reset_mobiles=0;
 #pragma pack(1)
 typedef struct s_save
   {
-  int viewsector;
-  char viewdir;
-  short version;
-  char not_used;
-  int gold;
-  short cur_group;
-  char autosave;
-  char enable_sort;
-  char shownames;
-  char showlives;
-  char zoom_speed;
-  char turn_speed;
-  char autoattack;
-  byte music_vol;
-  byte sample_vol;
-  char xbass;
-  char bass;
-  char treble;
-  char stereing;
-  char swapchans;
-  char out_filter;
-  long glob_flags;
-  long game_time;
-  char runes[5];
-  char level_name[12];
-  short picks;  //pocet_sebranych predmetu v mysi
-  short items_added; //pocet_pridanych predmetu
-  int sleep_long;
-	int game_flags;
+  int32_t viewsector;
+  int8_t viewdir;
+  int16_t version;
+  int8_t not_used;
+  int32_t gold;
+  int16_t cur_group;
+  int8_t autosave;
+  int8_t enable_sort;
+  int8_t shownames;
+  int8_t showlives;
+  int8_t zoom_speed;
+  int8_t turn_speed;
+  int8_t autoattack;
+  uint8_t music_vol;
+  uint8_t sample_vol;
+  int8_t xbass;
+  int8_t bass;
+  int8_t treble;
+  int8_t stereing;
+  int8_t swapchans;
+  int8_t out_filter;
+  int32_t glob_flags;
+  int32_t game_time;
+  int8_t runes[5];
+  int8_t level_name[12];
+  int16_t picks;  //pocet_sebranych predmetu v mysi
+  int16_t items_added; //pocet_pridanych predmetu
+  int32_t sleep_long;
+	int32_t game_flags;
   }S_SAVE;
 #pragma option align=reset
 
@@ -105,7 +98,7 @@ typedef struct s_save
 
 static int get_list_count();
 
-static word vypocet_crc(byte *data,long delka)
+static uint16_t vypocet_crc(uint8_t *data,long delka)
   {
   unsigned long l=0;
   do
@@ -289,7 +282,7 @@ void load_map_description(FILE *f)
   {
   int count;
   int i;
-  word len;
+  uint16_t len;
 
   if (texty_v_mape!=NULL)release_list(texty_v_mape);
   fread(&count,1,sizeof(count),f);
@@ -597,7 +590,7 @@ int pack_status_file(FILE *f,char *status_name)
   char rcheck=0;
   long fsz;
   char *buffer,*c,*fullnam;
-  word crc;
+  uint16_t crc;
 
   SEND_LOG("(SAVELOAD) Packing status file '%s'",status_name,0);
 //  fullnam=alloca(strlen(status_name)+strlen(pathtable[SR_TEMP])+1);
@@ -635,7 +628,7 @@ int unpack_status_file(FILE *f)
   long fsz;
   char *buffer,*c,*fullnam;
   char name[13];
-  word crc,crccheck;
+  uint16_t crc,crccheck;
 
   name[12]=0;
   name[11]=0;
@@ -1484,7 +1477,7 @@ static EVENT_PROC(saveload_keyboard)
   user_ptr;
   WHEN_MSG(E_KEYBOARD)
      {
-     switch (GET_DATA(word)>>8)
+     switch (GET_DATA(uint16_t)>>8)
         {
         case 1:unwire_proc();wire_proc();break;
         case 'H':if (last_select>0) bright_slot((last_select-1)*SLOT_SPACE+1);break;

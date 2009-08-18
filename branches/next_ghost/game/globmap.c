@@ -20,25 +20,19 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <debug.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-//#include "libs/bios.h"
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include <ctype.h>
 #include "libs/devices.h"
-//#include <conio.h>
 #include "libs/bmouse.h"
 #include "libs/bgraph.h"
 #include "libs/sound.h"
-//#include <io.h>
 #include "libs/strlite.h"
 #include "game/engine1.h"
 #include "libs/pcx.h"
@@ -63,7 +57,7 @@ typedef struct index_def
    {
    char mapname[13];
    char *text;
-   char defined;
+   int8_t defined;
    }INDEX_DEF;
 
 static INDEX_DEF *index_tab=NULL;
@@ -428,7 +422,7 @@ static void do_script(void)
 static int found_place=0;
 
 
-static char flp_validate2(word sector)
+static char flp_validate2(uint16_t sector)
   {
   TMOB *m;
   char c;
@@ -445,7 +439,7 @@ static char flp_validate2(word sector)
   return 1;
   }
 
-static char flp_validate(word sector)
+static char flp_validate(uint16_t sector)
   {
   TMOB *m;
   char c;
@@ -575,7 +569,7 @@ EVENT_PROC(global_map_point)
               {
               xs=text_width(fly_text)+4;
               ys=text_height(fly_text)+4;
-              fly_background=NewArr(word,xs*ys*2+6);
+              fly_background=NewArr(uint16_t,xs*ys*2+6);
               }
            else
               {

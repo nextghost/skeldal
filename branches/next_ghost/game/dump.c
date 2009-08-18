@@ -20,12 +20,10 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "libs/bgraph.h"
-//#include <dos.h>
 #include "libs/memman.h"
-//#include <debug.h>
 #include "libs/system.h"
 
 void save_dump()
@@ -33,7 +31,7 @@ void save_dump()
   static dump_counter=-1;
   FILE *f;
   int i,r,g,b,x,y;
-  word *a;
+  uint16_t *a;
   char c[20];
 
   if (dump_counter==-1)
@@ -67,7 +65,7 @@ void save_dump()
   for(i=4,r=0;i>0;i--) fwrite(&r,1,4,f);
   for(y=Screen_GetYSize();y>0;y--)
      {
-     word *scr=Screen_GetAddr();
+     uint16_t *scr=Screen_GetAddr();
      a=scr+(y-1)*Screen_GetXSize();
      for(x=0;x<Screen_GetXSize();x++)
         {

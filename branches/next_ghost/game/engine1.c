@@ -20,24 +20,17 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <debug.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-//#include "libs/mem.h"
-//#include "libs/bios.h"
 #include "libs/memman.h"
 #include "libs/bgraph.h"
 #include "libs/event.h"
 #include "libs/mgifmem.h"
-//#include "libs/zvuk.h"
-//#include "math.h"
 #include "game/globals.h"
 #include "game/engine1.h"
-//#include "windows/bgraph2dx.h"
 
 #define CTVR 128
 
@@ -124,10 +117,10 @@ void lodka64b(void *source,void *target,void *background,void *xlat,long xysize)
 */
 
 void *p,*p2,*pozadi,*podlaha,*strop,*sit;int i;
-void (*zooming)(void *source,long target,word *background,void *xlat,long xysize);
+void (*zooming)(void *source,long target,uint16_t *background,void *xlat,long xysize);
 void (*turn)(long lbuf,void *src1,void *src2,int size1);
-word *Screen_GetBackAddr();
-word *background;
+uint16_t *Screen_GetBackAddr();
+uint16_t *background;
 char debug=0,nosides=0,nofloors=0,drwsit=0,show_names=0,show_lives=0;
 static long old_timer;
 
@@ -136,7 +129,7 @@ static void wait_timer()
   Timer_Sleep(10);
   }
 
-/*void zooming1(void *source,long target,word *background,void *xlat,long xysize)
+/*void zooming1(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
   wait_timer();
   if (backgrnd_mode)
@@ -146,9 +139,9 @@ static void wait_timer()
   showview(0,0,0,0);
   }
 /*
-void zooming2(void *source,long target,word *background,void *xlat,long xysize)
+void zooming2(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
-  word *lbuffer=LockDirectScreen();
+  uint16_t *lbuffer=LockDirectScreen();
   wait_timer();
   if (backgrnd_mode)
     lodka256(source,lbuffer+(target>>1),background+3,xlat,xysize);
@@ -157,14 +150,14 @@ void zooming2(void *source,long target,word *background,void *xlat,long xysize)
   UnlockDirectScreen();
   }
 
-void zooming3(void *source,long target,word *background,void *xlat,long xysize)
+void zooming3(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
   source;target;background;xlat;xysize;
   }
 
-/*void zooming4(void *source,long target,word *background,void *xlat,long xysize)
+/*void zooming4(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
-  word *lbuffer=LockDirectScreen();
+  uint16_t *lbuffer=LockDirectScreen();
   wait_timer();
   if (backgrnd_mode)
     lodka32b(source,(void *)(target*2),background+3,xlat,xysize);
@@ -173,7 +166,7 @@ void zooming3(void *source,long target,word *background,void *xlat,long xysize)
   UnlockDirectScreen();
   }*/
 /*
-void zooming5(void *source,long target,word *background,void *xlat,long xysize)
+void zooming5(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
   wait_timer();
   if (backgrnd_mode)
@@ -182,9 +175,9 @@ void zooming5(void *source,long target,word *background,void *xlat,long xysize)
      zooming256b(source,(void *)target,background+3,xlat,xysize);
   }
 
-void zooming6(void *source,long target,word *background,void *xlat,long xysize)
+void zooming6(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
-  word *lbuffer=LockDirectScreen();
+  uint16_t *lbuffer=LockDirectScreen();
   wait_timer();
   if (backgrnd_mode)
     lodka_dx(source,lbuffer+(target),background+3,xlat,xysize);
@@ -193,7 +186,7 @@ void zooming6(void *source,long target,word *background,void *xlat,long xysize)
   UnlockDirectScreen();
   }
 /*
-void zooming7(void *source,long target,word *background,void *xlat,long xysize)
+void zooming7(void *source,long target,uint16_t *background,void *xlat,long xysize)
   {
   wait_timer();
   if (backgrnd_mode)
@@ -236,7 +229,7 @@ void turn5(long lbuf,void *src1,void *src2,int size1)
 /*
 void turn6(long lbuf,void *src1,void *src2,int size1)
   {
-  word *lbuffer=LockDirectScreen();
+  uint16_t *lbuffer=LockDirectScreen();
   wait_timer();
      scroll_support_dx((lbuf)+lbuffer,src1,src2,size1,xlatmem);
   UnlockDirectScreen();
@@ -272,7 +265,7 @@ void calc_points(void)
      }
   }
 
-void calc_x_buffer(long *ptr,long txt_size_x, long len,long total,long scale1)
+void calc_x_buffer(int32_t *ptr,long txt_size_x, long len,long total,long scale1)
   {
   int i,j,old,z=-1;
 
@@ -468,7 +461,7 @@ void create_zooming(void)
      }
   }
 
-static void stepzoom(word *dst, word *src, float phase, int *points, int width, int height) {
+static void stepzoom(uint16_t *dst, uint16_t *src, float phase, int *points, int width, int height) {
 	int pts[4], i, j;
 	float xcoef, ycoef;
 
@@ -489,12 +482,12 @@ static void stepzoom(word *dst, word *src, float phase, int *points, int width, 
 	}
 }
 
-static void zooming_forward_backward(word *background,char back)
+static void zooming_forward_backward(uint16_t *background,char back)
   {
   if (!zooming_step) return;  
     {
     long tmp=Timer_GetValue();
-	word *scr, *buffer;
+	uint16_t *scr, *buffer;
     int tpoints[4]={90,31,90+460,31+259};
 
     int maxtime=5*zoom_speed(-1);
@@ -520,12 +513,12 @@ static void zooming_forward_backward(word *background,char back)
     }
   }
 
-void zooming_forward(word *background)
+void zooming_forward(uint16_t *background)
   {
   zooming_forward_backward(background,0);
   }
 
-void zooming_backward(word *background)
+void zooming_backward(uint16_t *background)
   {
   zooming_forward_backward(background,1);
   }
@@ -541,7 +534,7 @@ void zooming_backward(word *background)
      do_events();
      zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*Screen_GetXSize()+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
      }*/
-/*void zooming_backward(word *background)
+/*void zooming_backward(uint16_t *background)
   {
   int i;
 
@@ -558,7 +551,7 @@ void zooming_backward(word *background)
 
 */
 
-static void joinpics(word *dst, word *left, word *right, float shift, int border, int width, int height) {
+static void joinpics(uint16_t *dst, uint16_t *left, uint16_t *right, float shift, int border, int width, int height) {
 	int i, xpos;
 
 	shift = shift < 0 ? 0 : shift;
@@ -566,8 +559,8 @@ static void joinpics(word *dst, word *left, word *right, float shift, int border
 	xpos = (width - 2 * border) * shift;
 
 	for (i = 0; i < height; i++) {
-		memcpy(dst + i * width, left + xpos + i * width, (width - xpos - border) * sizeof(word));
-		memcpy(dst + width - xpos - border + i * width, right + border + i * width, (xpos + border) * sizeof(word));
+		memcpy(dst + i * width, left + xpos + i * width, (width - xpos - border) * sizeof(uint16_t));
+		memcpy(dst + width - xpos - border + i * width, right + border + i * width, (xpos + border) * sizeof(uint16_t));
 	}
 }
 
@@ -577,7 +570,7 @@ static void turn_left_right(char right)
   if (!rot_phases) return;  
     {
     long tmp=Timer_GetValue();
-	word *scr, *back, *buffer;
+	uint16_t *scr, *back, *buffer;
 
 	int maxtime=5*rot_phases;
     int curtime;
@@ -609,7 +602,7 @@ static void turn_left_right(char right)
 void turn_left()
   {
   turn_left_right(0);
-/*  word *kde1,c;
+/*  uint16_t *kde1,c;
   int i;
 
   kde1=Screen_GetAddr()+SCREEN_OFFSET+70;
@@ -625,7 +618,7 @@ void turn_left()
 void turn_right()
   {
   turn_left_right(1);
-/*  word *kde1,c;
+/*  uint16_t *kde1,c;
   int i;
 
   kde1=Screen_GetBackAddr()+SCREEN_OFFSET+70+400;
@@ -654,8 +647,8 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   if (!x3d->used) return;
   yd=&showtabs.y_table[cely];
   yp=&showtabs.y_table[cely+1];
-  txtsx=*(word *)stena;
-  txtsy=*((word *)stena+1);
+  txtsx=*(uint16_t *)stena;
+  txtsy=*((uint16_t *)stena+1);
     if (rev<2)
      {
      xofs-=(txtsx>>1)*TXT_SIZE_X/TXT_SIZE_X_3D;yofs-=txtsy>>1;
@@ -702,7 +695,7 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.texture_line=txtsx;
   zoom.xtable=&x3d->zoom_table[i];
   zoom.ytable=yd->zoom_table;
-  zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
+  zoom.palette=(uint16_t *)((uint8_t *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
 //  zoom.line_len=Screen_GetScan();
@@ -734,8 +727,8 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   if (celx<=0) x3d=&showtabs.x_table[-celx][cely]; else  x3d=&showtabs.x_table[celx][cely];
   if (!x3d->used) return;
   yd=&showtabs.y_table[cely+1];
-  txtsx=*(word *)stena;
-  txtsy=*((word *)stena+1);
+  txtsx=*(uint16_t *)stena;
+  txtsy=*((uint16_t *)stena+1);
   if (!rev)
      {
       xofs-=txtsx>>1;yofs-=txtsy>>1;
@@ -774,7 +767,7 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.texture_line=txtsx;
   zoom.xtable=x3d->zoom_table;
   zoom.ytable=yd->zoom_table;
-  zoom.palette=(word *)((byte *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
+  zoom.palette=(uint16_t *)((uint8_t *)stena+6+512*(cely)+(secnd_shade?SHADE_STEPS*512:0));
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
 //  zoom.line_len=Screen_GetScan();
@@ -789,12 +782,12 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
   int y;
 
   if (nofloors) return;
-  txtr=(void *)(((word *)txtr)+3);
+  txtr=(void *)(((uint16_t *)txtr)+3);
   if (f_c==0) //podlaha
      {
      y=(VIEW_SIZE_Y-MIDDLE_Y)-points[0][0][cely].y+1;
      if (y<1) y=1;
-     txtr=(void *)((word *)txtr);
+     txtr=(void *)((uint16_t *)txtr);
      fcdraw(txtr,Screen_GetBackAddr()+SCREEN_OFFSET,&showtabs.f_table[celx+3][y]);
 /*     if (debug)
         {
@@ -833,7 +826,7 @@ void CopyBuffer2nd(void)
 
   /*void chozeni(void)
   {
-  char c;  char dir=0;word sector=22;
+  char c;  char dir=0;uint16_t sector=22;
 
   zooming_forward();
   swap_buffs();
@@ -963,7 +956,7 @@ void report_mode(int mode)
      }*/
   }
 
-__inline void clear_color(word *start,int _size,word _color)
+__inline void clear_color(uint16_t *start,int _size,uint16_t _color)
   {
 /*
   __asm
@@ -991,7 +984,7 @@ __inline void clear_color(word *start,int _size,word _color)
     //parm [EDI][ECX][EAX] modify [EBX];
 
 
-void clear_buff(word *background,word backcolor,int lines)
+void clear_buff(uint16_t *background,uint16_t backcolor,int lines)
 {  
   if (background!=NULL) put_picture(0,SCREEN_OFFLINE,background);else lines=0;
   if (lines!=360) 
@@ -1000,7 +993,7 @@ void clear_buff(word *background,word backcolor,int lines)
 
 }
 
-void clear_screen(word *screen, word color)
+void clear_screen(uint16_t *screen, uint16_t color)
 {
 for (i=0;i<480;i++) clear_color(screen+Screen_GetXSize()*i,640,color);
 }
@@ -1108,7 +1101,7 @@ void map_pos(int celx,int cely,int posx,int posy,int posz,int *x,int *y)
   zoom.texture_line=xs;
   zoom.xtable=(long *)&zoomtab_x;
   zoom.ytable=(short *)&zoomtab_y;
-  zoom.palette=(word *)&pic[3+cely*256+(secnd_shade?SHADE_STEPS*256:0)];
+  zoom.palette=(uint16_t *)&pic[3+cely*256+(secnd_shade?SHADE_STEPS*256:0)];
   zoom.ycount=ysr;
   zoom.xmax=xmax;
   zoom.line_len=1280;
@@ -1136,14 +1129,14 @@ void draw_item(int celx,int cely,int posx,int posy,short *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((uint8_t*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 
 void put_textured_bar(void *src,int x,int y,int xs,int ys,int xofs,int yofs)
   {
-  word *pos;
-  word *xy;
+  uint16_t *pos;
+  uint16_t *xy;
 
   pos=Screen_GetAddr()+x+Screen_GetXSize()*y;
   xy=src;
@@ -1172,8 +1165,8 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-     if (turn) enemy_draw_mirror((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
-     else enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     if (turn) enemy_draw_mirror((uint8_t*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+     else enemy_draw((uint8_t*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
 
 /*void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int posz,char turn)
@@ -1219,7 +1212,7 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
   zoom.texture_line=xs;
   zoom.xtable=(long *)&zoomtab_x;
   zoom.ytable=(short *)&zoomtab_y;
-  zoom.palette=(word *)&txtr[3+cely*256+(secnd_shade?SHADE_STEPS*256:0)];
+  zoom.palette=(uint16_t *)&txtr[3+cely*256+(secnd_shade?SHADE_STEPS*256:0)];
   zoom.ycount=ysr;
   zoom.xmax=xmax;
   zoom.line_len=1280;
@@ -1358,7 +1351,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
+  enemy_draw((uint8_t*)txtr,Screen_GetBackAddr()+x+(yc+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   if (show_names && name!=NULL)
      {
      sd=text_width(name)/2;
@@ -1387,7 +1380,7 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw_transp((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
+  enemy_draw_transp((uint8_t*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
   }
 
 /*
@@ -1410,10 +1403,10 @@ __inline void prumeruj(void *target,void *source1, void *source2)
     }
   }
 
-void double_zoom_xicht(word x,word y,word *source)
+void double_zoom_xicht(uint16_t x,uint16_t y,uint16_t *source)
   {
-  word *xpal;
-  word *sline,*slline;
+  uint16_t *xpal;
+  uint16_t *sline,*slline;
   char *pline;
   char *sr;
   int xx,yy;
@@ -1457,7 +1450,7 @@ void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
   ysc=showtabs.y_table[cely].vert_size;
   xpos+=indextab[7-index][0];
   ypos+=indextab[7-index][1];
-  xpos-=*(word *)txtr/2;
+  xpos-=*(uint16_t *)txtr/2;
   xpos=xs*xpos/500;
   ypos=ys*ypos/320;
   if (asc) x=-x;
@@ -1473,7 +1466,7 @@ void draw_item2(int celx,int cely,int xpos,int ypos,void *txtr,int index)
   else clipl=0;
   clipr=640-x;
   if (clipr>0)
-  enemy_draw((byte*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
+  enemy_draw((uint8_t*)txtr,Screen_GetBackAddr()+x+(y+SCREEN_OFFLINE)*Screen_GetXSize(),6+512*cely+(secnd_shade?SHADE_STEPS*512:0),ys,y,(clipr<<16)+clipl);
   }
 
 /*
@@ -1534,7 +1527,7 @@ void set_backgrnd_mode(int mode)
   backgrnd_mode=mode;
   }
 
-int get_item_top(int celx,int cely,int posx,int posy,word *txtr,int index)
+int get_item_top(int celx,int cely,int posx,int posy,uint16_t *txtr,int index)
   {
   int x,y;
   int randx,randy;
@@ -1548,7 +1541,7 @@ int get_item_top(int celx,int cely,int posx,int posy,word *txtr,int index)
 
 #define ANIM_SIZE (320*180)
 
-static word *paleta;
+static uint16_t *paleta;
 static void *anm = NULL;
 static int blk = 0;
 
@@ -1576,7 +1569,7 @@ void play_big_mgif_animation(int block) {
 	assert(anim_render_buffer == NULL && "Another animation is being played");
 
 	SEND_LOG("(ANIM) Running animation number %xh", block, 0);
-	anim_render_buffer = getmem(ANIM_SIZE * sizeof(word));
+	anim_render_buffer = getmem(ANIM_SIZE * sizeof(uint16_t));
 	mgif_install_proc(animace_kouzla);
 	running_anm = 1;
 

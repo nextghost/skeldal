@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <inttypes.h>
 #include "libs/devices.h"
 
 #ifdef WIN32
@@ -82,20 +83,20 @@ void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
 int Screen_GetScan(void);
 
-void Screen_StripBlt(word *data, unsigned int startline, unsigned long width);
+void Screen_StripBlt(uint16_t *data, unsigned int startline, unsigned long width);
 void Screen_Shift(int x, int y);
 
-void Screen_FixPalette(word *pal, int size);
-void Screen_FixMGIFPalette(word *pal, int size);
-word Screen_RGB(unsigned r, unsigned g, unsigned b);
-word Screen_ColorMin(word c1, word c2);
-word Screen_ColorSub(word color, int sub);
-word Screen_ColorAvg(word c1, word c2);
-word Screen_ColorBlend(word c1, word c2, float factor);
+void Screen_FixPalette(uint16_t *pal, int size);
+void Screen_FixMGIFPalette(uint16_t *pal, int size);
+uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b);
+uint16_t Screen_ColorMin(uint16_t c1, uint16_t c2);
+uint16_t Screen_ColorSub(uint16_t color, int sub);
+uint16_t Screen_ColorAvg(uint16_t c1, uint16_t c2);
+uint16_t Screen_ColorBlend(uint16_t c1, uint16_t c2, float factor);
 
-unsigned Screen_ColorR(word c);
-unsigned Screen_ColorG(word c);
-unsigned Screen_ColorB(word c);
+unsigned Screen_ColorR(uint16_t c);
+unsigned Screen_ColorG(uint16_t c);
+unsigned Screen_ColorB(uint16_t c);
 
 
 void ShareCPU(void);
@@ -138,7 +139,7 @@ int get_shift_state(void);
 void *LoadDefaultFont(void);
 void *PrepareVideoSound(int mixfreq, int buffsize);
 void DoneVideoSound(void *buffer);
-char LoadNextVideoFrame(void *buffer, byte *data, int size, short *xlat, short *accnums, long *writepos);
+char LoadNextVideoFrame(void *buffer, uint8_t *data, int size, short *xlat, short *accnums, long *writepos);
 
 char OtevriUvodniOkno();
 char SelectAdventure();

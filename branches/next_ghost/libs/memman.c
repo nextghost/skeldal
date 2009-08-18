@@ -20,10 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-#include "libs/types.h"
-//#include "libs/mem.h"
-//#include <dos.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -31,10 +28,7 @@
 #include <string.h>
 #include "libs/memman.h"
 #include <time.h>
-//#include <i86.h>
-//#include "libs/swaper.c"
 #include "libs/system.h"
-//#include <io.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -172,7 +166,7 @@ void *load_file(char *filename)
 typedef struct tnametable
         {
         char name[12];
-        long seek;
+        int32_t seek;
         }TNAMETABLE;
 
 
@@ -761,21 +755,21 @@ static int apreload_sort(const void *val1,const void *val2)
   {
   long vl1,vl2;
 
-  vl1=apr_sign[*(word *)val1];
-  vl2=apr_sign[*(word *)val2];
+  vl1=apr_sign[*(uint16_t *)val1];
+  vl2=apr_sign[*(uint16_t *)val2];
   return (vl1>vl2)-(vl1<vl2);
   }
 
 void apreload_start(void (*percent)(int cur,int max))
   {
-  word *p;
+  uint16_t *p;
   int i;
   int c,z;
 
   swap_status=0;
-  p=NewArr(word,max_sign);
+  p=NewArr(uint16_t,max_sign);
   for(i=0;i<max_sign;i++) p[i]=i;
-  qsort(p,max_sign,sizeof(word),apreload_sort);
+  qsort(p,max_sign,sizeof(uint16_t),apreload_sort);
   for(i=0,c=0;i<max_sign;i++) if (apr_sign[p[i]]==0x7f7f7f7f)p[i]=0xffff;else c++;
   for(i=0,z=0;i<max_sign;i++) if (p[i]!=0xffff)
      {

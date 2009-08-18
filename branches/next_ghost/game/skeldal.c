@@ -20,24 +20,16 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
-//#include <debug.h>
 #include <assert.h>
-//#include <env.h>
-//#include <dos.h>
-//#include <bios.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-//#include <conio.h>
 #include <malloc.h>
 #include <limits.h>
 #include <unistd.h>
-//#include "libs/mem.h"
 #include "libs/pcx.h"
-//#include <direct.h>
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/bgraph.h"
 #include "libs/event.h"
 #include "libs/devices.h"
@@ -49,13 +41,11 @@
 #include "libs/basicobj.h"
 #include <time.h>
 #include "libs/mgfplay.h"
-//#include <doserr.h>
 #include "libs/inicfg.h"
 #include "game/globals.h"
 #include "game/engine1.h"
 #include "game/wizard.h"
 #include "game/version.h"
-//#include "windows/uvodni.h"
 #include "libs/system.h"
 
 #define CONFIG_NAME SKELDALINI
@@ -124,7 +114,7 @@ typedef struct inis
   {
 //  char heslo[15];
   char heslo[20];
-  char parmtype;
+  int8_t parmtype;
   }INIS;
 
 THE_TIMER timer_tree;
@@ -396,7 +386,7 @@ int ask_video()
 
 void pcx_fade_decomp(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
   load_pcx(*p,*s,A_FADE_PAL,&buff,mglob.fade_r,mglob.fade_g,mglob.fade_b);
 // TODO: rewrite this properly
 //  *s=_msize(buff);
@@ -407,7 +397,7 @@ void pcx_fade_decomp(void **p,long *s)
 
 void pcx_15bit_decomp(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
 // TODO: rewrite this properly
 //  *s=_msize(buff);
@@ -418,7 +408,7 @@ void pcx_15bit_decomp(void **p,long *s)
 
 void pcx_15bit_autofade(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
   load_pcx(*p,*s,A_16BIT,&buff);
 // TODO: rewrite this properly
 //  *s=_msize(buff);
@@ -430,7 +420,7 @@ void pcx_15bit_autofade(void **p,long *s)
 
 void pcx_15bit_backgrnd(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
   long i;long *z;
 
   if (*p!=NULL)
@@ -448,7 +438,7 @@ void pcx_15bit_backgrnd(void **p,long *s)
 
 void pcx_8bit_nopal(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
 
   if (*p!=NULL)
      {
@@ -464,7 +454,7 @@ void pcx_8bit_nopal(void **p,long *s)
 
 void pcx_8bit_decomp(void **p,long *s)
   {
-  char *buff;
+  int8_t *buff;
   load_pcx(*p,*s,A_8BIT,&buff);
 // TODO: rewrite this properly
 //  *s=_msize(buff);
@@ -475,7 +465,7 @@ void pcx_8bit_decomp(void **p,long *s)
 
 void hi_8bit_correct(void **p,long *s)
 {
-  word *ptr=(word *)*p;
+  uint16_t *ptr=(uint16_t *)*p;
   int i;
   if (ptr[2]==8)
   {
@@ -492,9 +482,9 @@ void hi_8bit_correct(void **p,long *s)
 
 void set_background(void **p,long *s)
   {
-  word *data;
-  word *ptr;
-  word *pal;
+  uint16_t *data;
+  uint16_t *ptr;
+  uint16_t *pal;
   char *pic;
   int counter;
 
@@ -1371,7 +1361,7 @@ void play_movie_seq(char *s,int y) {
 	int hic = full_video ? SMD_HICOLOR+128 : SMD_HICOLOR;
 	int cc = full_video ? SMD_256+128 : SMD_256;
 
-	word *lbuffer=Screen_GetAddr();
+	uint16_t *lbuffer=Screen_GetAddr();
 	set_play_attribs(lbuffer, 0, banking, vmode == 5);
 
 	switch (vmode)

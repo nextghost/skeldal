@@ -20,15 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
-//#include <skeldal_win.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-//#include <bios.h>
-//#include "libs/mem.h"
-#include "libs/types.h"
+#include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -114,7 +111,7 @@ long shop_hacek_size=0; //toto je jeho delka
 #define INV_LEVEL_COL2 (RGB555(31,24,0))
 
 //unsigned short butt_plus[]={0x0,(RGB555(25,23,16)),(RGB555(18,17,14)),(RGB555(10,10,5)),(RGB555(31,27,14))};
-word butt_plus[5];
+uint16_t butt_plus[5];
 
 #define PO_XS 194
 #define PO_YS 340
@@ -135,9 +132,9 @@ void Inv_Init(void) {
 	butt_plus[4] = RGB555(31,27,14);
 }
 
-void place_human_item(word *obrazek,int x,int y,int item)
+void place_human_item(uint16_t *obrazek,int x,int y,int item)
   {
-  word *p;
+  uint16_t *p;
 
   p=ablock(item);
   put_picture2picture(p,obrazek,PO_XSS-p[0]/2+x,PO_YS-p[1]-y-20);
@@ -178,10 +175,10 @@ static void items_15to16_correct(void **p,long *s)
   for (i=0;i<IT_LIB_SIZE;i++)
     {
     int pos=IT_ICONE_SIZE*i;
-    word *pal;
+    uint16_t *pal;
     
     if (pos>=*s) return;
-    pal=((word *)(cur+pos))+3;
+    pal=((uint16_t *)(cur+pos))+3;
     for (j=0;j<256;j++,pal++)
       {
       *pal=RGB555(*pal>>10,(*pal>>5)& 0x1F,(*pal & 0x1F));
@@ -385,7 +382,7 @@ short create_item_money(int obnos)
 
 void load_item_map(void *p,long s)
   {
-  word itmc;
+  uint16_t itmc;
   int sect;
   short *c,*d;
 
@@ -488,7 +485,7 @@ int find_item(short *place,int mask)
 
 static int lastsector;
 
-static char ValidateSector(word sector)
+static char ValidateSector(uint16_t sector)
   {  
   int pp=map_sectors[sector].sector_type;
   if (pp==S_NORMAL || pp==S_SMER || pp==S_LEAVE || pp==S_FLT_SMER) 
@@ -701,7 +698,7 @@ char pick_item_(int id,int xa,int ya,int xr,int yr)
 		  {
 		  int curinside=count_items_inside(picked_item);
 		  int nosnost=(glob_items[*picked_item-1].nosnost);
-		  short *batoh=(word *)getmem(nosnost*2+20);		  
+		  short *batoh=(uint16_t *)getmem(nosnost*2+20);		  
 		  short *cur=batoh;
 		  memcpy(cur,picked_item,(curinside+1)*2);
 		  cur+=curinside;
@@ -1178,7 +1175,7 @@ void display_items_in_inv(THUMAN *h)
 
 void display_rings()
   {
-  word pozice[][2]=
+  uint16_t pozice[][2]=
      {
      {245,194},{245,229},{245,264},{245,299}
      };
@@ -1191,9 +1188,9 @@ void display_rings()
      ikn=human_selected->prsteny[i];
      if (ikn)
         {
-        word *w;
+        uint16_t *w;
         ikn=glob_items[ikn-1].ikona;
-        w=(word *)ico_extract(ikn);
+        w=(uint16_t *)ico_extract(ikn);
         put_picture(pozice[i][0]-w[0]/2,pozice[i][1]-w[1]/2,w);
         }
      }
@@ -1202,8 +1199,8 @@ void display_rings()
 void *build_items_wearing(THUMAN *h)
   {
   int i,vzhled,it;
-  word *p,hx,hy;
-  word *ob;
+  uint16_t *p,hx,hy;
+  uint16_t *ob;
   size_t siz;
   char *pp;
 
@@ -1266,13 +1263,13 @@ void display_items_wearing(THUMAN *h)
   if (it)
         {
         TITEM *itt;
-        word *w;int vzhled;
+        uint16_t *w;int vzhled;
 
         itt=&glob_items[it-1];
         vzhled=itt->vzhled;
         if (h->female==1) vzhled+=face_arr[2];else vzhled+=face_arr[1];
         w=ablock(vzhled);
-        enemy_draw((byte*)w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+Screen_GetXSize()*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
+        enemy_draw((uint8_t*)w,Screen_GetAddr()+itt->polohy[0][0]+HUMAN_X+PO_XSS-w[0]/2+Screen_GetXSize()*(HUMAN_Y-itt->polohy[0][1]-20),6,320,HUMAN_Y,640*65536);
         }
   }
 
@@ -1309,11 +1306,11 @@ static void percent_bar(int x,int y,int xs,int ys,int val,int max,char *popis)
 
 struct t_inv_script
   {
-  short col,line;
+  int16_t col,line;
   char *text;
-  short parm1,parm2;
-  char lenght;
-  char align;
+  int16_t parm1,parm2;
+  int8_t lenght;
+  int8_t align;
   };
 
 #define INFO_AP -1
@@ -1445,10 +1442,10 @@ void inv_display_vlastnosti()
 
 typedef struct t_info
   {
-  short line,col;
+  int16_t line,col;
   char *format;
-  short parm1,parm2;
-  char bonus;
+  int16_t parm1,parm2;
+  int8_t bonus;
   }T_INFO;
 
 
@@ -2674,7 +2671,7 @@ static void block_back()
 
 static void redraw_keepers_items()
   {
-        word *w;
+        uint16_t *w;
         schovej_mysku();
         w=ablock(H_SHOP_PIC);
         display_keepers_items();
@@ -2870,7 +2867,7 @@ void wire_shop()
   {
   long size;
   static TSHOP *last_shop=NULL;
-  static word *pic=NULL;
+  static uint16_t *pic=NULL;
   mute_all_tracks(0);
   old_inv_view_mode=inv_view_mode;
   inv_view_mode=0;
@@ -2925,11 +2922,11 @@ void enter_shop(int shopid)
   cur_mode=MD_SHOP;
   }
 
-  word *xs;
+  uint16_t *xs;
 
 char shop_change_player(int id, int xa, int ya,int xr,int yr)
   {
-  word *xs;
+  uint16_t *xs;
   int i;
 
   id;xa;ya;yr;
