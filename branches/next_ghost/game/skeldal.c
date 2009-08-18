@@ -1693,7 +1693,11 @@ static void start()
                           exit_wait=1;
                           }
                         break;
-       case V_UVOD:bar(0,0,639,479);goto zde;break;
+       case V_UVOD:
+       		bar(0,0,639,479);
+		while (Input_Kbhit()) Input_ReadKey();
+		goto zde;
+		break;
        case V_OBNOVA_HRY:load_saved_game();break;
        case V_AUTORI:run_titles(NULL);break;
         }

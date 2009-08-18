@@ -42,7 +42,7 @@ typedef struct {
 static int freq = 22050;
 static channel_t chans[CHANNELS] = {0};
 static int swapped = 0;
-static int play_music = 0;
+static int play_music = 0, active = 0;
 static Mix_Music *cur_music = NULL, *next_music = NULL;
 
 void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
@@ -75,10 +75,15 @@ void Sound_StartMixing(void) {
 
 	Mix_AllocateChannels(CHANNELS);
 	Mix_ChannelFinished(Channel_Callback);
+
+	active = 1;
 }
 
 void Sound_StopMixing(void) {
 	int i;
+
+	active = 0;
+	play_music = 0;
 
 	// clean up resampled buffers
 	for (i = 0; i < CHANNELS; i++) {
@@ -89,10 +94,12 @@ void Sound_StopMixing(void) {
 	Mix_HaltMusic();
 	if (cur_music) {
 		Mix_FreeMusic(cur_music);
+		cur_music = NULL;
 	}
 
 	if (next_music) {
 		Mix_FreeMusic(next_music);
+		next_music = NULL;
 	}
 
 	// shut down subsystem
@@ -101,6 +108,7 @@ void Sound_StopMixing(void) {
 
 // FIXME: resample when loading the sound file
 void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
+	assert(active && "Sound system not initialized");
 	assert(channel >= 0 && channel < CHANNELS && "Invalid channel");
 	assert(((lstart == 0) || (lstart == size)) && "Lead-in not supported");
 
@@ -326,7 +334,7 @@ void Sound_ChangeMusic(char *file) {
 int Sound_MixBack(int sync) {
 	char *buf;
 
-	if (!play_music || Mix_PlayingMusic()) {
+	if (!active || !play_music || Mix_PlayingMusic()) {
 		return 0;
 	}
 
