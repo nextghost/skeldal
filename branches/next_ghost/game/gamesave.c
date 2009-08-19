@@ -1199,39 +1199,38 @@ static char updown_scroll(int id,int xa,int ya,int xr,int yr);
 
 static char updown_noinst=0;
 
-static EVENT_PROC(updown_scroll_hold)
-  {
-  user_ptr;
-  WHEN_MSG(E_MOUSE)
-    {
-    MS_EVENT *ms;
+static EVENT_PROC(updown_scroll_hold) {
+	WHEN_MSG(E_MOUSE) {
+		MS_EVENT *ms;
+		va_list args;
 
-    ms=get_mouse(msg);
-    if (ms->event_type==0x4 || !ms->tl1 || ms->tl2 || ms->tl3)
-      {
-      send_message(E_DONE,E_MOUSE,updown_scroll_hold);
-      send_message(E_DONE,E_TIMER,updown_scroll_hold);
-      updown_noinst=0;
-      }
-    }
-  WHEN_MSG(E_TIMER)
-    {
-    MS_EVENT *ms;
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-    updown_noinst=1;
-    ms=&ms_last_event;
-    ms->event_type=0x2;
-    send_message(E_MOUSE,ms);
-    if (updown_noinst)
-      {
-      send_message(E_DONE,E_MOUSE,updown_scroll_hold);
-      send_message(E_DONE,E_TIMER,updown_scroll_hold);
-      updown_noinst=0;
-      }
-    else
-      updown_noinst=1;
-    }
-  }
+		if (ms->event_type == 0x4 || !ms->tl1 || ms->tl2 || ms->tl3) {
+			send_message(E_DONE, E_MOUSE, updown_scroll_hold);
+			send_message(E_DONE, E_TIMER, updown_scroll_hold);
+			updown_noinst = 0;
+		}
+	}
+
+	WHEN_MSG(E_TIMER) {
+		MS_EVENT *ms;
+
+		updown_noinst = 1;
+		ms = &ms_last_event;
+		ms->event_type = 0x2;
+		send_message(E_MOUSE, ms);
+		if (updown_noinst) {
+			send_message(E_DONE, E_MOUSE, updown_scroll_hold);
+			send_message(E_DONE, E_TIMER, updown_scroll_hold);
+			updown_noinst = 0;
+		} else {
+			updown_noinst = 1;
+		}
+	}
+}
 
 static char updown_scroll(int id,int xa,int ya,int xr,int yr)
   {
@@ -1472,26 +1471,46 @@ T_CLK_MAP clk_save[]=
   {-1,0,0,639,479,close_saveload,9,H_MS_DEFAULT},
   };
 
-static EVENT_PROC(saveload_keyboard)
-  {
-  user_ptr;
-  WHEN_MSG(E_KEYBOARD)
-     {
-     switch (GET_DATA(uint16_t)>>8)
-        {
-        case 1:unwire_proc();wire_proc();break;
-        case 'H':if (last_select>0) bright_slot((last_select-1)*SLOT_SPACE+1);break;
-        case 'P':if (last_select<SLOTS_MAX-1) bright_slot((last_select+1)*SLOT_SPACE+1);break;
-        case 28:ms_last_event.event_type|=0x2;
-                if (force_save) clk_save_proc(0,0,0,0,last_select*SLOT_SPACE+1+18);
-                else if (load_mode==4)
-                  clk_load_proc_menu(0,0,0,0,last_select*SLOT_SPACE+1+18);
-                else
-                  clk_load_proc(0,0,0,0,last_select*SLOT_SPACE+1+18);
-                break;
-        }
-     }
-  }
+static EVENT_PROC(saveload_keyboard) {
+	WHEN_MSG(E_KEYBOARD) {
+		char c;
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		switch (c) {
+		case 1:
+			unwire_proc();
+			wire_proc();
+			break;
+
+		case 'H':
+			if (last_select > 0) {
+				bright_slot((last_select - 1) * SLOT_SPACE + 1);
+			}
+			break;
+
+		case 'P':
+			if (last_select < SLOTS_MAX - 1) {
+				bright_slot((last_select + 1) * SLOT_SPACE + 1);
+			}
+			break;
+
+		case 28:
+			ms_last_event.event_type |= 0x2;
+		        if (force_save) {
+				clk_save_proc(0, 0, 0, 0, last_select * SLOT_SPACE + 1 + 18);
+			} else if (load_mode == 4) {
+				clk_load_proc_menu(0, 0, 0, 0, last_select * SLOT_SPACE + 1 + 18);
+			} else {
+				clk_load_proc(0, 0, 0, 0, last_select * SLOT_SPACE + 1 + 18);
+			}
+			break;
+		}
+	}
+}
 
 void unwire_save_load()
   {

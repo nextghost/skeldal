@@ -97,17 +97,20 @@ static void change_turn()
 
 static void unwire_setup();
 
-static EVENT_PROC(setup_keyboard)
-  {
-  user_ptr;
-  WHEN_MSG(E_KEYBOARD)
-     {
-     if (GET_DATA(char)==27)
-        {
-        unwire_proc();
-        }
-     }
-  }
+static EVENT_PROC(setup_keyboard) {
+	WHEN_MSG(E_KEYBOARD) {
+		char c;
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) & 0xff;
+		va_end(args);
+
+		if (c == 27) {
+			unwire_proc();
+		}
+	}
+}
 
 static void wire_setup()
   {

@@ -23,11 +23,11 @@
 #ifndef __BMOUSE_H
 #define __BMOUSE_H
 
-#include "event.h"
-#include "devices.h"
+#include "libs/event.h"
+#include "libs/devices.h"
 
 
-#define get_mouse(info) ((MS_EVENT *)(*(long *) info->data))
+//#define get_mouse(info) ((MS_EVENT *)(*(long *) info->data))
 
 extern MS_EVENT ms_last_event;
 

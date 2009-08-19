@@ -606,98 +606,153 @@ OBJREC *get_prev_id(OBJREC *o)
   }
 
 
-void do_it_events(EVENT_MSG *msg,void **user_data)
-  {
-  MS_EVENT *msev;
-  EVENT_MSG msg2;
-  char b;
-  static uint16_t cursor_tick=CURSOR_SPEED
-  OBJREC *p;
-  char *oz=otevri_zavoru;
+void do_it_events(EVENT_MSG *msg, void **user_data) {
+	MS_EVENT *msev;
+	EVENT_MSG msg2;
+	char b;
+	static uint16_t cursor_tick = CURSOR_SPEED;
+	OBJREC *p;
+	char *oz = otevri_zavoru;
+	va_list args;
+	
+	if (msg->msg == E_INIT) {
+		return;
+	}
 
-  user_data;
-  if (msg->msg==E_INIT) return;
-  if (desktop==NULL) {exit_wait=1;return;}
-  change_flag=0;f_cancel_event=0;
-  if (o_aktual!=NULL)o_aktual->events[0](msg,o_aktual);
-  if (msg->msg==E_MOUSE)
-     {
-     *oz=1;
-     msev=get_mouse(msg);
-     aktivate_window(msev);
-       if (o_aktual==NULL)
-        if (o_start!=NULL && (msev->tl1 || msev->tl2 || msev->tl3))
-           {
-           o_aktual=o_start;
-           while (o_aktual!=NULL && (!o_aktual->enabled || !mouse_in_object(msev,o_aktual,waktual) || o_aktual->runs[2]==empty3)) o_aktual=o_aktual->next;
-           if (o_aktual==NULL) return;
-           msg2.msg=E_GET_FOCUS;
-           o_aktual->runs[2](&msg2,o_aktual);
-           o_aktual->events[1]();
-           o_aktual->runs[2](msg,o_aktual);
-           }
-        else return;
-        else
-           {
-        if (o_aktual->enabled) b=mouse_in_object(msev,o_aktual,waktual);else b=0;
-        if (b) 
-          o_aktual->runs[2](msg,o_aktual);
-        if ((msev->tl1 || msev->tl2 || msev->tl3)&& !b)
-          {
-          o_aktual->events[2]();
-          if (f_cancel_event) return;
-          msg2.msg=E_LOST_FOCUS;
-          o_aktual->runs[2](&msg2,o_aktual);
-          p=o_start;
-          while (p!=NULL && (!p->enabled || !mouse_in_object(msev,p,waktual) || p->runs[2]==empty3))
-             p=p->next;
-          if (p!=NULL) o_aktual=p;
-          msg2.msg=E_GET_FOCUS;
-          o_aktual->runs[2](&msg2,o_aktual);
-          o_aktual->events[1]();
-          if (p!=NULL) o_aktual->runs[2](msg,o_aktual);
-          }
-           }
-     }
-  if (msg->msg==E_KEYBOARD)
-      {
-     *oz=1;
-      if (o_aktual!=NULL)
-        {
-        o_aktual->runs[2](msg,o_aktual);
-        }
-     if ((*(int *)msg->data>>8)==0xf && waktual->idlist!=NULL)
-        {
-        if (o_aktual==NULL) o_aktual=get_last_id();
-        if (o_aktual!=NULL)
-           {
-           f_cancel_event=0;
-           o_aktual->events[2]();
-           if (f_cancel_event) return;
-           msg2.msg=E_LOST_FOCUS;
-           o_aktual->runs[2](&msg2,o_aktual);
-           }
-        if((*(int *)msg->data & 0xff)==9) o_aktual=get_next_id(o_aktual);
-        else o_aktual=get_prev_id(o_aktual);
-        if (o_aktual!=NULL)
-           {
-           msg2.msg=E_GET_FOCUS;
-           o_aktual->runs[2](&msg2,o_aktual);
-           o_aktual->events[1]();
-           }
-        }
-     }
-  if (msg->msg==E_TIMER && o_aktual!=NULL)
-     {
-     o_aktual->runs[2](msg,o_aktual);
-     if (!(cursor_tick--))
-     {
-     msg->msg=E_CURSOR_TICK;
-     o_aktual->runs[2](msg,o_aktual);
-     o_aktual->events[0](msg,o_aktual);
-     cursor_tick=CURSOR_SPEED;
-     }
-     }
+	if (desktop == NULL) {
+		exit_wait = 1;
+		return;
+	}
+
+	change_flag = 0;
+	f_cancel_event = 0;
+
+	if (o_aktual != NULL) {
+		o_aktual->events[0](msg, o_aktual);
+	}
+
+	if (msg->msg == E_MOUSE) {
+		va_copy(args, msg->data);
+		msev = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		*oz = 1;
+		aktivate_window(msev);
+
+		if (o_aktual == NULL) {
+			if (o_start != NULL && (msev->tl1 || msev->tl2 || msev->tl3)) {
+				o_aktual = o_start;
+				while (o_aktual != NULL && (!o_aktual->enabled || !mouse_in_object(msev, o_aktual, waktual) || o_aktual->runs[2] == empty3)) {
+					o_aktual = o_aktual->next;
+				}
+
+				if (o_aktual == NULL) {
+					return;
+				}
+
+				msg2.msg = E_GET_FOCUS;
+				o_aktual->runs[2](&msg2, o_aktual);
+				o_aktual->events[1]();
+				o_aktual->runs[2](msg, o_aktual);
+			} else {
+				return;
+			}
+		} else {
+			if (o_aktual->enabled) {
+				b = mouse_in_object(msev, o_aktual, waktual);
+			} else {
+				b = 0;
+			}
+
+			if (b) {
+				o_aktual->runs[2](msg, o_aktual);
+			}
+
+			if ((msev->tl1 || msev->tl2 || msev->tl3) && !b) {
+				o_aktual->events[2]();
+
+				if (f_cancel_event) {
+					return;
+				}
+
+				msg2.msg = E_LOST_FOCUS;
+				o_aktual->runs[2](&msg2, o_aktual);
+				p = o_start;
+
+				while (p != NULL && (!p->enabled || !mouse_in_object(msev, p, waktual) || p->runs[2] == empty3)) {
+					p = p->next;
+				}
+
+				if (p != NULL) {
+					o_aktual = p;
+				}
+
+				msg2.msg = E_GET_FOCUS;
+				o_aktual->runs[2](&msg2, o_aktual);
+				o_aktual->events[1]();
+
+				if (p != NULL) {
+					o_aktual->runs[2](msg, o_aktual);
+				}
+			}
+		}
+	}
+
+	if (msg->msg == E_KEYBOARD) {
+		int c;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int);
+		va_end(args);
+
+		*oz = 1;
+
+		if (o_aktual != NULL) {
+			o_aktual->runs[2](msg, o_aktual);
+		}
+
+		if (c >> 8 == 0xf && waktual->idlist != NULL) {
+			if (o_aktual == NULL) {
+				o_aktual = get_last_id();
+			}
+
+			if (o_aktual != NULL) {
+				f_cancel_event = 0;
+				o_aktual->events[2]();
+
+				if (f_cancel_event) {
+					return;
+				}
+
+				msg2.msg = E_LOST_FOCUS;
+				o_aktual->runs[2](&msg2, o_aktual);
+			}
+
+			if(c & 0xff == 9) {
+				o_aktual = get_next_id(o_aktual);
+			} else {
+				o_aktual = get_prev_id(o_aktual);
+			}
+
+			if (o_aktual != NULL) {
+				msg2.msg = E_GET_FOCUS;
+				o_aktual->runs[2](&msg2, o_aktual);
+				o_aktual->events[1]();
+			}
+		}
+	}
+
+	if (msg->msg == E_TIMER && o_aktual != NULL) {
+		o_aktual->runs[2](msg, o_aktual);
+
+		if (!(cursor_tick--)) {
+			msg->msg = E_CURSOR_TICK;
+			o_aktual->runs[2](msg, o_aktual);
+			o_aktual->events[0](msg, o_aktual);
+			cursor_tick = CURSOR_SPEED;
+		}
+	}
+/* E_GUI message never gets sent
   if (msg->msg==E_GUI)
      {
      OBJREC *o;
@@ -715,10 +770,15 @@ void do_it_events(EVENT_MSG *msg,void **user_data)
         }
 
      }
-  if (msg->msg==E_CHANGE)
-     run_background(o_aktual->events[3]);
-  if (change_flag) send_message(E_CHANGE);
-  }
+*/
+	if (msg->msg == E_CHANGE) {
+		run_background(o_aktual->events[3]);
+	}
+
+	if (change_flag) {
+		send_message(E_CHANGE);
+	}
+}
 
 
 
@@ -899,26 +959,26 @@ void close_current()
   close_window(waktual);
   }
 
-void background_runner(EVENT_MSG *msg,void **prog)
-  {
-  register void (*p)();
-  char i=1;
+void background_runner(EVENT_MSG *msg,void **prog) {
+	void (*p)();
+	char i = 1;
+	
+	if (msg->msg == E_INIT) {
+		va_list args;
+		va_copy(args, msg->data);
+		*prog = va_arg(args, void (*)());
+		va_end(args);
+		return;
+	} else if (msg->msg == E_DONE) {
+		*prog = NULL;
+		return;
+	}
 
-  if (msg->msg==E_INIT)
-     {
-     memcpy(prog,msg->data,4);
-     return;
-     }
-  if (msg->msg==E_DONE)
-     {
-     *prog=NULL;
-     return;
-     }
-    p=*prog;
-    p();
-    i=0;
-  msg->msg=-2;
-  }
+	p = *prog;
+	p();
+	i = 0;
+	msg->msg = -2;
+}
 
 void run_background(void (*p)())
   {

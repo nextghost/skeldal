@@ -24,6 +24,7 @@
 #define __EVENT_H
 
 #include <inttypes.h>
+#include <stdarg.h>
 
 //#define nodebug  // 0 znamena ze se nealokuje udalost pro chybu
 // Tato knihovna definuje zakladni systemove konstanty
@@ -62,11 +63,14 @@
 
 #define TASK_EVENT_WAITING 2
 
-#define shift_msg(msgg,tg) ((tg.msg=*(long *)msgg->data),(tg.data=(void *)((long *)msgg->data+1)))
-
 #define EVENT_BUFF_SIZE 16
 
-typedef void (*EV_PROC)(void *,void *) ;
+typedef struct event_msg {
+	int msg;
+	va_list data;
+} EVENT_MSG;
+
+typedef void (*EV_PROC)(EVENT_MSG *,void *) ;
 
 #define PROC_GROUP (EV_PROC )1
 
@@ -111,12 +115,6 @@ typedef struct t_event_root
   T_EVENT_POINT *list;
   }T_EVENT_ROOT;
 
-typedef struct event_msg
-  {
-  int32_t msg;
-  void *data;
-  }EVENT_MSG;
-
 extern char exit_wait; // 1 - opousti aktivni cekaci event;
 extern char freeze_on_exit; //1 - po opusteni udalosti cela cesta uzamcena
 extern char *otevri_zavoru;
@@ -125,7 +123,7 @@ extern char *otevri_zavoru;
 
 void init_events();
  // inicalizuje zakladni strom udalosto
-void send_message(long message,...);
+void send_message(int message,...);
  // posila zpravu do stromu
 void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg);
  // pripojuje zakladni funkce brany, jako je instalace listu a jejich deinstalace
@@ -163,8 +161,6 @@ void timer(EVENT_MSG *msg);
 #define EVENT_PROC(name) void name(EVENT_MSG *msg,void **user_ptr)
 #define WHEN_MSG(msg_num) if (msg->msg==msg_num)
 #define UNTIL_MSG(msg_num) if (msg->msg!=msg_num)
-#define GET_DATA(data_type) (*(data_type *)msg->data)
-#define GET_DATA_PTR(data_type) ((data_type *)msg->data);
 #define GET_USER(data_type) (*(data_type *)user_ptr)
 #define SAVE_USER_PTR(p) (*user_ptr=p)
 #define GET_USER_PTR() user_ptr

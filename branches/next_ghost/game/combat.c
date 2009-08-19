@@ -708,17 +708,22 @@ void wire_end_game()
   }
 
 
-void konec_presunu(EVENT_MSG *msg,void **unused)
-  {
-  unused;
+void konec_presunu(EVENT_MSG *msg, void **unused) {
+	if (msg->msg == E_KEYBOARD) {
+		char c;
+		va_list args;
 
-  if (msg->msg==E_KEYBOARD && ((*(int *)msg->data)>>8)==28 && !pass_zavora)
-     {
-     unwire_proc();
-     wire_jadro_souboje();
-     msg->msg=-1;
-     }
-  }
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		if (c == 28 && !pass_zavora) {
+			unwire_proc();
+			wire_jadro_souboje();
+			msg->msg = -1;
+		}
+	}
+}
 
 void wire_presun_postavy();
 void unwire_presun_postavy()
@@ -1930,44 +1935,72 @@ void souboje_turn(char smer)
 
 
 
-void programming_keyboard(EVENT_MSG *msg,void **unused)
-  {
-  char c;
+void programming_keyboard(EVENT_MSG *msg,void **unused) {
+	char c;
+	
+	if (msg->msg==E_KEYBOARD) {
+		va_list args;
 
-  unused;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=(*(int *)msg->data)>>8;
-//     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
-     while (Input_Kbhit()) Input_ReadKey();
-     switch (c)
-        {
-        case 1:konec(0,0,0,0,0);break;
-        case 'M':souboje_turn(1);break;
-        case 'K':souboje_turn(-1);break;
-        case '=':unwire_proc();cancel_render=1;wire_save_load(0);break;
-        case '>':game_setup(0,0,0,0,0);break;
-        case 57:souboje_dalsi();bott_draw(1);break;
-        case 15:
-        case 50:
-		      if (GlobEvent(MAGLOB_BEFOREMAPOPEN,viewsector,viewdir))
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		while (Input_Kbhit()) Input_ReadKey();
+
+		switch (c) {
+		case 1:
+			konec(0, 0, 0, 0, 0);
+			break;
+
+		case 'M':
+			souboje_turn(1);
+			break;
+
+		case 'K':
+			souboje_turn(-1);
+			break;
+
+		case '=':
+			unwire_proc();
+			cancel_render = 1;
+			wire_save_load(0);
+			break;
+
+		case '>':
+			game_setup(0, 0, 0, 0, 0);
+			break;
+
+		case 57:
+			souboje_dalsi();
+			bott_draw(1);
+			break;
+
+		case 15:
+		case 50:
+			if (GlobEvent(MAGLOB_BEFOREMAPOPEN, viewsector, viewdir)) {
 				show_automap(1);
-              break;
-        case 0x17:unwire_proc();
-                 wire_inv_mode(human_selected);
-        case 82:group_all();break;
-        CASE_KEY_1_6:c=group_sort[c-2];
-                     if (postavy[c].used)
-                       {
-                       select_player=c;
-                       zmen_skupinu(postavy+c);
-                       bott_draw(1);
-                       }
-                     break;
-        }
-     }
+			}
+			break;
 
-  }
+		case 0x17:
+			unwire_proc();
+			wire_inv_mode(human_selected);
+		case 82:
+			group_all();
+			break;
+
+		CASE_KEY_1_6:
+			c = group_sort[c - 2];
+			if (postavy[c].used) {
+				select_player = c;
+				zmen_skupinu(postavy + c);
+				bott_draw(1);
+			}
+			break;
+		}
+	}
+
+}
 
 void unwire_programming()
   {

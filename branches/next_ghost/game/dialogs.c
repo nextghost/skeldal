@@ -702,35 +702,50 @@ static void dialog_cont()
      }
 
 
-static void key_check(EVENT_MSG *msg,void **unused)
-  {
-  char c,d;
+static void key_check(EVENT_MSG *msg, void **unused) {
+	char c, d;
+	
+	if (msg->msg == E_KEYBOARD) {
+		int tmp;
+		va_list args;
 
-  unused;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=*(char *)msg->data;
-     d=*(int *)msg->data>>8;
-     if (c==0)
-        {
-        switch(d)
-           {
-           case 'H':if (vyb_volba==0) his_line-=(his_line>0);else vyb_volba--;break;
-           case 'P':if (his_line<last_his_line) his_line++;else if (vyb_volba+1<pocet_voleb) vyb_volba++;break;
-           }
-        schovej_mysku();
-        redraw_text();
-        ukaz_mysku();
-        showview(TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS);
-        }
-     else if (c==13||c==32)
-        {
-        dialog_cont();
-        msg->msg=-1;
-        }
-     else if (c==27) konec(0,0,0,0,0);
-     }
-  }
+		va_copy(args, msg->data);
+		tmp = va_arg(args, int);
+		c = tmp & 0xff;
+		d = tmp >> 8;
+		va_end(args);
+
+		if (c == 0) {
+			switch(d) {
+			case 'H':
+				if (vyb_volba == 0) {
+					his_line -= (his_line > 0);
+				} else {
+					vyb_volba--;
+				}
+				break;
+
+			case 'P':
+				if (his_line < last_his_line) {
+					his_line++;
+				} else if (vyb_volba + 1 < pocet_voleb) {
+					vyb_volba++;
+				}
+				break;
+			}
+
+			schovej_mysku();
+			redraw_text();
+			ukaz_mysku();
+			showview(TEXT_X, TEXT_Y, TEXT_XS, TEXT_YS);
+		} else if (c == 13 || c == 32) {
+			dialog_cont();
+			msg->msg = -1;
+		} else if (c == 27) {
+			konec(0,0,0,0,0);
+		}
+	}
+}
 
 void wire_dialog();
 void wire_dialog_drw()

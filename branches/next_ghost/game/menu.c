@@ -326,27 +326,57 @@ static void preload_anim(void) {
   load_ok=1;
   }
 
-static void klavesnice(EVENT_MSG *msg,void **unused)
-  {
-  short cursor,i;
-  unused;
+static void klavesnice(EVENT_MSG *msg, void **unused) {
+	int cursor, i;
 
+	if (msg->msg == E_KEYBOARD) {
+		char c;
+		va_list args;
 
-  if (msg->msg==E_KEYBOARD)
-     {
-     for(cursor=0;cursor<5;cursor++) if (cur_dir[cursor]==SELECT) break;
-     if (cursor==5) cursor=-1;
+		for (cursor = 0; cursor < 5; cursor++) {
+			if (cur_dir[cursor] == SELECT) {
+				break;
+			}
+		}
 
-     switch(*((char *)msg->data+1))
-        {
-        case 'H':cursor--;if (cursor<0) cursor=0;break;
-        case 'P':cursor++;if (cursor>4) cursor=4;break;
-        case 28:
-        case 57:click(0,0,0,0,0);return;
-        }
-     for(i=0;i<5;i++) if (i==cursor) cur_dir[i]=SELECT;else cur_dir[i]=UNSELECT;
-     }
-  }
+		if (cursor == 5) {
+			cursor=-1;
+		}
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		switch (c) {
+		case 'H':
+			cursor--;
+			if (cursor < 0) {
+				cursor = 0;
+			}
+			break;
+
+		case 'P':
+			cursor++;
+			if (cursor > 4) {
+				cursor=4;
+			}
+			break;
+
+		case 28:
+		case 57:
+			click(0,0,0,0,0);
+			return;
+		}
+
+		for(i = 0; i < 5; i++) {
+			if (i == cursor) {
+				cur_dir[i] = SELECT;
+			} else {
+				cur_dir[i] = UNSELECT;
+			}
+		}
+	}
+}
 
 int enter_menu(char open)
   {
@@ -659,7 +689,7 @@ void titles(int send_back, char *textname) {
 //  if (send_back)send_message(E_KEYBOARD,27);
 }
 
-void run_titles(va_list args)
+void run_titles(void)
   {
 /*
   int task_id;

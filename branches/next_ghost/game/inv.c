@@ -1683,59 +1683,72 @@ char vls_click(int id,int xa,int ya,int xr,int yr)
 
 
 
-void inv_item_info_box(EVENT_MSG *msg,void **data)
-  {
-  MS_EVENT *ms;
-  char podm;
-  int pos;
-  static int lastpos=-1;
-  int xr,yr;
+void inv_item_info_box(EVENT_MSG *msg, void **data) {
+	MS_EVENT *ms;
+	char podm;
+	int pos;
+	static int lastpos = -1;
+	int xr, yr;
 
-  data;
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (picked_item!=NULL)
-        {
-        if (ms->y>378 && info_box_drawed) hide_inv_info_box();
-        else if (ms->y<=378 && !info_box_drawed)
-           {
-           schovej_mysku();
-           inv_informuj();
-           ukaz_mysku();
-           showview(INV_INFO_X-VEL_RAMEC,INV_INFO_Y-VEL_RAMEC,INV_INFO_XS+2*VEL_RAMEC+2,INV_INFO_YC+2*VEL_RAMEC+2);
-           }
-        lastpos=-1;
-        }
-     else
-        {
-        if (inv_view_mode) return;
-        podm=(ms->x>=clk_inv_view[0].xlu &&
-              ms->x<=clk_inv_view[0].xrb &&
-              ms->y>=clk_inv_view[0].ylu &&
-              ms->y<=clk_inv_view[0].yrb);
-        xr=ms->x-clk_inv_view[0].xlu;
-        yr=ms->y-clk_inv_view[0].ylu;
-        if (podm) pos=(xr/INV_XS)+6*(yr/INV_YS);else pos=-1;
-        if (pos>=human_selected->inv_size) podm=0;
-        if (podm && (!info_box_drawed || pos!=lastpos))
-           {
-           int i=human_selected->inv[pos];
-           if (i)
-              {
-              char s[80];
-              schovej_mysku();
-              inv_info_box(glob_items[i-1].jmeno,glob_items[i-1].popis,get_item_req(s,i),!muze_nosit(i));
-              showview(INV_INFO_X-VEL_RAMEC,INV_INFO_Y-VEL_RAMEC,INV_INFO_XS+2*VEL_RAMEC+2,INV_INFO_YC+2*VEL_RAMEC+2);
-              ukaz_mysku();
-              }
-           else if (info_box_drawed) hide_inv_info_box();
-           }
-        else if (!podm && info_box_drawed) hide_inv_info_box();
-        lastpos=pos;
-        }
-     }
-  }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (picked_item!=NULL) {
+			if (ms->y > 378 && info_box_drawed) {
+				hide_inv_info_box();
+			} else if (ms->y <= 378 && !info_box_drawed) {
+				schovej_mysku();
+				inv_informuj();
+				ukaz_mysku();
+				showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
+			}
+
+			lastpos = -1;
+		} else {
+			if (inv_view_mode) {
+				return;
+			}
+
+			podm = (ms->x >= clk_inv_view[0].xlu &&
+				ms->x <= clk_inv_view[0].xrb &&
+				ms->y >= clk_inv_view[0].ylu &&
+				ms->y <= clk_inv_view[0].yrb);
+			xr = ms->x - clk_inv_view[0].xlu;
+			yr = ms->y - clk_inv_view[0].ylu;
+
+			if (podm) {
+				pos = (xr / INV_XS) + 6 * (yr / INV_YS);
+			} else {
+				pos = -1;
+			}
+
+			if (pos >= human_selected->inv_size) {
+				podm = 0;
+			}
+
+			if (podm && (!info_box_drawed || pos!=lastpos)) {
+				int i = human_selected->inv[pos];
+				if (i) {
+					char s[80];
+					schovej_mysku();
+					inv_info_box(glob_items[i-1].jmeno, glob_items[i-1].popis, get_item_req(s,i), !muze_nosit(i));
+					showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
+					ukaz_mysku();
+				} else if (info_box_drawed) {
+					hide_inv_info_box();
+				}
+			} else if (!podm && info_box_drawed) {
+				hide_inv_info_box();
+			}
+
+			lastpos = pos;
+		}
+	}
+}
 
 void unwire_inv_mode()
   {
@@ -2203,34 +2216,37 @@ char human_click(int id,int xa,int ya,int xr,int yr)
   }
 
 
-void *inv_keyboard(EVENT_MSG *msg,void **usr)
-  {
-  char c;
+void *inv_keyboard(EVENT_MSG *msg, void **usr) {
+	char c;
+	
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
 
-  usr;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=(*(int *)msg->data)>>8;
-     switch (c)
-        {
-        case 0x17:
-        case 1:unwire_inv_mode();
-               wire_proc();
-               inv_view_mode=0;
-               break;
-        case 28:
-        case 15:
-        case 50:
-  	  	      if (GlobEvent(MAGLOB_BEFOREMAPOPEN,viewsector,viewdir))
-			  {
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		switch (c) {
+		case 0x17:
+		case 1:
+			unwire_inv_mode();
+			wire_proc();
+			inv_view_mode = 0;
+			break;
+
+		case 28:
+		case 15:
+		case 50:
+			if (GlobEvent(MAGLOB_BEFOREMAPOPEN, viewsector, viewdir)) {
 				unwire_inv_mode();
 				show_automap(1);
-			  }
-              break;
-        }
-     }
-  return &inv_keyboard;
-  }
+			}
+			break;
+		}
+	}
+
+	return &inv_keyboard;
+}
 
 
 void wire_inv_mode(THUMAN *select)
@@ -2419,50 +2435,52 @@ T_CLK_MAP clk_shop[]=
   {-1,30,0,85,14,konec,2,H_MS_DEFAULT},
   };
 
-static void shop_mouse_event(EVENT_MSG *msg,void **unused)
-  {
-  unused;
+static void shop_mouse_event(EVENT_MSG *msg, void **unused) {
+	if (msg->msg==E_MOUSE) {
+		MS_EVENT *ms;
+		int x, y;
+		char cc = 1;
+		static last_pos = -1;
+		va_list args;
 
-  if (msg->msg==E_MOUSE)
-     {
-     MS_EVENT *ms;
-     int x,y;
-     char cc=1;
-     static last_pos=-1;
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-     ms=get_mouse(msg);
-     x=ms->x-(BUYBOX_X+SHP_ICPLCX);
-     y=ms->y-(BUYBOX_Y+SHP_ICPLCY);
-     if (picked_item==NULL && x>0 && y>0 && x<(4*SHP_ICSIZX) && y<(2*SHP_ICSIZY))
-        {
-        int i,j;
-        x/=SHP_ICSIZX;
-        y/=SHP_ICSIZY;
-        i=4*y+x;
-        if (i<8 && (j=shp_item_map[i])!=0 && i!=last_pos)
-           {
-           char c[80];
-           char s[80];
-           int cena=cur_shop->list[shp_item_pos[i]].cena;
+		x = ms->x - (BUYBOX_X + SHP_ICPLCX);
+		y = ms->y - (BUYBOX_Y + SHP_ICPLCY);
 
-           j--;
-           schovej_mysku();
-           sprintf(c,"%s (%d)",glob_items[j].jmeno,cena+cur_shop->koef*cena/100);
-           inv_info_box(c,glob_items[j].popis,get_item_req(s,j+1),!muze_nosit(j+1));
-           ukaz_mysku();
-           showview(INV_INFO_X-VEL_RAMEC,INV_INFO_Y-VEL_RAMEC,INV_INFO_XS+2*VEL_RAMEC+2,INV_INFO_YC+2*VEL_RAMEC+2);
-           last_pos=i;
-           cc=0;
-           }
-        else cc=i!=last_pos;
-        }
-        if (cc)
-        {
-        inv_item_info_box(msg,unused);
-        last_pos=-1;
-        }
-     }
-  }
+		if (picked_item == NULL && x > 0 && y > 0 && x < (4 * SHP_ICSIZX) && y < (2 * SHP_ICSIZY)) {
+			int i, j;
+			x /= SHP_ICSIZX;
+			y /= SHP_ICSIZY;
+			i = 4 * y + x;
+
+			if (i < 8 && (j = shp_item_map[i]) != 0 && i != last_pos) {
+				char c[80];
+				char s[80];
+				int cena = cur_shop->list[shp_item_pos[i]].cena;
+
+				j--;
+				schovej_mysku();
+				sprintf(c, "%s (%d)", glob_items[j].jmeno, cena + cur_shop->koef * cena / 100);
+				inv_info_box(c, glob_items[j].popis, get_item_req(s, j + 1), !muze_nosit(j + 1));
+				ukaz_mysku();
+				showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
+				last_pos = i;
+				cc = 0;
+			} else {
+				cc = i != last_pos;
+			}
+		}
+
+		if (cc) {
+			inv_item_info_box(msg, unused);
+			last_pos = -1;
+		}
+	}
+}
+
 static void rebuild_shops(void)
   {
   char *c=(char *)shop_hacek;

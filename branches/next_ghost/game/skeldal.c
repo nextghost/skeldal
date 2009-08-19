@@ -624,62 +624,76 @@ void back_music()
   puts("\x7");
   }
 */
-void *timming(EVENT_MSG *msg,void **data)
-  {
-  THE_TIMER *p,*q;
-  int i,j;
+void *timming(EVENT_MSG *msg,void **data) {
+	THE_TIMER *p, *q;
+	int i, j;
+	va_list args;
 
-  data;
-  if (msg->msg==E_INIT) return &timming;
-  *otevri_zavoru=1;
-  j=*(int *)msg->data;
-  for (i=0;i<j;i++)
-  {
-  p=&timer_tree;
-  q=p->next;
-  while (q!=NULL)
-     {
-     p=q->next;
-//     if (p!=NULL && p->zero!=0) timer_error();
-     if (!(--q->counter))
-     if (q->zavora && i==(j-1))
-        {
-        q->zavora=0;
-        if (q->calls!=-2) q->proc(q);
-        p=q->next;
-        q->zavora=1;
-        q->counter=q->count_max;
-        if (q->calls!=-1)
-           if (--q->calls<1)
-              {
-              for(p=&timer_tree;p->next!=q;p=p->next);
-              p->next=q->next;
-              #ifdef LOGFILE
-              if (q->next==NULL)
-                 SEND_LOG("(TIMER) Self remove for timer id: %d, next-><NULL>",q->id,0);
-              else
-                 SEND_LOG("(TIMER) Self remove for timer id: %d, next->%d",q->id,q->next->id);
-              #endif
-              free(q);
-              q=p;
-              }
-           //else
-             // q->counter=1;
-        }
-     else
-        q->counter=1;
-     if (q->next!=p && q!=p)
-        {
-        THE_TIMER *z;
-        SEND_LOG("(TIMER) Timer integrity corrupted",0,0);
-        z=&timer_tree;while(z->next!=p && z->next!=NULL) z=z->next;
-        if (z->next==NULL) return NULL;
-        }
-     q=p;
-     }
-  }
-  return NULL;
-  }
+	if (msg->msg == E_INIT) {
+		return &timming;
+	}
+
+	*otevri_zavoru = 1;
+	va_copy(args, msg->data);
+	j = va_arg(args, int);
+	va_end(args);
+
+	for (i = 0; i < j; i++) {
+		p = &timer_tree;
+		q = p->next;
+
+		while (q != NULL) {
+			p = q->next;
+
+			if (!(--q->counter))
+			if (q->zavora && i==(j-1)) {
+				q->zavora = 0;
+
+				if (q->calls != -2) {
+					q->proc(q);
+				}
+
+				p = q->next;
+				q->zavora = 1;
+				q->counter = q->count_max;
+				if (q->calls != -1) {
+					if (--q->calls<1) {
+						for(p = &timer_tree; p->next != q; p = p->next);
+						p->next = q->next;
+						#ifdef LOGFILE
+						if (q->next == NULL) {
+							SEND_LOG("(TIMER) Self remove for timer id: %d, next-><NULL>",q->id,0);
+						} else {
+							SEND_LOG("(TIMER) Self remove for timer id: %d, next->%d",q->id,q->next->id);
+						}
+						#endif
+						free(q);
+						q = p;
+					}
+				}
+			} else {
+				q->counter=1;
+			}
+
+			if (q->next!=p && q!=p) {
+				THE_TIMER *z;
+				SEND_LOG("(TIMER) Timer integrity corrupted", 0, 0);
+				z = &timer_tree;
+
+				while(z->next != p && z->next != NULL) {
+					z = z->next;
+				}
+
+				if (z->next == NULL) {
+					return NULL;
+				}
+			}
+
+			q = p;
+		}
+	}
+	return NULL;
+}
 
 void delete_from_timer(int id)
   {
@@ -891,18 +905,22 @@ void cti_texty()
   }
 
 
-void global_kbd(EVENT_MSG *msg,void **usr)
-  {
-  char c;
+void global_kbd(EVENT_MSG *msg, void **usr) {
+	char c;
+	
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
 
-  usr;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=(*(int *)msg->data)>>8;
-     if (c==';') save_dump();
-     }
-  return;
-  }
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		if (c == ';') {
+			save_dump();
+		}
+	}
+	return;
+}
 
 void  add_game_window()
   {
@@ -1152,33 +1170,46 @@ void *map_keyboard(EVENT_MSG *msg,void **usr);
 
 char doNotLoadMapState=0;
 
-static reload_map_handler(EVENT_MSG *msg,void **usr)
-{
-extern char running_battle;
-  if (msg->msg==E_RELOADMAP)
-  {
-	int i;
-	va_list list=msg->data;
-	const char *fname=va_arg(list,const char *);
-	int sektor=va_arg(list,int);
-	strncpy(loadlevel.name,fname,sizeof(loadlevel.name));
-	loadlevel.start_pos=sektor;
-    for(i=0;i<POCET_POSTAV;i++)postavy[i].sektor=loadlevel.start_pos;
-    SEND_LOG("(WIZARD) Load map '%s' %d",loadlevel.name,loadlevel.start_pos);
-    unwire_proc();    
-    if (battle) konec_kola();
-	battle=0;
-	running_battle=0;
-	doNotLoadMapState=1;
-	hl_ptr=ikon_libs;
-	destroy_fly_map();
-	load_items();
-    kill_block(H_ENEMY);
-    kill_block(H_SHOP_PIC);
-    kill_block(H_DIALOGY_DAT);
-    load_shops();
-    send_message(E_CLOSE_MAP);
-  }
+static reload_map_handler(EVENT_MSG *msg, void **usr) {
+	extern char running_battle;
+
+	if (msg->msg == E_RELOADMAP) {
+		int i;
+		va_list list;
+		const char *fname;
+		int sektor;
+
+		va_copy(list, msg->data);
+		fname = va_arg(list, const char *);
+		sektor = va_arg(list, int);
+		va_end(list);
+
+		strncpy(loadlevel.name, fname, sizeof(loadlevel.name));
+		loadlevel.start_pos = sektor;
+
+		for (i = 0; i < POCET_POSTAV; i++) {
+			postavy[i].sektor = loadlevel.start_pos;
+		}
+
+		SEND_LOG("(WIZARD) Load map '%s' %d",loadlevel.name,loadlevel.start_pos);
+		unwire_proc();    
+
+		if (battle) {
+			konec_kola();
+		}
+
+		battle = 0;
+		running_battle = 0;
+		doNotLoadMapState = 1;
+		hl_ptr = ikon_libs;
+		destroy_fly_map();
+		load_items();
+		kill_block(H_ENEMY);
+		kill_block(H_SHOP_PIC);
+		kill_block(H_DIALOGY_DAT);
+		load_shops();
+		send_message(E_CLOSE_MAP);
+	}
 }
 
 void enter_game()
@@ -1689,7 +1720,7 @@ static void start()
 		goto zde;
 		break;
        case V_OBNOVA_HRY:load_saved_game();break;
-       case V_AUTORI:run_titles(NULL);break;
+       case V_AUTORI:run_titles();break;
         }
      }
   while (!exit_wait);

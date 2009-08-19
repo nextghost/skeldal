@@ -73,18 +73,21 @@ void ms_idle_event(EVENT_MSG *info,void *user_data)
      }
   }
 
-void ms_draw_event(EVENT_MSG *info,void *user_data)
-  {
-  MS_EVENT *ms_ev;
+void ms_draw_event(EVENT_MSG *info,void *user_data) {
+	MS_EVENT *ms_ev;
 
-  user_data;
-  if (info->msg==E_MOUSE)
-     {
-     ms_ev=get_mouse(info);
-     if (ms_ev->event_type & 1)
-       if (!visible) move_ms_cursor(ms_ev->x-h_x,ms_ev->y-h_y,0);
-     }
-  }
+	if (info->msg==E_MOUSE) {
+		va_list args;
+
+		va_copy(args, info->data);
+		ms_ev = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if ((ms_ev->event_type & 1) && !visible) {
+			move_ms_cursor(ms_ev->x - h_x, ms_ev->y - h_y, 0);
+		}
+	}
+}
 
 
 void update_mysky(void)

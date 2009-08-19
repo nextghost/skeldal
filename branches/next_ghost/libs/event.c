@@ -284,114 +284,149 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg)
   Task_Wakeup(msg);
   }
 
-T_EVENT_POINT *install_event(T_EVENT_ROOT **tree,long ev_num,EV_PROC proc,void *procdata,char end)
 //instaluje novou udalost;
-  {
-  EVENT_MSG x;
-  void **user=NULL;
-  T_EVENT_POINT *p;
+T_EVENT_POINT *install_event(T_EVENT_ROOT **tree, int ev_num, EV_PROC proc, va_list procdata, char end) {
+	EVENT_MSG x;
+	void **user = NULL;
+	T_EVENT_POINT *p;
 
-  x.msg=E_INIT;
-  x.data=procdata;
-  proc(&x,&user);
-  if (x.data!=NULL)
-      {
-      p=add_event(tree,ev_num,proc,end);
-      p->user_data=user;
-      }
-   return p;
-   }
+	x.msg = E_INIT;
+	x.data = procdata;
+	proc(&x, &user);
 
-void deinstall_event(T_EVENT_ROOT **tree,long ev_num,EV_PROC proc,void *procdata)
+	p = add_event(tree, ev_num, proc, end);
+	p->user_data = user;
+
+	return p;
+}
+
 //deinstaluje udalost;
-  {
-  EVENT_MSG x;
-  T_EVENT_ROOT *r;
-  T_EVENT_POINT *p;
+void deinstall_event(T_EVENT_ROOT **tree, int ev_num, EV_PROC proc, va_list procdata) {
+	EVENT_MSG x;
+	T_EVENT_ROOT *r;
+	T_EVENT_POINT *p;
 
-  find_event_msg(*tree,ev_num,r);
-  if (r==NULL) return;
-  find_event_proc(r->list,proc,p);
-  if (p==NULL) return;
-  x.msg=E_DONE;
-  x.data=procdata;
-  proc(&x,&p->user_data);
-  if (p->user_data!=NULL) free(p->user_data);
-  p->proc=NULL;
-  p->user_data=NULL;
-  if (!p->calls) force_delete_curr(tree,r,p);
-  }
+	find_event_msg(*tree, ev_num, r);
+	if (!r) {
+		return;
+	}
 
-void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg)
-{
-  char *p;
-  void *(*q)();
-  EVENT_MSG tg;
+	find_event_proc(r->list, proc, p);
+	if (!p) {
+		return;
+	}
 
-  if (msg->msg==E_ADD || msg->msg==E_ADDEND)
-     {
-     T_EVENT_POINT *r;
-     shift_msg(msg,tg);
-     p=(char *)(tg.data);
-     p+=4;
-     find_event_msg_proc(*ev_tree,tg.msg,tg.data,r);
-     assert(r==NULL);
-     if (r==NULL)
-        install_event(ev_tree,tg.msg,*(EV_PROC *)tg.data,p,msg->msg==E_ADDEND);
-     return;
-     }
-  if (msg->msg==E_INIT)
-     {
-     memcpy(&q,msg->data,4);
-     q();
-     return;
-     }
-  if (msg->msg==E_DONE)
-     {
-     shift_msg(msg,tg);
-     p=(char *)(tg.data);
-     p+=4;
-     deinstall_event(ev_tree,tg.msg,*(EV_PROC *) tg.data,p);
-     return;
-     }
-  if (msg->msg==E_GROUP)
-     {
-     int pocet,i,addev;
-     T_EVENT_POINT *pp;
-     EVENT_MSG *tgm=&tg;
+	x.msg = E_DONE;
+	x.data = procdata;
+	proc(&x, &p->user_data);
 
-     long *p;void *proc;
-     shift_msg(msg,tg);addev=tg.msg; if (addev!=E_ADD || addev!=E_ADDEND) return;
-     shift_msg(tgm,tg);
-     pocet=tg.msg;
-     p=tg.data;proc=p+pocet*sizeof(long);
-     for(i=0;i<pocet;i++,p++) if (i!=0)
-                                {
-                                T_EVENT_POINT *q;
-                                q=add_event(ev_tree,*p,proc,addev==E_ADDEND);
-                                q->user_data=(void *)pp;
-                                q->proc=PROC_GROUP;
-                                }
-        else
-           pp=install_event(ev_tree,*p,proc,((long *)proc+1),addev==E_ADDEND);
-     }
+	if (p->user_data != NULL) {
+		free(p->user_data);
+	}
 
+	p->proc = NULL;
+	p->user_data = NULL;
 
+	if (!p->calls) {
+		force_delete_curr(tree, r, p);
+	}
+}
+
+void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg) {
+	char *p;
+	void *(*q)();
+	EV_PROC proc;
+	EVENT_MSG tg;
+	
+	if (msg->msg == E_ADD || msg->msg == E_ADDEND) {
+		T_EVENT_POINT *r;
+
+		va_copy(tg.data, msg->data);
+		tg.msg = va_arg(tg.data, int);
+		proc = va_arg(tg.data, EV_PROC);
+		find_event_msg_proc(*ev_tree, tg.msg, proc, r);
+		assert(r == NULL);
+		if (r == NULL) {
+			install_event(ev_tree, tg.msg, proc, tg.data, msg->msg == E_ADDEND);
+		}
+		va_end(tg.data);
+		return;
+	}
+
+	if (msg->msg == E_INIT) {
+		tg.msg = msg->msg;
+		va_copy(tg.data, msg->data);
+		proc = va_arg(tg.data, EV_PROC);
+		proc(msg, NULL);
+		va_end(tg.data);
+		return;
+	}
+
+	if (msg->msg == E_DONE) {
+		va_copy(tg.data, msg->data);
+		tg.msg = va_arg(tg.data, int);
+		proc = va_arg(tg.data, EV_PROC);
+		deinstall_event(ev_tree, tg.msg, proc, tg.data);
+		va_end(tg.data);
+		return;
+	}
+
+	if (msg->msg == E_GROUP) {
+		int pocet, i, addev;
+		T_EVENT_POINT *pp;
+		EVENT_MSG *tgm = &tg;
+		int *p;
+
+		va_copy(tg.data, msg->data);
+		tg.msg = va_arg(tg.data, int);
+		addev = tg.msg;
+
+		if (addev != E_ADD || addev != E_ADDEND) {
+			va_end(tg.data);
+			return;
+		}
+
+		tg.msg = va_arg(tg.data, int);
+		pocet = tg.msg;
+		p = malloc(pocet * sizeof(int));
+
+		for (i = 0; i < pocet; i++) {
+			p[i] = va_arg(tg.data, int);
+		}
+
+		proc = va_arg(tg.data, EV_PROC);
+
+		for (i = 0; i < pocet; i++, p++) {
+			if (i != 0) {
+				T_EVENT_POINT *q;
+				q = add_event(ev_tree, p[i], proc, addev == E_ADDEND);
+				q->user_data = (void *)pp; // WTF?!
+				q->proc = PROC_GROUP;
+			} else {
+				pp = install_event(ev_tree, p[i], proc, tg.data, addev == E_ADDEND);
+			}
+		}
+
+		free(p);
+		va_end(tg.data);
+	}
 }
 
 // FIXME: this needs a BIG rewrite
-void send_message(long message,...)
-  {
-  long *p;
-  EVENT_MSG x;
+void send_message(int message, ...) {
+	EVENT_MSG x;
 
-  p=&message;
-  x.msg=*p++;
-  x.data=(void *)p;
-  if (x.msg==E_ADD || x.msg==E_INIT || x.msg==E_DONE) tree_basics(&ev_tree,&x);
-     else
-        enter_event(&ev_tree,&x);
-  }
+	x.msg = message;
+	va_start(x.data, message);
+
+	if (x.msg == E_ADD || x.msg == E_INIT || x.msg == E_DONE) {
+		tree_basics(&ev_tree, &x);
+	} else {
+		enter_event(&ev_tree, &x);
+	}
+
+	va_end(x.data);
+}
 
 
 
@@ -519,17 +554,21 @@ void escape()
   exit_wait=0;
   }
 
-T_EVENT_ROOT *gate_basics(EVENT_MSG *msg, void **user_data)
-  {
-  T_EVENT_ROOT *p;
-  EVENT_MSG msg2;
+T_EVENT_ROOT *gate_basics(EVENT_MSG *msg, void **user_data) {
+	T_EVENT_ROOT *p;
+	EVENT_MSG msg2;
 
-  memcpy(&p,user_data,4);
-  shift_msg(msg,msg2);;
-  if (msg2.msg==E_ADD || msg2.msg==E_INIT || msg2.msg==E_DONE)
-      tree_basics((T_EVENT_ROOT **)user_data,&msg2);
-  return p;
-  }
+	p = *user_data;
+	va_copy(msg2.data, msg->data);
+	msg2.msg = va_arg(msg2.data, int);
+
+	if (msg2.msg == E_ADD || msg2.msg == E_INIT || msg2.msg == E_DONE) {
+		tree_basics((T_EVENT_ROOT **)user_data, &msg2);
+	}
+
+	va_end(msg2.data);
+	return p;
+}
 /*
 int create_task()
   {

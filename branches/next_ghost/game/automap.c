@@ -231,89 +231,109 @@ void ukaz_vsechny_texty_v_mape()
      }
   }
 
-void psani_poznamek_event(EVENT_MSG *msg,void **data)
-  {
-  static int x,y;
-  static char text[255],index;
-  static char *save;
-  static void *save_pic=NULL;
+void psani_poznamek_event(EVENT_MSG *msg, void **data) {
+	static int x, y;
+	static char text[255], index;
+	static char *save;
+	static void *save_pic = NULL;
+	va_list args;
+	
+	if (msg->msg == E_INIT) {
+		char *c;
 
-  data;
-  if (msg->msg==E_INIT)
-     {
-     int *p;
-     char *c;
+		set_font(H_FLITT5, NOSHADOW(0));
 
-     set_font(H_FLITT5,NOSHADOW(0));
-     p=msg->data;
-     x=p[0];
-     y=p[1];
-     c=*(char **)(p+2);
-     strcpy(text,c);
-     save=(char *)getmem(strlen(text)+1);
-     strcpy(save,text);
-     index=strchr(text,0)-text;
-     if (save_pic==NULL)
-        {
-        schovej_mysku();
-        save_pic=getmem(640*20*2+6);
-        get_picture(0,y,640,20,save_pic);
-        position(x,y);outtext(text);outtext("_");
-        showview(0,0,640,480);
-        }
-     }
-  else
-  if (msg->msg==E_MOUSE)
-     {
-     MS_EVENT *ms;
+		va_copy(args, msg->data);
+		x = va_arg(args, int);
+		y = va_arg(args, int);
+		c = va_arg(args, char*);
+		va_end(args);
 
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x8) send_message(E_KEYBOARD,27);
-     msg->msg=-1;
-     }
-  else if (msg->msg==E_KEYBOARD)
-     {
-     char c;
+		strcpy(text, c);
+		save = (char *)getmem(strlen(text) + 1);
+		strcpy(save, text);
+		index = strchr(text, 0) - text;
+		if (save_pic == NULL) {
+			schovej_mysku();
+			save_pic = getmem(640 * 20 * 2 + 6);
+			get_picture(0, y, 640, 20, save_pic);
+			position(x, y);
+			outtext(text);
+			outtext("_");
+			showview(0, 0, 640, 480);
+		}
+	} else if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
 
-     c=*(char *)msg->data;
-     set_font(H_FLITT5,NOSHADOW(0));
-     if (c)
-        {
-        switch (c)
-           {
-           case 8:if (index) index--; text[index]=0;break;
-           case 27:strcpy(text,save);
-           case 13:save_text_to_map(x,y,cur_depth,text);
-                  send_message(E_DONE,E_MOUSE,psani_poznamek_event);msg->msg=-2;return;
-           default:if (c>=32)
-              {
-              text[index]=c;
-              text[index+1]=0;
-              if (text_width(text)>(640-x)) text[index]=0; else index++;
-              }
-           }
-        put_picture(0,y,save_pic);
-        position(x,y);outtext(text);outtext("_");
-        showview(x,y,640,20);
-        }
-     msg->msg=-1;
-     }
-  else if (msg->msg==E_DONE)
-     {
-     if (save_pic!=NULL)
-        {
-        put_picture(0,y,save_pic);
-        showview(x,y,640,y+20);
-        free(save_pic);save_pic=NULL;
-        send_message(E_AUTOMAP_REDRAW);
-        ukaz_mysku();
-        }
-     if (save!=NULL)
-        {
-        free(save);save=NULL;
-        }
-     }
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+		if (ms->event_type & 0x8) {
+			send_message(E_KEYBOARD,27);
+		}
+		msg->msg = -1;
+	} else if (msg->msg == E_KEYBOARD) {
+		char c;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) & 0xff;
+		va_end(args);
+
+		set_font(H_FLITT5, NOSHADOW(0));
+
+		if (c) {
+			switch (c) {
+			case 8:
+				if (index) {
+					index--;
+				}
+
+				text[index]=0;
+				break;
+
+			case 27:
+				strcpy(text,save);
+			case 13:
+				save_text_to_map(x, y, cur_depth, text);
+				send_message(E_DONE, E_MOUSE, psani_poznamek_event);
+				msg->msg = -2;
+				return;
+
+			default:
+				if (c >= 32) {
+					text[index] = c;
+					text[index + 1] = 0;
+
+					if (text_width(text) > (640 - x)) {
+						text[index] = 0;
+					} else {
+						index++;
+					}
+				}
+			}
+
+			put_picture(0, y, save_pic);
+			position(x, y);
+			outtext(text);
+			outtext("_");
+			showview(x, y, 640, 20);
+		}
+
+		msg->msg = -1;
+	} else if (msg->msg == E_DONE) {
+		if (save_pic != NULL) {
+			put_picture(0, y, save_pic);
+			showview(x, y, 640, y + 20);
+			free(save_pic);
+			save_pic = NULL;
+			send_message(E_AUTOMAP_REDRAW);
+			ukaz_mysku();
+		} if (save != NULL) {
+		   free(save);
+		   save = NULL;
+		}
+	}
+}
 
 int hledej_poznamku(int x,int y,int depth)
   {
@@ -642,46 +662,85 @@ void unwire_automap()
 			  GlobEvent(MAGLOB_AFTERMAPOPEN,viewsector,viewdir);
               }
 
-void *map_keyboard(EVENT_MSG *msg,void **usr)
-  {
-  char c;
-  static draw=0;
-  static xr,yr;
+void *map_keyboard(EVENT_MSG *msg, void **usr) {
+	char c;
+	static draw = 0;
+	static xr, yr;
+	
+	if (msg->msg == E_INIT) {
+		xr = yr = 0;
+	}
 
-  usr;
-  if (msg->msg==E_INIT) xr=yr=0;
-  if (msg->msg==E_IDLE && draw==1)
-     {
-     draw_automap(xr,yr);
-     draw=0;
-     }
-  else draw--;
-  if (msg->msg==E_AUTOMAP_REDRAW) draw=4;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=(*(int *)msg->data)>>8;
-     switch (c)
-        {
-        case 'H':yr++;draw=4;break;
-        case 'P':yr--;draw=4;break;
-        case 'M':xr--;draw=4;break;
-        case 'K':xr++;draw=4;break;
-        case 'Q':
-        case 's':if (check_for_layer(cur_depth-1)) cur_depth--;draw=4;break;
-        case 'I':
-        case 't':if (check_for_layer(cur_depth+1)) cur_depth++;draw=4;break;
-        case 15:
-        case 50:
-        case 1:
-              (*(int *)msg->data)=0;
-              unwire_proc();
-              wire_proc();
-			  
-              break;
-         }
-     }
-  return &map_keyboard;
-  }
+	if (msg->msg == E_IDLE && draw == 1) {
+		draw_automap(xr, yr);
+		draw = 0;
+	} else {
+		draw--;
+	}
+
+	if (msg->msg == E_AUTOMAP_REDRAW) {
+		draw = 4;
+	}
+
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		switch (c) {
+		case 'H':
+			yr++;
+			draw = 4;
+			break;
+
+		case 'P':
+			yr--;
+			draw = 4;
+			break;
+
+		case 'M':
+			xr--;
+			draw = 4;
+			break;
+
+		case 'K':
+			xr++;
+			draw = 4;
+			break;
+
+		case 'Q':
+		case 's':
+			if (check_for_layer(cur_depth - 1)) {
+				cur_depth--;
+			}
+
+			draw = 4;
+			break;
+
+		case 'I':
+		case 't':
+			if (check_for_layer(cur_depth + 1)) {
+				cur_depth++;
+			}
+
+			draw = 4;
+			break;
+
+		case 15:
+		case 50:
+		case 1:
+			// FIXME: rewrite and beat the original writer senseless
+			//(*(int *)msg->data)=0;
+			unwire_proc();
+			wire_proc();
+			break;
+		}
+	}
+
+	return &map_keyboard;
+}
 
 void show_automap(char full)
   {
@@ -922,17 +981,25 @@ char map_target_cancel(int id,int xa,int ya,int xr,int yr)
   return exit_wait=1;
   }
 
-void map_teleport_keyboard(EVENT_MSG *msg,void **usr)
-  {
-  usr;
-  if (msg->msg==E_KEYBOARD)
-     switch (*(short *)msg->data>>8)
-        {
-        case 1:
-        case 15:
-        case 50: exit_wait=1; msg->msg=-1;break;
-        }
-  }
+void map_teleport_keyboard(EVENT_MSG *msg,void **usr) {
+	if (msg->msg == E_KEYBOARD) {
+		char c;
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		switch (c) {
+		case 1:
+		case 15:
+		case 50:
+			exit_wait = 1;
+			msg->msg = -1;
+			break;
+		}
+	}
+}
 
 
 static char path_ok(uint16_t sector)

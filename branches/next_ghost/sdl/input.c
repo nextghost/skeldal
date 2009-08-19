@@ -63,7 +63,7 @@ int Input_ReadKey(void) {
 
 void Sys_ProcessEvents(void) {
 	SDL_Event event;
-	uint16_t keycode;
+	int keycode;
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {

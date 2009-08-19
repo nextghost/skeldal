@@ -518,98 +518,120 @@ static char *fly_text;
 static int fly_x,fly_y,fly_xs,fly_ys;
 static void *fly_background;
 
-EVENT_PROC(global_map_point)
-  {
-  MS_EVENT *ms;
+EVENT_PROC(global_map_point) {
+	MS_EVENT *ms;
 
-  user_ptr;
-  WHEN_MSG(E_INIT)
-     {
-     fly_background=NULL;last_index=0;fly_text=NULL;
-     fly_x=0;fly_y=0;fly_xs=4;fly_ys=4;
-     }
-  WHEN_MSG(E_MOUSE)
-     {
-     int x,y,i,xs,ys;
-     char *ptr;
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x1)
-        {
-        x=ms->x;y=ms->y-SCREEN_OFFLINE;
-        if (y<0 || y>359) return;
-        else
-           {
-           alock(usemap);
-           ptr=ablock(usemap);
-           ptr+=640*y+x+6;
-           i=*ptr;
-           }
-        y+=60;
-        schovej_mysku();
-        if (fly_background!=NULL)put_picture(fly_x,fly_y,fly_background);
-        set_font(H_FTINY,RGB555(31,31,0));
-        xs=fly_xs;ys=fly_ys;
-        if (i!=last_index)
-           {
-           free(fly_background);
-           last_index=i;
-           if (index_tab[i].defined)
-              {
-              fly_text=index_tab[i].text;
-              mouse_set_default(H_MS_ZARE);
-              set_ms_finger(5,5);
-              }
-           else
-              {
-              fly_text=NULL;
-              mouse_set_default(H_MS_DEFAULT);
-              }
+	WHEN_MSG(E_INIT) {
+		fly_background = NULL;
+		last_index = 0;
+		fly_text = NULL;
+		fly_x = 0;
+		fly_y = 0;
+		fly_xs = 4;
+		fly_ys = 4;
+	}
 
-           if (fly_text!=NULL)
-              {
-              xs=text_width(fly_text)+4;
-              ys=text_height(fly_text)+4;
-              fly_background=NewArr(uint16_t,xs*ys*2+6);
-              }
-           else
-              {
-              fly_text=NULL;xs=4;ys=4;
-              fly_background=NULL;
-              }
-           }
-        if (fly_text!=NULL)
-           {
-           if ((x+xs)>639) x=639-xs;
-           get_picture(x,y,xs,ys,fly_background);
-           trans_bar(x,y,xs,ys,0);
-           position(x+2,y+2);outtext(fly_text);
-           }
-        send_message(E_MOUSE,msg);
-        ukaz_mysku();
-        showview(fly_x,fly_y,fly_xs+1,fly_ys);
-        showview(fly_x=x,fly_y=y,(fly_xs=xs)+1,fly_ys=ys);
-        aunlock(usemap);
-        }
-     if (ms->event_type & 0x2 && ms->y>SCREEN_OFFLINE && ms->y<378)
-        {
-        if (last_index && index_tab[last_index].defined) if (load_index_map(last_index)) return;
-        else;else return;
-        unwire_proc();
-        wire_proc();
-		 		msg->msg=-1;
-        }
-		 if (ms->event_type & 0x8)
-				{
-				unwire_proc();
-				wire_proc();
-		 		msg->msg=-1;
+	WHEN_MSG(E_MOUSE) {
+		int x, y, i, xs, ys;
+		char *ptr;
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->event_type & 0x1) {
+			x = ms->x;
+			y = ms->y - SCREEN_OFFLINE;
+
+			if (y < 0 || y > 359) {
+				return;
+			} else {
+				alock(usemap);
+				ptr = ablock(usemap);
+				ptr += 640 * y + x + 6;
+				i = *ptr;
+			}
+
+			y += 60;
+			schovej_mysku();
+
+			if (fly_background != NULL) {
+				put_picture(fly_x, fly_y, fly_background);
+			}
+
+			set_font(H_FTINY, RGB555(31, 31, 0));
+			xs = fly_xs;
+			ys=fly_ys;
+
+			if (i != last_index) {
+				free(fly_background);
+				last_index = i;
+
+				if (index_tab[i].defined) {
+					fly_text = index_tab[i].text;
+					mouse_set_default(H_MS_ZARE);
+					set_ms_finger(5, 5);
+				} else {
+					fly_text = NULL;
+					mouse_set_default(H_MS_DEFAULT);
 				}
-     }
-  WHEN_MSG(E_DONE)
-     {
-     free(fly_background);
-     }
-  }
+				
+				if (fly_text != NULL) {
+					xs = text_width(fly_text) + 4;
+					ys = text_height(fly_text) + 4;
+					fly_background = NewArr(uint16_t, xs * ys * 2 + 6);
+				} else {
+				   fly_text = NULL;
+				   xs = 4;
+				   ys = 4;
+				   fly_background = NULL;
+				}
+			}
+
+			if (fly_text != NULL) {
+				if ((x + xs) > 639) {
+					x = 639 - xs;
+				}
+
+				get_picture(x, y, xs, ys, fly_background);
+				trans_bar(x, y, xs, ys, 0);
+				position(x + 2, y + 2);
+				outtext(fly_text);
+			}
+
+			send_message(E_MOUSE, msg); // WTF?!
+			ukaz_mysku();
+			showview(fly_x, fly_y, fly_xs + 1, fly_ys);
+			showview(fly_x = x, fly_y = y, (fly_xs = xs)+1, fly_ys = ys);
+			aunlock(usemap);
+		}
+
+		if (ms->event_type & 0x2 && ms->y > SCREEN_OFFLINE && ms->y < 378) {
+			if (last_index && index_tab[last_index].defined) {
+				if (load_index_map(last_index)) {
+					return;
+				}
+			} else {
+				return;
+			}
+
+			unwire_proc();
+			wire_proc();
+			msg->msg = -1;
+		}
+
+		if (ms->event_type & 0x8) {
+			unwire_proc();
+			wire_proc();
+			msg->msg = -1;
+		}
+	}
+
+	WHEN_MSG(E_DONE) {
+		free(fly_background);
+	}
+}
 
 void unwire_global_map()
   {

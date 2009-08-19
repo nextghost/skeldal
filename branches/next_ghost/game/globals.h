@@ -1719,7 +1719,7 @@ void prekodovat(unsigned char *c);
 //menu
 int enter_menu(char open); //task!
 //void titles(va_list args); //task!
-void run_titles(va_list args); //task!
+void run_titles(void); //task!
 void effect_show(va_list args); //effektni zobrazeni // task!
 void konec_hry();
 

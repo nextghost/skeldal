@@ -526,34 +526,48 @@ int find_in_click_map(MS_EVENT *ms,T_CLK_MAP *pt,int pocet,int *evtype)
   }
 
 
-void ms_clicker(EVENT_MSG *msg,void **usr)
-  {
-  MS_EVENT *ms;
+void ms_clicker(EVENT_MSG *msg,void **usr) {
+	MS_EVENT *ms;
+	
+	if (pass_zavora) {
+		return;
+	}
 
-  usr;
-  if (pass_zavora) return;
-  switch (msg->msg)
-     {
-     case E_INIT:return;
-     case E_DONE:return;
-     case E_MOUSE:
-           {
-           int mscur;
-           int msc=-1;
-           int evtype;
-           ms=get_mouse(msg);
-           mscur=-1;
-           evtype=ms->event_type;
-           mscur=find_in_click_map(ms,click_map,click_map_size,&evtype);
-           if (evtype) msc=find_in_click_map(ms,global_click_map,global_click_map_size,&evtype);
-           if (mscur==-1) mscur=msc;
-           if (mscur!=-1) mouse_set_cursor(mscur);
-           else mouse_set_cursor(default_ms_cursor);
-           }
-          break;
-     }
-  return;
-  }
+	switch (msg->msg) {
+	case E_INIT:return;
+	case E_DONE:return;
+	case E_MOUSE:
+		{
+			int mscur;
+			int msc = -1;
+			int evtype;
+			va_list args;
+
+			va_copy(args, msg->data);
+			ms = va_arg(args, MS_EVENT*);
+			va_end(args);
+
+			mscur = -1;
+			evtype = ms->event_type;
+			mscur = find_in_click_map(ms, click_map, click_map_size, &evtype);
+			if (evtype) {
+				msc = find_in_click_map(ms, global_click_map, global_click_map_size, &evtype);
+			}
+
+			if (mscur == -1) {
+				mscur=msc;
+			}
+
+			if (mscur != -1) {
+				mouse_set_cursor(mscur);
+			} else {
+				mouse_set_cursor(default_ms_cursor);
+			}
+		}
+		break;
+	}
+	return;
+}
 
 void change_click_map(T_CLK_MAP *map,int mapsize)
   {

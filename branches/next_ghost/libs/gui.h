@@ -40,9 +40,9 @@
 #define E_GUI 58    //direct enter to gui system
 #define E_CONTROL 59 //User defined feature, enables direct controling desktop objects
 
-#define CURSOR_SPEED 5;
-#define get_title(title) (char *)*(long *)(title);
-#define DESK_TOP_COLOR RGB555(0,15,15);
+#define CURSOR_SPEED 5
+#define get_title(title) (char *)*(long *)(title)
+#define DESK_TOP_COLOR RGB555(0,15,15)
 #define MINSIZX 60
 #define MINSIZY 40
 

@@ -259,37 +259,56 @@ void open_message_win(int pocet_textu,char **texts)
 
 static char default_action,cancel_action;
 
-EVENT_PROC(message_keyboard)
-  {
-  switch(GET_MSG())
-     {
-     case E_INIT:SAVE_USER_PTR(NewArr(char,strlen(GET_DATA(char *))+1));
-                 strcpy(GET_USER(char *),GET_DATA(char *));
-                 break;
-     case E_DONE:free(*GET_USER_PTR());
-                 SAVE_USER_PTR(NULL);
-                 break;
-     case E_KEYBOARD:
-                 {
-                 char *keys=GET_USER(char *);
-                 char code,*p;
-                 int key;
+EVENT_PROC(message_keyboard) {
+	char *str;
+	va_list args;
 
-                 code=GET_DATA(char);
-                 if (code==0) return;
-                 code=toupper(code);
-                 if (code==13) key=default_action;
-                 else if (code==27) key=cancel_action;
-                 else if ((p=strchr(keys,code))!=NULL) key=p-keys;
-                 else key=-1;
-                 if (key!=-1)
-                    {
-                    goto_control(key);
-                    terminate();
-                    }
-                 }
-     }
-  }
+	switch(GET_MSG()) {
+	case E_INIT:
+		va_copy(args, msg->data);
+		str = va_arg(args, char*);
+		va_end(args);
+
+		SAVE_USER_PTR(NewArr(char, strlen(str)+1));
+		strcpy(GET_USER(char *), str);
+		break;
+	case E_DONE:
+		free(*GET_USER_PTR());
+		SAVE_USER_PTR(NULL);
+		break;
+	case E_KEYBOARD:
+		{
+			char *keys = GET_USER(char *);
+			char code, *p;
+			int key;
+
+			va_copy(args, msg->data);
+			code = va_arg(args, int);
+			va_end(args);
+
+			if (code == 0) {
+				return;
+			}
+
+			code = toupper(code);
+
+			if (code == 13) {
+				key = default_action;
+			} else if (code == 27) {
+				key = cancel_action;
+			} else if ((p = strchr(keys, code)) != NULL) {
+				key = p - keys;
+			} else {
+				key = -1;
+			}
+
+			if (key!=-1) {
+				goto_control(key);
+				terminate();
+			}
+		}
+	}
+}
 
 int message(int butts,char def,char canc,char *keys,...)
   {
@@ -327,21 +346,22 @@ void type_text(EVENT_MSG *msg,void **data) {
 	static type_text_exit_proc exit_proc;
 	static uint16_t *back_pic;
 	int i, px, ok = 0;
+	va_list args;
 
 	if (msg->msg == E_INIT) {
 		int *p;
 		char *c;
 
-		// load arguments (yuck)
-		p = msg->data;
-		c = *(char **)p;
-		x = p[1];
-		y = p[2];
-		max_size = p[3];
-		max_chars = p[4];
-		font = p[5];
-		color = p[6];
-		exit_proc = *(type_text_exit_proc*)(p+7);
+		va_copy(args, msg->data);
+		c = va_arg(args, char*);
+		x = va_arg(args, int);
+		y = va_arg(args, int);
+		max_size = va_arg(args, int);
+		max_chars = va_arg(args, int);
+		font = va_arg(args, int);
+		color = va_arg(args, int);
+		exit_proc = va_arg(args, type_text_exit_proc);
+		va_end(args);
 
 		// prepare buffer
 		for (i = 0; i < 254; i++) {
@@ -373,7 +393,9 @@ void type_text(EVENT_MSG *msg,void **data) {
 		char sz[2] = " ";
 		uint16_t c;
 
-		c=*(uint16_t *)msg->data;
+		va_copy(args, msg->data);
+		c = va_arg(args, int);
+		va_end(args);
 		set_font(font, color);
 
 		switch (c & 0xff) {
@@ -832,32 +854,37 @@ static void radio_butts_draw(int x1,int y1,int x2,int y2,OBJREC *o)
      }
   }
 
-static void radio_butts_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
-  int sel;
+static void radio_butts_event(EVENT_MSG *msg,OBJREC *o) {
+	MS_EVENT *ms;
+	int sel;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x02)
-        {
-        TRADIO_BUTT_DATA *rd;
-        long *params;
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-        rd=(TRADIO_BUTT_DATA *)o->userptr;
-        params=(long *)rd->texty;
-        sel=(ms->y-o->locy)/(o->ys/(*(params+1)));
-        if (sel>=*(params+1)) sel=*(params+1)-1;
-        *(long *)o->data=sel;
-        *params=0;
-        redraw_object(o);
-        *params=1;
-        set_change();
-        }
-     }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-  }
+		if (ms->event_type & 0x02) {
+			TRADIO_BUTT_DATA *rd;
+			long *params;
+
+			rd = (TRADIO_BUTT_DATA *)o->userptr;
+			params = (long *)rd->texty;
+			sel = (ms->y - o->locy) / (o->ys / (*(params+1)));
+
+			if (sel >= *(params+1)) {
+				sel = *(params+1) - 1;
+			}
+
+			*(long *)o->data = sel;
+			*params = 0;
+			redraw_object(o);
+			*params = 1;
+			set_change();
+		}
+	}
+}
 
 static void radio_butts_done(OBJREC *o)
   {
@@ -1090,22 +1117,24 @@ static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   put_8bit_clipped(obr,Screen_GetAddr()+x1+y1*Screen_GetXSize(),phase,obr[0],obr[0]);
   }
 
-static void skeldal_checkbox_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+static void skeldal_checkbox_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
+	
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x2)
-        {
-        char *data=(char *)o->data;
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-        *data^=1;
-        set_change();
-        }
-     }
-  }
+		if (ms->event_type & 0x2) {
+			char *data = (char *)o->data;
+
+			*data ^= 1;
+			set_change();
+		}
+	}
+}
 
 void animate_checkbox(int first_id,int last_id,int step)
   {
@@ -1178,27 +1207,29 @@ static void setup_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   z[1]=pic;
   }
 
-static void setup_button_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+static void setup_button_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x2)
-        {
-        *(char *)o->data=1;redraw_object(o);
-        }
-     else if (ms->event_type & 0x4)
-        {
-        *(char *)o->data=0;redraw_object(o);set_change();
-        }
-     }
-  else if (msg->msg==E_LOST_FOCUS)
-     {
-     *(char *)o->data=0;redraw_object(o);
-     }
-  }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->event_type & 0x2) {
+			*(char *)o->data = 1;
+			redraw_object(o);
+		} else if (ms->event_type & 0x4) {
+			*(char *)o->data = 0;
+			redraw_object(o);
+			set_change();
+		}
+	} else if (msg->msg==E_LOST_FOCUS) {
+		*(char *)o->data=0;
+		redraw_object(o);
+	}
+}
 
 static void setup_button_done(OBJREC *o)
   {
@@ -1260,34 +1291,43 @@ static void skeldal_soupak_draw (int x1,int y1,int x2,int y2,OBJREC *o)
   put_picture(x1,xpos,pic);
   }
 
-static skeldal_soupak_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  if (msg->msg==E_MOUSE)
-     {
-     MS_EVENT *ms;
-     int *z;
-     int rozsah;
-     int total;
-     uint16_t *pic;
-     int ypos,newvalue;
+static skeldal_soupak_event(EVENT_MSG *msg, OBJREC *o) {
+	if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
+		int *z;
+		int rozsah;
+		int total;
+		uint16_t *pic;
+		int ypos, newvalue;
+		va_list args;
 
-     ms=get_mouse(msg);
-     if (ms->tl1)
-        {
-        z=o->userptr;rozsah=z[0];
-        pic=ablock(H_SOUPAK);
-        total=o->ys-pic[1];
-        ypos=ms->y-o->locy;
-        ypos+=pic[1]/2;
-        newvalue=(o->ys-ypos)*rozsah/total;
-        if (newvalue<0) newvalue=0;
-        if (newvalue>rozsah) newvalue=rozsah;
-        *(int *)o->data=newvalue;
-        redraw_object(o);
-        set_change();
-        }
-     }
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->tl1) {
+			z = o->userptr;
+			rozsah = z[0];
+			pic = ablock(H_SOUPAK);
+			total = o->ys - pic[1];
+			ypos = ms->y - o->locy;
+			ypos += pic[1] / 2;
+			newvalue = (o->ys - ypos) * rozsah / total;
+
+			if (newvalue < 0) {
+				newvalue = 0;
+			}
+
+			if (newvalue > rozsah) {
+				newvalue = rozsah;
+			}
+
+			*(int *)o->data = newvalue;
+			redraw_object(o);
+			set_change();
+		}
+	}
+}
 
 static void skeldal_soupak_done(OBJREC *o)
   {
@@ -1668,18 +1708,28 @@ int smlouvat_prodej(int cena,int ponuka,int posledni,int puvod,int pocet)
   return 5;
   }
 
-static smlouvat_enter(EVENT_MSG *msg,OBJREC *o)
-  {
-  o;
-  if (msg->msg==E_KEYBOARD)
-    {
-    switch( *(char *)msg->data)
-      {
-      case 13:goto_control(30);terminate();break;
-      case 27:goto_control(20);terminate();break;
-      }
-    }
-  }
+static smlouvat_enter(EVENT_MSG *msg, OBJREC *o) {
+	if (msg->msg == E_KEYBOARD) {
+		char c;
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) & 0xff;
+		va_end(args);
+
+		switch (c) {
+			case 13:
+				goto_control(30);
+				terminate();
+				break;
+
+			case 27:
+				goto_control(20);
+				terminate();
+				break;
+		}
+	}
+}
 
 int smlouvat(int cena,int puvod,int pocet,int money,char mode)
   {

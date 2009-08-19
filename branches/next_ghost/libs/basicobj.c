@@ -97,17 +97,21 @@ void mid_label_draw(int x1,int y1,int x2, int y2,OBJREC *o)
   }
 
 
-void sample_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+void sample_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
 
-  o;
-  if (msg->msg==E_MOUSE)
-      {
-      ms=get_mouse(msg);
-      if (ms->tl1) exit_wait=1;
-      }
-  }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->tl1) {
+			exit_wait = 1;
+		}
+	}
+}
 
 
 void sample(OBJREC *o)
@@ -165,35 +169,33 @@ void button_draw2(int x1,int y1,int x2,int y2,OBJREC *o)
   }
 
 
-void button_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+void button_event(EVENT_MSG *msg,OBJREC *o) {
+	MS_EVENT *ms;
+	
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x06)
-        {
-        if (ms->tl1)
-           {
-           *(char *)o->data=1;
-           redraw_object(o);
-           }
-        else if (*(char *)o->data)
-              {
-               *(char *)o->data=0;
-               redraw_object(o);
-               set_change();
-              }
-        }
-        }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-  if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS)
-     {
-     *(char *)o->data=0;
-     redraw_object(o);
-     }
-  }
+		if (ms->event_type & 0x06) {
+			if (ms->tl1) {
+				*(char *)o->data = 1;
+				redraw_object(o);
+			} else if (*(char *)o->data) {
+				*(char *)o->data = 0;
+				redraw_object(o);
+				set_change();
+			}
+		}
+	}
+	
+	if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS) {
+		*(char *)o->data = 0;
+		redraw_object(o);
+	}
+}
 
 
 
@@ -285,87 +287,99 @@ void *status_mem_info(EVENT_MSG *msg)
   }
 */
 
-void *status_idle(EVENT_MSG *msg)
+void *status_idle(EVENT_MSG *msg, void **data)
   {
   if (msg->msg==E_INIT) return &status_idle;
   send_message(E_STATUS_LINE,msg->msg);
   return NULL;
   }
 
-void status_line(EVENT_MSG *msg,T_EVENT_ROOT **user_data)
-  {
-  T_EVENT_ROOT **p;
-  static char st_line[256],oldline[256]={"\0"};
-  EVENT_MSG tg;
-  static char recurse=1;
+/* The following code is seriously broken
+void status_line(EVENT_MSG *msg, T_EVENT_ROOT **user_data) {
+	T_EVENT_ROOT **p;
+	static char st_line[256], oldline[256] = {"\0"};
+	EVENT_MSG tg;
+	static char recurse = 1;
+	
+	if(msg->msg == E_INIT) {
+		if (recurse) {
+			T_EVENT_ROOT *p;
+			recurse = 0;
+			send_message(E_ADD, E_IDLE, status_idle);
+			send_message(E_ADD, E_REDRAW, status_idle);
+			p = NULL;
+			*user_data = p;
+			draw_status_line(NULL);
+			recurse = 1;
+			return;
+		} else {
+			return;
+		}
+	}
 
-  if(msg->msg==E_INIT)
-     if (recurse)
-     {
-      T_EVENT_ROOT *p;
-      recurse=0;
-      send_message(E_ADD,E_IDLE,status_idle);
-      send_message(E_ADD,E_REDRAW,status_idle);
-      p=NULL;
-      *user_data=p;
-      draw_status_line(NULL);
-      recurse=1;
-      return;
-      }
-     else return;
-  shift_msg(msg,tg);
-       if (tg.msg==E_REDRAW)
-        {
-        draw_status_line(oldline);
-        return;
-        }
-  p=user_data;
-    if (tg.msg==E_IDLE)
-     {
-     EVENT_MSG msg;
+	va_copy(tg.data, msg->data);
+	tg.msg = va_arg(tg.data, int);
 
-     msg.msg=E_IDLE;
-     msg.data=&st_line;
-     enter_event(p,&msg);
-     if (strcmp(st_line,oldline))
-        {
-        draw_status_line(st_line);
-        strcpy(oldline,st_line);
-        }
-     }
-  else
-     tree_basics(p,&tg);
-  return;
-  }
+	if (tg.msg == E_REDRAW) {
+		draw_status_line(oldline);
+		va_end(tg.data);
+		return;
+	}
 
-void *mouse_xy(EVENT_MSG *msg)
-  {
-  char *c;
+	p = user_data;
 
-  if (msg->msg==E_INIT) return &mouse_xy;
-  c=(char *)msg->data;
-  sprintf(c," X: %d Y: %d",ms_last_event.x,ms_last_event.y);
-  c=strchr(c,'\0');
-  msg->data=(void *)c;
-  return NULL;
-  }
+	if (tg.msg == E_IDLE) {
+		EVENT_MSG msg;
 
-void *show_time(EVENT_MSG *msg)
-  {
-  char *c;
-  time_t t;
-  struct tm cas;
+		msg.msg = E_IDLE;
+		msg.data = &st_line;
+		enter_event(p, &msg);
 
-  if (msg->msg==E_INIT) return &show_time;
-  c=(char *)msg->data;
-  t=time(NULL);
-  cas=*localtime(&t);
+		if (strcmp(st_line, oldline)) {
+			draw_status_line(st_line);
+			strcpy(oldline, st_line);
+		}
+	} else {
+		tree_basics(p, &tg);
+	}
 
-  sprintf(c,"%02d:%02d:%02d ",cas.tm_hour,cas.tm_min,cas.tm_sec);
-  c=strchr(c,'\0');
-  msg->data=(void *)c;
-  return NULL;
-  }
+	va_end(tg.data);
+	return;
+}
+
+void *mouse_xy(EVENT_MSG *msg, void **userdata) {
+	char *c;
+
+	if (msg->msg == E_INIT) {
+		return &mouse_xy;
+	}
+
+	c = (char *)msg->data;
+	sprintf(c, " X: %d Y: %d", ms_last_event.x, ms_last_event.y);
+	c = strchr(c, '\0');
+	msg->data = (void *)c;
+	return NULL;
+}
+
+void *show_time(EVENT_MSG *msg) {
+	char *c;
+	time_t t;
+	struct tm cas;
+
+	if (msg->msg == E_INIT) {
+		return &show_time;
+	}
+
+	c = (char *)msg->data;
+	t = time(NULL);
+	cas = *localtime(&t);
+
+	sprintf(c, "%02d:%02d:%02d ", cas.tm_hour, cas.tm_min, cas.tm_sec);
+	c = strchr(c, '\0');
+	msg->data = (void *)c;
+	return NULL;
+}
+*/
 //------------------------------------------
 
 void win_label_draw(int x1,int y1,int x2,int y2,OBJREC *o)
@@ -400,82 +414,78 @@ void xor_rectangle(int x,int y,int xs,int ys)
      }
   }
 
-void win_label_move(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
-  static char run=0;
-  static uint16_t xref,yref;
-  static WINDOW w;
-  static moved=0;
-  static drawed=0;
+void win_label_move(EVENT_MSG *msg,OBJREC *o) {
+	MS_EVENT *ms;
+	static char run = 0;
+	static uint16_t xref, yref;
+	static WINDOW w;
+	static moved = 0;
+	static drawed = 0;
 
-  o;
-  if (msg->msg==E_INIT) return;
-  if (msg->msg==E_TIMER)
-     {
-     send_message(E_TIMER);
-     if (!drawed)
-     if (!moved)
-     {
-     drawed=1;
-     redraw_desktop();
-     moved=0;
-     }
-     else
-     {
-     drawed=0;
-     moved=0;
-     }
-     }
-  if (msg->msg==E_MOUSE)
-     {
-        ms=get_mouse(msg);
-        if (run)
-           {
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           if (ms->event_type & 4)
-              {
-              run=0;
-              redraw_desktop();
-              send_message(E_DONE,E_MOUSE,win_label_move);
-              msg->msg=-1;
-              return;
-              }
-           w.x=ms->x-xref;
-           w.y=ms->y-yref;
-           check_window(&w);
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           waktual->x=w.x;
-           waktual->y=w.y;
-           waktual->xs=w.xs;
-           waktual->ys=w.ys;
-           moved=1;drawed=0;
-           redraw_window();
-           redraw_desktop();
-           }
-        else
-           if (ms->event_type & 2)
-           {
-           run=1;
-           memcpy(&w,waktual,sizeof(WINDOW));
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           xref=ms->x-waktual->x;
-           yref=ms->y-waktual->y;
-           send_message(E_ADD,E_MOUSE,win_label_move);
-           freeze_on_exit=1;
-           }
-     }
-  if (msg->msg==E_LOST_FOCUS && run)
-     {
-              run=0;
-              redraw_desktop();
-              send_message(E_DONE,E_MOUSE,win_label_move);
-              msg->msg=-1;
-              return;
-     }
-msg->msg=-1;
-return;
-  }
+	if (msg->msg == E_INIT) {
+		return;
+	}
+
+	if (msg->msg == E_TIMER) {
+		send_message(E_TIMER);
+		if (!drawed && !moved) {
+			drawed=1;
+			redraw_desktop();
+			moved=0;
+		} else {
+			drawed=0;
+			moved=0;
+		}
+	}
+
+	if (msg->msg == E_MOUSE) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (run) {
+			if (ms->event_type & 4) {
+				run = 0;
+				redraw_desktop();
+				send_message(E_DONE, E_MOUSE, win_label_move);
+				msg->msg = -1;
+				return;
+			}
+
+			w.x = ms->x - xref;
+			w.y = ms->y - yref;
+			check_window(&w);
+			waktual->x = w.x;
+			waktual->y = w.y;
+			waktual->xs = w.xs;
+			waktual->ys = w.ys;
+			moved = 1;
+			drawed = 0;
+			redraw_window();
+			redraw_desktop();
+		} else if (ms->event_type & 2) {
+			run = 1;
+			memcpy(&w, waktual, sizeof(WINDOW));
+			xref = ms->x - waktual->x;
+			yref = ms->y - waktual->y;
+			send_message(E_ADD, E_MOUSE, win_label_move);
+			freeze_on_exit = 1;
+		}
+	}
+
+	if (msg->msg == E_LOST_FOCUS && run) {
+		run = 0;
+		redraw_desktop();
+		send_message(E_DONE, E_MOUSE, win_label_move);
+		msg->msg = -1;
+		return;
+	}
+
+	msg->msg = -1;
+	return;
+}
 
 
 void win_label(OBJREC *o)
@@ -516,36 +526,34 @@ void check_box_draw(int x1,int y1, int x2, int y2,OBJREC *o)
      }
   }
 
-void check_box_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+void check_box_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x06)
-        {
-        if (ms->tl1)
-           {
-           *(char *)o->data|=0x80;
-           redraw_object(o);
-           }
-        else if (*(char *)o->data)
-              {
-               *(char *)o->data^=0x1;
-               *(char *)o->data&=0x1;
-               redraw_object(o);
-               set_change();
-              }
-        }
-        }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS)
-     {
-     *(char *)o->data&=0x1;
-     redraw_object(o);
-     }
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->event_type & 0x06) {
+			if (ms->tl1) {
+				*(char *)o->data |= 0x80;
+				redraw_object(o);
+			} else if (*(char *)o->data) {
+				*(char *)o->data ^= 0x1;
+				*(char *)o->data &= 0x1;
+				redraw_object(o);
+				set_change();
+			}
+		}
+	}
+
+	if (msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) {
+		*(char *)o->data &= 0x1;
+		redraw_object(o);
+	}
+}
 
 
 void check_box(OBJREC *o)
@@ -625,28 +633,32 @@ void radio_butts_draw(int x1,int y1,int x2,int y2,OBJREC *o)
      }
   }
 
-void radio_butts_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
-  int sel;
+void radio_butts_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
+	int sel;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x02)
-        {
-        sel=(ms->y-o->locy)/(o->ys/(*((long *)o->userptr+1)));
-        if (sel>=*((long *)o->userptr+1)) sel=*((long *)o->userptr+1)-1;
-        *(long *)o->data=sel;
-        *(long *)o->userptr=0;
-        redraw_object(o);
-        *(long *)o->userptr=1;
-        set_change();
-        }
-     }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
+		if (ms->event_type & 0x02) {
+			sel = (ms->y - o->locy) / (o->ys / (*((long *)o->userptr+1)));
+
+			if (sel >= *((long *)o->userptr + 1)) {
+				sel=*((long *)o->userptr + 1) - 1;
+			}
+
+			*(long *)o->data = sel;
+			*(long *)o->userptr = 0;
+			redraw_object(o);
+			*(long *)o->userptr = 1;
+			set_change();
+		}
+	}
+}
 
 void radio_butts(OBJREC *o)
   {
@@ -660,37 +672,35 @@ void radio_butts(OBJREC *o)
 
 
 
-void toggle_button_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
-  static char toggle_exit=0;
+void toggle_button_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
+	static char toggle_exit = 0;
+	
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x06)
-        {
-        if (ms->tl1)
-           {
-           *(char *)o->data^=1;
-           redraw_object(o);
-           toggle_exit=1;
-           }
-        else if (toggle_exit)
-              {
-              set_change();
-              toggle_exit=0;
-              }
-        }
-        }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
 
-  if ((msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS)&&toggle_exit)
-     {
-     *(char *)o->data^=1;
-     redraw_object(o);
-     toggle_exit=0;
-     }
-  }
+		if (ms->event_type & 0x06) {
+			if (ms->tl1) {
+				*(char *)o->data ^= 1;
+				redraw_object(o);
+				toggle_exit = 1;
+			} else if (toggle_exit) {
+				set_change();
+				toggle_exit = 0;
+			}
+		}
+	}
+
+	if ((msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) && toggle_exit) {
+		*(char *)o->data ^= 1;
+		redraw_object(o);
+		toggle_exit = 0;
+	}
+}
 
 
 
@@ -738,105 +748,192 @@ void input_line_draw(int x1,int y1, int x2, int y2, OBJREC *o)
      }
   }
 
-void input_line_event(EVENT_MSG *msg,OBJREC *o)
-  {
-   static cursor=0;
-   int *len,*start,slen;
-   char *c;
-   static char *save;
-   static char clear_kontext;
+void input_line_event(EVENT_MSG *msg,OBJREC *o) {
+	static cursor = 0;
+	int *len, *start, slen;
+	char *c;
+	static char *save;
+	static char clear_kontext;
+	va_list args;
 
-   len=(int *)o->userptr;
-   start=len+1;
-   c=(char *)o->data;
-   slen=strlen(c);
-   switch (msg->msg)
-     {
-     case E_GET_FOCUS:cursor=0;save=(char *)getmem(*len+1);
-                      strcpy(save,c);clear_kontext=1;break;
-     case E_LOST_FOCUS:cursor=0;*start=0;free(save);redraw_object(o);break;
-     case E_CURSOR_TICK:
-        {
-        int xpos,i,j=-1,d;
+	len = (int *)o->userptr;
+	start = len + 1;
+	c = (char *)o->data;
+	slen = strlen(c);
+	switch (msg->msg) {
+	case E_GET_FOCUS:
+		cursor=0;
+		save = (char *)getmem(*len + 1);
+		strcpy(save, c);
+		clear_kontext = 1;
+		break;
 
-        do
-           {
-           xpos=0;j++;
-           for (i=*start;i<cursor;i++)
-              {
-              if ((d=charsize(curfont,c[i]) & 0xff)==0) xpos+=1;
-              else xpos+=d;
-              }
-           if (xpos>=o->xs) (*start)+=1;
-           if (xpos==0) (*start)-=1;
-           if (*start<0) *start=0;
-           }
-        while ((xpos==0 || xpos>=o->xs)&& cursor);
-        if (j) redraw_object(o);
-        xor_rectangle(o->locx+xpos,o->locy,1,o->ys);
-        };break;
-     case E_MOUSE:
-        {
-        MS_EVENT *ms;int msx;
+	case E_LOST_FOCUS:
+		cursor = 0;
+		*start = 0;
+		free(save);
+		redraw_object(o);
+		break;
 
-        ms=get_mouse(msg);
-        msx=ms->x-o->locx;
-        if (ms->event_type & 2)
-           {
-           int xpos;
+	case E_CURSOR_TICK:
+		{
+			int xpos, i, j = -1, d;
 
-           xpos=0;
-           for (cursor=*start;cursor<slen;cursor++)
-              {
-              xpos+=charsize(curfont,c[cursor]) & 0xff;
-              if (xpos>msx) break;
-              }
-           redraw_object(o);
-           }
-        }
-        break;
-     case E_KEYBOARD:
-        {
-        char key;
+			do {
+				xpos = 0;
+				j++;
 
-        cancel_event();
-        key=(*(int *)msg->data) & 0xff;
-        if (!key)
-        switch (*(int *)msg->data >> 8)
-           {
-           case 'M':if (cursor<slen)  cursor++;break;
-           case 'K':if (cursor>0)  cursor--;break;
-           case 'S':if (cursor<slen) strcpy(&c[cursor],&c[cursor+1]);slen--;break;
-           case 'G':cursor=0;
-           case 'O':cursor=slen;
-           }
-        else
-        if (key)
-           switch (key)
-           {
-           case 8:if (cursor>0) {strcpy(&c[cursor-1],&c[cursor]);cursor--;}break;
-           case 0:break;
-           case 13:break;
-           case 27:strcpy(c,save);slen=strlen(c);if (cursor>slen) cursor=slen;break;
-           default:if (key>=' ') if (slen<*len || clear_kontext)
-             {
-             int i;
+				for (i = *start; i < cursor; i++) {
+					if ((d = charsize(curfont, c[i]) & 0xff) == 0) {
+						xpos += 1;
+					} else {
+						xpos += d;
+					}
+				}
 
-              if (clear_kontext)
-                 {*c='\0';cursor=0;slen=0;}
-              for (i=slen+1;i>cursor;i--) c[i]=c[i-1];
-              c[cursor++]=key;
-             }
-           }
-        if (!cursor) *start=0;
-        redraw_object(o);
-        msg->msg=E_CURSOR_TICK;
-        input_line_event(msg,o);
-        clear_kontext=0;
-        msg->msg=-1;
-        }
-     }
-  }
+				if (xpos >= o->xs) {
+					*start += 1;
+				}
+
+				if (xpos == 0) {
+					*start -= 1;
+				}
+
+				if (*start < 0) {
+					*start = 0;
+				}
+			} while ((xpos == 0 || xpos >= o->xs) && cursor);
+
+			if (j) {
+				redraw_object(o);
+			}
+
+			xor_rectangle(o->locx + xpos, o->locy, 1, o->ys);
+		}
+		break;
+
+	case E_MOUSE:
+		{
+			MS_EVENT *ms;
+			int msx;
+
+			va_copy(args, msg->data);
+			ms = va_arg(args, MS_EVENT*);
+			va_end(args);
+			msx = ms->x - o->locx;
+
+			if (ms->event_type & 2) {
+				int xpos;
+
+				xpos = 0;
+
+				for (cursor = *start; cursor < slen; cursor++) {
+					xpos += charsize(curfont, c[cursor]) & 0xff;
+					if (xpos > msx) {
+						break;
+					}
+				}
+
+				redraw_object(o);
+			}
+		}
+		break;
+
+	case E_KEYBOARD:
+		{
+			int key;
+
+			cancel_event();
+			va_copy(args, msg->data);
+			key = va_arg(args, int);
+			va_end(args);
+
+			if (!(key & 0xff)) {
+				switch (key >> 8) {
+				case 'M':
+					if (cursor<slen) {
+						cursor++;
+					}
+					break;
+
+				case 'K':
+					if (cursor > 0) {
+						cursor--;
+					}
+					break;
+
+				case 'S':
+					if (cursor < slen) {
+						strcpy(&c[cursor], &c[cursor+1]);
+						slen--;
+					}
+					break;
+
+				case 'G':
+					cursor = 0;
+					break;
+
+				case 'O':
+					cursor = slen;
+					break;
+				}
+			} else {
+				key &= 0xff;
+
+				switch (key) {
+				case 8:
+					if (cursor > 0) {
+						strcpy(&c[cursor-1], &c[cursor]);
+						cursor--;
+					}
+					break;
+
+				case 0:
+					break;
+
+				case 13:
+					break;
+
+				case 27:
+					strcpy(c, save);
+					slen = strlen(c);
+					if (cursor > slen) {
+						cursor = slen;
+					}
+					break;
+
+				default:
+					if (key >= ' ' && (slen < *len || clear_kontext)) {
+						int i;
+
+						if (clear_kontext) {
+							*c = '\0';
+							cursor = 0;
+							slen = 0;
+						}
+
+						for (i = slen + 1; i > cursor; i--) {
+							c[i] = c[i-1];
+						}
+
+						c[cursor++] = key;
+					}
+					break;
+				}
+			}
+
+			if (!cursor) {
+				*start = 0;
+			}
+
+			redraw_object(o);
+			msg->msg = E_CURSOR_TICK;
+			input_line_event(msg, o);
+			clear_kontext = 0;
+			msg->msg = -1;
+		}
+	}
+}
 
 
 
@@ -904,37 +1001,39 @@ void scroll_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   outtext(param->title);
   }
 
-void scroll_button_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
+void scroll_button_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
 
-  if (msg->msg==E_MOUSE)
-     {
-     ms=get_mouse(msg);
-     if (ms->event_type & 0x0e)
-        {
-        if (ms->tl1 || ms->event_type & 0x8)
-           {
-           *(char *)o->data=1;
-           redraw_object(o);
-           set_change();
-           }
-        }
-     }
-  if (msg->msg==E_TIMER && *(char *)o->data )
-      if (ms_last_event.tl1) set_change();
-      else if (!ms_last_event.tl2)
-             {
-              *(char *)o->data=0;
-               redraw_object(o);
-             }
+	if (msg->msg == E_MOUSE) {
+		va_list args;
 
-  if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS)
-     {
-     *(char *)o->data=0;
-     redraw_object(o);
-     }
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->event_type & 0x0e) {
+			if (ms->tl1 || ms->event_type & 0x8) {
+				*(char *)o->data = 1;
+				redraw_object(o);
+				set_change();
+			}
+		}
+	}
+
+	if (msg->msg == E_TIMER && *(char *)o->data) {
+		if (ms_last_event.tl1) {
+			set_change();
+		} else if (!ms_last_event.tl2) {
+			*(char *)o->data = 0;
+			redraw_object(o);
+		}
+	}
+
+	if (msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) {
+		*(char *)o->data = 0;
+		redraw_object(o);
+	}
+}
 
 void scroll_button(OBJREC *o)
   {
@@ -1002,51 +1101,61 @@ void scroll_bar_v_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   p->barsize=barsize;
   }
 
-void scroll_bar_v_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  SCR_BAR *p;
-  int *d;
-  int _d;
+void scroll_bar_v_event(EVENT_MSG *msg, OBJREC *o) {
+	SCR_BAR *p;
+	int *d;
+	int _d;
+	va_list args;
 
-  p=(SCR_BAR *)o->userptr;
-  d=(int *)o->data;
-  switch (msg->msg)
-     {
-     case E_MOUSE:
-          {
-          int y;
-          MS_EVENT *ms;
+	p = (SCR_BAR *)o->userptr;
+	d = (int *)o->data;
 
-          ms=get_mouse(msg);
-          y=(ms->y+(p->stepsize>>1)-o->locy-(p->barsize>>1));
-          if (ms->tl1)
-           {
-           if (o->ys<=p->barsize) _d=p->minvalue; else
-           _d=y*(p->maxvalue-p->minvalue)/(o->ys-p->barsize)+p->minvalue;
-           if (_d>p->maxvalue) _d=p->maxvalue;
-           if (_d<p->minvalue) _d=p->minvalue;
-           if (_d!=*d)
-              {
-              *d=_d;
-              redraw_object(o);
-              set_change();
-              }
-           }
-          }
-          break;
-     case E_CONTROL:
-          {
-          int *q;
+	switch (msg->msg) {
+	case E_MOUSE:
+		{
+			int y;
+			MS_EVENT *ms;
 
-          q=msg->data;
-          p->minvalue=*q++;
-          p->maxvalue=*q++;
-          p->parview=*q++;
-          }
-          break;
+			va_copy(args, msg->data);
+			ms = va_arg(args, MS_EVENT*);
+			va_end(args);
+			y = (ms->y + (p->stepsize >> 1) - o->locy - (p->barsize >> 1));
 
-     }
-  }
+			if (ms->tl1) {
+				if (o->ys <= p->barsize) {
+					_d=p->minvalue;
+				} else {
+					_d = y*(p->maxvalue - p->minvalue) / (o->ys - p->barsize) + p->minvalue;
+				}
+
+				if (_d > p->maxvalue) {
+					_d = p->maxvalue;
+				}
+
+				if (_d < p->minvalue) {
+					_d = p->minvalue;
+				}
+
+				if (_d != *d) {
+					*d = _d;
+					redraw_object(o);
+					set_change();
+				}
+			}
+		}
+		break;
+
+	case E_CONTROL:
+		{
+			va_copy(args, msg->data);
+			p->minvalue = va_arg(args, int);
+			p->maxvalue = va_arg(args, int);
+			p->parview = va_arg(args, int);
+			va_end(args);
+		}
+		break;
+	}
+}
 
 void scroll_bar_v(OBJREC *o)
   {
@@ -1116,39 +1225,50 @@ void scroll_bar_h_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   p->barsize=barsize;
   }
 
-void scroll_bar_h_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  SCR_BAR *p;
-  int *d;
-  int _d;
+void scroll_bar_h_event(EVENT_MSG *msg, OBJREC *o) {
+	SCR_BAR *p;
+	int *d;
+	int _d;
 
-  p=(SCR_BAR *)o->userptr;
-  d=(int *)o->data;
-  switch (msg->msg)
-     {
-     case E_MOUSE:
-          {
-          int x;
-          MS_EVENT *ms;
+	p = (SCR_BAR *)o->userptr;
+	d = (int *)o->data;
 
-          ms=get_mouse(msg);
-          x=(ms->x+(p->stepsize>>1)-o->locx-(p->barsize>>1));
-          if (ms->tl1)
-           {
-           if (o->xs<=p->barsize) _d=p->minvalue; else
-           _d=x*(p->maxvalue-p->minvalue)/(o->xs-p->barsize)+p->minvalue;
-           if (_d>p->maxvalue) _d=p->maxvalue;
-           if (_d<p->minvalue) _d=p->minvalue;
-           if (_d!=*d)
-              {
-              *d=_d;
-              redraw_object(o);
-              set_change();
-              }
-           }
-          }
-     }
-  }
+	switch (msg->msg) {
+	case E_MOUSE:
+		{
+			int x;
+			MS_EVENT *ms;
+			va_list args;
+
+			va_copy(args, msg->data);
+			ms = va_arg(args, MS_EVENT*);
+			va_end(args);
+			x = (ms->x + (p->stepsize >> 1) - o->locx - (p->barsize >> 1));
+
+			if (ms->tl1) {
+				if (o->xs <= p->barsize) {
+					_d = p->minvalue;
+				} else {
+					_d = x * (p->maxvalue - p->minvalue) / (o->xs - p->barsize) + p->minvalue;
+				}
+
+				if (_d > p->maxvalue) {
+					_d = p->maxvalue;
+				}
+
+				if (_d < p->minvalue) {
+					_d = p->minvalue;
+				}
+
+				if (_d != *d) {
+					*d = _d;
+					redraw_object(o);
+					set_change();
+				}
+			}
+		}
+	}
+}
 
 
 
@@ -1274,79 +1394,95 @@ void resizer_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   line(((x1+x2)>>1)+2,y2-1,((x1+x2)>>1)+4,y2-1);
   }
 
-void resizer_event(EVENT_MSG *msg,OBJREC *o)
-  {
-  MS_EVENT *ms;
-  static char run=0;
-  static uint16_t xref,yref;
-  static WINDOW w;
-  static moved=0;
-  static drawed=0;
+void resizer_event(EVENT_MSG *msg, OBJREC *o) {
+	MS_EVENT *ms;
+	static char run = 0;
+	static uint16_t xref, yref;
+	static WINDOW w;
+	static moved = 0;
+	static drawed = 0;
 
-  o;
-  if (msg->msg==E_INIT) return;
-  if (msg->msg==E_TIMER && !drawed)
-     if (!moved)
-     {
-     drawed=1;
-     redraw_desktop();
-     moved=0;
-     }
-     else
-     {
-     drawed=0;
-     moved=0;
-     }
-  if (msg->msg==E_MOUSE)
-     {
-        ms=get_mouse(msg);
-        if (run)
-           {
-           char force_redraw=0;
-           int new;
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           if (ms->event_type & 4)
-              {
-              run=0;
-              redraw_desktop();
-              send_message(E_DONE,E_MOUSE,resizer_event);
-              msg->msg=-1;
-              return;
-              }
-           new=ms->x-waktual->x+xref;if (new<w.xs) force_redraw=1;
-           w.xs=new;
-           new=ms->y-waktual->y+yref;if (new<w.ys) force_redraw=1;
-           w.ys=new;
-           check_window(&w);
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           movesize_win(waktual,w.x,w.y,w.xs,w.ys);
-           moved=1;drawed=0;
-           redraw_window();
-           if (force_redraw) redraw_desktop();
-           }
-        else
-           if (ms->event_type & 2)
-           {
-           run=1;
-           memcpy(&w,waktual,sizeof(WINDOW));
-           //xor_rectangle(w.x,w.y,w.xs,w.ys);
-           xref=waktual->xs-(ms->x-waktual->x);
-           yref=waktual->ys-(ms->y-waktual->y);
-           send_message(E_ADD,E_MOUSE,resizer_event);
-           freeze_on_exit=1;
-           }
-     }
-  if (msg->msg==E_LOST_FOCUS && run)
-     {
-              run=0;
-              redraw_desktop();
-              send_message(E_DONE,E_MOUSE,resizer_event);
-              msg->msg=-1;
-              return;
-     }
-if (msg->msg!=E_TIMER)  msg->msg=-1;
-  return;
-  }
+	if (msg->msg == E_INIT) {
+		return;
+	}
+
+	if (msg->msg == E_TIMER && !drawed) {
+		if (!moved) {
+			drawed = 1;
+			redraw_desktop();
+			moved = 0;
+		} else {
+			drawed = 0;
+			moved = 0;
+		}
+	}
+
+	if (msg->msg == E_MOUSE) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (run) {
+			char force_redraw = 0;
+			int new;
+
+			if (ms->event_type & 4) {
+				run = 0;
+				redraw_desktop();
+				send_message(E_DONE, E_MOUSE, resizer_event);
+				msg->msg = -1;
+				return;
+			}
+
+			new = ms->x - waktual->x + xref;
+
+			if (new < w.xs) {
+				force_redraw = 1;
+			}
+
+			w.xs = new;
+			new = ms->y - waktual->y + yref;
+
+			if (new < w.ys) {
+				force_redraw = 1;
+			}
+
+			w.ys = new;
+			check_window(&w);
+			movesize_win(waktual, w.x, w.y, w.xs, w.ys);
+			moved = 1;
+			drawed = 0;
+			redraw_window();
+
+			if (force_redraw) {
+				redraw_desktop();
+			}
+		} else if (ms->event_type & 2) {
+			run = 1;
+			memcpy(&w, waktual, sizeof(WINDOW));
+			xref = waktual->xs - (ms->x - waktual->x);
+			yref = waktual->ys - (ms->y - waktual->y);
+			send_message(E_ADD, E_MOUSE, resizer_event);
+			freeze_on_exit = 1;
+		}
+	}
+
+	if (msg->msg == E_LOST_FOCUS && run) {
+		run = 0;
+		redraw_desktop();
+		send_message(E_DONE, E_MOUSE, resizer_event);
+		msg->msg = -1;
+		return;
+	}
+
+	if (msg->msg != E_TIMER) {
+		msg->msg = -1;
+	}
+
+	return;
+}
 
 
 

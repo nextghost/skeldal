@@ -1916,19 +1916,24 @@ void recall()
    while (j!=-1);
   }
 
-void key_break_sleep(EVENT_MSG *msg,void **unused)
-  {
+void key_break_sleep(EVENT_MSG *msg,void **unused) {
+	if (msg->msg == E_KEYBOARD) {
+		break_sleep = 1;
+	}
 
-  unused;
-  if (msg->msg==E_KEYBOARD) break_sleep=1;
-  if (msg->msg==E_MOUSE)
-     {
-     MS_EVENT *ms;
+	if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
+		va_list args;
 
-     ms=get_mouse(msg);
-     if (ms->event_type & (0x2+0x8+0x20)) break_sleep=1;
-     }
-  }
+		va_copy(args, msg->data);
+		ms = va_arg(args, MS_EVENT*);
+		va_end(args);
+
+		if (ms->event_type & (0x2 | 0x8 | 0x20)) {
+			break_sleep = 1;
+		}
+	}
+}
 
 //void sleep_players(va_list args) {
 void sleep_players(void) {
@@ -2008,72 +2013,148 @@ void sleep_players(void) {
 }
 
 
-void *game_keyboard(EVENT_MSG *msg,void **usr)
-  {
-  char c;
+void *game_keyboard(EVENT_MSG *msg, void **usr) {
+	char c;
+	
+	if (pass_zavora) {
+		return NULL;
+	}
 
-  usr;
-  if (pass_zavora) return NULL;
-  if (cur_mode==MD_END_GAME) return NULL;
-  if (msg->msg==E_KEYBOARD)
-     {
-     c=(*(int *)msg->data)>>8;
-//     while (_bios_keybrd(_KEYBRD_READY) ) _bios_keybrd(_KEYBRD_READ);
-     while (Input_Kbhit()) Input_ReadKey();
-     switch (c)
-        {
-        case 'H':step_zoom(0);break;
-        case 'P':step_zoom(2);break;
-//        case 'M':if (GetKeyState(VK_CONTROL) & 0x80)
-        case 'M':if (get_control_state())
-            step_zoom(1);
-          else
-            turn_zoom(1);
-          break;
-//        case 'K':if (GetKeyState(VK_CONTROL) & 0x80)
-        case 'K':if (get_control_state())
-            step_zoom(3);
-          else
-            turn_zoom(-1);
-          break;
-        case 79:
-        case 's':step_zoom(3);break;
-        case 81:
-        case 't':step_zoom(1);break;
-        case 0x21:if (q_item(flute_item,viewsector)) bott_draw_fletna();
-        case 57:a_touch(viewsector,viewdir);if (cur_mode==MD_PRESUN)send_message(E_KEYBOARD,28*256);break;
-        case 15:
-        case 50:
-   	  	      if (GlobEvent(MAGLOB_BEFOREMAPOPEN,viewsector,viewdir))
+	if (cur_mode == MD_END_GAME) {
+		return NULL;
+	}
+
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) >> 8;
+		va_end(args);
+
+		while (Input_Kbhit()) Input_ReadKey();
+		switch (c) {
+		case 'H':
+			step_zoom(0);
+			break;
+
+		case 'P':
+			step_zoom(2);
+			break;
+
+		case 'M':
+			if (get_control_state()) {
+				step_zoom(1);
+			} else {
+				turn_zoom(1);
+			}
+			break;
+
+		case 'K':
+			if (get_control_state()) {
+				step_zoom(3);
+			} else {
+				turn_zoom(-1);
+			}
+			break;
+
+		case 79:
+		case 's':
+			step_zoom(3);
+			break;
+
+		case 81:
+		case 't':
+			step_zoom(1);
+			break;
+
+		case 0x21:
+			if (q_item(flute_item, viewsector)) {
+				bott_draw_fletna();
+			}
+			// FIXME: should there be a break here?
+
+		case 57:
+			a_touch(viewsector,viewdir);
+			if (cur_mode == MD_PRESUN) {
+				send_message(E_KEYBOARD, 28*256);
+			}
+			break;
+
+		case 15:
+		case 50:
+			if (GlobEvent(MAGLOB_BEFOREMAPOPEN, viewsector, viewdir)) {
 				show_automap(1);
-              break;
-        case 0x17:unwire_proc();
-                 wire_inv_mode(human_selected);break;
-//      case 'A':lodka=!lodka;set_backgrnd_mode(lodka);break;
-        case 1:konec(0,0,0,0,0);break;
-//        case 25:GamePause();break;
-        case 28:enforce_start_battle();break;
-        case 82:group_all();break;
-        case '<':if (!battle && GlobEvent(MAGLOB_CLICKSAVE,viewsector,viewdir)) 
-				 {unwire_proc();cancel_render=1;wire_save_load(1);}break;
-        case '=':unwire_proc();cancel_render=1;wire_save_load(0);break;
-        case '>':game_setup(0,0,0,0,0);break;
-        CASE_KEY_1_6:c=group_sort[c-2];
-                     if (postavy[c].sektor==viewsector && postavy[c].used)
-                       add_to_group(c);
-                     zmen_skupinu(postavy+c);
-                     bott_draw(1);
-                     break;
-/*        default:
-              {
-              char s[20];
-              bott_disp_text(itoa(c,s,10));
-              break;
-              }*/
-         }
-     }
-  return &game_keyboard;
-  }
+			}
+			break;
+
+		case 0x17:
+			unwire_proc();
+			wire_inv_mode(human_selected);
+			break;
+
+/*
+		case 'A':
+			lodka = !lodka;
+			set_backgrnd_mode(lodka);
+			break;
+*/
+		case 1:
+			konec(0, 0, 0, 0, 0);
+			break;
+
+/*
+		case 25:
+			GamePause();
+			break;
+*/
+		case 28:
+			enforce_start_battle();
+			break;
+
+		case 82:
+			group_all();
+			break;
+
+		case '<':
+			if (!battle && GlobEvent(MAGLOB_CLICKSAVE, viewsector, viewdir)) {
+				unwire_proc();
+				cancel_render = 1;
+				wire_save_load(1);
+			}
+			break;
+
+		case '=':
+			unwire_proc();
+			cancel_render = 1;
+			wire_save_load(0);
+			break;
+
+		case '>':
+			game_setup(0, 0, 0, 0, 0);
+			break;
+
+		CASE_KEY_1_6:
+			c = group_sort[c - 2];
+			if (postavy[c].sektor == viewsector && postavy[c].used) {
+				add_to_group(c);
+			}
+			zmen_skupinu(postavy+c);
+			bott_draw(1);
+			break;
+
+/*
+		default:
+			{
+				char s[20];
+				bott_disp_text(itoa(c, s, 10));
+			}
+			break;
+*/
+		}
+	}
+
+	return &game_keyboard;
+}
 
 
 void start_dialog(int dialog,int mob)

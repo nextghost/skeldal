@@ -788,36 +788,45 @@ void effect_show(va_list args)
   }
 
 
-static void enter_reaction(EVENT_MSG *msg,void **unused)
-  {
-  unused;
-  if (msg->msg==E_KEYBOARD)
-     {
-     if (*(char *)msg->data==13 && !shut_downing_text)
-        {
-        send_message(E_KEYBOARD,13);
-        bott_draw(1);
-        redraw_generator(1);
-        msg->msg=-1;
-        }
+static void enter_reaction(EVENT_MSG *msg,void **unused) {
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
+		char c;
 
-	if (*(char*)(msg->data) != 0) {
-		was_enter=1;
+		va_copy(args, msg->data);
+		c = va_arg(args, int) & 0xff;
+		va_end(args);
+
+		if (c == 13 && !shut_downing_text) {
+			send_message(E_KEYBOARD, 13);
+			bott_draw(1);
+			redraw_generator(1);
+			msg->msg = -1;
+		}
+
+		if (c != 0) {
+			was_enter = 1;
+		}
 	}
-     }
-  }
+}
 
-static void enter_reaction2(EVENT_MSG *msg,void **unused)
-  {
-  unused;
-  if (msg->msg==E_KEYBOARD && *(char *)msg->data==13 && !shut_downing_text && ~b_disables & 0x3)
-     {
-     send_message(E_KEYBOARD,13);
-     bott_draw(1);
-     redraw_page3();
-     msg->msg=-1;
-     }
-  }
+static void enter_reaction2(EVENT_MSG *msg,void **unused) {
+	if (msg->msg == E_KEYBOARD) {
+		va_list args;
+		char c;
+
+		va_copy(args, msg->data);
+		c = va_arg(args, int) & 0xff;
+		va_end(args);
+
+		if (c == 13 && !shut_downing_text && ~b_disables & 0x3) {
+			send_message(E_KEYBOARD, 13);
+			bott_draw(1);
+			redraw_page3();
+			msg->msg = -1;
+		}
+	}
+}
 
 
 char gen_exit_editor(int id,int xa,int ya,int xr,int yr)
