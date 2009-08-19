@@ -344,14 +344,15 @@ static void bott_fletna_normal(void **pp,long *s)
 static void bott_draw_normal(void **pp,long *s)
   {
   int i,j;int x,xs=0,y;
-  uint16_t *bott_scr;
+  uint16_t *bott_scr, *ptr;
   THUMAN *p;
 
   bott_scr=bott_clear();
   Screen_SetAddr(bott_scr);
   if (battle && cur_mode==MD_INBATTLE) put_picture(0,0,ablock(H_BATTLE_BAR));
   else put_picture(0,0,ablock(H_DESK));
-  memcpy(&xs,ablock(H_OKNO),2);
+  ptr = ablock(H_OKNO);
+  xs = ptr[0];
   x=54;
   for(j=0;j<POCET_POSTAV;j++)
      if ((p=&postavy[i=group_sort[j]])->used)

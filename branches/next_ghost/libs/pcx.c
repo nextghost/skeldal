@@ -30,7 +30,7 @@
 #define SHADE_STEPS 5
 #define SHADE_PAL (SHADE_STEPS*512*2)
 
-void *get_palette_ptr=NULL;
+//void *get_palette_ptr=NULL;
 
 
 void decomprimate_line_256(uint8_t *src,int8_t *trg,int linelen,int *srcstep)
@@ -127,8 +127,10 @@ int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... )
   if (pcx==0) return -1;
   paleta1=pcx+fsize-768;
   ptr1=paleta1;ptr2=paleta2;
+/*
   if (get_palette_ptr!=NULL)
      memcpy(get_palette_ptr,ptr1,768);
+*/
 
 	for (i = 0; i < 256; i++) {
 		*ptr2++ = Screen_RGB(ptr1[0] >> 3, ptr1[1] >> 3, ptr1[2] >> 3);
@@ -146,7 +148,7 @@ int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... )
   ysize=pcxdata.ymax-pcxdata.ymin+1;
   switch (conv_type)
      {
-     case A_8BIT: *buffer=(int8_t *)getmem(xsize*ysize+512+16);break;
+     case A_8BIT: *buffer=(int8_t *)getmem(xsize*ysize+256*sizeof(uint16_t)+16);break;
      case A_16BIT: *buffer=(int8_t *)getmem(xsize*ysize*2+16);break;
      case A_FADE_PAL: *buffer=(int8_t *)getmem(xsize*ysize+SHADE_PAL+16);break;
      case A_8BIT_NOPAL: *buffer=(int8_t *)getmem(xsize*ysize+16);break;
@@ -165,8 +167,8 @@ int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... )
      }
   if (conv_type==A_8BIT)
      {
-     memcpy(ptr1,paleta2,512);
-     ptr1+=512;
+     memcpy(ptr1,paleta2,256*sizeof(uint16_t));
+     ptr1+=256*sizeof(uint16_t);
      }
   if (conv_type==A_FADE_PAL)
      {

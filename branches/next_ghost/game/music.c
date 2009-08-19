@@ -271,7 +271,7 @@ void wav_load(void **p,long *s)
 void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
   {
   int chan;
-  int blockid;
+  int32_t blockid;
   SND_INFO *track;
   THANDLE_DATA *z;
   char *s;
@@ -294,7 +294,7 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
      }
   else
      if (calcul_volume(chan,x-xd,y-yd,/*side-*/sided,p->volume)) return;
-  if (p->filename[0]==1) memcpy(&blockid,&p->filename[1],4);
+  if (p->filename[0]==1) memcpy(&blockid,&p->filename[1],sizeof(int32_t));
   else
      {
      blockid=find_handle(p->filename,wav_load);
@@ -304,7 +304,7 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
         blockid=end_ptr++;
         if (level_preload) apreload(blockid);
        }
-     memcpy(&p->filename[1],&blockid,4);
+     memcpy(&p->filename[1],&blockid,sizeof(int32_t));
      p->filename[0]=1;
      }
   alock(blockid);
@@ -323,12 +323,12 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
 
 void restore_sound_name(TMA_SOUND *p)
   {
-  int blockid;
+  int32_t blockid;
   THANDLE_DATA *h;
 
   if (p->filename[0]==1)
      {
-      memcpy(&blockid,&p->filename[1],4);
+      memcpy(&blockid,&p->filename[1],sizeof(int32_t));
      do
         {
         h=get_handle(blockid);

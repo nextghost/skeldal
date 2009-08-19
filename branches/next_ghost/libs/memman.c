@@ -243,7 +243,7 @@ void load_file_table()
   fread(&strsize,4,1,bmf);
   strsize-=grptabsiz;
   fseek(bmf,grptabsiz,SEEK_SET);
-  p=getmem(strsize);memcpy(&nametable,&p,4);
+  nametable=p=getmem(strsize);
 //  read(bmf,nametable,strsize);
   fread(nametable,1,strsize,bmf);
   nmtab_size=strsize/sizeof(*nametable);

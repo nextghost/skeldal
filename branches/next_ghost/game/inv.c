@@ -700,7 +700,7 @@ char pick_item_(int id,int xa,int ya,int xr,int yr)
 		  int nosnost=(glob_items[*picked_item-1].nosnost);
 		  short *batoh=(uint16_t *)getmem(nosnost*2+20);		  
 		  short *cur=batoh;
-		  memcpy(cur,picked_item,(curinside+1)*2);
+		  memcpy(cur,picked_item,(curinside+1)*sizeof(short));
 		  cur+=curinside;
 		  free(picked_item);
 		  picked_item=NULL;		

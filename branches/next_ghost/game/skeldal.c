@@ -503,7 +503,7 @@ void set_background(void **p,long *s)
 
 void mouse_set_cursor(int cursor)
   {
-  static short *ms_item=NULL;
+  static int16_t *ms_item=NULL;
 
   if (cursor==last_ms_cursor) return;
   if (last_ms_cursor>0) aunlock(last_ms_cursor);
@@ -521,7 +521,7 @@ void mouse_set_cursor(int cursor)
      char *p;
 
      cursor=-cursor;
-     if (ms_item==NULL) ms_item=(short *)getmem(IT_ICONE_SIZE);
+     if (ms_item==NULL) ms_item=getmem(IT_ICONE_SIZE);
      p=(char *)ablock(cursor/18+ikon_libs);
      memcpy(ms_item,&p[(cursor%18)*IT_ICONE_SIZE],IT_ICONE_SIZE);
      schovej_mysku();

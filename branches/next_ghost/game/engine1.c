@@ -813,15 +813,15 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
 void OutBuffer2nd(void)
   {
   int i;
-  for (i=0;i<480;i++)
-	memcpy(Screen_GetAddr()+i*Screen_GetXSize(),Screen_GetBackAddr()+i*Screen_GetXSize(),640*2);
+  for (i=0;i<Screen_GetYSize();i++)
+	memcpy(Screen_GetAddr()+i*Screen_GetXSize(),Screen_GetBackAddr()+i*Screen_GetXSize(),Screen_GetScan());
   }
 
 void CopyBuffer2nd(void)
   {
   int i;
-  for (i=0;i<480;i++)
-	memcpy(Screen_GetBackAddr()+i*Screen_GetXSize(),Screen_GetAddr()+i*Screen_GetXSize(),640*2);
+  for (i=0;i<Screen_GetYSize();i++)
+	memcpy(Screen_GetBackAddr()+i*Screen_GetXSize(),Screen_GetAddr()+i*Screen_GetXSize(),Screen_GetScan());
   }
 
   /*void chozeni(void)

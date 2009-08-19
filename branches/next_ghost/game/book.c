@@ -175,7 +175,7 @@ static int insert_end_line_and_save(int p,int ys)
   int size;
   while (read_buff[buff_pos]==' ' && buff_pos<buff_end) buff_pos++;
   size=buff_end-buff_pos;
-  if (size)memcpy(read_buff,read_buff+buff_pos,size);
+  if (size)memcpy(read_buff,read_buff+buff_pos,size*sizeof(char));
   write_buff[p++]=27;
   write_buff[p++]=END_LINE;
   p=insert_num(write_buff,p,ys);
@@ -261,7 +261,7 @@ static void save_line_center()
   next_line(ys);
   ss=total_width-xs;
   p=insert_left_skip(p,ss/2);
-  memcpy(write_buff+p,read_buff,buff_pos);
+  memcpy(write_buff+p,read_buff,buff_pos*sizeof(char));
   p+=buff_pos;
   write_buff[p]=0;
   insert_end_line_and_save(p,ys);
@@ -274,7 +274,7 @@ static void save_line_left()
 
   p=0;
   p=insert_left_skip(p,0);z=p;
-  if (buff_pos) memcpy(write_buff+p,read_buff,buff_pos);
+  if (buff_pos) memcpy(write_buff+p,read_buff,buff_pos*sizeof(char));
   p+=buff_pos;
   write_buff[p]=0;
   ys=text_height(write_buff+z);

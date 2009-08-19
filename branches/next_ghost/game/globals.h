@@ -150,7 +150,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define SWAPPATH pathtable[SR_TEMP]
 #define TEMP_FILE "~SKELDAL.TMP"
 #define PICTURES "..\\OBRAZKY\\"
-#define PIC_FADE_PAL_SIZE (10*512+6)
+#define PIC_FADE_PAL_SIZE (10*256*sizeof(uint16_t)+6)
 
 #define E_REFRESH  256 //udalost refresh scene
 #define E_KOUZLO_KOLO 257 //funkce kouzel kazde jedno kolo

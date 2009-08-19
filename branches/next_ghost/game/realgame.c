@@ -627,8 +627,8 @@ TFLY *duplic_fly(TFLY *p)
 //     int s=_msize(q->items);
      int s = 0;
      for (; q->items[s]; s++);
-     q->items=(short *)getmem(s);
-     memcpy(q->items,p->items,s);
+     q->items=getmem(s*sizeof(int16_t));
+     memcpy(q->items,p->items,s*sizeof(int16_t));
      }
   return q;
   }

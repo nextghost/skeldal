@@ -714,6 +714,7 @@ void toggle_button(OBJREC *o)
 
 //------------------------------------------
 
+// FIXME: portability rewrite
 void input_line_init(OBJREC *o,int *len)
   {
   o->datasize=(*len)+1;

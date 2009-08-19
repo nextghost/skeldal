@@ -166,18 +166,27 @@ char testclip(int x,int y)
   }
  */
 
-void save_text_to_map(int x,int y,int depth,char *text)
-  {
-  char c[512],*d;
-  if (text[0]==0) return;
-  memset(c,1,sizeof(c));
-  strcpy(c+12,text);
-  if (texty_v_mape==NULL) texty_v_mape=create_list(8);
-  d=texty_v_mape[str_add(&texty_v_mape,c)];
-  x=(x-320)+map_xr;
-  y=(y-197)+map_yr;
-  memcpy(d,&x,4);memcpy(d+4,&y,4);memcpy(d+8,&depth,4);
-  }
+void save_text_to_map(int32_t x, int32_t y, int32_t depth, char *text) {
+	char c[512], *d;
+
+	if (!text[0]) {
+		return;
+	}
+
+	memset(c, 1, sizeof(c));
+	strcpy(c + 3 * sizeof(int32_t), text);
+
+	if (!texty_v_mape) {
+		texty_v_mape = create_list(8);
+	}
+
+	d = texty_v_mape[str_add(&texty_v_mape, c)];
+	x = (x - 320) + map_xr;
+	y = (y - 197) + map_yr;
+	memcpy(d, &x, sizeof(int32_t));
+	memcpy(d + sizeof(int32_t), &y, sizeof(int32_t));
+	memcpy(d + 2*sizeof(int32_t), &depth, sizeof(int32_t));
+}
 
 static char check_for_layer(int layer)
   {
@@ -188,48 +197,67 @@ static char check_for_layer(int layer)
   return 0;
   }
 
-void ukaz_vsechny_texty_v_mape()
-  {
-  int x,y,d,i,cn;
-  char *c;
+void ukaz_vsechny_texty_v_mape() {
+	int32_t x, y, d;
+	int i, cn;
+	char *c;
 
-  if (texty_v_mape==NULL) return;
-  set_font(H_FLITT5,NOSHADOW(0));
-  cn=str_count(texty_v_mape);
-  for(i=0;i<cn;i++)
-     {
-     c=texty_v_mape[i];
-     if (c!=NULL)
-        {
-        memcpy(&x,c,4);memcpy(&y,c+4,4);memcpy(&d,c+8,4);c+=12;
-        x=x-map_xr;
-        y=y-map_yr;
-        x+=320;y+=197;
-        if (d==cur_depth)
-        if (testclip(x,y))
-           {
-           int h;char *d,e;
-           d=strchr(c,0);e=0;
-           while((h=text_width(c)+x)>640)
-              {
-              *d=e;
-              d--;e=*d;*d=0; if (d==c) break;
-              }
-           position(x,y);outtext(c);
-           *d=e;
-           }
-        else if(x<8 && x+text_width(c)>10 && y>16 && y<376)
-           {
-           char cd[2]=" ";
-           while (x<10 && *c)
-              {
-              cd[0]=*c++;x+=text_width(cd);
-              }
-           position(x,y);outtext(c);
-           }
-        }
-     }
-  }
+	if (!texty_v_mape) {
+		return;
+	}
+
+	set_font(H_FLITT5, NOSHADOW(0));
+	cn = str_count(texty_v_mape);
+
+	for(i = 0; i < cn; i++) {
+		c = texty_v_mape[i];
+		if (c) {
+			memcpy(&x, c, sizeof(int32_t));
+			memcpy(&y, c + sizeof(int32_t), sizeof(int32_t));
+			memcpy(&d, c + 2*sizeof(int32_t), sizeof(int32_t));
+			c += 3*sizeof(int32_t);
+			x = x - map_xr;
+			y = y - map_yr;
+			x += 320;
+			y += 197;
+
+			if (d == cur_depth) {
+				if (testclip(x, y)) {
+					int h;
+					char *d, e;
+
+					d = strchr(c, 0);
+					e = 0;
+
+					while((h = text_width(c) + x) > 640) {
+						*d = e;
+						d--;
+						e = *d;
+						*d = 0;
+
+						if (d == c) {
+							break;
+						}
+					}
+
+					position(x, y);
+					outtext(c);
+					*d = e;
+				} else if(x < 8 && x + text_width(c) > 10 && y > 16 && y < 376) {
+					char cd[2] = " ";
+
+					while (x < 10 && *c) {
+						cd[0] = *c++;
+						x += text_width(cd);
+					}
+
+					position(x, y);
+					outtext(c);
+				}
+			}
+		}
+	}
+}
 
 void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 	static int x, y;

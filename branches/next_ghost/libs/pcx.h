@@ -57,7 +57,7 @@ extern "C" {
 int load_pcx(char *pcx,long fsize,int conv_type,int8_t **buffer, ... );
 int open_pcx(char *filename,int type,int8_t **buffer,...);
 void palette_shadow(uint8_t *pal1,uint16_t pal2[][256],int tr,int tg,int tb);
-extern void *get_palette_ptr;
+//extern void *get_palette_ptr;
 
 #pragma option align=reset
 
