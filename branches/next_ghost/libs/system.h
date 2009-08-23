@@ -24,8 +24,8 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstdio>
+#include <cstdarg>
 #include <inttypes.h>
 #include "libs/devices.h"
 
@@ -56,7 +56,7 @@ void Sys_Shutdown(void);
 void Sys_SetEnv(const char *name, const char *value);
 void Sys_Init(void);
 void Sys_Mkdir(const char *path);
-int Sys_LatestFile(char *mask, int offset);
+int Sys_LatestFile(const char *mask, int offset);
 void Sys_PurgeTemps(char z);
 int Sys_PackStatus(FILE *f);
 void Sys_SetPath(unsigned idx, const char *path);
@@ -69,8 +69,8 @@ void Sys_ProcessEvents(void);
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
 int Screen_GetXSize(void);
 int Screen_GetYSize(void);
-unsigned short *Screen_GetAddr(void);
-unsigned short *Screen_GetBackAddr(void);
+uint16_t *Screen_GetAddr(void);
+uint16_t *Screen_GetBackAddr(void);
 long Screen_GetSize(void);
 void Screen_SetAddr(unsigned short *addr);
 void Screen_SetBackAddr();
@@ -110,7 +110,7 @@ void Sound_GetVolume(int channel, int *left, int *right);
 char Sound_GetChannelState(int channel);
 int Sound_MixBack(int synchro);
 void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type);
-void Sound_ChangeMusic(char *file);
+void Sound_ChangeMusic(const char *file);
 void Sound_BreakLoop(int channel);
 void Sound_BreakExt(int channel, void *sample, long size);
 void Sound_Mute(int channel);

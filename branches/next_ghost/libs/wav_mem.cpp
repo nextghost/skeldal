@@ -20,28 +20,40 @@
  *  
  *  Last commit made by: $Id$
  */
-#ifndef _WAV_H
-#define _WAV_H
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include "wav_mem.h"
 
-#include <inttypes.h>
+const char *find_chunk(const char *wav, const char *name) {
+	int32_t next;
 
-#pragma pack(1)
+	wav += 12;
 
-#define WAV_RIFF "RIFF"
-#define WAV_WAVE "WAVE"
-#define WAV_FMT  "fmt "
-#define WAV_DATA "data"
+	do {
+		if (!strncmp(name, wav, 4)) {
+			return wav + 4;
+		}
 
-typedef struct t_wave
+		wav += 4;
+		memcpy(&next, wav, sizeof(int32_t));
+		wav += next + 4;
+	} while (1);
+}
+
+int get_chunk_size(const char *wav) {
+	int32_t size;
+
+	memcpy(&size, wav, sizeof(int32_t));
+	return size;
+}
+
+int read_chunk(const char *wav,void *mem)
   {
-  uint16_t wav_mode,chans;
-  int32_t freq,bps;
-  }T_WAVE;
 
-const char *find_chunk(const char *wav, const char *name);
-int get_chunk_size(const char *wav);
-int read_chunk(const char *wav,void *mem);
+  wav+=4;
+  memcpy(mem,wav,get_chunk_size(wav-4));
+  return 0;
+  }
 
-#pragma option align=reset
 
-#endif

@@ -62,5 +62,9 @@ void mgif_install_proc(MGIF_PROC proc);
 void *open_mgif(void *mgif); //vraci ukazatel na prvni frame
 void *mgif_play(void *mgif); //dekoduje a zobrazi frame
 void close_mgif();           //dealokuje buffery pro prehravani
+
+void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
+void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
+
 #pragma option align=reset
 #endif

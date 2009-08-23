@@ -69,9 +69,9 @@ void char2_32(uint16_t *posit,uint16_t *font,uint8_t znak);
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
 uint16_t charsize(uint16_t *font,uint8_t znak);
 //#pragma aux charsize parm [esi] [eax]
-void put_picture(uint16_t x,uint16_t y,void *p);
+void put_picture(uint16_t x,uint16_t y,uint16_t *p);
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
-void get_picture(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys,void *p);
+void get_picture(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys,uint16_t *p);
 //#pragma aux get_picture parm [esi] [eax] [ebx] [ecx] [edi] modify [edx]
 void setpal(void *paleta);
 //#pragma aux setpal parm [esi] modify [eax edx]
@@ -127,14 +127,14 @@ void *create_hixlat();
 void closemode();
 void line32(uint16_t x1,uint16_t y1, uint16_t x2, uint16_t y2);
 void position(uint16_t x,uint16_t y);
-void outtext(uint8_t *text);
+void outtext(const char *text);
 void show_ms_cursor(int16_t x,int16_t y);
-void *register_ms_cursor(void *cursor);
+void *register_ms_cursor(uint16_t *cursor);
 void move_ms_cursor(int16_t newx,int16_t newy,char nodraw);
 void hide_ms_cursor();
-int text_height(char *text);
-int text_width(char *text);
-void set_aligned_position(int x,int y,char alignx, char aligny,char *text);
+int text_height(const char *text);
+int text_width(const char *text);
+void set_aligned_position(int x,int y,char alignx, char aligny,const char *text);
 void wait_retrace();
 void pal_optimize();
 void rectangle(int x1,int y1,int x2,int y2,int color);
@@ -149,7 +149,7 @@ void put_8bit_clipped(uint16_t *src,uint16_t *trg,int startline,int velx,int vel
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
 void put_textured_bar_(uint16_t *src,uint16_t *trg,int xsiz,int ysiz,int xofs,int yofs);
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
-void put_textured_bar(void *src,int x,int y,int xs,int ys,int xofs,int yofs);
+void put_textured_bar(uint16_t *src,int x,int y,int xs,int ys,int xofs,int yofs);
 void trans_bar(int x,int y,int xs,int ys,int barva);
 //#pragma aux trans_bar parm [EDI][ESI][EDX][ECX][EBX] modify [EAX];
 void trans_bar25(int x,int y,int xs,int ys);

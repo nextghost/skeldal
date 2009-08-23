@@ -79,6 +79,7 @@ typedef FC_TABLE FC_PALETTE[16];
      DONE(OBJREC *object);
 */
 
+// FIXME: get rid of this crap
 typedef void (*RUN_ROUTS[4])();
 
 typedef struct objrec
@@ -141,7 +142,7 @@ extern FC_TABLE f_default;
 extern uint16_t desktop_y_size;
 //extern char change_flag;
 extern uint16_t *default_font;
-extern void *gui_background;
+extern uint16_t *gui_background;
 
 
 
@@ -171,7 +172,7 @@ void on_event(void (*proc)());
 void terminate(void);
 void set_change(void);
 void set_value(int win_id,int obj_id,void *value);
-void set_default(void *value);
+void set_default(const void *value);
 void c_set_value(int win_id,int obj_id,int cnst);
 void c_default(int cnst);
 int f_get_value(int win_id,int obj_id);

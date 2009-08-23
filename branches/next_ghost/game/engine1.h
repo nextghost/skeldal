@@ -54,7 +54,7 @@
 #pragma pack(1)
 
 void general_engine_init(void);
-void draw_floor_ceil(int celx,int cely,char f_c,void *txtr);
+void draw_floor_ceil(int celx,int cely,char f_c,uint16_t *txtr);
 void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev);
   //zobrazi primou stenu ktera lezi pred nebo napravo od pozorovatele
 void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev);
@@ -65,7 +65,7 @@ void zooming_forward(uint16_t *background);
 void OutBuffer2nd(void);
 void CopyBuffer2nd(void);
 void report_mode(int);
-void draw_item(int celx,int cely,int posx,int posy,short *pic,int index);
+void draw_item(int celx,int cely,int posx,int posy,uint16_t *pic,int index);
 void draw_item2(int celx,int cely,int xpos,int ypos,void *texture,int index);
 //void textmode_effekt();
 //#pragma aux textmode_effekt modify[eax ebx ecx edx edi];
@@ -169,7 +169,7 @@ void enemy_draw_mirror(uint8_t *src,uint16_t *trg,int shade,int scale,int maxspa
 //clip je v poradi vpravo - vlevo (HiLo)
 
 void draw_enemy(DRW_ENEMY *drw);
-void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char *name);
+void draw_player(uint16_t *txtr,int celx,int cely,int posx,int posy,int adjust,char *name);
 void double_zoom_xicht(uint16_t x,uint16_t y,uint16_t *source);
 
 void set_lclip_rclip(int celx,int cely,int lc,int rc);

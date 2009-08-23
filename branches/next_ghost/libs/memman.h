@@ -25,7 +25,7 @@
 #ifndef _MEMMAN_H_
 #define _MEMMAN_H_
 
-#include <stdio.h>
+#include <cstdio>
 #include <inttypes.h>
 
 #pragma pack(1)
@@ -93,21 +93,22 @@ void *getmem(long size);        //alokace pameti pres memman. alokovat pomoci ma
 void *grealloc(void *m,long size); //realokace pameti pres memman
 void *load_file(char *filename); //obycejne natahne soubor do pameti a vrati ukazatel.
 void init_manager(char *filename,char *swp); //inicializuje manager. Jmeno filename i swapname nejsou povinne (musi byt NULL kdyz nejsou pouzity)
-THANDLE_DATA *def_handle(int handle,char *filename,void *decompress,char path); //deklaruje rukojet. promenna decompress je ukazatel na funkci ktera upravi data pred vracenim ukazatele
+THANDLE_DATA *def_handle(int handle,const char *filename,void (*decompress)(void**, long*),char path); //deklaruje rukojet. promenna decompress je ukazatel na funkci ktera upravi data pred vracenim ukazatele
 void *ablock(int handle);             //vraci ukazatel bloku spojeneho s handlem
 void alock(int handle);               //zamyka blok
 void aunlock(int handle);             //odmyka blok
 void aswap(int handle);               //zapina swapovani pro blok
 void aunswap(int handle);             //vypina swapovani pro blok
 void apreload(int handle);            //zapina preloading pro blok (preloading proved pomoci ablock)
+THANDLE_DATA *kill_block(int handle);
 //void free();                          //free
 void close_manager();                 //uzavre manager a uvolni veskerou pamet
 void undef_handle(int handle);        //uvolni hadle k dalsimu pouziti
 THANDLE_DATA *zneplatnit_block(int handle); //zneplatni data bloku
 THANDLE_DATA *get_handle(int handle); //vraci informace o rukojeti
-int find_handle(char *name,void *decomp);   //hleda mezi rukojeti stejnou definici
-int test_file_exist(int group,char *filename); //testuje zda soubor existuje v ramci mmanageru
-void *afile(char *filename,int group,long *blocksize); //nahraje do pameti soubor registrovany v ramci mmanageru
+int find_handle(const char *name,void (*decomp)(void**, long*));   //hleda mezi rukojeti stejnou definici
+int test_file_exist(int group,const char *filename); //testuje zda soubor existuje v ramci mmanageru
+void *afile(const char *filename,int group,long *blocksize); //nahraje do pameti soubor registrovany v ramci mmanageru
 long get_handle_size(int handle);
 //void get_mem_info(MEMORYSTATUS *mem); 
 

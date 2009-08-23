@@ -24,7 +24,7 @@
 #define __EVENT_H
 
 #include <inttypes.h>
-#include <stdarg.h>
+#include <cstdarg>
 
 //#define nodebug  // 0 znamena ze se nealokuje udalost pro chybu
 // Tato knihovna definuje zakladni systemove konstanty
@@ -117,13 +117,13 @@ typedef struct t_event_root
 
 extern char exit_wait; // 1 - opousti aktivni cekaci event;
 extern char freeze_on_exit; //1 - po opusteni udalosti cela cesta uzamcena
-extern char *otevri_zavoru;
+extern int8_t *otevri_zavoru;
 //extern int curtask;
 //extern char *task_info;
 
 void init_events();
  // inicalizuje zakladni strom udalosto
-void send_message(int message,...);
+void send_message(int message, ...);
  // posila zpravu do stromu
 void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg);
  // pripojuje zakladni funkce brany, jako je instalace listu a jejich deinstalace
@@ -140,7 +140,6 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg);
 void do_events();
 void escape();
 
-//#include "windows/fcs_tasker.h"
 /*
 void *task_sleep(void *param);
 //#pragma aux task_sleep parm [eax] value [eax]

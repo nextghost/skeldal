@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <string.h>
+#include <cstring>
 
 struct czxlat
   {

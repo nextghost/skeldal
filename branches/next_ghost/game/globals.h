@@ -24,8 +24,9 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
-#include <stdarg.h>
-#include <stdio.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <inttypes.h>
 #include "libs/gui.h"
 #include "game/engine1.h"
@@ -151,6 +152,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define TEMP_FILE "~SKELDAL.TMP"
 #define PICTURES "..\\OBRAZKY\\"
 #define PIC_FADE_PAL_SIZE (10*256*sizeof(uint16_t)+6)
+typedef uint16_t pal_t[256];
 
 #define E_REFRESH  256 //udalost refresh scene
 #define E_KOUZLO_KOLO 257 //funkce kouzel kazde jedno kolo
@@ -294,7 +296,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define MAX_HLAD(x) (((x)->vlastnosti[VLS_MAXHIT]/2+2*24)*HODINA)
 #define MAX_ZIZEN(x) (((x)->vlastnosti[VLS_MAXHIT]/3+24)*HODINA)
 #define concat(c,s1,s2) \
-        c=alloca(strlen(s1)+strlen(s2)+1);\
+        c=(char*)alloca(strlen(s1)+strlen(s2)+1);\
         strcpy(c,s1);\
         strcat(c,s2)
 
@@ -631,7 +633,7 @@ extern int dlives;
 extern int dmzhit;
 extern int dsee;
 extern char show_debug;
-extern char *debug_text;
+extern const char *debug_text;
 extern char map_with_password;
 extern int debug_enabled;
 extern char marker; //tato promenna je 0, jen v pripade ze je 1 probehne assert
@@ -651,7 +653,7 @@ void *game_keyboard(EVENT_MSG *msg,void **usr);
 void calc_animations(void);
 int load_map(char *filename);
 void other_draw();
-void refresh_scene();
+void refresh_scene(the_timer *arg);
 void pcx_fade_decomp(void **p,long *s);
 void pcx_15bit_decomp(void **p,long *s);
 void pcx_15bit_autofade(void **p,long *s);
@@ -666,19 +668,18 @@ void ukaz_kompas(unsigned char mode);
 void *timming(EVENT_MSG *msg,void **data);
 void do_timer();
 void hold_timer(int id,char hld);
-THE_TIMER *add_to_timer(int id,int delay,int maxcall,void *proc);
+THE_TIMER *add_to_timer(int id,int delay,int maxcall,void (*proc)(the_timer*));
 void delete_from_timer(int id);
 THE_TIMER *find_timer(int id);
-void objekty_mimo();
+void objekty_mimo(the_timer*);
 void mouse_set_cursor(int cursor);
 void set_font(int font,int c1,...);
 void bott_draw(char);
-void bott_draw_proc();
-THE_TIMER *add_to_timer(int id,int delay,int maxcall,void *proc);
+void bott_draw_proc(void**, long*);
 void mouse_set_default(int cursor);
 void create_frame(int x,int y,int xs,int ys,char clear);
 void save_dump();
-void bott_disp_text(char *);
+void bott_disp_text(const char *);
 void bott_text_forever();
 char chod_s_postavama(char sekupit);
 void hide_ms_at(int line); //schova mysku ktera je nad line
@@ -755,7 +756,7 @@ void a_touch(int sector,int dir);
 int do_action(int action_numb,int sector,int direct,int flags,int nosend);
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay);
 long load_section(FILE *f,void **section, int *sct_type,long *sect_size);
-void prepare_graphics(int *ofs,char *names,long size,void *decomp,int class);
+void prepare_graphics(int *ofs,char *names,long size,void (*decomp)(void**, long*),int cls);
 void show_automap(char full);
 void draw_medium_map();
 void anim_sipky(int h,int mode);
@@ -971,7 +972,7 @@ typedef struct thuman
   HUM_ACTION *zvolene_akce;     //ukazatel na tabulku zvolenych akci
   HUM_ACTION *provadena_akce;   //ukazatel na aktualni akci
   int8_t programovano;            //pocet programovanych akci
-  int8_t jmeno[15];               //jmeno
+  char jmeno[15];               //jmeno
   int16_t zasah;                   //posledni zasah postavy ???
   int16_t dostal;                  //cislo ktere se ukazuje na obrazku s postavou jako zasah
   int16_t bonus;                  //bonus pro rozdeleni vlastnosti
@@ -999,12 +1000,12 @@ int count_items_inside(short *place);
 int count_items_total(short *place);
 char put_item_to_inv(THUMAN *p,short *picked_items); //funkce vklada predmet(y) do batohu postavy
 void pick_set_cursor();         //nastavuje kurzor podle vlozeneho predmetu;
-void calc_fly();
+void calc_fly(the_timer *);
 void zmen_skupinu(THUMAN *p);
 void add_to_group(int num);
 void group_all(void);
 void build_items_called(void **p,long *s);
-void real_regeneration(); //regenerace postav behem hry v realu (pouze kondice a mana)
+void real_regeneration(the_timer *); //regenerace postav behem hry v realu (pouze kondice a mana)
 char sleep_regenerace(THUMAN *p);  //regenerace postav behem spani
 char check_jidlo_voda(THUMAN *p);
 void prepocitat_postavu(THUMAN *human_selected);
@@ -1397,7 +1398,7 @@ int save_map_state(); //uklada stav mapy pro savegame (neuklada aktualni pozici)
 int load_map_state(); //obnovuje stav mapy; nutno volat po zavolani load_map;
 void restore_current_map(); //pouze obnovuje ulozeny stav aktualni mapy
 int load_game(int slotnum);
-int save_game(int slotnum,char *gamename);
+int save_game(int slotnum, const char *gamename);
 void wire_save_load(char save);
 #define autosave() if (autosave_enabled) save_game(9,"AUTOSAVE");
 extern char autosave_enabled;
@@ -1432,7 +1433,7 @@ char test_playing(int track);
 void stop_track_free(int track);
 void mute_all_tracks(char all);
 void kill_all_sounds();
-void create_sound_table(char *template,long size);
+void create_sound_table(char *templ,long size);
 void create_sound_table_old();
 void start_play_flute(char note);
 void stop_play_flute();
@@ -1492,7 +1493,7 @@ typedef struct tmob
   uint16_t bonus;              //bonus za zabiti
   int8_t flee_num;             //pravdepodobnost uteku
   int8_t anim_counts[6];     //pocet animacnich policek pro kazdy pohyb
-  int8_t mobs_name[7];       //zaklad jmena souboru pro moba
+  char mobs_name[7];       //zaklad jmena souboru pro moba
   int32_t experience;          //zkusenost
   int8_t vlajky;             //BIT0 - 1 v boji
   int8_t anim_phase;            //cinnost kterou mob dela
@@ -1536,7 +1537,7 @@ char track_mob(int sect,int dir);//trackuje pritomnost potvory v urcitem smeru
 void stop_all_mobs();
 int utok_na_sektor(THUMAN *p,TMOB *m,int chaos,int bonus);
 int vyber_potvoru(int sect,int dir,int *chaos); //vybere potvoru ze sektoru a smeru. Vraci take pocet potvor v promenne *chaos
-void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize);
+void load_enemies(short *data,int size,int *grptr,TMOB *templ,long tsize);
 char mob_test_na_bitvu(TMOB *p);  //nastavi p->vlajky|MOB_INBATTLE pokud potvora muze vstoupit do bitvy;
 void send_mob_to(int m,uint16_t *path);
 void save_enemy_paths(FILE *f);
@@ -1652,13 +1653,13 @@ typedef struct enc_file
   }ENCFILE;
 
 void add_window(int x,int y,int xs,int ys,int texture,int border,int txtx,int txty);
-int message(int butts,char def,char canc,char *keys,...);
-void type_text(); //event procedura (parms: X,Y,TEXT,MAX_SPACE,MAX_CHARS);
+int message(int butts,char def,char canc,const char *keys,...);
+void type_text(EVENT_MSG *msg, void **data); //event procedura (parms: X,Y,TEXT,MAX_SPACE,MAX_CHARS);
 void type_text_v2(va_list args);//char *text_buffer,int x,int y,int max_size,int max_chars,int font,int color,void (*exit_proc)(char));
-void zalamovani(char *source,char *target,int maxxs,int *xs,int *ys);
+void zalamovani(const char *source,char *target,int maxxs,int *xs,int *ys);
 void col_load(void **data,long *size);
 void open_story_file();
-void write_story_text(char *text);
+void write_story_text(const char *text);
 void close_story_file();
 char labyrinth_find_path(uint16_t start,uint16_t konec,int flag,char (*proc)(uint16_t),uint16_t **cesta);
   //tato procedura je obecne hledani cesty. Start - startovni cislo sektoru
@@ -1672,13 +1673,13 @@ void start_check(); //testuje stav pocitace a rozhodne zda lze program spustit
 void check_number_1phase(char *exename); //check serial number! Task!//
 void animate_checkbox(int first_id,int last_id,int step);
 void fletna_pridej_notu(char note);
-void check_fletna();
+void check_fletna(THE_TIMER *t);
 char fletna_get_buffer_pos();
-void check_global_fletna();
+void check_global_fletna(THE_TIMER *t);
 void fletna_glob_add_note(char note);
 
 
-char *find_map_path(char *filename); //vyhledava jmeno mapy v alternativnich cestach.
+char *find_map_path(const char *filename); //vyhledava jmeno mapy v alternativnich cestach.
 				//Vysledny retezec je nutne uvolnit (free) !
 FILE *enc_open(char *filename,ENCFILE *fil); //dekoduje a otevira TXT soubor (ENC)
 void enc_close(ENCFILE *fil); //uzavira dekodovany soubor.
@@ -1689,7 +1690,7 @@ int smlouvat_prodej(int cena,int ponuka,int posledni,int puvod,int pocet);
 int smlouvat(int cena,int puvod,int pocet,int money,char mode);
 
 void disable_intro();
-void show_jrc_logo(char *filename);
+void show_jrc_logo(const char *filename);
 
 
 //dialogy
@@ -1713,7 +1714,7 @@ void write_book(int page);
 int count_pages();
 void save_book();
 void load_book();
-void prekodovat(unsigned char *c);
+void prekodovat(char *c);
 
 
 //menu

@@ -9,7 +9,7 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_CC
+AC_LANG(C++)
 
 # Checks for libraries.
 AC_CHECK_LIB([SDL], [SDL_Init], [], AC_MSG_ERROR([libSDL library not found]))
@@ -17,7 +17,7 @@ AC_CHECK_LIB([SDL_mixer], [Mix_OpenAudio], [], AC_MSG_ERROR([SDL_mixer library n
 AC_CHECK_LIB([m], [sqrt])
 
 # Checks for header files.
-AC_CHECK_HEADERS([fcntl.h limits.h malloc.h stddef.h stdlib.h string.h unistd.h], [], AC_MSG_ERROR(Standard headers not found))
+AC_CHECK_HEADERS([fcntl.h climits cstddef cstdlib cstring unistd.h], [], AC_MSG_ERROR(Standard headers not found))
 AC_CHECK_HEADER([SDL/SDL.h], [], AC_MSG_ERROR([libSDL header not found]))
 AC_CHECK_HEADER([SDL/SDL_mixer.h], [], AC_MSG_ERROR([SDL_mixer header not found]))
 

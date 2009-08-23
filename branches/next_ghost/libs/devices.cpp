@@ -20,28 +20,27 @@
  *  
  *  Last commit made by: $Id$
  */
-#ifndef _WAV_H
-#define _WAV_H
+#include <cstdio>
+#include "libs/event.h"
+#include "libs/devices.h"
+#include "libs/system.h"
+#include <ctime>
 
-#include <inttypes.h>
+TMS_BASIC_INFO ms_basic_info={0};
+static char ms_keys;
 
-#pragma pack(1)
+char cz_table_1[]=" 1!3457­908+,-./‚+ˆ¨‡©‘˜ ¡\"–?=:_2ABCDEFGHIJKLMNOPQRSTUVWXYZ£\\)6=;abcdefghijklmnopqrstuvwxyz/|(; ";
+char cz_table_2[]=" !\"#$%&'()*+,-./0123456789:;<=>?@BCDFGH‹JKŠMN•PQ«ST—VWXZ[\\]^_` bcd‚fgh¡jkmn¢pqªst£vwx˜z{|}~ ";
+char cz_table_3[]=" !\"#$%&'()*+,-./0123456789:;<=>?@AB€…‰FGHIJKœM¥§PQ›†¦VWXY’[\\]^_`ab‡ƒˆfghijkŒm¤“pq©¨Ÿ–vwxy‘{|}~ ";
+char *cz_key_tabs[]={cz_table_1,cz_table_2,cz_table_3};
 
-#define WAV_RIFF "RIFF"
-#define WAV_WAVE "WAVE"
-#define WAV_FMT  "fmt "
-#define WAV_DATA "data"
+void keyboard(EVENT_MSG *msg, void *user_data) {
+	if (msg->msg == E_WATCH) {
+		Sys_ProcessEvents();
+	}
+}
 
-typedef struct t_wave
+char ms_get_keycount()
   {
-  uint16_t wav_mode,chans;
-  int32_t freq,bps;
-  }T_WAVE;
-
-const char *find_chunk(const char *wav, const char *name);
-int get_chunk_size(const char *wav);
-int read_chunk(const char *wav,void *mem);
-
-#pragma option align=reset
-
-#endif
+  return ms_keys;
+  }
