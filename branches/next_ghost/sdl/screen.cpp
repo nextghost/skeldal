@@ -66,6 +66,21 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	scancodes[SDLK_RETURN] = 0x1c00;
 	scancodes[SDLK_ESCAPE] = 0x0100;
 	scancodes[SDLK_SPACE] = 0x3900;
+	// english keyboard numrow
+	scancodes[SDLK_1] = 0x0200;
+	scancodes[SDLK_2] = 0x0300;
+	scancodes[SDLK_3] = 0x0400;
+	scancodes[SDLK_4] = 0x0500;
+	scancodes[SDLK_5] = 0x0600;
+	scancodes[SDLK_6] = 0x0700;
+	// czech keyboard numrow
+	scancodes[SDLK_PLUS] = 0x0200;
+	scancodes[SDLK_WORLD_76] = 0x0300;
+	scancodes[SDLK_WORLD_25] = 0x0400;
+	scancodes[SDLK_WORLD_72] = 0x0500;
+	scancodes[SDLK_WORLD_88] = 0x0600;
+	scancodes[SDLK_WORLD_30] = 0x0700;
+
 	scancodes[SDLK_UP] = 0x4800;
 	scancodes[SDLK_DOWN] = 0x5000;
 	scancodes[SDLK_RIGHT] = 0x4d00;
