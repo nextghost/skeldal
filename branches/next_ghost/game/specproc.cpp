@@ -341,18 +341,20 @@ MAP_PROC(map_identify)
   int x,y,yp,xp,ys,yss;
   int i,cnt;char s[100];
   TITEM *it;
-  TSTR_LIST ls;
+  StringList ls;
 
   sector;side;event;value;
   if (picked_item==NULL) return 0;
   it=glob_items+*picked_item-1;
-  ls=create_list(256);
   unwire_proc();
-  sprintf(s,texty[210],it->jmeno);str_add(&ls,s);
-  sprintf(s,texty[211],it->hmotnost*2,it->hmotnost>0 && it->hmotnost<3?texty[236]:texty[237]);str_add(&ls,s);
+  sprintf(s,texty[210],it->jmeno);
+  ls.insert(s);
+  sprintf(s,texty[211],it->hmotnost*2,it->hmotnost>0 && it->hmotnost<3?texty[236]:texty[237]);
+  ls.insert(s);
   if (it->nosnost)
      {
-     sprintf(s,texty[212],it->nosnost);str_add(&ls,s);
+     sprintf(s,texty[212],it->nosnost);
+     ls.insert(s);
      }
   for(i=0;i<21;i++)
      if (it->zmeny[i] && texty[213+i]!=NULL)
@@ -361,15 +363,18 @@ MAP_PROC(map_identify)
            sprintf(s,texty[213+i],it->zmeny[i]>0?texty[234]:texty[235]);
         else
            sprintf(s,texty[213+i],it->zmeny[i],it->zmeny[i+1]);
-        str_add(&ls,s);
+	ls.insert(s);
         }
   if (it->zmeny[VLS_MGSIL_H])
      {
-     sprintf(s,texty[233],texty[22+it->zmeny[VLS_MGZIVEL]]);str_add(&ls,s);
+     sprintf(s,texty[233],texty[22+it->zmeny[VLS_MGZIVEL]]);
+     ls.insert(s);
      }
   for(i=0;i<16;i++)
-     if (it->zmeny[VLS_KOUZLA] & (1<<i) && texty[i+240]!=NULL) str_add(&ls,texty[i+240]);
-  for(i=str_count(ls);i>0;i--) if (ls[i-1]!=NULL) break;
+     if (it->zmeny[VLS_KOUZLA] & (1<<i) && texty[i+240]!=NULL) {
+		ls.insert(texty[i+240]);
+	}
+  for(i = ls.size(); i > 0; i--) if (ls[i-1]!=NULL) break;
   cnt=i;i=0;
   ys=cnt*10+10;
   do

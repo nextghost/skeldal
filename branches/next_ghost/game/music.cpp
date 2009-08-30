@@ -67,8 +67,8 @@ SND_INFO tracks[TRACKS];
 SND_INFO playings[CHANNELS];
 static uint16_t locks[32];
 
-TSTR_LIST cur_playlist=NULL;
-TSTR_LIST sound_table=NULL;
+StringList cur_playlist;
+StringList sound_table;
 int playlist_size;
 int playing_track=0;
 int remain_play=0;
@@ -396,16 +396,14 @@ void recalc_volumes(int sector,int side)
   mute_task=-1;
   }
 
-void create_playlist(char *playlist)
+void create_playlist(const char *playlist)
   {
-  char *c;
+  const char *c;
   char mode[20];
   char shift;
   int i=1,j;
-  if (cur_playlist!=NULL) release_list(cur_playlist);
-  cur_playlist=NULL;
-  if (playlist==NULL) return;
-  if (playlist=="") return;
+  cur_playlist.clear();
+  if (!playlist || !playlist[0]) return;
   c=playlist;
   while (*c && *c==32) c++;
   sscanf(c,"%s",mode);
@@ -421,7 +419,6 @@ void create_playlist(char *playlist)
   if (playlist=="") return;
   for (c=playlist;c!=NULL;c=strchr(c+1,' ')) i++;
   playlist_size=i-1;
-  cur_playlist=create_list(i);
   j=0;
   for (c=playlist;c!=NULL;c=strchr(c+1,' '))
      {
@@ -430,11 +427,15 @@ void create_playlist(char *playlist)
      strncat(d,c+j,PATH_MAX);d[PATH_MAX+1]=0;j=1;
      if ((e=strchr(d,32))!=NULL) *e=0;
      strupr(d);
-     str_add(&cur_playlist,d);
+     cur_playlist.insert(d);
      }
   if (play_list_mode==PL_FIRST)
      {
-     cur_playlist[0][0]=32;
+     char *ptr = new char[strlen(cur_playlist[0]) + 1];
+     strcpy(ptr, cur_playlist[0]);
+     ptr[0] = ' ';
+     cur_playlist.replace(0, ptr);
+     delete[] ptr;
      remain_play=1;
      play_list_mode=PL_RANDOM;
      }
@@ -452,9 +453,15 @@ void play_next_music(char **c)
 	char *tmp;
 
   *c=NULL;
-  if (cur_playlist==NULL) return;
+  if (!cur_playlist.count()) return;
   if (!remain_play)
-     for(i=0;cur_playlist[i]!=NULL;remain_play++,i++) cur_playlist[i][0]=32;
+     for (i = 0; cur_playlist[i] != NULL; remain_play++, i++) {
+		char *tmp = new char[strlen(cur_playlist[i]) + 1];
+		strcpy(tmp, cur_playlist[i]);
+		tmp[0] = ' ';
+		cur_playlist.replace(i, tmp);
+		delete[] tmp;
+	}
   if (play_list_mode==PL_RANDOM)
 	step = rnd(playlist_size) + 1;
   else
@@ -480,15 +487,19 @@ void play_next_music(char **c)
 	}
 	strcpy(d, tmp);
 
-  cur_playlist[i][0]=33;
+	tmp = new char[strlen(cur_playlist[i]) + 1];
+	strcpy(tmp, cur_playlist[i]);
+	tmp[0] = 33;
+	cur_playlist.replace(i, tmp);
+	delete[] tmp;
+
   remain_play--;
   *c=d;
   }
 
 void purge_playlist()
   {
-  if (cur_playlist!=NULL)release_list(cur_playlist);
-  cur_playlist=NULL;
+	cur_playlist.clear();
   }
 
 void play_sample_at_sector(int sample,int sector1,int sector2,int track, char loop)
@@ -554,11 +565,10 @@ void create_sound_table(char *templ,long size)
   char *c,*s;
   int i=0;
 
-  if (sound_table==NULL) sound_table=create_list(2);
   s=c=templ;
   while (c-s<size)
      {
-     if (c[0]!=0) str_replace(&sound_table,i,c);
+     if (c[0]!=0) sound_table.replace(i, c);
      c=strchr(c,0)+1;
      i++;
      }
@@ -570,12 +580,11 @@ void create_sound_table_old()
   long pocet;
   int i=0;
 
-  if (sound_table==NULL) sound_table=create_list(2);
   s = c = (char*)ablock(H_SOUND_DAT);
   memcpy(&pocet,s,sizeof(long));c+=4;
   while (pocet--)
      {
-     if (c[0]!=0) str_replace(&sound_table,i,c);
+     if (c[0]!=0) sound_table.replace(i, c);
      c=strchr(c,0)+1;
      i++;
      }

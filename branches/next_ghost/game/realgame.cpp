@@ -62,9 +62,9 @@
 #define DIS (char *)0x1
 #define START_HANDLE hl_ptr
 
-extern TSTR_LIST texty_v_mape;
+extern StringList texty_v_mape;
 
-static TSTR_LIST leaving_places=NULL;
+static StringList leaving_places;
 
 char pass_zavora=0;
 
@@ -80,7 +80,7 @@ uint16_t vyk_max;               //pocet vyklenku v mape
 short **map_items;
 uint8_t *flag_map;
 TMAP_EDIT_INFO *map_coord;
-TSTR_LIST level_texts;
+StringList level_texts;
 int mapsize;
 int num_ofsets[10]; //tabulka ofsetu pro cisla sten k levelu
 char sekceid[]="<BLOCK>";
@@ -189,8 +189,7 @@ int load_level_texts(char *filename)
   {
   int err;
 
-  level_texts=create_list(10);
-  err=load_string_list_ex(&level_texts,filename);
+  err=load_string_list_ex(level_texts,filename);
   return err;
   }
 
@@ -393,7 +392,7 @@ int load_map(char *filename)
   d=pripona(c,".TXT");
 	free(c);
   suc=load_level_texts(d);free(d);
-  if (!suc && level_texts!=NULL) create_playlist(level_texts[0]);
+  if (!suc) create_playlist(level_texts[0]);
   init_tracks();
   play_next_music(&d);
   Sound_ChangeMusic(d);
@@ -413,15 +412,14 @@ int load_map(char *filename)
 
 void add_leaving_place(int sector)
   {
-  if (leaving_places==NULL) leaving_places=create_list(16);
-  add_field_num(&leaving_places,level_fname,sector);
+  add_field_num(leaving_places, level_fname, sector);
   }
 
 void save_leaving_places(void)
   {
   char *s;
 
-  if (leaving_places==NULL) return;
+  if (!leaving_places.count()) return;
 //  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
 //  save_config(leaving_places,s);
 	save_config(leaving_places, Sys_FullPath(SR_TEMP, "_LPLACES.TMP"));
@@ -431,10 +429,10 @@ void load_leaving_places(void)
   {
   char *s;
 
-  if (leaving_places!=NULL) release_list(leaving_places);
+  leaving_places.clear();
 //  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
 //  leaving_places=read_config(s);
-	leaving_places = read_config(Sys_FullPath(SR_TEMP, "_LPLACES.TMP"));
+	read_config(leaving_places, Sys_FullPath(SR_TEMP, "_LPLACES.TMP"));
   }
 
 int set_leaving_place(void)
@@ -445,7 +443,7 @@ int set_leaving_place(void)
 int get_leaving_place(char *level_name)
   {
   int s=0,i;
-  if (leaving_places==NULL) return 0;
+  if (!leaving_places.count()) return 0;
   if (get_num_field(leaving_places,level_name,&s) ||
     ~map_coord[s].flags & 1 || map_sectors[s].sector_type!=S_LEAVE || s==0)
       {
@@ -476,15 +474,14 @@ void leave_current_map()
   free(flag_map);
   free(map_coord);
   free(map_vyk);map_vyk=NULL;vyk_max=0;
-  if (texty_v_mape!=NULL)release_list(texty_v_mape);
+  texty_v_mape.clear();
   while (d_action!=NULL)
     {
     void *p=d_action;
     d_action=d_action->next;
     free(p);
     }
-  texty_v_mape=NULL;
-  release_list(level_texts);
+  level_texts.clear();
   if (mob_map!=NULL) free(mob_map);
   if (macro_block!=NULL)
      {

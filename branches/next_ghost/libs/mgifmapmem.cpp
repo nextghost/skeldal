@@ -29,6 +29,7 @@
 #include "libs/mgifmem.h"
 #include "libs/sound.h"
 #include "libs/system.h"
+#include "libs/strlite.h"
 
 //static HANDLE mapped_mgif;
 //static HANDLE mgif_file;
@@ -174,7 +175,7 @@ void play_animation(char *filename, char mode, int posy, char sound) {
 	CloseMGFFile(mgf);
 }
 
-void set_title_list(char **titles)
+void set_title_list(const StringList *titles)
   {
 
   }

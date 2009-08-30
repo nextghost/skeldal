@@ -78,7 +78,7 @@ char enable_glmap=0;
 
 static int map_xr,map_yr;
 static int cur_depth;
-TSTR_LIST texty_v_mape=NULL;
+StringList texty_v_mape;
 
 #define BOTT 378
 #define LEFT 520
@@ -172,19 +172,22 @@ void save_text_to_map(int32_t x, int32_t y, int32_t depth, char *text) {
 		return;
 	}
 
-	memset(c, 1, sizeof(c));
+//	memset(c, 1, sizeof(c));
 	strcpy(c + 3 * sizeof(int32_t), text);
 
+/*
 	if (!texty_v_mape) {
 		texty_v_mape = create_list(8);
 	}
+*/
 
-	d = texty_v_mape[str_add(&texty_v_mape, c)];
+//	d = texty_v_mape[str_add(&texty_v_mape, c)];
 	x = (x - 320) + map_xr;
 	y = (y - 197) + map_yr;
-	memcpy(d, &x, sizeof(int32_t));
-	memcpy(d + sizeof(int32_t), &y, sizeof(int32_t));
-	memcpy(d + 2*sizeof(int32_t), &depth, sizeof(int32_t));
+	memcpy(c, &x, sizeof(int32_t));
+	memcpy(c + sizeof(int32_t), &y, sizeof(int32_t));
+	memcpy(c + 2 * sizeof(int32_t), &depth, sizeof(int32_t));
+	texty_v_mape.insert(c, strlen(text) + 3 * sizeof(int32_t) + 1);
 }
 
 static char check_for_layer(int layer)
@@ -199,14 +202,14 @@ static char check_for_layer(int layer)
 void ukaz_vsechny_texty_v_mape() {
 	int32_t x, y, d;
 	int i, cn;
-	char *c;
+	const char *c;
 
-	if (!texty_v_mape) {
+	if (!texty_v_mape.count()) {
 		return;
 	}
 
 	set_font(H_FLITT5, NOSHADOW(0));
-	cn = str_count(texty_v_mape);
+	cn = texty_v_mape.size();
 
 	for(i = 0; i < cn; i++) {
 		c = texty_v_mape[i];
@@ -368,8 +371,8 @@ int hledej_poznamku(int x,int y,int depth)
 
   x=(x-320)+map_xr;
   y=(y-197)+map_yr;
-  if (texty_v_mape==NULL) return -1;
-  count=str_count(texty_v_mape);
+  if (!texty_v_mape.count()) return -1;
+  count = texty_v_mape.size();
   set_font(H_FLITT5,NOSHADOW(0));
   for(i=0;i<count;i++)
      if (texty_v_mape[i]!=NULL)
@@ -419,8 +422,10 @@ char psani_poznamek(int id,int xa,int ya,int xr,int yr)
      ya=(ya+197)-map_yr;
      s=(char *)getmem(strlen(texty_v_mape[id]+12)+1);
      strcpy(s,texty_v_mape[id]+12);
-     str_remove(&texty_v_mape,id);
-     str_delfreelines(&texty_v_mape);
+//     str_remove(&texty_v_mape,id);
+//     str_delfreelines(&texty_v_mape);
+     texty_v_mape.remove(id);
+     texty_v_mape.pack();
      send_message(E_AUTOMAP_REDRAW);
      for(xr=0;xr<10;xr++) do_events();
      send_message(E_ADD,E_KEYBOARD,psani_poznamek_event,xa,ya,s);
@@ -563,7 +568,7 @@ static void zobraz_herni_cas(void)
 extern uint16_t color_butt_on[];
 extern uint16_t color_butt_off[];
 
-static void displ_button(char disable,char **text)
+static void displ_button(char disable, const char **text)
   {
   int posy[]={0,18,37,55};
   int sizy[]={18,20,20,21};
@@ -769,26 +774,41 @@ void *map_keyboard(EVENT_MSG *msg, void **usr) {
 	return (void*)&map_keyboard;
 }
 
-void show_automap(char full)
-  {
-  mute_all_tracks(0);
-  unwire_proc();
-  if (full) enable_all_map();
-  hold_timer(TM_FAST_TIMER,1);
-  unwire_proc=unwire_automap;
-  schovej_mysku();
-  if (cur_mode!=MD_ANOTHER_MAP) bott_draw(1),cur_mode=MD_MAP;
-  other_draw();
-  if (!battle && full && enable_glmap) displ_button(cur_mode==MD_ANOTHER_MAP?4:6,texty+210);
-  else displ_button(7,texty+210);
-  ukaz_mysku();
-  showview(0,376,640,480);
-  cur_depth=map_coord[viewsector].layer;
-  draw_automap(0,0);
-  send_message(E_ADD,E_KEYBOARD,map_keyboard);
-  send_message(E_ADD,E_AUTOMAP_REDRAW,map_keyboard);
-  send_message(E_ADD,E_IDLE,map_keyboard);
-  change_click_map(clk_map_view,CLK_MAP_VIEW);
+void show_automap(char full) {
+	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
+
+	mute_all_tracks(0);
+	unwire_proc();
+
+	if (full) {
+		enable_all_map();
+	}
+
+	hold_timer(TM_FAST_TIMER, 1);
+	unwire_proc = unwire_automap;
+	schovej_mysku();
+
+	if (cur_mode != MD_ANOTHER_MAP) {
+		bott_draw(1);
+		cur_mode=MD_MAP;
+	}
+
+	other_draw();
+
+	if (!battle && full && enable_glmap) {
+		displ_button(cur_mode == MD_ANOTHER_MAP ? 4 : 6, btexts);
+	} else {
+		displ_button(7, btexts);
+	}
+
+	ukaz_mysku();
+	showview(0, 376, 640, 480);
+	cur_depth = map_coord[viewsector].layer;
+	draw_automap(0, 0);
+	send_message(E_ADD, E_KEYBOARD, map_keyboard);
+	send_message(E_ADD, E_AUTOMAP_REDRAW, map_keyboard);
+	send_message(E_ADD, E_IDLE, map_keyboard);
+	change_click_map(clk_map_view, CLK_MAP_VIEW);
 }
 
 static char mob_not_invis(int sector)
@@ -856,72 +876,99 @@ void draw_medium_map()
            }
   }
 
-static char map_menu_glob_map(int id,int xa,int ya,int xr,int yr)
-  {
-  id,xa,ya,xr,yr;
-  id=set_select_mode(0);
-  if (id)
-     {
-     schovej_mysku();
-     pick_set_cursor();
-     displ_button(1,texty+210);
-     ukaz_mysku();
-     showview(520,378,120,120);
-     return 1;
-     }
-  return 0;
-  }
+static char map_menu_glob_map(int id,int xa,int ya,int xr,int yr) {
+	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
+
+	id = set_select_mode(0);
+
+	if (id) {
+		schovej_mysku();
+		pick_set_cursor();
+		displ_button(1, btexts);
+		ukaz_mysku();
+		showview(520, 378, 120, 120);
+		return 1;
+	}
+
+	return 0;
+}
 
 
-static void wire_glob_map_control()
-  {
-  set_select_mode(0);
-  schovej_mysku();
-  other_draw();
-  displ_button(1,texty+210);
-  wire_global_map();
-  ukaz_mysku();
-  update_mysky();
-  change_click_map(clk_glob_map,CLK_GLOB_MAP);
-  }
+static void wire_glob_map_control() {
+	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
+
+	set_select_mode(0);
+	schovej_mysku();
+	other_draw();
+	displ_button(1, btexts);
+	wire_global_map();
+	ukaz_mysku();
+	update_mysky();
+	change_click_map(clk_glob_map, CLK_GLOB_MAP);
+}
 
 
-char map_menu(int id,int xa,int ya,int xr,int yr)
-  {
-  char *s;
-  uint16_t *c;
+char map_menu(int id,int xa,int ya,int xr,int yr) {
+	char *s;
+	uint16_t *c;
+	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
 
-  ya;xa;id;
-  id=set_select_mode(0);
-  s = (char*)ablock(H_CHARGENM);
-  c = (uint16_t*)ablock(H_CHARGENM);
-  s+=*c*yr+xr+6;
-  id=*s;
-  if (!id) return 1;
-  if (id>4) return 1;
-  id--;
-  if (cur_disables & (1<<id)) return 1;
-  if (id)
-     {
-     pick_set_cursor();
-     displ_button(1,texty+210);
-     }
-  if (cur_mode==MD_ANOTHER_MAP) {unwire_proc();wire_proc();}
-  switch (id)
-     {
-     case 0:wire_glob_map_control();break;
-     case 1:unwire_proc();show_automap(1);break;
-     case 2:set_select_mode(1);
-            schovej_mysku();
-            displ_button(5,texty+210);
-            mouse_set_default(H_MS_WHO);
-            ukaz_mysku();
-            showview(0,0,0,0);break;
-     case 3:	   
-	   unwire_proc();wire_proc();break;
-     }
-  return 1;
-  }
+	id = set_select_mode(0);
+	s = (char*)ablock(H_CHARGENM);
+	c = (uint16_t*)ablock(H_CHARGENM);
+	s += *c * yr + xr + 6;
+	id = *s;
+
+	if (!id) {
+		return 1;
+	}
+
+	if (id>4) {
+		return 1;
+	}
+
+	id--;
+
+	if (cur_disables & (1 << id)) {
+		return 1;
+	}
+
+	if (id) {
+		pick_set_cursor();
+		displ_button(1, btexts);
+	}
+
+	if (cur_mode == MD_ANOTHER_MAP) {
+		unwire_proc();
+		wire_proc();
+	}
+
+	switch (id) {
+	case 0:
+		wire_glob_map_control();
+		break;
+
+	case 1:
+		unwire_proc();
+		show_automap(1);
+		break;
+
+	case 2:
+		set_select_mode(1);
+		schovej_mysku();
+		displ_button(5, btexts);
+		mouse_set_default(H_MS_WHO);
+		ukaz_mysku();
+		showview(0, 0, 0, 0);break;
+
+	case 3:
+		unwire_proc();
+		wire_proc();
+		break;
+	}
+
+	return 1;
+}
 
 
 char exit_kniha(int id,int xa,int ya, int xr, int yr)

@@ -23,40 +23,46 @@
 #ifndef _STRLITE_H_
 #define _STRLITE_H_
 
-#pragma pack(1)
+#include <cstdlib>
 
-typedef char **TSTR_LIST;
+class StringList {
+private:
+	char **_data;
+	unsigned _size, _count;
 
-typedef struct ptrmap
-  {
-  struct ptrmap *next;
-  void *data;
-  }PTRMAP;
+	// Do not implement
+	StringList(const StringList &src);
+	const StringList &operator=(const StringList &src);
+public:
+	explicit StringList(unsigned prealloc = 8);
+	~StringList(void);
 
-#define STR_REALLOC_STEP 256
+	/// Insert string into first empty space
+	unsigned insert(const char *str, unsigned len = 0);
+	/// Replace string on position idx
+	void replace(unsigned idx, const char *str, unsigned len = 0);
+	/// Delete selected string
+	void remove(unsigned idx);
+	/// Remove all NULL pointers
+	void pack(void);
+	/// Replace all strings with NULL pointers
+	void clear(void);
 
+	/// Get string
+	inline const char *operator[](unsigned idx) const {
+		return idx < _size ? _data[idx] : NULL;
+	}
 
-TSTR_LIST create_list(int count);
-int str_add(TSTR_LIST *list,const char *text);
-const char *str_insline(TSTR_LIST *list,int before,const char *text);
-const char *str_replace(TSTR_LIST *list,int line,const char *text);
-void str_remove(TSTR_LIST *list,int line);
-void str_delfreelines(TSTR_LIST *list);
-int str_count(TSTR_LIST p);
-void release_list(TSTR_LIST list);
-TSTR_LIST sort_list(TSTR_LIST list,int direction);
-TSTR_LIST read_directory(const char *mask,int view_type,int attrs);
-void name_conv(const char *c);
-void strlist_cat(TSTR_LIST *org, TSTR_LIST add);
+	/// Total count of non-NULL strings, if you want to pass through
+	/// the entire list, use size() instead
+	inline unsigned count(void) const {
+		return _count;
+	}
 
-void pl_add_data(PTRMAP **p,void *data,int datasize);
-void *pl_get_data(PTRMAP **p,void *key,int keysize);
-PTRMAP *pl_find_item(PTRMAP **p,void *key,int keysize);
-void pl_delete_item(PTRMAP **p,void *key,int keysize);
-void pl_delete_all(PTRMAP **p);
-
-int load_string_list(TSTR_LIST *list,const char *filename);
-
-#pragma option align=reset
+	/// Allocated size of string table, including empty space
+	inline unsigned size(void) const {
+		return _size;
+	}
+};
 
 #endif 

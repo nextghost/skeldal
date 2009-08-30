@@ -1288,7 +1288,7 @@ void write_human_big_name(char *c)
 
 #define pvls(x) (offsetof(struct thuman,vlastnosti[x]))
 #define ptpw(x) (offsetof(struct thuman,bonus_zbrani[x]))
-static void percent_bar(int x,int y,int xs,int ys,int val,int max,char *popis)
+static void percent_bar(int x, int y, int xs, int ys, int val, int max, const char *popis)
   {
   CTL3D clt;
   char s[25];

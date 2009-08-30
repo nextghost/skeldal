@@ -30,6 +30,7 @@
 #include <inttypes.h>
 #include "libs/gui.h"
 #include "game/engine1.h"
+#include "libs/strlite.h"
 
 #define POCET_POSTAV 6
 #define HODINA 360
@@ -563,8 +564,8 @@ extern THE_TIMER timer_tree;       //strom casovych udalosti
 extern D_ACTION *d_action;         //spojovy seznam zpozdenych akci
 //extern char *pathtable[];          //tabulka adresaru
 extern char level_preload;         //informace o preloadingu
-extern char **texty;               //globalni tabulka textu
-extern char **level_texts;         //lokalni tabulka textu
+extern StringList texty;               //globalni tabulka textu
+extern StringList level_texts;         //lokalni tabulka textu
 extern char *level_fname;          //jmeno levelu
 extern int mapsize;                //pocet sektoru v mape
 extern int hl_ptr;                 //ukazatel na konec staticke tabulky registraci
@@ -1417,12 +1418,12 @@ void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
 
 //sounder & music
 
-extern char **sound_table;
+extern StringList sound_table;
 
 void init_tracks();
 void recalc_volumes(int sector,int side);
 void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p);
-void create_playlist(char *playlist);
+void create_playlist(const char *playlist);
 void play_next_music(char **c);
 void purge_playlist();
 void restore_sound_names();
@@ -1681,9 +1682,9 @@ void fletna_glob_add_note(char note);
 
 char *find_map_path(const char *filename); //vyhledava jmeno mapy v alternativnich cestach.
 				//Vysledny retezec je nutne uvolnit (free) !
-FILE *enc_open(char *filename,ENCFILE *fil); //dekoduje a otevira TXT soubor (ENC)
+FILE *enc_open(const char *filename, ENCFILE *fil); //dekoduje a otevira TXT soubor (ENC)
 void enc_close(ENCFILE *fil); //uzavira dekodovany soubor.
-int load_string_list_ex(char ***list,char *filename);
+int load_string_list_ex(StringList &list, const char *filename);
 
 int smlouvat_nakup(int cena,int ponuka,int posledni,int puvod,int pocet);
 int smlouvat_prodej(int cena,int ponuka,int posledni,int puvod,int pocet);

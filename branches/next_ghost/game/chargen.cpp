@@ -142,7 +142,7 @@ static int close_ret = 0;
 uint16_t *pod_perlou=NULL;
 short pod_perlou_x=0;
 short pod_perlou_y=0;
-char *error_text=NULL;
+const char *error_text = NULL;
 
 
 
@@ -215,7 +215,7 @@ TDREGISTERS char_gen_reg[]=
 #define BOTT 378
 #define LEFT 520
 
-char *b_texty[4];
+const char *b_texty[4];
 char b_disables;
 
 void Chargen_Init(void) {
@@ -230,7 +230,7 @@ void Chargen_Init(void) {
 	color_butt_off[3] = RGB555(10,10,10);
 }
 
-void displ_button(char disable,char **text)
+void displ_button(char disable,const char **text)
   {
   int posy[]={0,18,37,55};
   int sizy[]={18,20,20,21};
@@ -736,7 +736,7 @@ static void empty_proc()
   {
   }
 
-char potvrzeno(char *text,void (*redraw)())
+char potvrzeno(const char *text,void (*redraw)())
   {
   int i;
   unwire_proc=empty_proc;

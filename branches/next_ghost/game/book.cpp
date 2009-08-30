@@ -108,7 +108,7 @@
 
 static int center=0;
 static int distend=0;
-static TSTR_LIST all_text=NULL;
+static StringList all_text;
 static char read_buff[256];
 static char write_buff[256];
 static int buff_pos=0;
@@ -137,7 +137,7 @@ static int insert_num(char *text,int pos,int num)
   }
 
 
-static int read_num(char *text,int *pos)
+static int read_num(const char *text,int *pos)
   {
   int num=0,shift=0;
   char c;
@@ -161,7 +161,7 @@ static void next_line(int step)
      s[0]=27;
      s[1]=END_PAGE;
      s[2]=0;
-     str_add(&all_text,s);
+     all_text.insert(s);
      linepos=0;
      picture_len=-1;
      }
@@ -179,7 +179,7 @@ static int insert_end_line_and_save(int p,int ys)
   write_buff[p++]=END_LINE;
   p=insert_num(write_buff,p,ys);
   write_buff[p++]=0;
-  str_add(&all_text,write_buff);
+  all_text.insert(write_buff);
   buff_pos=size;
   buff_end=buff_pos;
   if (picture_len>0) picture_len-=ys;
@@ -382,7 +382,7 @@ static void insert_picture(const char *filename,int align,int line,int lsize)
   c+=insert_num(c,0,line);
   c+=insert_num(c,0,lsize);
   *c++=0;
-  str_add(&all_text,write_buff);
+  all_text.insert(write_buff);
   }
 
 static char read_tag(FILE *txt)
@@ -562,7 +562,6 @@ void add_text_to_book(char *filename,int odst)
   ENCFILE fl;
 
   set_font(H_FKNIHA,NOSHADOW(0));
-  if (all_text==NULL) all_text=create_list(256);
   txt=enc_open(filename,&fl);
   if (txt==NULL) return;
   seek_section(txt,odst);
@@ -571,7 +570,7 @@ void add_text_to_book(char *filename,int odst)
   enc_close(&fl);
   }
 
-static char *displ_picture(char *c)
+static const char *displ_picture(const char *c)
   {
   char *d;
   int x,y,hn,z,ln,sl;
@@ -596,14 +595,13 @@ static char *displ_picture(char *c)
 void write_book(int page)
   {
   int i=0,y=0,z,zz,ps,pg;
-  char *c;
+  const char *c;
   char space[]=" ";
 
   pg=page;
-  if (all_text==NULL) return;
   set_font(H_FKNIHA,NOSHADOW(0));
   relpos=XLEFT;
-  zz=str_count(all_text);
+  zz = all_text.size();
   if (--page)
   for(i=0;i<zz && page;i++)
      {
@@ -673,10 +671,9 @@ void write_book(int page)
 int count_pages()
   {
   int i,cn,z;
-  char *c;
+  const char *c;
 
-  if (all_text==NULL) return 0;
-  z=str_count(all_text);
+  z = all_text.size();
   for(i=0,cn=0;i<z;i++)
      {
      c=all_text[i];
@@ -690,9 +687,9 @@ void save_book()
   char *c;
   FILE *f;
   int i,ss;
-  char *tx;
+  const char *tx;
 
-  if (all_text==NULL) return;
+  if (!all_text.count()) return;
 /*
   concat(c,pathtable[SR_TEMP],BOOK_FILE);
   f=fopen(c,"w");if (f==NULL) return;
@@ -705,7 +702,7 @@ void save_book()
 	}
 
   i=0;
-  ss=str_count(all_text);
+  ss = all_text.size();
   while (i<ss && (tx=all_text[i++])!=NULL)
      {
      fputs(tx,f);
@@ -720,8 +717,7 @@ void load_book()
   FILE *f;
   char tx[512];
 
-  if (all_text!=NULL) release_list(all_text);
-  all_text=NULL;
+  all_text.clear();
 /*
   concat(c,pathtable[SR_TEMP],BOOK_FILE);
   f=fopen(c,"r");if (f==NULL) return;
@@ -733,12 +729,11 @@ void load_book()
 		return;
 	}
 
-  all_text=create_list(256);
   while (fgets(tx,510,f)!=NULL)
      {
      char *c;
      c=strchr(tx,0);c--;*c=0;
-     str_add(&all_text,tx);
+     all_text.insert(tx);
      }
   fclose(f);
   }

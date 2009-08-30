@@ -1663,7 +1663,7 @@ void program_draw()
      }
  if(pgm_help || rune_name!=NULL)
      {
-     char *c;
+     const char *c;
 
      if (rune_name!=NULL) c=rune_name;else c=texty[40+pgm_help];
      set_font(H_FLITT5,PRG_HELP_COLOR);

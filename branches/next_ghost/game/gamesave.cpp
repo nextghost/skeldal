@@ -258,14 +258,14 @@ void restore_items(FILE *f)
      }
   }
 
-extern TSTR_LIST texty_v_mape;
+extern StringList texty_v_mape;
 
 void save_map_description(FILE *f)
   {
   int count,max;
   int i;
 
-  if (texty_v_mape==NULL) max=0;else max=str_count(texty_v_mape);
+  max = texty_v_mape.size();
   for(i=0,count=0;i<max;i++) if (texty_v_mape[i]!=NULL) count++;
   fwrite(&count,1,sizeof(count),f);
   for(i=0;i<max;i++) if (texty_v_mape[i]!=NULL)
@@ -279,29 +279,25 @@ void save_map_description(FILE *f)
 
 void load_map_description(FILE *f)
   {
-  int count;
+  int32_t count;
   int i;
   uint16_t len;
 
-  if (texty_v_mape!=NULL)release_list(texty_v_mape);
+  texty_v_mape.clear();
   fread(&count,1,sizeof(count),f);
   if (!count)
      {
-     texty_v_mape=NULL;
      return;
      }
-  texty_v_mape=create_list(count);
   for(i=0;i<count;i++)
      {
-     fread(&len,1,2,f);
+     fread(&len,sizeof(uint16_t),1,f);
         {
         char *s;
         s=(char *)alloca(len);
-        memset(s,1,len-1);
-        s[len-1]=0;
-        str_replace(&texty_v_mape,i,s);
+        fread(s,1,len,f);
+	texty_v_mape.replace(i, s, len-1);
         }
-     fread(texty_v_mape[i],1,len,f);
      }
   }
 
@@ -992,10 +988,10 @@ static void load_specific_file(int slot_num,const char *filename,void **out,long
 
 //------------------------ SAVE LOAD DIALOG ----------------------------
 static char force_save;
-static TSTR_LIST slot_list=NULL;
+static StringList slot_list;
 static int last_select=-1;
 static char used_pos[SLOTS_MAX];
-static TSTR_LIST story_text=NULL;
+static StringList story_text;
 static void *back_texture=NULL;
 static int cur_story_pos=0;
 static char load_mode;
@@ -1013,8 +1009,6 @@ void read_slot_list()
   int i;
   char *mask,*name;
   char slotname[SAVE_NAME_SIZE];
-  if (slot_list==NULL) slot_list=create_list(SLOTS_MAX);
-//  concat(mask,pathtable[SR_SAVES],_SLOT_SAV);
 	mask = Sys_FullPath(SR_SAVES, _SLOT_SAV);
   name = (char*)alloca(strlen(mask)+1);
   for(i=0;i<SLOTS_MAX;i++)
@@ -1033,7 +1027,7 @@ void read_slot_list()
         strcpy(slotname,texty[75]);
         used_pos[i]=0;
         }
-     str_replace(&slot_list,i,slotname);
+     slot_list.replace(i, slotname);
      }
   }
 
@@ -1084,23 +1078,21 @@ static void redraw_story_bar(int pos)
      }
   else
      put_picture(x, STORY_Y+SCREEN_OFFLINE, (uint16_t*)back_texture);
-  if (story_text!=NULL)
-     {
-     y=SCREEN_OFFLINE+STORY_Y;
-     ys=STORY_YS;
-     count=str_count(story_text);
-       set_font(H_FONT6,NOSHADOW(0));
-     for(i=pos;i<count;i++) if (story_text[i]!=NULL)
-       {
-       int h;
 
-       h=text_height(story_text[i]);
-       if (ys<2*h) break;
-       position(x,y);outtext(story_text[i]);
-       ys-=h;
-       y+=h;
-       }
-     }
+  y=SCREEN_OFFLINE+STORY_Y;
+  ys=STORY_YS;
+  count = story_text.size();
+  set_font(H_FONT6,NOSHADOW(0));
+  for(i=pos;i<count;i++) if (story_text[i]!=NULL)
+    {
+    int h;
+
+    h=text_height(story_text[i]);
+    if (ys<2*h) break;
+    position(x,y);outtext(story_text[i]);
+    ys-=h;
+    y+=h;
+    }
   ukaz_mysku();
   showview(x,STORY_Y+SCREEN_OFFLINE,STORY_XS,STORY_YS);
   }
@@ -1111,15 +1103,14 @@ static void redraw_story_bar(int pos)
 //  int slot=va_arg(args,int);
 static void read_story_task(int slot) {
 
-  TSTR_LIST ls;
   void *text_data;
   char *c,*d;
   long size;
 
   load_specific_file(slot,STORY_BOOK,&text_data,&size);
+  story_text.clear();
   if (text_data!=NULL)
      {
-     ls=create_list(2);
      c = (char*)text_data;
      set_font(H_FONT6,0);
      while (size>0)
@@ -1135,7 +1126,7 @@ static void read_story_task(int slot) {
        zalamovani(c,e,STORY_XS,&xs,&ys);
        while (*e)
           {
-          str_add(&ls,e);
+	  story_text.insert(e);
           if (text_width(e)>STORY_XS) abort();
           e=strchr(e,0)+1;
           }
@@ -1146,9 +1137,6 @@ static void read_story_task(int slot) {
        }
      free(text_data);
      }
-  else ls=NULL;
-  if (story_text!=NULL) release_list(story_text);
-  story_text=ls;
   cur_story_pos=get_list_count();if (cur_story_pos<0) cur_story_pos=0;
   redraw_story_bar(cur_story_pos);
   }
@@ -1168,8 +1156,7 @@ static int get_list_count()
   {
   int count,i,max=0;
 
-  if (story_text==NULL) return 0;
-  count=str_count(story_text);
+  count = story_text.size();
   for(i=0;i<count;i++) if (story_text[i]!=NULL) max=i;
   return max-20;
   }
@@ -1237,7 +1224,6 @@ static char updown_scroll(int id,int xa,int ya,int xr,int yr)
   {
   int count;
   xr,yr,xa,ya;
-  if (story_text==NULL) return 0;
   cur_story_pos+=id;
   count=get_list_count();
   if (cur_story_pos>count) cur_story_pos=count;
@@ -1517,8 +1503,7 @@ void unwire_save_load()
   {
   if (back_texture!=NULL) free(back_texture);
   back_texture=NULL;
-  if (story_text!=NULL)release_list(story_text);
-  story_text=NULL;
+  story_text.clear();
   cancel_pass=0;
   send_message(E_DONE,E_KEYBOARD,saveload_keyboard);
   }
@@ -1529,7 +1514,7 @@ void wire_save_load(char save)
   mute_all_tracks(0);
   force_save=save & 1;
   load_mode=save;
-  if (slot_list==NULL) read_slot_list();
+  if (!slot_list.count()) read_slot_list();
   curcolor=0;
   bar(0,17,639,17+360);
   if (force_save) redraw_save();else redraw_load();

@@ -20,6 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
+
+#ifndef _MGIFMAPMEM_H_
+#define _MGIFMAPMEM_H_
+
+#include "libs/strlite.h"
+
 void play_animation(char *filename,char mode,int posy,char sound);
-void set_title_list(char **titles);
+void set_title_list(const StringList *titles);
 void set_play_attribs(void *screen,char rdraw,char bm,char colr64);
+
+#endif

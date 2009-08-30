@@ -646,7 +646,7 @@ static void ma_drop_money(int sect,int side,TMULTI_ACTION *q)
 
 void macro_change_music(int textindex)
 {
-  char *trackdef=level_texts[textindex];
+  const char *trackdef = level_texts[textindex];
   char *nextTrack;
 
   create_playlist(trackdef);

@@ -105,7 +105,7 @@ static short vol_n[MAX_VOLEB];
 //static char *vol_s[MAX_VOLEB];
 static short save_jump;
 
-static TSTR_LIST history=NULL;
+static StringList history;
 static int his_line=0;
 static int end_text_line=0;
 static int last_his_line=0;
@@ -307,9 +307,10 @@ static void goto_paragraph(int prgf)
   while (1);
   }
 
-static char *transfer_text(char *source,char *target)
+static char *transfer_text(const char *source, char *target)
   {
-  char *orgn=source,*ot=target;
+  const char *orgn = source;
+  char *ot=target;
   int num;
   while (*source)
      {
@@ -376,7 +377,7 @@ static char *transfer_text(char *source,char *target)
   return target;
   }
 
-static char *conv_text(char *source)
+static char *conv_text(const char *source)
   {
   if (string_buffer==NULL) string_buffer = (char*)getmem(STR_BUFF_SIZ);
   return transfer_text(source,string_buffer);
@@ -482,7 +483,7 @@ static void show_emote(char *c)
      {
      char z[100]="M";
      strcat(z,a);
-     end_text_line=str_add(&history,z)+1;
+     end_text_line = history.insert(z) + 1;
      a=strchr(a,0)+1;
      }
   }
@@ -501,7 +502,7 @@ static void echo(const char *c)
      {
      char z[100]="E";
      strcat(z,a);
-     end_text_line=str_add(&history,z)+1;
+     end_text_line = history.insert(z) + 1;
      a=strchr(a,0)+1;
      }
   }
@@ -518,13 +519,13 @@ static void redraw_text()
 
   put_textured_bar((uint16_t*)ablock(H_DIALOG),TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS,TEXT_X,TEXT_Y-SCREEN_OFFLINE);
   //create_frame(TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS,1);
-  ls_cn=str_count(history);
+  ls_cn = history.size();
   if (ls_cn<=his_line) return;
 
   for (i=his_line;i<ls_cn;i++)
      if (history[i]!=NULL)
         {
-        char *c=&history[i][0];
+        const char *c = history[i];
         if (*c=='E') set_font(H_FBOLD,NOSHADOW(0));
         else if(*c=='M') set_font(H_FBOLD,NOSHADOW(0)+TEXT_UNSELECT);
         else if(*c-48==vyb_volba) set_font(H_FBOLD,NOSHADOW(0)+TEXT_SELECT);
@@ -541,7 +542,7 @@ static int get_last_his_line()
   {
   int i=0,cf;
 
-  cf=str_count(history);
+  cf = history.size();
   while(i<cf && history[i]!=NULL) i++;
   return i;
   }
@@ -831,23 +832,37 @@ static void add_case(int num,char *text)
      z[0]=pocet_voleb+48;
      z[1]=0;
      strcat(z,a);
-     str_add(&history,z);
+     history.insert(z);
      a=strchr(a,0)+1;
      }
   pocet_voleb++;
   }
 
-static void remove_all_cases()
-  {
-  int cf,i;
-  pocet_voleb=0;
-  cf=str_count(history);
-  for(i=end_text_line;i<cf;i++) if (history[i]!=NULL)
-     if (history[i][0]-48!=vyb_volba) str_replace(&history,i,NULL);else
-     history[i][0]='M';else break;
-  str_delfreelines(&history);
-  vyb_volba=0;
-  }
+static void remove_all_cases() {
+	int cf, i;
+
+	pocet_voleb = 0;
+	cf = history.size();
+
+	for (i = end_text_line; i < cf; i++) {
+		if (history[i]!=NULL) {
+			if (history[i][0]-48 != vyb_volba) {
+				history.remove(i);
+			} else {
+				char *ptr = new char[strlen(history[i]) + 1];
+				strcpy(ptr, history[i]);
+				ptr[0] = 'M';
+				history.replace(i, ptr);
+				delete[] ptr;
+			}
+		} else {
+			break;
+		}
+	}
+
+	history.pack();
+	vyb_volba=0;
+}
 
 static char case_click(int id,int xa,int ya,int xr,int yr)
   {
@@ -858,7 +873,7 @@ static char case_click(int id,int xa,int ya,int xr,int yr)
   if (pocet_voleb>1)
      {
      id=yr/TEXT_STEP;
-     cf=str_count(history);
+     cf = history.size();
      id+=his_line;
      if (id>=cf) return 0;
      if (history[id]==NULL) return 0;
@@ -916,8 +931,7 @@ static void exit_dialog()
   free(descript);descript=NULL;
   free(string_buffer);string_buffer=NULL;
   remove_all_cases();
-  release_list(history);
-  history=0;
+  history.clear();
   free(back_pic);
   undef_handle(H_DIALOG_PIC);
   if (starting_shop!=-1 && !battle)
@@ -1376,7 +1390,6 @@ void call_dialog(int entr,int mob)
   poloz_vsechny_predmety();
   cancel_render=1;
   norefresh=1;
-  history=create_list(256);
   his_line=0;
   memset(sn_nums,0xff,sizeof(sn_nums));
   goto_paragraph(entr);

@@ -1536,7 +1536,7 @@ char *find_map_path(const char *filename)
 	return p;
 	}
 
-FILE *enc_open(char *filename,ENCFILE *fil)
+FILE *enc_open(const char *filename, ENCFILE *fil)
   {
   FILE *f,*g;
   char *c,*d,*enc,*temp;
@@ -1617,7 +1617,7 @@ void enc_close(ENCFILE *fil)
   }
 
 
-int load_string_list_ex(TSTR_LIST *list,char *filename)
+int load_string_list_ex(StringList &list, const char *filename)
   {
   char c[1024],*p;
   int i,j,lin=0;
@@ -1625,7 +1625,6 @@ int load_string_list_ex(TSTR_LIST *list,char *filename)
   ENCFILE fl;
 
   f=enc_open(filename,&fl);
-  if (*list==NULL) *list=create_list(256);
   if (f==NULL) return -1;
   do
      {
@@ -1663,11 +1662,7 @@ int load_string_list_ex(TSTR_LIST *list,char *filename)
      p=strchr(c,'\r');if (p!=NULL) *p=0;
      p=strchr(c,'\n');if (p!=NULL) *p=0;
      for(p=c;*p;p++) *p=*p=='|'?'\n':*p;
-     if (str_replace(list,i,c)==NULL)
-        {
-        enc_close(&fl);
-        return -3;
-        }
+     list.replace(i, c);
      }
   while (1);
   enc_close(&fl);
@@ -1736,7 +1731,8 @@ static void smlouvat_enter(EVENT_MSG *msg, OBJREC *o) {
 int smlouvat(int cena,int puvod,int pocet,int money,char mode)
   {
   int ponuka=0,posledni=0;
-  char text[255],*c,buffer[20];
+  char text[255],buffer[20];
+  const char *c;
   int y,yu,xu;
   int temp1,temp2;
 

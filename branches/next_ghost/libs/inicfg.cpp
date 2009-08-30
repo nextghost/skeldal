@@ -27,15 +27,14 @@
 #include "libs/strlite.h"
 #include "libs/inicfg.h"
 
-TSTR_LIST read_config(const char *filename)
+int read_config(StringList &ls, const char *filename)
   {
   FILE *f;
-  TSTR_LIST ls;
   char buff[256];
 
   f=fopen(filename,"r");
-  if (f==NULL) return NULL;
-  ls=create_list(256);
+  if (f==NULL) return 0;
+  ls.clear();
   while (!feof(f))
      {
      char *c;
@@ -44,16 +43,17 @@ TSTR_LIST read_config(const char *filename)
      c=strchr(buff,'\n');if (c!=NULL) *c=0;
      if (ferror(f))
         {
-        release_list(ls);
+        ls.clear();
         fclose(f);
-        return NULL;
+        return 0;
         }
-     str_add(&ls,buff);
+     ls.insert(buff);
      }
   fclose(f);
-  return ls;
+  return 1;
   }
 
+/* never used
 TSTR_LIST merge_configs(TSTR_LIST target, TSTR_LIST source)
 {
   char buff[256];
@@ -82,6 +82,7 @@ TSTR_LIST merge_configs(TSTR_LIST target, TSTR_LIST source)
   }
   return target;
 }
+*/
 
 char comcmp(const char *text,const char *command)
   {
@@ -90,11 +91,11 @@ char comcmp(const char *text,const char *command)
   return 0;
   }
 
-int find_ini_field(TSTR_LIST ls,const char *name)
+int find_ini_field(const StringList &ls, const char *name)
   {
   const char *a;
-  char *b;
-  int i,cnt=str_count(ls);
+  const char *b;
+  int i,cnt = ls.size();
 
   for (i=0;i<cnt;i++) if (ls[i]!=NULL)
      {
@@ -107,20 +108,20 @@ int find_ini_field(TSTR_LIST ls,const char *name)
   return -1;
   }
 
-void add_field_txt(TSTR_LIST *ls,const char *name,const char *text)
+void add_field_txt(StringList &ls,const char *name,const char *text)
   {
   int i;
   char *d;
 
   d = (char*)alloca(strlen(name)+strlen(text)+2);
   sprintf(d,"%s %s",name,text);
-  i=find_ini_field(*ls,name);
-  if (i==-1) str_add(ls,d);
+  i=find_ini_field(ls,name);
+  if (i==-1) ls.insert(d);
   else
-     str_replace(ls,i,d);
+	ls.replace(i, d);
   }
 
-void add_field_num(TSTR_LIST *ls,const char *name,long number)
+void add_field_num(StringList &ls,const char *name,long number)
   {
   char buff[20];
 
@@ -129,13 +130,13 @@ void add_field_num(TSTR_LIST *ls,const char *name,long number)
   add_field_txt(ls,name,buff);
   }
 
-int save_config(TSTR_LIST ls,const char *filename)
+int save_config(const StringList &ls, const char *filename)
   {
   int i,cnt,err=0;
   FILE *f;
   f=fopen(filename,"w");
   if (f==NULL) return -1;
-  cnt=str_count(ls);
+  cnt = ls.size();
   for(i=0;i<cnt && !err;i++) if (ls[i]!=NULL)
      {
      if (fputs(ls[i],f)==EOF) err=-1;
@@ -146,11 +147,10 @@ int save_config(TSTR_LIST ls,const char *filename)
   }
 
 
-const char *get_text_field(TSTR_LIST ls,const char *name)
+const char *get_text_field(const StringList &ls, const char *name)
   {
   int i;
-  char *c;
-  if (ls==NULL) return NULL;
+  const char *c;
   i=find_ini_field(ls,name);if (i==-1) return NULL;
   c=ls[i];
   c=strchr(c,' ');if (c!=NULL) while (*c==' ') c++;
@@ -159,7 +159,7 @@ const char *get_text_field(TSTR_LIST ls,const char *name)
   }
 
 
-int get_num_field(TSTR_LIST ls,const char *name,int *num)
+int get_num_field(const StringList &ls,const char *name,int *num)
   {
   const char *c;
 
@@ -169,11 +169,11 @@ int get_num_field(TSTR_LIST ls,const char *name,int *num)
   return 0;
   }
 
-void process_ini(TSTR_LIST ls,void (*process)(const char *line))
+void process_ini(const StringList &ls, void (*process)(const char *line))
   {
-  char *c;
+  const char *c;
   int i,cnt;
-  cnt=str_count(ls);
+  cnt = ls.size();
 
   for(i=0;i<cnt;i++) if (ls[i]!=NULL)
      {

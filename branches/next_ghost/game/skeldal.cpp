@@ -92,7 +92,7 @@ char *pathtable[]=
   };
 */
 
-char **texty;
+StringList texty;
 
 char skip_intro=0;
 char autosave_enabled=0;
@@ -153,7 +153,7 @@ char *texty_knihy;
 static char *patch_file=NULL;
 int cur_page=0;
 
-TSTR_LIST cur_config=NULL;
+StringList cur_config;
 
 TDREGISTERS registred[]=
   {
@@ -815,8 +815,8 @@ void done_skeldal(void)
   Sys_PurgeTemps(1);
   Sound_StopMixing();
 //  deinstall_mouse_handler();
-  if (texty!=NULL) release_list(texty);texty=NULL;
-  if (cur_config!=NULL) release_list(cur_config);cur_config=NULL;
+  texty.clear();
+  cur_config.clear();
   kill_timer();
   SEND_LOG("NORMAL TERMINATING--------------------------",0,0);
   }
@@ -879,14 +879,11 @@ void reg_grafiku_postav()
 
 void cti_texty()
   {
-//  char path[80];int err;
 	char *path;
 	int err;
 
-  texty=(TSTR_LIST)create_list(4);
-//  sprintf(path,"%s%s",pathtable[SR_DATA],TEXTY);
 	path = Sys_FullPath(SR_DATA, TEXTY);
-  if ((err=load_string_list_ex(&texty,path))!=0)
+  if ((err = load_string_list_ex(texty, path)) !=0 )
      {
 	 char buff[256];
      closemode();
@@ -1341,9 +1338,7 @@ static void config_skeldal(const char *line)
 static void configure(char *filename)
   {
   SEND_LOG("(GAME) Reading config. file '%s'",filename,NULL);
-  cur_config=read_config(filename);
-  if (cur_config==NULL)
-     {
+  if (!read_config(cur_config, filename)) {
      char s[256];
 
      sprintf(s,"\nNemohu precist konfiguracni soubor \"%s\".\n",filename);
@@ -1359,13 +1354,13 @@ static void configure(char *filename)
 static void update_config()
   {
   SEND_LOG("(GAME) Updating config. file '%s'",CONFIG_NAME,NULL);
-  add_field_num(&cur_config,sinit[1].heslo,zoom_speed(-1));
-  add_field_num(&cur_config,sinit[2].heslo,turn_speed(-1));
+  add_field_num(cur_config, sinit[1].heslo, zoom_speed(-1));
+  add_field_num(cur_config, sinit[2].heslo, turn_speed(-1));
 // FIXME: rewrite
 //  if (Sound_CheckEffect(SND_MUSIC)) add_field_num(&cur_config,sinit[3].heslo,Sound_GetEffect(SND_MUSIC));
 //  if (Sound_CheckEffect(SND_GFX)) add_field_num(&cur_config,sinit[4].heslo,Sound_GetEffect(SND_GFX));
-  add_field_num(&cur_config,sinit[9].heslo,level_preload);
-  add_field_num(&cur_config,sinit[13].heslo,autosave_enabled);
+  add_field_num(cur_config, sinit[9].heslo, level_preload);
+  add_field_num(cur_config, sinit[13].heslo, autosave_enabled);
   save_config(cur_config,Sys_FullPath(SR_WORK, CONFIG_NAME));
   SEND_LOG("(GAME) Config. file was saved",0,0);
   }
@@ -1420,7 +1415,7 @@ void play_anim(int anim_num)
   {
      char *s;
      char *t,*z;
-     TSTR_LIST titl=NULL;
+     StringList titl;
 //     concat(s,pathtable[SR_VIDEO],texty[anim_num]);
 	s = Sys_FullPath(SR_VIDEO, texty[anim_num]);
      if (!Sound_IsActive() || titles_on)
@@ -1430,16 +1425,15 @@ void play_anim(int anim_num)
       if (z!=NULL)
         {
         strcpy(z,".TXT");
-        if (load_string_list_ex(&titl,t)) titl=NULL;
+        load_string_list_ex(titl, t);
         }
-      else titl=NULL;
       }
-     else titl=NULL;
-     set_title_list(titl);set_font(H_FBIG,RGB(200,200,200));
+     set_title_list(&titl);
+     set_font(H_FBIG,RGB(200,200,200));
      curcolor=0;bar(0,0,639,459);
      showview(0,0,0,0);
      play_movie_seq(s,60);
-     set_title_list(NULL);if (titl!=NULL) release_list(titl);
+     set_title_list(NULL);
   }
 
 
@@ -1736,7 +1730,7 @@ static void start_from_mapedit(va_list args)
 
 void disable_intro()
   {
-  add_field_num(&cur_config,sinit[12].heslo,1);
+  add_field_num(cur_config, sinit[12].heslo, 1);
   update_config();
   }
 

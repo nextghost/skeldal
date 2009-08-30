@@ -20,13 +20,20 @@
  *  
  *  Last commit made by: $Id$
  */
-TSTR_LIST read_config(const char *filename);
-void add_field_txt(TSTR_LIST *ls,const char *name,const char *text);
-void add_field_num(TSTR_LIST *ls,const char *name,long number);
-int save_config(TSTR_LIST ls,const char *filename);
-const char *get_text_field(TSTR_LIST ls,const char *name);
-int get_num_field(TSTR_LIST ls,const char *name,int *num);
-void process_ini(TSTR_LIST ls,void (*process)(const char *line));
-char comcmp(const char *text,const char *command);
-TSTR_LIST merge_configs(TSTR_LIST target, TSTR_LIST source);
-int find_ini_field(TSTR_LIST ls,const char *name);
+
+#ifndef _INICFG_H_
+#define _INICFG_H_
+
+#include "libs/strlite.h"
+
+int read_config(StringList &list, const char *filename);
+void add_field_txt(StringList &ls, const char *name, const char *text);
+void add_field_num(StringList &ls, const char *name,long number);
+int save_config(const StringList &ls, const char *filename);
+const char *get_text_field(const StringList &ls, const char *name);
+int get_num_field(const StringList &ls, const char *name, int *num);
+void process_ini(const StringList &ls, void (*process)(const char *line));
+char comcmp(const char *text, const char *command);
+int find_ini_field(const StringList &ls, const char *name);
+
+#endif
