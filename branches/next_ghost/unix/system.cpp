@@ -245,7 +245,11 @@ void *OpenMGFFile(const char *filename) {
 
 	assert(mgf == -1);
 	mgf = open(filename, O_RDONLY);
-	assert(mgf >= 0);
+
+	if (mgf < 0) {
+		fprintf(stderr, "Could not open file %s\n", filename);
+		exit(1);
+	}
 
 	fstat(mgf, &st);
 	mgf_len = st.st_size;
