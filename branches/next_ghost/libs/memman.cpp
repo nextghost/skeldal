@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <unistd.h>
 #include <cstring>
 #include "libs/memman.h"
@@ -162,27 +163,235 @@ void *load_file(char *filename)
 
 //--------------- BLOCK MASTER OPERATION SYSTEM --------------------------
 //--------------- part: MEMORY MANAGER -----------------------------------
-typedef struct tnametable
-        {
-        char name[12];
-        int32_t seek;
-        }TNAMETABLE;
 
-
-static long *grptable,grptabsiz;
-static TNAMETABLE *nametable;
-static int nmtab_size;
-static int next_name_read=0;
-static int last_group;
-
-char *main_file_name=NULL;
+DDLFile datafile, patchfile;
 handle_groups _handles;
-//static int bmf=-1;
-static FILE *bmf = NULL;
-//static int patch=-1;
-static FILE *patch = NULL;
 unsigned long bk_global_counter=0;
 char *swap_path;
+
+int8_t ReadStream::readSint8(void) {
+	int8_t ret = 0;
+
+	read(&ret, 1);
+	return ret;
+}
+
+uint8_t ReadStream::readUint8(void) {
+	uint8_t ret = 0;
+
+	read(&ret, 1);
+	return ret;
+}
+
+uint16_t ReadStream::readUint16LE(void) {
+	uint8_t a = readUint8();
+	uint8_t b = readUint8();
+
+	return (b << 8) | a;
+}
+
+uint32_t ReadStream::readUint32LE(void) {
+	uint16_t a = readUint16LE();
+	uint16_t b = readUint16LE();
+
+	return (b << 16) | a;
+}
+
+int16_t ReadStream::readSint16LE(void) {
+	return (int16_t)readUint16LE();
+}
+
+int32_t ReadStream::readSint32LE(void) {
+	return (int32_t)readUint32LE();
+}
+
+uint16_t ReadStream::readUint16BE(void) {
+	uint8_t a = readUint8();
+	uint8_t b = readUint8();
+
+	return (a << 8) | b;
+}
+
+uint32_t ReadStream::readUint32BE(void) {
+	uint16_t a = readUint16BE();
+	uint16_t b = readUint16BE();
+
+	return (a << 16) | b;
+}
+
+int16_t ReadStream::readSint16BE(void) {
+	return (int16_t)readUint16BE();
+}
+
+int32_t ReadStream::readSint32BE(void) {
+	return (int32_t)readUint32BE();
+}
+
+File::File(void) : _file(NULL), _name(NULL) { }
+
+File::File(const char *filename) : _file(NULL), _name(NULL) {
+	open(filename);
+}
+
+File::~File(void) {
+	close();
+}
+
+void File::open(const char *filename) {
+	close();
+
+	_file = fopen(filename, "r");
+
+	if (_file) {
+		_name = new char[strlen(filename) + 1];
+		strcpy(_name, filename);
+	}
+}
+
+void File::close(void) {
+	if (!_file) {
+		return;
+	}
+
+	fclose(_file);
+	delete[] _name;
+
+	_file = NULL;
+	_name = NULL;
+}
+
+void File::seek(long offset, int whence) {
+	assert(_file);
+	fseek(_file, offset, whence);
+}
+
+long File::pos(void) {
+	assert(_file);
+	return ftell(_file);
+}
+
+long File::size(void) {
+	long tmp, ret;
+	assert(_file);
+
+	tmp = ftell(_file);
+	fseek(_file, 0, SEEK_END);
+	ret = ftell(_file);
+	fseek(_file, tmp, SEEK_SET);
+	return ret;
+}
+
+size_t File::read(void *buf, size_t size) {
+	assert(_file);
+	return fread(buf, 1, size, _file);
+}
+
+DDLFile::DDLFile(void) : _grptable(NULL), _grpsize(0), _namesize(0),
+	_nametable(NULL) {
+}
+
+DDLFile::~DDLFile(void) {
+	close();
+}
+
+void DDLFile::open(const char *filename) {
+	int i;
+	char buf[DDLEntryNameSize + 1];
+
+	close();
+
+	_file.open(filename);
+
+	if (!_file.isOpen()) {
+		fprintf(stderr, "Could not open file %s\n", filename);
+		return;
+	}
+
+	i = _file.readUint32LE();
+	_grpsize = _file.readSint32LE() / DDLGroupSize;
+	_grptable = new DDLGroup[_grpsize];
+
+	_grptable[0].id = i;
+	_grptable[0].start = 0;
+
+	for (i = 1; i < _grpsize; i++) {
+		_grptable[i].id = _file.readSint32LE();
+		_grptable[i].start = (_file.readSint32LE() - _grpsize * DDLGroupSize) / DDLEntrySize;
+	}
+
+	_file.read(buf, DDLEntryNameSize);
+	buf[DDLEntryNameSize] = '\0';
+	i = _file.readSint32LE();
+	_namesize = (i - _grpsize * DDLGroupSize) / DDLEntrySize;
+	_nametable = new DDLEntry[_namesize];
+
+	strcpy(_nametable[0].name, buf);
+	_nametable[0].offset = i;
+
+	for (i = 1; i < _namesize; i++) {
+		_file.read(_nametable[i].name, DDLEntryNameSize);
+		_nametable[i].offset = _file.readSint32LE();
+	}
+}
+
+void DDLFile::close(void) {
+	if (!_file.isOpen()) {
+		return;
+	}
+
+	_file.close();
+	delete[] _grptable;
+	delete[] _nametable;
+
+	_grptable = NULL;
+	_nametable = NULL;
+	_grpsize = 0;
+	_namesize = 0;
+}
+
+void *DDLFile::readFile(int group, const char *name, long &size) {
+	assert(_nametable);
+	int entry = findEntry(group, name);
+	void *ret;
+
+	assert(entry >= 0);
+
+	_file.seek(_nametable[entry].offset, SEEK_SET);
+	size = _file.readSint32LE();
+	ret = malloc(size); // FIXME: change to something else later
+	_file.read(ret, size);
+
+	return ret;
+}
+
+int DDLFile::findEntry(int group, const char *name) const {
+	int i;
+	assert(_nametable);
+
+	for (i = 0; i < _grpsize; i++) {
+		if (_grptable[i].id == group) {
+			break;
+		}
+	}
+
+	if (i >= _grpsize) {
+		return -1;
+	}
+
+	for (i = _grptable[i].start; i < _namesize; i++) {
+		if (!strcmp(_nametable[i].name, name)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int DDLFile::getOffset(unsigned id) const {
+	assert(id < _namesize);
+
+	return _nametable[id].offset;
+}
 
 #ifdef LOGFILE
 static void bonz_table()
@@ -212,71 +421,36 @@ static int test_file_exist_DOS(int group, const char *filename)
 	return Sys_FileExists(Sys_FullPath(group, filename));
   }
 
+int get_file_entry(int group,char *name) {
+	int i;
+	char ex;
 
-void load_grp_table()
-  {
-  long i;
+	if (mman_patch) {
+		ex = test_file_exist_DOS(group, name);
+	} else {
+		ex = 0;
+	}
 
-  SEND_LOG("(LOAD) Loading Group Table",0,0);
-  fseek(bmf,4,SEEK_SET);
-//  read(bmf,&i,4);
-  fread(&i,4,1,bmf);
-  grptable=(long *)getmem(i+4);
-  fseek(bmf,0,SEEK_SET);
-//  read(bmf,grptable,i);
-  fread(grptable,1,i,bmf);
-  grptabsiz=i;
-  for(i=0;i<(grptabsiz>>3);i++) grptable[i*2+1]=(grptable[i*2+1]-grptabsiz)>>4;
-  SEND_LOG("(LOAD) Group Table Loaded",0,0);
-  }
+	if (ex || !datafile.isOpen()) {
+		return 0;
+	}
 
-void load_file_table()
-  {
-  int strsize;
-  void *p;
+	if (patchfile.isOpen()) {
+		i = patchfile.findEntry(group,name);
 
-  SEND_LOG("(LOAD) Loading File Table",0,0);
-  fseek(bmf,grptabsiz,SEEK_SET);
-  fseek(bmf,12,SEEK_CUR);
-//  read(bmf,&strsize,4);
-  fread(&strsize,4,1,bmf);
-  strsize-=grptabsiz;
-  fseek(bmf,grptabsiz,SEEK_SET);
-  p = nametable = (TNAMETABLE*)getmem(strsize);
-//  read(bmf,nametable,strsize);
-  fread(nametable,1,strsize,bmf);
-  nmtab_size=strsize/sizeof(*nametable);
-  SEND_LOG("(LOAD) File Table Loaded",0,0);
-  }
+		if (i != -1) {
+			return -datafile.getOffset(i);
+		}
+	}
 
+	i = datafile.findEntry(group,name);
 
+	if (i == -1) {
+		return 0;
+	}
 
-int find_name(int group, const char *name)
-  {
-  int i;
-
-  for(i=0;i<(grptabsiz>>2);i+=2)
-     {
-     if (grptable[i]==group) break;
-     }
-  if ((grptabsiz>>2)<=i) return -1;
-  for(i=grptable[i+1];i<nmtab_size;i++)
-     if (!strncmp(nametable[i].name,name,12)) break;
-  if (i==nmtab_size) return -1;
-  return i;
-  }
-
-int get_file_entry(int group,char *name)
-  {
-  int i;
-  char ex;
-
-  if (mman_patch) ex=test_file_exist_DOS(group,name);else ex=0;
-  if (ex || bmf==0) return 0;
-  i=find_name(group,name);
-  if (i==-1) return 0;
-  return nametable[i].seek;
-  }
+	return datafile.getOffset(i);
+}
 
 void swap_init(void);
 int swap_add_block(long size);
@@ -443,27 +617,11 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
                                   // se pouzije DOS
                                             // swp je cesta do TEMP adresare
   {
-  next_name_read=0;
-  last_group=0;
   memset(_handles,0,sizeof(_handles));
-  if (filename!=NULL)
-     {
-// O_BINARY is Windows-specific
-//     bmf=open(filename,O_BINARY | O_RDONLY);
-     bmf=fopen(filename, "rb");
-//     if (bmf!=-1)
-     if (bmf)
-        {
-        main_file_name=(char *)getmem(strlen(filename)+1);
-        strcpy(main_file_name,filename);
-        load_grp_table();
-        load_file_table();
-        }
-     else
-        main_file_name=NULL;
-     }
-  else
-     main_file_name=NULL;
+
+	if (filename) {
+		datafile.open(filename);
+	}
   mem_error=heap_error;
   if (swp!=NULL)
      {
@@ -515,7 +673,7 @@ int find_handle(const char *name,void (*decomp)(void**, long*))
 
 int test_file_exist(int group,const char *filename)
   {
-  if (find_name(group,filename)==-1) return test_file_exist_DOS(group,filename);
+  if (datafile.findEntry(group,filename)==-1) return test_file_exist_DOS(group,filename);
   return 1;
   }
 
@@ -570,13 +728,12 @@ void *afile(const char *filename,int group,long *blocksize)
 //		 int hnd;
 		 FILE *hnd;
 		 SEND_LOG("(LOAD) Afile is loading file '%s' from group %d",d,group);
-		 if (entr<0) entr=-entr,hnd=patch;else hnd=bmf;
-     fseek(hnd,entr,SEEK_SET);
-//     read(hnd,blocksize,4);
-     fread(blocksize,4,1,hnd);
-     p=getmem(*blocksize);
-//     read(hnd,p,*blocksize);
-     fread(p,1,*blocksize,hnd);
+
+		if (entr < 0) {
+			p = patchfile.readFile(group, d, *blocksize);
+		} else {
+			p = datafile.readFile(group, d, *blocksize);
+		}
 	} else {
 		SEND_LOG("(LOAD) Afile is loading file '%s' from disk", d, group);
 		p = load_file(Sys_FullPath(group, filename));
@@ -626,11 +783,6 @@ void *ablock(int handle)
            if (h->src_file[0]!=0)
               {
               if (mman_action!=NULL) mman_action(MMA_READ);
-/*
-              strcpy(c,mman_pathlist[h->path]);
-	      strcat(c,h->src_file);
-              c[strlen(mman_pathlist[h->path])+12]='\0';
-*/
 		c = Sys_FullPath(h->path, "");
 		s = strlen(c);
 		strcpy(c+s, h->src_file);
@@ -654,13 +806,13 @@ void *ablock(int handle)
 					 int entr=h->seekpos;//,hnd;
 					 FILE *hnd;
            if (mman_action!=NULL) mman_action(MMA_READ);
-					 if (entr<0) entr=-entr,hnd=patch;else hnd=bmf;
-           fseek(hnd,entr,SEEK_SET);
-//           read(hnd,&s,4);
-           fread(&s,4,1,hnd);
-           p=getmem(s);
-//           read(hnd,p,s);
-           fread(p,1,s,hnd);
+
+		if (entr < 0) {
+			p = patchfile.readFile(h->path, h->src_file, s);
+		} else {
+			p = datafile.readFile(h->path, h->src_file, s);
+		}
+
            if (h->loadproc!=NULL) h->loadproc(&p,&s);
            h->blockdata=p;
            h->status=BK_PRESENT;
@@ -818,13 +970,9 @@ void close_manager()
      for(j=0;j<BK_MINOR_HANDLES;j ++) undef_handle(i*BK_MINOR_HANDLES+j);
      free(_handles[i]);
      }
-  free(main_file_name);
-  fclose(bmf);
 //  if (swap!=-1) close(swap);
   if (swap) fclose(swap);
 //  fclose(log);
-  free(grptable); grptable=NULL;
-  free(nametable); nametable=NULL;
   max_handle=0;
   }
 
@@ -935,59 +1083,23 @@ void *grealloc(void *p,long size)
 	return ret;
   }
 
-char *read_next_entry(char mode)
-  {
-  if (mode==MMR_FIRST) next_name_read=0;
-  if (main_file_name==NULL) return NULL;
-  if (next_name_read>=nmtab_size) return NULL;
-  return nametable[next_name_read++].name;
-  }
-
-int read_group(int index)
-  {
-  return grptable[index<<1];
-  }
-
-char add_patch_file(char *filename)
-	{
-	long l;
-	long poc;
-	int i,cc=0;
-	TNAMETABLE p;
-	SEND_LOG("Adding patch: %s",filename,0);
-//	if (patch!=-1) return 2;
-	if (patch) return 2;
-//	if (bmf==-1) return 3;
-	if (!bmf) return 3;
-// O_BINARY is Windows-specific
-//	patch=open(filename,O_BINARY|O_RDONLY);
-	patch=fopen(filename, "rb");
-//	if (patch==-1) return 1;
-	if (!patch) return 1;
-	fseek(patch,4,SEEK_SET);
-//	read(patch,&l,4);
-	fread(&l,4,1,patch);
-	fseek(patch,l,SEEK_SET);
-//	read(patch,&p,sizeof(p));
-	fread(&p,sizeof(p),1,patch);
-	poc=(p.seek-l)/sizeof(p);
-	fseek(patch,l,SEEK_SET);
-	for(i=0;i<poc;i++)
-		{
-		int j;
-//		read(patch,&p,sizeof(p));
-		fread(&p,sizeof(p),1,patch);
-		j=find_name(read_group(0),p.name);
-		if (j==-1)
-			{
-			nametable = (TNAMETABLE*)grealloc(nametable,sizeof(TNAMETABLE)*(nmtab_size+1));
-			j=nmtab_size++;strncpy(nametable[j].name,p.name,12);
-			}
-		nametable[j].seek=-p.seek,cc++;
-		}
-	SEND_LOG("Patch added: %s - %d entries modified",filename,cc);
-	return 0;
+char add_patch_file(char *filename) {
+	if (patchfile.isOpen()) {
+		return 2;
 	}
+
+	if (!datafile.isOpen()) {
+		return 3;
+	}
+
+	patchfile.open(filename);
+
+	if (!patchfile.isOpen()) {
+		return 1;
+	}
+
+	return 0;
+}
 
 #ifdef LOGFILE
 /*

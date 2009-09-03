@@ -28,6 +28,100 @@
 #include <cstdio>
 #include <inttypes.h>
 
+class ReadStream {
+public:
+	virtual int8_t readSint8(void);
+	virtual uint8_t readUint8(void);
+
+	virtual int16_t readSint16LE(void);
+	virtual uint16_t readUint16LE(void);
+	virtual int32_t readSint32LE(void);
+	virtual uint32_t readUint32LE(void);
+
+	virtual int16_t readSint16BE(void);
+	virtual uint16_t readUint16BE(void);
+	virtual int32_t readSint32BE(void);
+	virtual uint32_t readUint32BE(void);
+
+	virtual size_t read(void *buf, size_t size) = 0;
+
+	virtual ~ReadStream() { }
+};
+
+class SeekableReadStream : public ReadStream {
+public:
+	virtual void seek(long offset, int whence) = 0;
+	virtual long pos(void) = 0;
+	virtual long size(void) = 0;
+
+	~SeekableReadStream() { }
+};
+
+class File : public SeekableReadStream {
+private:
+	FILE *_file;
+	char *_name;
+
+	// Do not implement
+	File(const File &src);
+	const File &operator=(const File &src);
+public:
+	File(void);
+	File(const char *filename);
+	~File(void);
+
+	// inherited methods
+	void seek(long offset, int whence);
+	long pos(void);
+	long size(void);
+	size_t read(void *buf, size_t size);
+
+	// new methods
+	void open(const char *filename);
+	void close(void);
+	inline const char *getName(void) const { return _name; }
+	inline bool isOpen(void) const { return _file; }
+};
+
+class DDLFile {
+private:
+	static const int DDLEntrySize = 16;
+	static const int DDLEntryNameSize = 12;
+	static const int DDLGroupSize = 8;
+
+	typedef struct {
+		char name[DDLEntryNameSize + 1];
+		int offset;
+	} DDLEntry;
+
+	typedef struct {
+		int id, start;
+	} DDLGroup;
+
+	int _grpsize, _namesize;
+	DDLGroup *_grptable;
+	DDLEntry *_nametable;
+	File _file;
+
+	// Do not implement
+	DDLFile(const DDLFile &src);
+	const DDLFile &operator=(const DDLFile &src);
+public:
+	DDLFile(void);
+	~DDLFile(void);
+
+	void open(const char *filename);
+	void close(void);
+
+	// FIXME: rewrite to return MemoryReadStream later
+	void *readFile(int group, const char *name, long &size);
+
+	int findEntry(int group, const char *name) const;
+	int getOffset(unsigned id) const;
+
+	bool isOpen(void) const { return _nametable; }
+};
+
 #pragma pack(1)
 
 #define freemem(size) free(size);
@@ -51,7 +145,7 @@ typedef struct meminfo {
 
 typedef struct thandle_data
   {
-  char src_file[12];  //12
+  char src_file[13];  //12
   int32_t seekpos;       //16
   void *blockdata;    //20
   int8_t flags;        //21

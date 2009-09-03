@@ -5,11 +5,10 @@ The plan:
 
 Now seriously, milestones for this branch:
 1) Get the game at least partially working on x86 Linux (91% done)
-2) Change the engine from task based to frame based (0% done)
-3) Write a proper build system and fix ugly hacks in backend code (0% done)
-4) Separate game code, libs, renderer, generic sound subsystem and backends
+2) Write a proper build system and fix ugly hacks in code (0% done)
+3) Separate game code, libs, renderer, generic sound subsystem and backends
    (0% done)
-5) Completely rewrite the remaining code to C++ (0% done)
+4) Completely rewrite the remaining code to C++ (0% done)
 
 Tasks for the next milestone:
 1) Make it compile (100% done)
