@@ -296,40 +296,68 @@ static void break_line()
   save_buffer();
   }
 
-static char read_set(FILE *txt,char *var,char *set)
-  {
+static char read_set(SeekableReadStream *txt, char *var, char *set) {
 // TODO: this REALLY needs rewrite
-  int c;
-  char *cc;
+	int c, i;
+	char *cc;
 
-  fscanf(txt,"%[^=]%c",var,&c);
-  do
-     c=fgetc(txt);
-  while (c<33);
-  if (c=='"') fscanf(txt,"%[^\"]%c%c",set,&c,&c);
-  else if (c=='\'') fscanf(txt,"%[^']%c%c",set,&c,&c);
-  else
-     {
-     ungetc(c,txt);
-     fscanf(txt,"%[^> ]%c",set,&c);
-     }
-  while(c<33 && c!=EOF) c=fgetc(txt);
-  if (c!='>') ungetc(c,txt);
-  cc=strchr(var,0);
-  while (cc!=var)
-     {
-     cc--;
-     if (*cc>32)
-        {
-        cc++;
-        break;
-        }
-     }
-  *cc=0;
-  strupr(set);
-  strupr(var);
-  return c;
-  }
+	i = -1;
+	do {
+		var[++i] = (char)txt->readUint8();
+	} while (var[i] != '=');
+	var[i] = '\0';
+
+	do {
+		c = txt->readUint8();
+	} while ((unsigned)c <= ' ');
+
+	if (c == '"') {
+		i = -1;
+		do {
+			set[++i] = (char)txt->readUint8();
+		} while (set[i] != '"');
+		c = (char)txt->readUint8();
+		set[i] = '\0';
+	} else if (c == '\'') {
+		i = -1;
+		do {
+			set[++i] = (char)txt->readUint8();
+		} while (set[i] != '\'');
+		set[i] = '\0';
+		c = (char)txt->readUint8();
+	} else {
+		for (i = 0, set[0] = c; set[i] != '>' && set[i] != ' ';) {
+			set[++i] = (char)txt->readUint8();
+		}
+		c = set[i];
+		set[i] = '\0';
+	}
+
+	while ((unsigned)c <= ' ' && !txt->eos()) {
+		c = (char)txt->readUint8();
+	}
+
+	if (c != '>') {
+		txt->seek(-1, SEEK_CUR);
+	}
+
+	cc = strchr(var, 0);
+
+	while (cc != var) {
+		cc--;
+
+		if (*cc > 32) {
+			cc++;
+			break;
+		}
+	}
+
+	*cc = 0;
+	strupr(set);
+	strupr(var);
+
+	return c;
+}
 
 static int get_data_handle(const char *filename,void (*dec)(void**, long*))
   {
@@ -385,77 +413,102 @@ static void insert_picture(const char *filename,int align,int line,int lsize)
   all_text.insert(write_buff);
   }
 
-static char read_tag(FILE *txt)
-  {
-  char c,var[256],set[256];
-  int i;
+static char read_tag(SeekableReadStream *txt) {
+	char c, var[256], set[256];
+	int i = -1;
 
-  i=fscanf(txt,"%[^> ] %c",var,&c);
-  while(c<33 && i!=EOF) c=i=fgetc(txt);
-  if (c!='>') ungetc(c,txt);
-  strupr(var);
-  if (!strcmp(var,PARAGRAPH))
-     {
-     break_line();
-     break_line();
-     return 1;
-     }
-  if (!strcmp(var,BREAKLINE))
-     {
-     break_line();
-     return 1;
-     }
-  if (!strcmp(var,IMAGE))
-     {
-     char pic_name[50]=" ";
-     char alig=0;
-     int line=0,lsize=0;
+	do {
+		var[++i] = (char)txt->readUint8();
+	} while (var[i] != '>' && var[i] != ' ');
+	c = var[i];
+	var[i] = '\0';
 
-     while (c!='>')
-        {
-        c=read_set(txt,var,set);
-        if (!strcmp(var,SRC)) strncpy(pic_name,set,49);
-        else if (!strcmp(var,ALIGN))
-           {
-           if (!strcmp(set,ALEFT)) alig=1;
-           else if (!strcmp(set,ARIGHT)) alig=2;
-           else if (!strcmp(set,ACENTER)) alig=0;
-           }
-        else if (!strcmp(var,PIC_LINE)) sscanf(set,"%d",&line);
-        else if (!strcmp(var,PIC_LSIZ)) sscanf(set,"%d",&lsize);
-        }
-     if (pic_name[0]!=0)
-        insert_picture(pic_name,alig,line,lsize);
-     return 0;
-     }
-  if (!strcmp(var,CENTER1)) center++;
-  else if (!strcmp(var,CENTER2))
-     {
-     if (center>0) center--;
-     }
-  else if (!strcmp(var,DISTEND1)) distend++;
-  else if (!strcmp(var,DISTEND2))
-     {
-     if (distend>0) distend--;
-     }
-  return 0;
-  }
+	while((unsigned)c <= ' ' && !txt->eos()) {
+		c = i = (char)txt->readUint8();
+	}
+
+	if (c != '>') {
+		txt->seek(-1, SEEK_CUR);
+	}
+
+	strupr(var);
+
+	if (!strcmp(var, PARAGRAPH)) {
+		break_line();
+		break_line();
+		return 1;
+	}
+
+	if (!strcmp(var, BREAKLINE)) {
+		break_line();
+		return 1;
+	}
+
+	if (!strcmp(var, IMAGE)) {
+		char pic_name[50] = " ";
+		char alig = 0;
+		int line = 0, lsize = 0;
+
+		while (c != '>') {
+			c = read_set(txt, var, set);
+			if (!strcmp(var, SRC)) {
+				strncpy(pic_name, set, 49);
+			} else if (!strcmp(var,ALIGN)) {
+				if (!strcmp(set, ALEFT)) {
+					alig = 1;
+				} else if (!strcmp(set, ARIGHT)) {
+					alig = 2;
+				} else if (!strcmp(set, ACENTER)) {
+					alig = 0;
+				}
+			} else if (!strcmp(var, PIC_LINE)) {
+				sscanf(set, "%d", &line);
+			} else if (!strcmp(var, PIC_LSIZ)) {
+				sscanf(set, "%d", &lsize);
+			}
+		}
+		if (pic_name[0] != 0) {
+			insert_picture(pic_name, alig, line, lsize);
+		}
+
+		return 0;
+	}
+
+	if (!strcmp(var, CENTER1)) {
+		center++;
+	} else if (!strcmp(var, CENTER2)) {
+		if (center > 0) {
+			center--;
+		}
+	} else if (!strcmp(var, DISTEND1)) {
+		distend++;
+	} else if (!strcmp(var, DISTEND2)) {
+		if (distend > 0) {
+			distend--;
+		}
+	}
+
+	return 0;
+}
 
 
-static char skip_section(FILE *txt)
-  {
-  int c;
-  char end=1;
+static char skip_section(SeekableReadStream *txt) {
+	int c;
+	char end = 1;
 
-  c=fgetc(txt);
-  while (c!=']' && c!=EOF)
-     {
-     c=fgetc(txt);
-     end=0;
-     }
-  if (c==EOF) end=1;
-  return end;
-  }
+	c = txt->readUint8();
+
+	while (c != ']' && !txt->eos()) {
+		c = txt->readUint8();
+		end = 0;
+	}
+
+	if (txt->eos()) {
+		end = 1;
+	}
+
+	return end;
+}
 
 void prekodovat(char *c) {
 	unsigned char *ptr = (unsigned char*)c;
@@ -468,106 +521,127 @@ void prekodovat(char *c) {
 	}
 }
 
-static void read_text(FILE *txt)
-  {
-  int i;
-  int xs;
-  char ss[2]=" ";
-  char wsp=1;
+static void read_text(SeekableReadStream *txt) {
+	int i;
+	int xs = 0;
+	char ss[2] = " ";
+	char wsp = 1;
 
-  buff_pos=0;
-  buff_end=0;
-  xs=0;
-  do
-     {
-     i=fgetc(txt);
-     if (i==EOF) break;
-     if (i<32) i=32;
-     if (i=='<')
-        {
-        if (read_tag(txt))
-           {
-           xs=0;
-           wsp=1;
-           }
-        continue;
-        }
-     if (i=='[')
-        {
-        if (skip_section(txt)) break;
-        continue;
-        }
-     if (i==32)
-        {
-        if (wsp) continue;
-        buff_pos=buff_end;
-        wsp=1;
-        }
-     else wsp=0;
-     if (i=='&') i=fgetc(txt);
-     if (winconv && i>137) i=xlat_table[i-138];
-     ss[0]=i;
-     xs+=text_width(ss);
-     read_buff[buff_end++]=i;
-     if (xs>total_width && !wsp)
-        {
-        save_buffer();
-        read_buff[buff_end]=0;
-        xs=text_width(read_buff);
-        }
-     }
-  while (1);
-  }
+	buff_pos = 0;
+	buff_end = 0;
 
-void seek_section(FILE *txt,int sect_number)
-  {
-  int c=0,i;
+	do {
+		i = txt->readUint8();
 
-  winconv=0;
-  do
-     {
-     while (c!='[' && c!=EOF) c=fgetc(txt);
-     if (c=='[')
-       {
-       i=-2;
-       fscanf(txt,"%d",&i);
-       if (i==sect_number)
-          {
-          c=fgetc(txt);
-          while(c!=']')
-             {
-             if (c=='W' || c=='w') winconv=1;
-             if (c=='K' || c=='k') winconv=0;
-             c=fgetc(txt);
-             }
-          return;
-          }
-       }
-     c=0;
-     }
-  while (i!=EOF);
-  closemode();
-	{
-    char buff[256];
-	sprintf(buff,"Nemohu najit odstavec s cislem %d.",sect_number);
-	Sys_ErrorBox(buff);
-//	MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
-	}
-  exit(1);
-  }
+		if (txt->eos()) {
+			break;
+		}
+
+		if (i < 32) {
+			i=32;
+		}
+
+		if (i == '<') {
+			if (read_tag(txt)) {
+				xs=0;
+				wsp=1;
+			}
+			continue;
+		}
+
+		if (i == '[') {
+			if (skip_section(txt)) {
+				break;
+			}
+
+			continue;
+		}
+
+		if (i == 32) {
+			if (wsp) {
+				continue;
+			}
+
+			buff_pos = buff_end;
+			wsp = 1;
+		} else {
+			wsp = 0;
+		}
+
+		if (i == '&') {
+			i = txt->readUint8();
+		}
+
+		if (winconv && i > 137) {
+			i = xlat_table[i-138];
+		}
+
+		ss[0] = i;
+		xs += text_width(ss);
+		read_buff[buff_end++] = i;
+		if (xs > total_width && !wsp) {
+			save_buffer();
+			read_buff[buff_end] = 0;
+			xs = text_width(read_buff);
+		}
+	} while (1);
+}
+
+void seek_section(SeekableReadStream *txt,int sect_number) {
+	int c = 0, i = EOF;
+	char buf[256];
+
+	winconv = 0;
+
+	do {
+		while (c != '[' && !txt->eos()) {
+			c = (char)txt->readUint8();
+		}
+
+		if (c == '[') {
+			i = -1;
+			do {
+				buf[++i] = (char)txt->readUint8();
+			} while (buf[i] >= '0' && buf[i] <= '9');
+			buf[i+1] = '\0';
+			i = -2;
+			sscanf(buf, "%d%c", &i, &c);
+
+			if (i == sect_number) {
+				while(c != ']' && !txt->eos()) {
+					if (c == 'W' || c == 'w') {
+						winconv = 1;
+					}
+
+					if (c == 'K' || c == 'k') {
+						winconv = 0;
+					}
+
+					c = (char)txt->readUint8();
+				}
+				return;
+			}
+		}
+		c = 0;
+	} while (i != EOF);
+
+	closemode();
+	sprintf(buf, "Nemohu najit odstavec s cislem %d.", sect_number);
+	Sys_ErrorBox(buf);
+	exit(1);
+}
 
 void add_text_to_book(char *filename,int odst)
   {
-  FILE *txt;
-  ENCFILE fl;
+  SeekableReadStream *txt;
 
   set_font(H_FKNIHA,NOSHADOW(0));
-  txt=enc_open(filename,&fl);
+  txt = enc_open(filename);
   if (txt==NULL) return;
   seek_section(txt,odst);
   read_text(txt);
   next_line(1000);
-  enc_close(&fl);
+  delete txt;
   }
 
 static const char *displ_picture(const char *c)
@@ -718,11 +792,6 @@ void load_book()
   char tx[512];
 
   all_text.clear();
-/*
-  concat(c,pathtable[SR_TEMP],BOOK_FILE);
-  f=fopen(c,"r");if (f==NULL) return;
-*/
-
 	f = fopen(Sys_FullPath(SR_TEMP, BOOK_FILE), "r");
 
 	if (!f) {

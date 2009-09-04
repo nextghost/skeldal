@@ -44,6 +44,9 @@ public:
 	virtual uint32_t readUint32BE(void);
 
 	virtual size_t read(void *buf, size_t size) = 0;
+	virtual char *readLine(char *buf, size_t size) = 0;
+
+	virtual bool eos() const { return false; }
 
 	virtual ~ReadStream() { }
 };
@@ -51,10 +54,31 @@ public:
 class SeekableReadStream : public ReadStream {
 public:
 	virtual void seek(long offset, int whence) = 0;
-	virtual long pos(void) = 0;
-	virtual long size(void) = 0;
+	virtual long pos(void) const = 0;
+	virtual long size(void) const = 0;
 
 	~SeekableReadStream() { }
+};
+
+class MemoryReadStream : public SeekableReadStream {
+private:
+	unsigned char *_data;
+	unsigned _length, _pos;
+
+public:
+	MemoryReadStream(const void *ptr, unsigned len);
+	MemoryReadStream(const MemoryReadStream &src);
+	~MemoryReadStream(void);
+
+	const MemoryReadStream &operator=(const MemoryReadStream &src);
+
+	size_t read(void *buf, size_t size);
+	char *readLine(char *buf, size_t size);
+	bool eos(void) const;
+
+	void seek(long offset, int whence);
+	long pos(void) const { return _pos; }
+	long size(void) const { return _length; }
 };
 
 class File : public SeekableReadStream {
@@ -67,20 +91,22 @@ private:
 	const File &operator=(const File &src);
 public:
 	File(void);
-	File(const char *filename);
+	explicit File(const char *filename);
 	~File(void);
 
 	// inherited methods
 	void seek(long offset, int whence);
-	long pos(void);
-	long size(void);
+	long pos(void) const;
+	long size(void) const;
 	size_t read(void *buf, size_t size);
+	char *readLine(char *buf, size_t size);
 
 	// new methods
 	void open(const char *filename);
 	void close(void);
 	inline const char *getName(void) const { return _name; }
 	inline bool isOpen(void) const { return _file; }
+	bool eos() const;
 };
 
 class DDLFile {

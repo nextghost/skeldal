@@ -227,6 +227,111 @@ int32_t ReadStream::readSint32BE(void) {
 	return (int32_t)readUint32BE();
 }
 
+MemoryReadStream::MemoryReadStream(const void *ptr, unsigned len) : _data(NULL),
+	_length(0), _pos(0) {
+
+	_length = len;
+	_data = new unsigned char[_length];
+	memcpy(_data, ptr, _length);
+}
+
+MemoryReadStream::MemoryReadStream(const MemoryReadStream &src) : _data(NULL),
+	_length(src._length), _pos(src._pos) {
+
+	_data = new unsigned char[_length];
+	memcpy(_data, src._data, _length);
+}
+
+MemoryReadStream::~MemoryReadStream(void) {
+	delete[] _data;
+}
+
+const MemoryReadStream &MemoryReadStream::operator=(const MemoryReadStream &src) {
+	MemoryReadStream tmp(src);
+	unsigned tmp1;
+	unsigned char *ptr;
+
+	ptr = _data;
+	_data = tmp._data;
+	tmp._data = ptr;
+
+	tmp1 = _length;
+	_length = tmp._length;
+	tmp._length = tmp1;
+
+	tmp1 = _pos;
+	_pos = tmp._pos;
+	tmp._pos = tmp1;
+
+	return *this;
+}
+
+size_t MemoryReadStream::read(void *buf, size_t size) {
+	size_t len;
+
+	if (_pos >= _length) {
+		_pos = _length + 1;
+		return 0;
+	}
+
+	len = size < _length - _pos ? size : _length - _pos;
+	memcpy(buf, _data + _pos, len);
+	_pos = len < size ? _length + 1 : _pos + len;
+
+	return len;
+}
+
+char *MemoryReadStream::readLine(char *buf, size_t size) {
+	unsigned i;
+
+	if (_pos >= _length) {
+		_pos = _length + 1;
+		return NULL;
+	}
+
+	for (i = 0; i < size - 1 && i + _pos < _length; i++) {
+		if (_data[_pos + i] == '\n') {
+			i++;
+			break;
+		}
+	}
+
+	memcpy(buf, _data + _pos, i);
+	_pos = _pos + i >= _length && i < size - 1 && buf[i-1] != '\n' ? _length + 1 : _pos + i;
+
+	buf[i] = '\0';
+	if (buf[i-1] == '\n' && buf[i-2] == '\r') {
+		buf[i-2] = '\n';
+		buf[i-1] = '\0';
+	} else if (buf[i-1] == '\r' && _pos < _length && _data[_pos] == '\n') {
+		buf[i-1] = '\n';
+		_pos++;
+	}
+
+	return buf;
+}
+
+bool MemoryReadStream::eos(void) const {
+	return _pos > _length;
+}
+
+void MemoryReadStream::seek(long offset, int whence) {
+	switch (whence) {
+	case SEEK_SET:
+		_pos = offset >= 0 && offset <= _length ? offset : _length;
+		break;
+
+	case SEEK_CUR:
+		_pos += offset;
+		_pos = _pos > _length ? _length : _pos;
+		break;
+
+	case SEEK_END:
+		_pos = _length + offset;
+		_pos = _pos > _length ? _length : _pos;
+	}
+}
+
 File::File(void) : _file(NULL), _name(NULL) { }
 
 File::File(const char *filename) : _file(NULL), _name(NULL) {
@@ -265,12 +370,12 @@ void File::seek(long offset, int whence) {
 	fseek(_file, offset, whence);
 }
 
-long File::pos(void) {
+long File::pos(void) const {
 	assert(_file);
 	return ftell(_file);
 }
 
-long File::size(void) {
+long File::size(void) const {
 	long tmp, ret;
 	assert(_file);
 
@@ -284,6 +389,39 @@ long File::size(void) {
 size_t File::read(void *buf, size_t size) {
 	assert(_file);
 	return fread(buf, 1, size, _file);
+}
+
+char *File::readLine(char *buf, size_t size) {
+	int idx;
+	assert(_file);
+
+	if (!fgets(buf, size, _file)) {
+		return NULL;
+	}
+
+	idx = strlen(buf);
+
+	if (buf[idx-1] == '\n' && buf[idx-2] == '\r') {
+		buf[idx-2] = '\n';
+		buf[idx-1] = '\0';
+	} else if (buf[idx-1] == '\r') {
+		unsigned tmp = readUint8();
+
+		if (eos()) {
+			return buf;
+		} else if (tmp == '\n') {
+			buf[idx-1] = '\n';
+		} else {
+			seek(-1, SEEK_CUR);
+		}
+	}
+
+	return buf;
+}
+
+bool File::eos() const {
+	assert(_file);
+	return feof(_file);
 }
 
 DDLFile::DDLFile(void) : _grptable(NULL), _grpsize(0), _namesize(0),

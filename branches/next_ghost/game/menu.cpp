@@ -417,25 +417,20 @@ int enter_menu(char open)
 
 char *get_next_title(char control, const char *filename)
   {
-  static FILE *titles=NULL;
-  static ENCFILE fl;
+  static SeekableReadStream *titles=NULL;
   static char buffer[81];
 	char *path, *c, *p1, *p2;
 
   switch(control)
      {
      case 1:
-//            concat(path,pathtable[SR_MAP],filename);
-//            titles=enc_open(path,&fl);
 		p2 = Sys_FullPath(SR_MAP, filename);
 		p1 = (char*)alloca((strlen(p2) + 1) * sizeof(char));
 		strcpy(p1, p2);
-		titles = enc_open(p1, &fl);
+		titles = enc_open(p1);
 		if (!titles) {
-//              concat(path,pathtable[SR_DATA],filename);
-//              titles=enc_open(path,&fl);
 			p2 = Sys_FullPath(SR_DATA, filename);
-			titles = enc_open(p2, &fl);
+			titles = enc_open(p2);
 		}
 
 		if (!titles) {
@@ -443,7 +438,6 @@ char *get_next_title(char control, const char *filename)
 			closemode();
 			sprintf(popis, "Soubor nenalezen: %s ani %s\n", p1, p2);
 			Sys_ErrorBox(popis);
-//			MessageBox(NULL,popis,NULL,MB_OK|MB_ICONSTOP);
 			exit(1);
 		}
 
@@ -451,7 +445,7 @@ char *get_next_title(char control, const char *filename)
 		return (char *)titles;
      case 0:
      	if (titles != NULL) {
-		fgets(buffer, 80, titles);
+		titles->readLine(buffer, 80);
 	}
 
         c = strchr(buffer, '\n');
@@ -470,7 +464,7 @@ char *get_next_title(char control, const char *filename)
 	}
 
         return buffer;
-     case -1:if (titles!=NULL)enc_close(&fl);
+     case -1:if (titles!=NULL) delete titles;
             break;
      }
   return NULL;

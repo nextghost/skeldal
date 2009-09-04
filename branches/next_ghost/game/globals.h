@@ -31,6 +31,7 @@
 #include "libs/gui.h"
 #include "game/engine1.h"
 #include "libs/strlite.h"
+#include "libs/memman.h"
 
 #define POCET_POSTAV 6
 #define HODINA 360
@@ -1647,12 +1648,6 @@ void spell_sound(char *name);
 #define S_WINPOS_XS 320
 #define S_WINPOS_YS 300
 
-typedef struct enc_file
-  {
-  FILE *f;
-  char *to_delete;
-  }ENCFILE;
-
 void add_window(int x,int y,int xs,int ys,int texture,int border,int txtx,int txty);
 int message(int butts,char def,char canc,const char *keys,...);
 void type_text(EVENT_MSG *msg, void **data); //event procedura (parms: X,Y,TEXT,MAX_SPACE,MAX_CHARS);
@@ -1682,8 +1677,7 @@ void fletna_glob_add_note(char note);
 
 char *find_map_path(const char *filename); //vyhledava jmeno mapy v alternativnich cestach.
 				//Vysledny retezec je nutne uvolnit (free) !
-FILE *enc_open(const char *filename, ENCFILE *fil); //dekoduje a otevira TXT soubor (ENC)
-void enc_close(ENCFILE *fil); //uzavira dekodovany soubor.
+SeekableReadStream *enc_open(const char *filename); //dekoduje a otevira TXT soubor (ENC)
 int load_string_list_ex(StringList &list, const char *filename);
 
 int smlouvat_nakup(int cena,int ponuka,int posledni,int puvod,int pocet);

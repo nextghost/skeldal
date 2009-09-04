@@ -1536,138 +1536,123 @@ char *find_map_path(const char *filename)
 	return p;
 	}
 
-FILE *enc_open(const char *filename, ENCFILE *fil)
-  {
-  FILE *f,*g;
-  char *c,*d,*enc,*temp;
-  int i,j,last=0;
+SeekableReadStream *enc_open(const char *filename) {
+	File *f;
+	MemoryReadStream *ret;
+	char *c, *d, *enc, *temp;
+	int i, j, last = 0;
 
-  f=fopen(filename,"r");
-  if (f!=NULL)
-    {
-    fil->f=f;
-    fil->to_delete=NULL;
-    return f;
-    }
-  enc = (char*)alloca(strlen(filename)+5);
-  strcpy(enc,filename);
-  c=strrchr(enc,'.');
-  if (c==NULL) c=strchr(enc,0);
-  strcpy(c,".ENC");
-  f=fopen(enc,"rb");
-  if (f==NULL)
-    {
-    fil->f=NULL;
-    fil->to_delete=NULL;
-    return NULL;
-    }
-  d=strrchr(enc,'/');if(d==NULL)d=enc;else d++;
-/*
-  d=strrchr(enc,'\\');if(d==NULL)d=enc;else d++;
-  temp=malloc((i=strlen(pathtable[SR_TEMP]))+strlen(d)+1);
-  strcpy(temp,pathtable[SR_TEMP]);
-  strcat(temp,d);
-  d=temp+i;
-*/
-	temp = Sys_FullPath(SR_TEMP, d);
-	d = (char*)malloc((strlen(temp) + 1) * sizeof(char));
-	strcpy(d, temp);
-	temp = d;
-  d=strrchr(d,'.');
-  strcpy(d,".dec");
-  g=fopen(temp,"wb");
-  if (g==NULL)
-    {
-    free(temp);
-    fclose(f);
-    fil->f=NULL;
-    fil->to_delete=NULL;
-    return NULL;
-    }
-  i=getc(f);
-  while (i!=EOF)
-    {
-    j=(last+i) & 0xff;
-    last=j;
-    putc(j,g);
-    i=getc(f);
-    }
-  fclose(f);
-  fclose(g);
-  f=fopen(temp,"r");
-  if (f==NULL)
-    {
-    free(temp);
-    fil->f=NULL;
-    fil->to_delete=NULL;
-    return NULL;
-    }
-  fil->f=f;
-  fil->to_delete=temp;
-  return f;
-  }
+	f = new File(filename);
 
-void enc_close(ENCFILE *fil)
-  {
-  fclose(fil->f);
-  if (fil->to_delete!=NULL) remove(fil->to_delete);
-  free(fil->to_delete);
-  fil->f=NULL;
-  fil->to_delete=NULL;
-  }
+	if (f->isOpen()) {
+		return f;
+	}
 
+	enc = (char*)alloca(strlen(filename) + 5);
+	strcpy(enc, filename);
+	c = strrchr(enc, '.');
+	if (!c) {
+		c = strchr(enc, 0);
+	}
 
-int load_string_list_ex(StringList &list, const char *filename)
-  {
-  char c[1024],*p;
-  int i,j,lin=0;
-  FILE *f;
-  ENCFILE fl;
+	strcpy(c, ".ENC");
+	f->open(enc);
 
-  f=enc_open(filename,&fl);
-  if (f==NULL) return -1;
-  do
-     {
-     lin++;
-       do
-        {
+	if (!f->isOpen()) {
+		delete f;
+		return NULL;
+	}
+
+	i = f->size();
+	c = new char[i];
+	f->read(c, i);
+
+	for (j = 1; j < i; j++) {
+		c[j] += c[j-1];
+	}
+
+	ret = new MemoryReadStream(c, i);
+	delete[] c;
+	delete f;
+
+	return ret;
+}
+
+int load_string_list_ex(StringList &list, const char *filename) {
+	char c[1024], *p;
+	int i, j, lin = 0;
+	SeekableReadStream *f;
+
+	f = enc_open(filename);
+
+	if (!f) {
+		return -1;
+	}
+
 	do {
-		j = fgetc(f);
-	} while (j <= ' ');
-        if (j==';') while ((j=fgetc(f))!='\n' && j!=EOF);
-        if (j=='\n') lin++;
-        }
-       while (j=='\n');
-      ungetc(j,f);
-	errno = 0;
-     j=fscanf(f,"%d",&i);
-     if (j==EOF)
-        {
-        enc_close(&fl);
-        return -2;
-        }
-     if (j!=1)
-        {
-        enc_close(&fl);
-        return lin;
-        }
-     if (i==-1) break;
-     while ((j=fgetc(f))<33 && j!=EOF);
-     if (j!=EOF) ungetc(j,f);
-     if (fgets(c,1022,f)==NULL)
-        {
-        enc_close(&fl);
-        return lin;
-        }
-     p=strchr(c,'\r');if (p!=NULL) *p=0;
-     p=strchr(c,'\n');if (p!=NULL) *p=0;
-     for(p=c;*p;p++) *p=*p=='|'?'\n':*p;
-     list.replace(i, c);
-     }
-  while (1);
-  enc_close(&fl);
-  return 0;
-  }
+		lin++;
+		do {
+			do {
+				j = f->readUint8();
+			} while ((unsigned)j <= ' ');
+
+			if (j == ';') {
+				while ((j = f->readUint8()) != '\n' && !f->eos());
+			}
+
+			if (j == '\n') {
+				lin++;
+			}
+		} while (j == '\n');
+
+		c[0] = j;
+		for (i = 0; (c[i] >= '0' && c[i] <= '9') || (i == 0 && c[0] == '-');) {
+			c[++i] = (char)f->readUint8();
+		}
+		c[i] = '\0';
+		j = sscanf(c, "%d", &i);
+
+		if (f->eos()) {
+			delete f;
+			return -2;
+		}
+
+		if (j != 1) {
+			delete f;
+			return lin;
+		}
+
+		if (i == -1) {
+			break;
+		}
+
+		while ((unsigned)(j = f->readUint8()) <= ' ' && !f->eos());
+
+		if (!f->eos()) {
+			f->seek(-1, SEEK_CUR);
+		}
+
+		if (f->readLine(c, 1022) == NULL) {
+			delete f;
+			return lin;
+		}
+
+		p = strchr(c, '\n');
+
+		if (p) {
+			*p=0;
+		}
+
+		for(p = c; *p; p++) {
+			*p = *p == '|' ? '\n' : *p;
+		}
+
+		list.replace(i, c);
+	} while (1);
+
+	delete f;
+	return 0;
+}
 
 //------------------------------------------------------------
 int smlouvat_nakup(int cena,int ponuka,int posledni,int puvod,int pocet)
