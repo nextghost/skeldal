@@ -25,6 +25,7 @@
 #define _BASICOBJ_H_
 
 #include <inttypes.h>
+#include "libs/gui.h"
 
 #define MEMTEXT "Pamˆt: "
 
@@ -47,20 +48,55 @@ void *mouse_xy(EVENT_MSG *msg);
 void *show_time(EVENT_MSG *msg);
 
 // objects
-//void sample(OBJREC *o);
-void button(OBJREC *o);
-void win_label(OBJREC *o);
-void check_box(OBJREC *o);
-void radio_butts(OBJREC *o);
-void toggle_button(OBJREC *o);
-void input_line(OBJREC *o);
-void label(OBJREC *o);
-void mid_label(OBJREC *o);
-void scroll_bar_v(OBJREC *o);
-void scroll_button(OBJREC *o);
-void scroll_support();
-void scroll_bar_h(OBJREC *o);
-void button2(OBJREC *o);
-void resizer(OBJREC *o);
+class Button : public GUIObject {
+protected:
+	char *_text;
+	int _data;
+
+public:
+	Button(int id, int x, int y, int width, int height, int align, const char *text);
+	~Button(void);
+
+	void draw(int x, int y, int width, int height);
+	void event(EVENT_MSG *msg);
+};
+
+class WindowLabel : public GUIObject {
+private:
+	char *_text;
+
+public:
+	WindowLabel(int id, int x, int y, int width, int height, int align, const char *text);
+	~WindowLabel(void);
+
+	void draw(int x, int y, int width, int height);
+	void event(EVENT_MSG *msg);
+};
+
+class InputLine : public GUIObject {
+private:
+	int _length, _shift;
+	char *_str;
+
+public:
+	InputLine(int id, int x, int y, int width, int height, int align, int length, const char *str = "");
+	~InputLine(void);
+
+	void draw(int x, int y, int width, int height);
+	void event(EVENT_MSG *msg);
+
+	const char *getString(void) const { return _str; }
+};
+
+class Label : public GUIObject {
+private:
+	char *_text;
+
+public:
+	Label(int id, int x, int y, int width, int height, int align, const char *text);
+	~Label(void);
+
+	void draw(int x, int y, int width, int height);
+};
 
 #endif

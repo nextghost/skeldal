@@ -24,6 +24,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include "libs/pcx.h"
 #include <inttypes.h>
 #include "libs/bgraph.h"
@@ -34,7 +35,6 @@
 #include "libs/sound.h"
 #include "libs/strlite.h"
 #include <cctype>
-#include "libs/gui.h"
 #include "libs/basicobj.h"
 #include <ctime>
 #include "libs/mgfplay.h"
@@ -43,6 +43,7 @@
 #include <errno.h>
 #include "game/globals.h"
 #include "game/engine1.h"
+#include "game/interfac.h"
 
 #define MES_MAXSIZE 500
 #define CHECK_BOX_ANIM 6
@@ -241,14 +242,14 @@ void open_message_win(int pocet_textu,char **texts)
   y=10;
   while (text[0])
      {
-     define(-1,10,y,1,1,0,label,text);
+     define(new Label(-1, 10, y, 1, 1, 0, text));
      y+=text_height(text);
      text=strchr(text,0)+1;
      }
   wsx=(maxxs-wscelk)>>1;
   for(i=1;i<pocet_textu;i++)
      {
-     define(i-1,wsx+10,wsy,maxws+10,wsys+10,3,button,texts[i]);
+     define(new Button(i-1, wsx+10, wsy, maxws+10, wsys+10, 3, texts[i]));
      property(def_border(5,BAR_COLOR),curfont,flat_color(MSG_COLOR1),BAR_COLOR);
      on_change(terminate);
      wsx+=maxws+20;
@@ -325,7 +326,7 @@ int message(int butts,char def,char canc,const char *keys,...)
   open_message_win(butts+1,texty);
   send_message(E_ADD,E_KEYBOARD,message_keyboard,keys);
   escape();
-  id=o_aktual->id;
+  id = o_aktual->id();
   send_message(E_DONE,E_KEYBOARD,message_keyboard,keys);
   close_current();
   restore_click_map(clksav,clksav2);
@@ -776,135 +777,6 @@ typedef struct radio_butt_data
   char *texty;
   }TRADIO_BUTT_DATA;
 
-static void radio_butts_init(OBJREC *o,long *params)
-  {
-  char *c,*z;
-  long cnt=0,*q,*d,*zz;
-  int i;
-  TRADIO_BUTT_DATA *rd;
-
-  d=params;
-  for (i=0;i<*params;i++)
-     {
-     d+=1;
-     c=get_title(d);
-     cnt+=strlen(c);cnt++;
-     }
-  rd=New(TRADIO_BUTT_DATA);
-  o->userptr=(void *)rd;
-  zz=q=(long *)getmem(cnt+8);
-  *q++=1;*q++=*params;
-  d=params;
-  z=(char *)q;
-  for (i=0;i<*params;i++)
-     {
-     d+=1;
-     c=get_title(d);
-     strcpy(z,c);
-     z=strchr(z,'\0');z++;
-     }
-  rd->picture=NULL;
-  rd->texty=(char *)zz;
-  }
-
-static void radio_butts_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  int step,size,sizpul,i;
-  long *params;
-  char *texts;
-  CTL3D *clt;
-  TRADIO_BUTT_DATA *rd;
-
-  x2;
-  rd=(TRADIO_BUTT_DATA *)o->userptr;
-  params=(long *)rd->texty;
-  step=(y2-y1)/(*(params+1));
-  size=(step*9)/10;
-  sizpul=size>>1;
-  if (rd->picture==NULL)
-     {
-     rd->picture=NewArr(uint16_t,3+(size)*(y2-y1));
-     get_picture(x1,y1,size,y2-y1,rd->picture);
-     }
-  else
-     put_picture(x1,y1,rd->picture);
-
-  texts=(char *)(params+2);
-  clt=def_border(5,curcolor);
-  for (i=0;i<*(params+1);i++,y1+=step)
-     {
-     if (*(long *)o->data==i)
-        {
-        int xx1=x1+2,yy1=y1+1,xx2=x1+size-2,yy2=y1+size-3,xxs=(xx1+xx2)>>1,yys=(yy1+yy2)>>1;
-        curcolor=0x0;
-        line(xx2+1,yy1+2,xxs+2,yy2+2);
-        line(xx1+1,yys+2,xxs+1,yy2+2);
-        curcolor=RGB555(31,31,31);
-        line(xx2,yy1+1,xxs+1,yy2+1);
-        line(xx1,yys+1,xxs,yy2+1);
-        line(xx2,yy1,xxs+1,yy2);
-        line(xx1,yys,xxs,yy2);
-        }
-     draw_border(x1+1,y1+1,size-2,size-2,clt);
-     if (*params)
-        {
-        set_aligned_position(x1+size+5,y1+sizpul,0,1,texts);
-        outtext(texts);
-        texts=strchr(texts,'\0')+1;
-        }
-     }
-  }
-
-static void radio_butts_event(EVENT_MSG *msg,OBJREC *o) {
-	MS_EVENT *ms;
-	int sel;
-
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (ms->event_type & 0x02) {
-			TRADIO_BUTT_DATA *rd;
-			long *params;
-
-			rd = (TRADIO_BUTT_DATA *)o->userptr;
-			params = (long *)rd->texty;
-			sel = (ms->y - o->locy) / (o->ys / (*(params+1)));
-
-			if (sel >= *(params+1)) {
-				sel = *(params+1) - 1;
-			}
-
-			*(long *)o->data = sel;
-			*params = 0;
-			redraw_object(o);
-			*params = 1;
-			set_change();
-		}
-	}
-}
-
-static void radio_butts_done(OBJREC *o)
-  {
-  TRADIO_BUTT_DATA *rd;
-
-  rd=(TRADIO_BUTT_DATA *)o->userptr;
-  free(rd->picture);
-  free(rd->texty);
-  };
-
-void radio_butts_gr(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())radio_butts_init;
-  o->runs[1] = (void (*)())radio_butts_draw;
-  o->runs[2] = (void (*)())radio_butts_event;
-  o->runs[3] = (void (*)())radio_butts_done;
-  o->datasize = 4;
-  }
-
 /*
 char ask_test(char *text,char def)
   {
@@ -1097,31 +969,54 @@ void check_number_1phase(char *exename) //check serial number!
   }
 
 */
-static void skeldal_checkbox_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  uint16_t *obr;
-  char *data;
-  int phase;
 
-  y2,x2;
-  data=(char *)o->data;
-  obr = (uint16_t*)ablock(H_CHECKBOX);
-  if (o->userptr==NULL)
-     {
-     o->userptr=NewArr(uint16_t,obr[0]*obr[0]+3);
-     obr = (uint16_t*)ablock(H_CHECKBOX);
-     get_picture(x1, y1, obr[0], obr[0], (uint16_t*)o->userptr);
-     }
-  else
-     put_picture(x1, y1, (uint16_t*)o->userptr);
-  phase=(CHECK_BOX_ANIM-(*data>>1))*20;
-  put_8bit_clipped(obr,Screen_GetAddr()+x1+y1*Screen_GetXSize(),phase,obr[0],obr[0]);
-  }
+void animate_checkbox(int first_id, int last_id, int step) {
+	int i;
 
-static void skeldal_checkbox_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-	
+	for(i = first_id; i <= last_id; i += step) {
+		WINDOW *w;
+		SkeldalCheckBox *cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, i, &w));
+
+		if (!cb) {
+			continue;
+		}
+
+		cb->nextFrame();
+		redraw_object(cb);
+	}
+}
+
+SkeldalCheckBox::SkeldalCheckBox(int id, int x, int y, int width, int height,
+	int align, int value) : GUIObject(id, x, y, width, height, align),
+	_phase(value ? 1 : 0), _background(NULL) {
+
+}
+
+SkeldalCheckBox::~SkeldalCheckBox(void) {
+	if (_background) {
+		delete[] _background;
+	}
+}
+
+void SkeldalCheckBox::draw(int x, int y, int width, int height) {
+	uint16_t *pic;
+	int phase;
+
+	pic = (uint16_t*)ablock(H_CHECKBOX);
+	if (!_background) {
+		_background = new uint16_t[pic[0] * pic[0] + 3];
+		get_picture(x, y, pic[0], pic[0], _background);
+	} else {
+		put_picture(x, y, _background);
+	}
+
+	phase = (CHECK_BOX_ANIM - (_phase >> 1)) * 20;
+	put_8bit_clipped(pic, Screen_GetAddr() + x + y * Screen_GetXSize(), phase, pic[0], pic[0]);
+}
+
+void SkeldalCheckBox::event(EVENT_MSG *msg) {
 	if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -1129,90 +1024,65 @@ static void skeldal_checkbox_event(EVENT_MSG *msg, OBJREC *o) {
 		va_end(args);
 
 		if (ms->event_type & 0x2) {
-			char *data = (char *)o->data;
-
-			*data ^= 1;
+			_phase ^= 1;
 			set_change();
 		}
 	}
 }
 
-void animate_checkbox(int first_id,int last_id,int step)
-  {
-  int i;
+void SkeldalCheckBox::nextFrame(void) {
+	if ((_phase & 1) && (_phase >> 1) < CHECK_BOX_ANIM) {
+		_phase += 2;
+	} else if (~_phase & 1 && (_phase >> 1) > 0) {
+		_phase -= 2;
+	}
+}
 
-  for(i=first_id;i<=last_id;i+=step)
-     {
-     char c;
-     char pos;
-
-     c=f_get_value(0,i);
-     pos=c>>1;
-     if (c & 1 && pos<CHECK_BOX_ANIM)
-        {
-        c+=2;
-        c_set_value(0,i,c);
-        }
-     else if (~c & 1 && pos>0)
-        {
-        c-=2;
-        c_set_value(0,i,c);
-        }
-     }
-  }
-
-void skeldal_checkbox(OBJREC *o)
-  {
-//  o->runs[0]=skeldal_checkbox_init;
-  o->runs[1] = (void (*)())skeldal_checkbox_draw;
-  o->runs[2] = (void (*)())skeldal_checkbox_event;
-  o->datasize=1;
-  }
+void SkeldalCheckBox::setValue(int value) {
+	_phase = (_phase & ~1) | (value ? 1 : 0);
+}
 
 //------------------------------------------
 
-static void setup_button_init(OBJREC *o,char **params)
-  {
-  char **d;
-  d = (char**)NewArr(void *,2);
-  d[0] = (char*)NewArr(char,strlen(*params)+1);
-  strcpy(d[0],*params);
-  d[1]=NULL;
-  o->userptr = d;
-  *(char *)o->data=0;
-  }
+SetupOkButton::SetupOkButton(int id, int x, int y, int width, int height,
+	int align, const char *text) : GUIObject(id, x, y, width, height,
+	align), _text(NULL), _background(NULL), _toggle(0) {
 
-static void setup_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  char *s;
-  char data;
-  void **z;
-  uint16_t *pic;
-  uint16_t *bb;
-  int x,y;
+	_text = new char[strlen(text) + 1];
+	strcpy(_text, text);
+}
 
-  z=(void **)o->userptr;
-  s = (char*)z[0];
-  bb = (uint16_t*)ablock(H_SETUPOK);
-  pic = (uint16_t*)z[1];
-  if (pic==NULL)
-     {
-     pic=NewArr(uint16_t,bb[0]*bb[1]+3);
-     bb = (uint16_t*)ablock(H_SETUPOK);
-     get_picture(x1,y1,bb[0],bb[1],pic);
-     }
-  data=*(char *)o->data;
-  if (data) put_picture(x1,y1,bb); else if (z[1]!=NULL) put_picture(x1,y1,pic);
-  x=(x1+10+x2)>>1;y=(y1+y2)>>1;
-  set_aligned_position(x,y,1,1,s);
-  outtext(s);
-  z[1]=pic;
-  }
+SetupOkButton::~SetupOkButton(void) {
+	delete[] _text;
 
-static void setup_button_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
+	if (_background) {
+		delete[] _background;
+	}
+}
 
+void SetupOkButton::draw(int x, int y, int width, int height) {
+	uint16_t *bb = (uint16_t*)ablock(H_SETUPOK);
+
+	if (!_background) {
+		_background = new uint16_t[bb[0] * bb[1] + 3];
+		get_picture(x, y, bb[0], bb[1], _background);
+	}
+
+	if (_toggle) {
+		put_picture(x, y, bb);
+	} else {
+		put_picture(x, y, _background);
+	}
+
+	x = x + (10 + width) / 2;
+	y = y + height / 2;
+	set_aligned_position(x, y, 1, 1, _text);
+	outtext(_text);
+}
+
+void SetupOkButton::event(EVENT_MSG *msg) {
 	if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -1220,87 +1090,60 @@ static void setup_button_event(EVENT_MSG *msg, OBJREC *o) {
 		va_end(args);
 
 		if (ms->event_type & 0x2) {
-			*(char *)o->data = 1;
-			redraw_object(o);
+			_toggle = 1;
+			redraw_object(this);
 		} else if (ms->event_type & 0x4) {
-			*(char *)o->data = 0;
-			redraw_object(o);
+			_toggle = 0;
+			redraw_object(this);
 			set_change();
 		}
-	} else if (msg->msg==E_LOST_FOCUS) {
-		*(char *)o->data=0;
-		redraw_object(o);
+	} else if (msg->msg == E_LOST_FOCUS) {
+		_toggle = 0;
+		redraw_object(this);
 	}
 }
 
-static void setup_button_done(OBJREC *o)
-  {
-  void **z;
-
-  z = (void**)o->userptr;
-  free(z[0]);
-  free(z[1]);
-  free(z);
-  o->userptr=NULL;
-  }
-
-void setup_ok_button(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())setup_button_init;
-  o->runs[1] = (void (*)())setup_button_draw;
-  o->runs[2] = (void (*)())setup_button_event;
-  o->runs[3] = (void (*)())setup_button_done;
-  o->datasize = 1;
-  }
-
 //-----------------------------------------------------
 
-static void skeldal_soupak_init (OBJREC *o,int *params)
-  {
-  void **d;
-  d=NewArr(void *,2);
-  d[0]=(void *)*params;
-  d[1]=NULL;
-  o->userptr=d;
-  }
+SkeldalSlider::SkeldalSlider(int id, int x, int y, int width, int height,
+	int align, int range, int value) : GUIObject(id, x, y, width, height,
+	align), _range(range), _background(NULL), _value(value) {
 
-static void skeldal_soupak_draw (int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  void **z;
-  int rozsah;
-  int value;
-  uint16_t *pic;
-  uint16_t *back;
-  int total;
-  int xpos;
+	_value = _value < 0 ? 0 : _value;
+	_value = _value > _range ? _range : _value;
+}
 
-  z = (void**)o->userptr;
-  rozsah=(int)z[0];
-  pic = (uint16_t*)ablock(H_SOUPAK);
-  total=y2-y1-pic[1];
-  value=*(int *)o->data;
-  xpos=y2-pic[1]-value*total/rozsah;
-  back = (uint16_t*)z[1];
-  if (back==NULL)
-     {
-     back=NewArr(uint16_t,(x2-x1+1)*(y2-y1+1)+3);
-     get_picture(x1,y1,(x2-x1+1),(y2-y1+1),back);
-     z[1]=back;
-     pic = (uint16_t*)ablock(H_SOUPAK);
-     }
-  else
-     put_picture(x1,y1,back);
-  put_picture(x1,xpos,pic);
-  }
+SkeldalSlider::~SkeldalSlider(void) {
+	if (_background) {
+		delete[] _background;
+	}
+}
 
-static void skeldal_soupak_event(EVENT_MSG *msg, OBJREC *o) {
+void SkeldalSlider::draw(int x, int y, int width, int height) {
+	uint16_t *pic;
+	int total;
+	int xpos;
+
+	pic = (uint16_t*)ablock(H_SOUPAK);
+	total = height - pic[1];
+	xpos = y + height - pic[1] - _value * total / _range;
+
+	if (!_background) {
+		_background = new uint16_t[(width + 1) * (height + 1) + 3];
+		get_picture(x, y, width + 1, height + 1, _background);
+	} else {
+		put_picture(x, y, _background);
+	}
+
+	put_picture(x, xpos, pic);
+}
+
+void SkeldalSlider::event(EVENT_MSG *msg) {
 	if (msg->msg == E_MOUSE) {
 		MS_EVENT *ms;
-		int *z;
-		int rozsah;
 		int total;
 		uint16_t *pic;
-		int ypos, newvalue;
+		int ypos;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -1308,50 +1151,25 @@ static void skeldal_soupak_event(EVENT_MSG *msg, OBJREC *o) {
 		va_end(args);
 
 		if (ms->tl1) {
-			z = (int*)o->userptr;
-			rozsah = z[0];
 			pic = (uint16_t*)ablock(H_SOUPAK);
-			total = o->ys - pic[1];
-			ypos = ms->y - o->locy;
+			total = _height - pic[1];
+			ypos = ms->y - _locy;
 			ypos += pic[1] / 2;
-			newvalue = (o->ys - ypos) * rozsah / total;
+			_value = (_height - ypos) * _range / total;
 
-			if (newvalue < 0) {
-				newvalue = 0;
+			if (_value < 0) {
+				_value = 0;
 			}
 
-			if (newvalue > rozsah) {
-				newvalue = rozsah;
+			if (_value > _range) {
+				_value = _range;
 			}
 
-			*(int *)o->data = newvalue;
-			redraw_object(o);
+			redraw_object(this);
 			set_change();
 		}
 	}
 }
-
-static void skeldal_soupak_done(OBJREC *o)
-  {
-  void **z;
-
-  z = (void**)o->userptr;
-  free(z[1]);
-  free(z);
-  o->userptr=NULL;
-  }
-
-
-
-void skeldal_soupak(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())skeldal_soupak_init;
-  o->runs[1] = (void (*)())skeldal_soupak_draw;
-  o->runs[2] = (void (*)())skeldal_soupak_event;
-  o->runs[3] = (void (*)())skeldal_soupak_done;
-  o->datasize=4;
-  }
-
 
 static char fletna_str[13];
 static char pos=0;
@@ -1690,7 +1508,7 @@ int smlouvat_prodej(int cena,int ponuka,int posledni,int puvod,int pocet)
   return 5;
   }
 
-static void smlouvat_enter(EVENT_MSG *msg, OBJREC *o) {
+static void smlouvat_enter(EVENT_MSG *msg) {
 	if (msg->msg == E_KEYBOARD) {
 		char c;
 		va_list args;
@@ -1723,18 +1541,22 @@ int smlouvat(int cena,int puvod,int pocet,int money,char mode)
 
   cena,puvod,pocet,money;text[0]=0;text[1]=0;
   add_window(170,130,300,150,H_IDESKA,3,20,20);
-  define(-1,10,15,1,1,0,label,texty[241]);
+  define(new Label(-1, 10, 15, 1, 1, 0, texty[241]));
 //  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
   sprintf(buffer, "%d", cena);
-  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,buffer);
+  set_font(H_FBOLD,RGB555(31,31,31));
+  define(new Label(-1, 150, 15, 100, 13, 0, buffer));
   set_font(H_FBOLD,MSG_COLOR1);
-  define(-1,10,30,1,1,0,label,texty[238]);
-  define(10,150,30,100,13,0,input_line,8);
+  define(new Label(-1, 10, 30, 1, 1, 0, texty[238]));
+  define(new InputLine(10, 150, 30, 100, 13, 0, 8));
   property(def_border(5,BAR_COLOR),NULL,NULL,0);
-  set_default("");
-    on_event((void (*)())smlouvat_enter);
-  define(20,20,20,80,20,2,button,texty[239]);property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);on_change(terminate);
-  define(30,110,20,80,20,2,button,texty[230]);property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);on_change(terminate);
+    on_event(smlouvat_enter);
+  define(new Button(20, 20, 20, 80, 20, 2, texty[239]));
+  property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);
+  on_change(terminate);
+  define(new Button(30, 110, 20, 80, 20, 2, texty[230]));
+  property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);
+  on_change(terminate);
   do
     {
     redraw_window();
@@ -1746,10 +1568,13 @@ int smlouvat(int cena,int puvod,int pocet,int money,char mode)
     goto_control(10);
     escape();
     temp1=1;
-    if (o_aktual->id==20) cena=-1;
+    if (o_aktual->id() == 20) cena=-1;
     else
       {
-      get_value(0,10,buffer);
+      WINDOW *wi;
+      InputLine *line = dynamic_cast<InputLine*>(find_object_desktop(0, 10, &wi));
+      assert(line);
+      strcpy(buffer, line->getString());
       if (buffer[0]==0) c=texty[240];
       else
         {

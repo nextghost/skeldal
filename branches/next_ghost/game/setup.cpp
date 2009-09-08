@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 #include "libs/event.h"
 #include "libs/memman.h"
 #include "libs/devices.h"
@@ -35,6 +36,7 @@
 #include "game/globals.h"
 #include "libs/gui.h"
 #include "libs/basicobj.h"
+#include "game/interfac.h"
 
 extern char enable_sort;
 extern char autoattack;
@@ -63,36 +65,61 @@ static void checkbox_animator(THE_TIMER *t)
 
 static int effects[]={SND_GVOLUME,SND_MUSIC,SND_GFX,SND_TREBL,SND_BASS,SND_XBASS};
 
-static void do_setup_change()
-  {
-  int c;
+static void do_setup_change() {
+	SkeldalCheckBox *cb;
+	SkeldalSlider *slider;
 
-  c=f_get_value(0,o_aktual->id);
-  switch (o_aktual->id)
-     {
-     case 10:Sound_SetEffect(SND_SWAP,c & 1);break;
-     case 20:Sound_SetEffect(SND_OUTFILTER,c & 1);break;
-     default:Sound_SetEffect(effects[o_aktual->id/10-20],c);break;
-     }
-  }
+	switch (o_aktual->id()) {
+	case 10:
+		cb = dynamic_cast<SkeldalCheckBox*>(o_aktual);
+		assert(cb);
+		Sound_SetEffect(SND_SWAP, cb->getValue());
+		break;
 
-static void change_zoom()
-  {
-  int id=o_aktual->id;
-  int i;
+	case 20:
+		cb = dynamic_cast<SkeldalCheckBox*>(o_aktual);
+		assert(cb);
+		Sound_SetEffect(SND_OUTFILTER, cb->getValue());
+		break;
 
-  for(i=30;i<60;i+=10) c_set_value(0,i,f_get_value(0,i) & ~1 | (i==id));
-  zoom_speed((id-30)/10);
-  }
+	default:
+		slider = dynamic_cast<SkeldalSlider*>(o_aktual);
+		if (slider) {
+			Sound_SetEffect(effects[o_aktual->id() / 10 - 20], slider->getValue());
+		}
+		break;
+	}
+}
 
-static void change_turn()
-  {
-  int id=o_aktual->id;
-  int i;
+static void change_zoom() {
+	int id = o_aktual->id();
+	int i;
+	SkeldalCheckBox *cb;
+	WINDOW *wi;
 
-  for(i=60;i<90;i+=10) c_set_value(0,i,f_get_value(0,i) & ~1 | (i==id));
-  turn_speed((id-60)/10);
-  }
+	for(i = 30; i < 60; i += 10) {
+		cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, i, &wi));
+		assert(cb);
+		cb->setValue(i == id ? 1 : 0);
+	}
+
+	zoom_speed((id - 30) / 10);
+}
+
+static void change_turn() {
+	int id = o_aktual->id();
+	int i;
+	SkeldalCheckBox *cb;
+	WINDOW *wi;
+
+	for (i = 60; i < 90; i += 10) {
+		cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, i, &wi));
+		assert(cb);
+		cb->setValue(i == id ? 1 : 0);
+	}
+
+	turn_speed((id-60)/10);
+}
 
 static void unwire_setup();
 
@@ -121,21 +148,34 @@ static void wire_setup()
   SEND_LOG("(GAME) Starting setup",0,0);
   }
 
-static void unwire_setup()
-  {
-  show_names=f_get_value(0,90) & 1;
-  enable_sort=f_get_value(0,100) & 1;
-  autoattack=f_get_value(0,110) & 1;
-  autosave_enabled=f_get_value(0,120) & 1;
-  level_preload=f_get_value(0,130) & 1;
-  delete_from_timer(TM_CHECKBOX);
-  Sound_MixBack(32768);
-  close_current();
-  send_message(E_DONE,E_KEYBOARD,setup_keyboard);
-  wire_proc();
-  cancel_render=1;
-  SEND_LOG("(GAME) Setup closed",0,0);
-  }
+static void unwire_setup() {
+	SkeldalCheckBox *cb;
+	WINDOW *wi;
+
+	cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, 90, &wi));
+	assert(cb);
+	show_names = cb->getValue();
+	cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, 100, &wi));
+	assert(cb);
+	enable_sort = cb->getValue();
+	cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, 110, &wi));
+	assert(cb);
+	autoattack = cb->getValue();
+	cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, 120, &wi));
+	assert(cb);
+	autosave_enabled = cb->getValue();
+	cb = dynamic_cast<SkeldalCheckBox*>(find_object_desktop(0, 130, &wi));
+	assert(cb);
+	level_preload = cb->getValue();
+
+	delete_from_timer(TM_CHECKBOX);
+	Sound_MixBack(32768);
+	close_current();
+	send_message(E_DONE, E_KEYBOARD, setup_keyboard);
+	wire_proc();
+	cancel_render = 1;
+	SEND_LOG("(GAME) Setup closed", 0, 0);
+}
 
 char exit_setup(int id,int xa,int ya,int xr,int yr)
   {
@@ -149,13 +189,6 @@ T_CLK_MAP setup[]=
   {-1,0,0,639,14,exit_setup,2,H_MS_DEFAULT},
   {-1,0,15,639,479,exit_setup,0x8,H_MS_DEFAULT},
   };
-
-
-void skeldal_checkbox(OBJREC *);
-void setup_ok_button(OBJREC *);
-void skeldal_soupak(OBJREC *);
-
-
 
 
 void new_setup()
@@ -176,45 +209,45 @@ void new_setup()
   w=create_window(0,SCREEN_OFFLINE,639,359,0,&ctl);
   w->draw_event=show_setup_desktop;
   desktop_add_window(w);
-  define(10,50,270,190,20,0,skeldal_checkbox);  c_default(Sound_GetEffect(SND_SWAP));   on_change(do_setup_change);
+  define(new SkeldalCheckBox(10, 50, 270, 190, 20, 0, Sound_GetEffect(SND_SWAP)));
+  on_change(do_setup_change);
   if (Sound_CheckEffect(SND_OUTFILTER))
      {
-     define(20,50,300,190,20,0,skeldal_checkbox);c_default(Sound_GetEffect(SND_OUTFILTER));
+     define(new SkeldalCheckBox(20, 50, 300, 190, 20, 0, Sound_GetEffect(SND_OUTFILTER)));
         on_change(do_setup_change);
      }
 
-  define(30,410,60,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==0);
+  define(new SkeldalCheckBox(30, 410, 60, 90, 20, 0, zoom_speed(-1) == 0));
   on_change(change_zoom);
-  define(40,410,90,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==1);on_change(change_zoom);
-  define(50,410,120,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==2);on_change(change_zoom);
+  define(new SkeldalCheckBox(40, 410, 90, 90, 20, 0, zoom_speed(-1) == 1));
+  on_change(change_zoom);
+  define(new SkeldalCheckBox(50, 410, 120, 90, 20, 0, zoom_speed(-1) == 2));
+  on_change(change_zoom);
 
-  define(60,510,60,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==0);on_change(change_turn);
-  define(70,510,90,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==1);on_change(change_turn);
-  define(80,510,120,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==2);on_change(change_turn);
+  define(new SkeldalCheckBox(60, 510, 60, 90, 20, 0, turn_speed(-1) == 0));
+  on_change(change_turn);
+  define(new SkeldalCheckBox(70, 510, 90, 90, 20, 0, turn_speed(-1) == 1));
+  on_change(change_turn);
+  define(new SkeldalCheckBox(80, 510, 120, 90, 20, 0, turn_speed(-1) == 2));
+  on_change(change_turn);
 
-  for(i=0;i<5;i++)
-     {
-     define((i+9)*10,410,180+i*30,190,20,0,skeldal_checkbox);
-     switch(i)
-        {
-        case 0:c_default(show_names);break;
-        case 1:c_default(enable_sort);break;
-        case 2:c_default(autoattack);break;
-        case 3:c_default(autosave_enabled);break;
-        case 4:c_default(level_preload);break;
-        }
-     }
+     define(new SkeldalCheckBox(90, 410, 180, 190, 20, 0, show_names));
+     define(new SkeldalCheckBox(100, 410, 210, 190, 20, 0, enable_sort));
+     define(new SkeldalCheckBox(110, 410, 240, 190, 20, 0, autoattack));
+     define(new SkeldalCheckBox(120, 410, 270, 190, 20, 0, autosave_enabled));
+     define(new SkeldalCheckBox(130, 410, 300, 190, 20, 0, level_preload));
 
   for(i=0;i<sizeof(textc)/sizeof(int);i++)
-     define(-1,textxp[i],textyp[i]-1,1,1,0,label,texty[textc[i]]);
+     define(new Label(-1,textxp[i],textyp[i]-1,1,1,0,texty[textc[i]]));
 
   for(i=0;i<sizeof(effects)/sizeof(int);i++)
      if (Sound_CheckEffect(effects[i]))
        {
-       define(200+i*10,50+i*60,30,30,200,0,skeldal_soupak,effects[i]==SND_MUSIC?127:255);c_default(Sound_GetEffect(effects[i]));
+       define(new SkeldalSlider(200+i*10, 50+i*60, 30, 30, 200, 0, effects[i]==SND_MUSIC?127:255, Sound_GetEffect(effects[i])));
        on_change(do_setup_change);
        }
-  define(300,559,336,81,21,0,setup_ok_button,texty[174]);on_change(unwire_setup);
+  define(new SetupOkButton(300,559,336,81,21,0,texty[174]));
+  on_change(unwire_setup);
   property(NULL,(uint16_t*)ablock(H_FTINY),&color_topbar,0);
   redraw_window();
   add_to_timer(TM_CHECKBOX,4,-1,checkbox_animator);

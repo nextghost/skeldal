@@ -72,105 +72,35 @@ CTL3D *def_border(int btype,int color)
   return &ctl;
   }
 
-void sample_init(OBJREC *o,char *title)
-  {
-  title=get_title(title);
-  o->userptr=(void *)getmem(strlen(title)+1);
-  strcpy((char *)o->userptr,title);
-  }
+//------------------------------------------
 
+Button::Button(int id, int x, int y, int width, int height, int align,
+	const char *text) : GUIObject(id, x, y, width, height, align),
+	_text(NULL), _data(0) {
 
-void sample_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  x2;y2;
-  position(x1,y1);
-  outtext((char *)o->userptr);
-  }
-
-void mid_label_draw(int x1,int y1,int x2, int y2,OBJREC *o)
-  {
-  x2;y2;
-  set_aligned_position((x1+x2)/2,y1,1,0,(char *)o->userptr);
-  outtext((char *)o->userptr);
-  }
-
-
-void sample_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (ms->tl1) {
-			exit_wait = 1;
-		}
-	}
+	_text = new char[strlen(text) + 1];
+	strcpy(_text, text);
 }
 
+Button::~Button(void) {
+	delete[] _text;
+}
 
-void sample(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())sample_init;
-  o->runs[1] = (void (*)())sample_draw;
-  o->runs[2] = (void (*)())sample_event;
-  //o->runs[3]=sample_done;
-  }
+void Button::draw(int x, int y, int width, int height) {
+	CTL3D ctl;
 
-//------------------------------------------
-void button_init(OBJREC *o,char *title)
-  {
-  char *v;
-  title=get_title(title);
-  o->userptr=(void *)getmem(strlen(title)+1);
-  strcpy((char *)o->userptr,title);
-  v=(char *)o->data;
-  *v=0;
-  }
+	bar(x, y, x + width, y + height);
+	highlight(&ctl, _color);
+	ctl.bsize = 2 - _data;
+	ctl.ctldef = 3 * _data;
+	draw_border(x + 2, y + 2, width - 4, height - 4, &ctl);
+	set_aligned_position(x + width / 2 + _data * 2, y + height / 2 + _data * 2, 1, 1, _text);
+	outtext(_text);
+}
 
-void button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  CTL3D x;
-  char w;
-
-  bar(x1,y1,x2,y2);
-  highlight(&x,o->color);
-  w=*(char *)o->data;
-  x.bsize=2-w;
-  x.ctldef=(w<<1)+w;
-  draw_border(x1+2,y1+2,x2-x1-4,y2-y1-4,&x);
-  set_aligned_position(((x1+x2)>>1)+(w<<1),((y1+y2)>>1)+(w<<1),1,1,(char *)o->userptr);
-  outtext((char *)o->userptr);
-  }
-
-void button_draw2(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  CTL3D x;
-  char w;
-
-  bar(x1,y1,x2,y2);
-  highlight(&x,o->color);
-  w=*(char *)o->data;
-  x.bsize=1;
-  x.ctldef=(w<<1)+w;
-  draw_border(x1+1,y1+1,x2-x1-2,y2-y1-2,&x);
-  if (!w)
-  {
-  curcolor=x.light;hor_line(x1,y1,x2);hor_line(x1,y1+1,x2);
-  curcolor=x.shadow;hor_line(x1,y2,x2);hor_line(x1,y2-1,x2);
-  }
-  set_aligned_position(((x1+x2)>>1)+(w<<1),((y1+y2)>>1)+(w<<1),1,1,(char *)o->userptr);
-  outtext((char *)o->userptr);
-  }
-
-
-void button_event(EVENT_MSG *msg,OBJREC *o) {
-	MS_EVENT *ms;
-	
+void Button::event(EVENT_MSG *msg) {
 	if (msg->msg == E_MOUSE) {
+		MS_EVENT *ms;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -179,42 +109,21 @@ void button_event(EVENT_MSG *msg,OBJREC *o) {
 
 		if (ms->event_type & 0x06) {
 			if (ms->tl1) {
-				*(char *)o->data = 1;
-				redraw_object(o);
-			} else if (*(char *)o->data) {
-				*(char *)o->data = 0;
-				redraw_object(o);
+				_data = 1;
+				redraw_object(this);
+			} else if (_data) {
+				_data = 0;
+				redraw_object(this);
 				set_change();
 			}
 		}
 	}
-	
-	if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS) {
-		*(char *)o->data = 0;
-		redraw_object(o);
+
+	if (msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) {
+		_data = 0;
+		redraw_object(this);
 	}
 }
-
-
-
-void button(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())button_init;
-  o->runs[1] = (void (*)())button_draw;
-  o->runs[2] = (void (*)())button_event;
-  //o->runs[3]=button_done;
-  o->datasize=1;
-  }
-
-void button2(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())button_init;
-  o->runs[1] = (void (*)())button_draw2;
-  o->runs[2] = (void (*)())button_event;
-  //o->runs[3]=button_done;
-  o->datasize=1;
-  }
-
 
 //------------------------------------------
 
@@ -380,13 +289,6 @@ void *show_time(EVENT_MSG *msg) {
 */
 //------------------------------------------
 
-void win_label_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  bar(x1,y1,x2,y2);
-  set_aligned_position(x1+5,(y1+y2)/2,0,1,(char *)o->userptr);
-  outtext((char *)o->userptr);
-  }
-
 void xor_rectangle(int x,int y,int xs,int ys)
   {
   curcolor=RGB555(31,31,31);
@@ -412,7 +314,7 @@ void xor_rectangle(int x,int y,int xs,int ys)
      }
   }
 
-void win_label_move(EVENT_MSG *msg,OBJREC *o) {
+void win_label_move(EVENT_MSG *msg) {
 	MS_EVENT *ms;
 	static char run = 0;
 	static uint16_t xref, yref;
@@ -485,293 +387,104 @@ void win_label_move(EVENT_MSG *msg,OBJREC *o) {
 	return;
 }
 
+WindowLabel::WindowLabel(int id, int x, int y, int width, int height, int align,
+	const char *text) : GUIObject(id, x, y, width, height, align),
+	_text(NULL) {
 
-void win_label(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())sample_init;
-  o->runs[1] = (void (*)())win_label_draw;
-  o->runs[2] = (void (*)())win_label_move;
-  //o->runs[3]=button_done;
-  o->datasize=0;
-  }
+	_text = new char[strlen(text) + 1];
+	strcpy(_text, text);
+}
+
+WindowLabel::~WindowLabel(void) {
+	delete[] _text;
+}
+
+void WindowLabel::draw(int x, int y, int width, int height) {
+	bar(x, y, x + width, y + height);
+	set_aligned_position(x + 5, y + height / 2, 0, 1, _text);
+	outtext(_text);
+}
+
+void WindowLabel::event(EVENT_MSG *msg) {
+	win_label_move(msg);
+}
 
 //------------------------------------------
 
-void check_box_draw(int x1,int y1, int x2, int y2,OBJREC *o)
-  {
-  int x3;
+//------------------------------------------
 
-  x1+=1;y1+=1;x2-=1;y2-=1;
-  x3=x1+(y2-y1);
-  draw_border(x1,y1,x3-x1,y2-y1,def_border(4,curcolor));
-  bar(x1,y1,x3,y2);
-  if (*(char *)o->data & 1)
-     {
-     curcolor=0x0000;
-     line(x1,y1,x3,y2);line(x1+1,y1,x3,y2-1);line(x1,y1+1,x3-1,y2);
-     line(x1,y2,x3,y1);line(x1+1,y2,x3,y1+1);line(x1,y2-1,x3-1,y1);
-     }
-  if (*(char *)o->data & 0x80)
-     {
-     curcolor=0x0000;
-     hor_line(x1,y1,x3);ver_line(x3,y1,y2);
-     ver_line(x1,y1,y2);hor_line(x1,y2,x3);
-     }
-  else
-     {
-     set_aligned_position(x3+5,(y2+y1)/2,0,1,(char *)o->userptr);
-     outtext((char *)o->userptr);
-     }
-  }
+InputLine::InputLine(int id, int x, int y, int width, int height, int align,
+	int length, const char *str) : GUIObject(id, x, y, width, height,
+	align), _length(length), _shift(0), _str(NULL) {
 
-void check_box_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
+	_str = new char[_length + 1];
+	memset(_str, 0, (_length + 1) * sizeof(char));
+	strcpy(_str, str);
+}
 
-	if (msg->msg == E_MOUSE) {
-		va_list args;
+InputLine::~InputLine(void) {
+	delete[] _str;
+}
 
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
+void InputLine::draw(int x, int y, int width, int height) {
+	char d[2] = " ", *str = _str;
+	int tw;
+	int len;
+	int shift;
 
-		if (ms->event_type & 0x06) {
-			if (ms->tl1) {
-				*(char *)o->data |= 0x80;
-				redraw_object(o);
-			} else if (*(char *)o->data) {
-				*(char *)o->data ^= 0x1;
-				*(char *)o->data &= 0x1;
-				redraw_object(o);
-				set_change();
-			}
-		}
+	bar(x, y, x + width, y + height);
+	position(x, y);
+
+	if (!*str) {
+		return;
 	}
 
-	if (msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) {
-		*(char *)o->data &= 0x1;
-		redraw_object(o);
+	len = strlen(str);
+	shift = _shift;
+
+	if (shift >= len) {
+		shift = 0;
+	}
+
+	str += shift;
+	d[0] = *str++;
+	tw = x + text_width(d);
+
+	while (tw < x + width) {
+		outtext(d);
+
+		if (!*str) {
+			break;
+		}
+
+		d[0] = *str++;
+		tw = writeposx + text_width(d);
 	}
 }
 
-
-void check_box(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())sample_init;
-  o->runs[1] = (void (*)())check_box_draw;
-  o->runs[2] = (void (*)())check_box_event;
-  o->datasize=4;
-  }
-
-//------------------------------------------
-void radio_butts_init(OBJREC *o,long *params)
-  {
-  char *c,*z;
-  long cnt=0,*q,*d;
-  int i;
-
-  d=params;
-  for (i=0;i<*params;i++)
-     {
-     d+=1;
-     c=get_title(d);
-     cnt+=strlen(c);cnt++;
-     }
-  q=(long *)getmem(cnt+8);
-  o->userptr=(void *)q;
-  *q++=1;*q++=*params;
-  d=params;
-  z=(char *)q;
-  for (i=0;i<*params;i++)
-     {
-     d+=1;
-     c=get_title(d);
-     strcpy(z,c);
-     z=strchr(z,'\0');z++;
-     }
-  }
-
-void radio_butts_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  int step,size,sizpul,i,cr;
-  long *params;
-  char *texts;
-  CTL3D ctl;
-
-  cr=curcolor;
-  highlight(&ctl,curcolor);
-  params=(long *)o->userptr;
-  if (*params) bar(x1,y1,x2,y2);
-  step=(y2-y1)/(*(params+1));
-  size=(step*9)/10;
-  sizpul=size>>1;
-
-  texts=(char *)(params+2);
-  for (i=0;i<*(params+1);i++,y1+=step)
-     {
-     int j;
-     curcolor=ctl.shadow;
-     line(x1+sizpul,y1,x1,y1+sizpul);
-     line(x1,y1+sizpul,x1+sizpul,y1+size-1);
-     curcolor=ctl.light;
-     line(x1+sizpul+1,y1,x1+size,y1+sizpul);
-     line(x1+size,y1+sizpul,x1+sizpul+1,y1+size-1);
-     if (*(long *)o->data==i) curcolor=0;else curcolor=cr;
-     for (j=0;j<3;j++)
-        {
-        hor_line(x1+sizpul-j,y1+sizpul-2+j,x1+sizpul+j);
-        hor_line(x1+sizpul-j,y1+sizpul+2-j,x1+sizpul+j);
-        }
-     if (*params)
-        {
-        set_aligned_position(x1+size+5,y1+sizpul,0,1,texts);
-        outtext(texts);
-        texts=strchr(texts,'\0')+1;
-        }
-
-     }
-  }
-
-void radio_butts_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-	int sel;
-
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (ms->event_type & 0x02) {
-			sel = (ms->y - o->locy) / (o->ys / (*((long *)o->userptr+1)));
-
-			if (sel >= *((long *)o->userptr + 1)) {
-				sel=*((long *)o->userptr + 1) - 1;
-			}
-
-			*(long *)o->data = sel;
-			*(long *)o->userptr = 0;
-			redraw_object(o);
-			*(long *)o->userptr = 1;
-			set_change();
-		}
-	}
-}
-
-void radio_butts(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())radio_butts_init;
-  o->runs[1] = (void (*)())radio_butts_draw;
-  o->runs[2] = (void (*)())radio_butts_event;;
-  o->datasize=4;
-  }
-
-//------------------------------------------
-
-
-
-void toggle_button_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-	static char toggle_exit = 0;
-	
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (ms->event_type & 0x06) {
-			if (ms->tl1) {
-				*(char *)o->data ^= 1;
-				redraw_object(o);
-				toggle_exit = 1;
-			} else if (toggle_exit) {
-				set_change();
-				toggle_exit = 0;
-			}
-		}
-	}
-
-	if ((msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) && toggle_exit) {
-		*(char *)o->data ^= 1;
-		redraw_object(o);
-		toggle_exit = 0;
-	}
-}
-
-
-
-void toggle_button(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())button_init;
-  o->runs[1] = (void (*)())button_draw;
-  o->runs[2] = (void (*)())toggle_button_event;
-  o->datasize=1;
-  }
-
-//------------------------------------------
-
-// FIXME: portability rewrite
-void input_line_init(OBJREC *o,int *len)
-  {
-  o->datasize=(*len)+1;
-  o->userptr=malloc(20);
-  memset(o->userptr,0,20);
-  memcpy(o->userptr,len,4);
-  memcpy((int *)o->userptr+2,len+1,12);
-  }
-
-void input_line_draw(int x1,int y1, int x2, int y2, OBJREC *o)
-  {
-  char d[2]=" ";
-  int x;
-  char *c;
-  int len;
-  int shift;
-
-  bar(x1,y1,x2,y2);
-  position(x1,y1);
-  c=(char *)o->data;
-  if (!*c) return;
-  len=strlen(c);
-  shift=*((int *)o->userptr+1);
-  if (shift>=len) shift=0;
-  c+=shift;
-  d[0]=*c++;x=x1+text_width(d);
-  while (x<x2)
-     {
-     outtext(d);
-     if (!*c) break;
-     d[0]=*c++;x=writeposx+text_width(d);
-     }
-  }
-
-void input_line_event(EVENT_MSG *msg,OBJREC *o) {
+// FIXME: get rid of static vars
+void InputLine::event(EVENT_MSG *msg) {
 	static int cursor = 0;
-	int *len, *start, slen;
-	char *c;
+	int slen;
 	static char *save;
-	static char clear_kontext;
+	static char clear_context;
 	va_list args;
 
-	len = (int *)o->userptr;
-	start = len + 1;
-	c = (char *)o->data;
-	slen = strlen(c);
+	slen = strlen(_str);
+
 	switch (msg->msg) {
 	case E_GET_FOCUS:
-		cursor=0;
-		save = (char *)getmem(*len + 1);
-		strcpy(save, c);
-		clear_kontext = 1;
+		cursor = 0;
+		save = new char[_length + 1];
+		strcpy(save, _str);
+		clear_context = 1;
 		break;
 
 	case E_LOST_FOCUS:
 		cursor = 0;
-		*start = 0;
-		free(save);
-		redraw_object(o);
+		_shift = 0;
+		delete[] save;
+		redraw_object(this);
 		break;
 
 	case E_CURSOR_TICK:
@@ -782,32 +495,32 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 				xpos = 0;
 				j++;
 
-				for (i = *start; i < cursor; i++) {
-					if ((d = charsize(curfont, c[i]) & 0xff) == 0) {
+				for (i = _shift; i < cursor; i++) {
+					if ((d = charsize(curfont, _str[i]) & 0xff) == 0) {
 						xpos += 1;
 					} else {
 						xpos += d;
 					}
 				}
 
-				if (xpos >= o->xs) {
-					*start += 1;
+				if (xpos >= _x + _width) {
+					_shift += 1;
 				}
 
 				if (xpos == 0) {
-					*start -= 1;
+					_shift -= 1;
 				}
 
-				if (*start < 0) {
-					*start = 0;
+				if (_shift < 0) {
+					_shift = 0;
 				}
-			} while ((xpos == 0 || xpos >= o->xs) && cursor);
+			} while ((xpos == 0 || xpos >= _x + _width) && cursor);
 
 			if (j) {
-				redraw_object(o);
+				redraw_object(this);
 			}
 
-			xor_rectangle(o->locx + xpos, o->locy, 1, o->ys);
+			xor_rectangle(_locx + xpos, _locy, 1, _y + _height);
 		}
 		break;
 
@@ -819,21 +532,21 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 			va_copy(args, msg->data);
 			ms = va_arg(args, MS_EVENT*);
 			va_end(args);
-			msx = ms->x - o->locx;
+			msx = ms->x - _locx;
 
 			if (ms->event_type & 2) {
 				int xpos;
 
 				xpos = 0;
 
-				for (cursor = *start; cursor < slen; cursor++) {
-					xpos += charsize(curfont, c[cursor]) & 0xff;
+				for (cursor = _shift; cursor < slen; cursor++) {
+					xpos += charsize(curfont, _str[cursor]) & 0xff;
 					if (xpos > msx) {
 						break;
 					}
 				}
 
-				redraw_object(o);
+				redraw_object(this);
 			}
 		}
 		break;
@@ -850,7 +563,7 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 			if (!(key & 0xff)) {
 				switch (key >> 8) {
 				case 'M':
-					if (cursor<slen) {
+					if (cursor < slen) {
 						cursor++;
 					}
 					break;
@@ -863,7 +576,7 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 
 				case 'S':
 					if (cursor < slen) {
-						strcpy(&c[cursor], &c[cursor+1]);
+						strcpy(&_str[cursor], &_str[cursor+1]);
 						slen--;
 					}
 					break;
@@ -882,7 +595,7 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 				switch (key) {
 				case 8:
 					if (cursor > 0) {
-						strcpy(&c[cursor-1], &c[cursor]);
+						strcpy(&_str[cursor-1], &_str[cursor]);
 						cursor--;
 					}
 					break;
@@ -894,398 +607,66 @@ void input_line_event(EVENT_MSG *msg,OBJREC *o) {
 					break;
 
 				case 27:
-					strcpy(c, save);
-					slen = strlen(c);
+					strcpy(_str, save);
+					slen = strlen(_str);
 					if (cursor > slen) {
 						cursor = slen;
 					}
 					break;
 
 				default:
-					if (key >= ' ' && (slen < *len || clear_kontext)) {
+					if (key >= ' ' && (slen < _length || clear_context)) {
 						int i;
 
-						if (clear_kontext) {
-							*c = '\0';
+						if (clear_context) {
+							*_str = '\0';
 							cursor = 0;
 							slen = 0;
 						}
 
 						for (i = slen + 1; i > cursor; i--) {
-							c[i] = c[i-1];
+							_str[i] = _str[i-1];
 						}
 
-						c[cursor++] = key;
+						_str[cursor++] = key;
 					}
 					break;
 				}
 			}
 
 			if (!cursor) {
-				*start = 0;
+				_shift = 0;
 			}
 
-			redraw_object(o);
+			redraw_object(this);
 			msg->msg = E_CURSOR_TICK;
-			input_line_event(msg, o);
-			clear_kontext = 0;
+			event(msg);
+			clear_context = 0;
 			msg->msg = -1;
 		}
 	}
 }
 
-
-
-
-
-void input_line(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())input_line_init;
-  o->runs[1] = (void (*)())input_line_draw;
-  o->runs[2] = (void (*)())input_line_event;
-  }
-
-
-//-------------------------------------------------------------
-void label(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())sample_init;
-  o->runs[1] = (void (*)())sample_draw;
-  }
-
-void mid_label(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())sample_init;
-  o->runs[1] = (void (*)())mid_label_draw;
-  }
 //-------------------------------------------------------------
 
-typedef struct scr_button
-  {
-  int32_t step;
-  int32_t maxvalue;
-  char *title;
-  }SCR_BUTTON;
+Label::Label(int id, int x, int y, int width, int height, int align,
+	const char *text) : GUIObject(id, x, y, width, height, align),
+	_text(NULL) {
 
-void scroll_button_init(OBJREC *o,int *param)
-  {                           // int step, int maxvalue,char *title
-  char *v;
-  SCR_BUTTON *p;
-
-  o->userptr=getmem(sizeof(SCR_BUTTON));
-  p=(SCR_BUTTON *)o->userptr;
-  p->step=*param++;
-  p->maxvalue=*param++;
-  p->title=(char *)*param++;
-  v=(char *)o->data;
-  *v=0;
-  }
-
-
-
-void scroll_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  CTL3D x;
-  char w;
-  SCR_BUTTON *param;
-
-  param=(SCR_BUTTON *)o->userptr;
-  bar(x1,y1,x2,y2);
-  highlight(&x,o->color);
-  w=*(char *)o->data;
-  x.bsize=2-w;
-  x.ctldef=(w<<1)+w;
-  draw_border(x1+2,y1+2,x2-x1-4,y2-y1-4,&x);
-  set_aligned_position(((x1+x2)>>1)+(w<<1),((y1+y2)>>1)+(w<<1),1,1,param->title);
-  outtext(param->title);
-  }
-
-void scroll_button_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (ms->event_type & 0x0e) {
-			if (ms->tl1 || ms->event_type & 0x8) {
-				*(char *)o->data = 1;
-				redraw_object(o);
-				set_change();
-			}
-		}
-	}
-
-	if (msg->msg == E_TIMER && *(char *)o->data) {
-		if (ms_last_event.tl1) {
-			set_change();
-		} else if (!ms_last_event.tl2) {
-			*(char *)o->data = 0;
-			redraw_object(o);
-		}
-	}
-
-	if (msg->msg == E_GET_FOCUS || msg->msg == E_LOST_FOCUS) {
-		*(char *)o->data = 0;
-		redraw_object(o);
-	}
+	_text = new char[strlen(text) + 1];
+	strcpy(_text, text);
 }
 
-void scroll_button(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())scroll_button_init;
-  o->runs[1] = (void (*)())scroll_button_draw;
-  o->runs[2] = (void (*)())scroll_button_event;
-  o->datasize=1;
-  }
-
-
-//-------------------------------------------------------------
-typedef struct scr_bar
-  {
-  int32_t minvalue;
-  int32_t maxvalue;
-  int32_t parview;
-  int32_t bgcolor;
-  int32_t barsize;
-  int32_t stepsize;
-  }SCR_BAR;
-
-void scroll_bar_init(OBJREC *o,int *param)
-  {
-  SCR_BAR *p;
-
-  o->userptr=getmem(sizeof(SCR_BAR));
-  p=(SCR_BAR *)o->userptr;
-  p->minvalue=*param++;
-  p->maxvalue=*param++;
-  p->parview=*param++;
-  p->bgcolor=*param++;
-  p->barsize=10;
-  p->stepsize=10;
-  }
-
-void scroll_bar_v_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  int barsize;
-  int wsize;
-  int valsize;
-  SCR_BAR *p;
-  int *d;
-  CTL3D ctl;
-  int y;
-
-
-  p=(SCR_BAR *)o->userptr;
-  d=(int *)o->data;
-  valsize=p->maxvalue-p->minvalue+p->parview;
-  wsize=y2-y1;
-  barsize=valsize?wsize*p->parview/valsize:10; if (barsize<2) barsize=2;
-  if (barsize>wsize) barsize=wsize;
-  wsize-=barsize;
-  curcolor=p->bgcolor;
-  bar(x1,y1,x2,y2);
-  curcolor=o->color;
-  highlight(&ctl,o->color);ctl.bsize=2;ctl.ctldef=0;
-  y=valsize?(*d-p->minvalue)*(wsize+barsize)/valsize:0;
-  p->stepsize=valsize?wsize/valsize:0;
-  if (y>wsize) y=wsize;
-  if (y<0) y=0;
-  y+=y1;
-  draw_border(x1+2,y+2,(x2-x1)-4,barsize-4,&ctl);
-  if (barsize>4)bar(x1+2,y+2,x2-2,y+barsize-2);
-  p->barsize=barsize;
-  }
-
-void scroll_bar_v_event(EVENT_MSG *msg, OBJREC *o) {
-	SCR_BAR *p;
-	int *d;
-	int _d;
-	va_list args;
-
-	p = (SCR_BAR *)o->userptr;
-	d = (int *)o->data;
-
-	switch (msg->msg) {
-	case E_MOUSE:
-		{
-			int y;
-			MS_EVENT *ms;
-
-			va_copy(args, msg->data);
-			ms = va_arg(args, MS_EVENT*);
-			va_end(args);
-			y = (ms->y + (p->stepsize >> 1) - o->locy - (p->barsize >> 1));
-
-			if (ms->tl1) {
-				if (o->ys <= p->barsize) {
-					_d=p->minvalue;
-				} else {
-					_d = y*(p->maxvalue - p->minvalue) / (o->ys - p->barsize) + p->minvalue;
-				}
-
-				if (_d > p->maxvalue) {
-					_d = p->maxvalue;
-				}
-
-				if (_d < p->minvalue) {
-					_d = p->minvalue;
-				}
-
-				if (_d != *d) {
-					*d = _d;
-					redraw_object(o);
-					set_change();
-				}
-			}
-		}
-		break;
-
-	case E_CONTROL:
-		{
-			va_copy(args, msg->data);
-			p->minvalue = va_arg(args, int);
-			p->maxvalue = va_arg(args, int);
-			p->parview = va_arg(args, int);
-			va_end(args);
-		}
-		break;
-	}
+Label::~Label(void) {
+	delete[] _text;
 }
 
-void scroll_bar_v(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())scroll_bar_init;
-  o->runs[1] = (void (*)())scroll_bar_v_draw;
-  o->runs[2] = (void (*)())scroll_bar_v_event;
-  o->datasize=4;
-  }
-
-//-------------------------------------------------------------
-void scroll_support()
-  {
-  int id,x;
-  SCR_BAR *p;
-  SCR_BUTTON *q;
-  OBJREC *o,*r;
-
-
-  id=o_aktual->id;
-  id=(id/10)*10;
-  o=find_object(waktual,id);
-  p=(SCR_BAR *)o->userptr;
-  q=(SCR_BUTTON*)o_aktual->userptr;
-  x=f_get_value(0,id);
-  x+=q->step;
-  if (q->step<0)
-     if (x<p->minvalue) x=p->minvalue;
-  if (q->step>0)
-     if (x>p->maxvalue) x=p->maxvalue;
-  set_value(0,id,&x);
-  r=o_aktual;
-  o_aktual=o;
-  o->events[3]();
-  o_aktual=r;
-  }
-//-------------------------------------------------------------
-
-void scroll_bar_h_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  int barsize;
-  int wsize;
-  int valsize;
-  SCR_BAR *p;
-  int *d;
-  CTL3D ctl;
-  int x;
-
-
-  p=(SCR_BAR *)o->userptr;
-  d=(int *)o->data;
-  valsize=p->maxvalue-p->minvalue;
-  wsize=x2-x1;
-  barsize=wsize*p->parview/valsize;
-  if (barsize>wsize) barsize=wsize;if (barsize<2) barsize=2;
-  wsize-=barsize;
-  curcolor=p->bgcolor;
-  bar(x1,y1,x2,y2);
-  curcolor=o->color;
-  highlight(&ctl,o->color);ctl.bsize=2;ctl.ctldef=0;
-  x=(*d-p->minvalue)*wsize/valsize;
-  p->stepsize=wsize/valsize;
-  if (x>wsize) x=wsize;
-  if (x<0) x=0;
-  x+=x1;
-  draw_border(x+2,y1+2,barsize-4,(y2-y1)-4,&ctl);
-  if (barsize>4)bar(x+2,y1+2,x+barsize-2,y2-2);
-  p->barsize=barsize;
-  }
-
-void scroll_bar_h_event(EVENT_MSG *msg, OBJREC *o) {
-	SCR_BAR *p;
-	int *d;
-	int _d;
-
-	p = (SCR_BAR *)o->userptr;
-	d = (int *)o->data;
-
-	switch (msg->msg) {
-	case E_MOUSE:
-		{
-			int x;
-			MS_EVENT *ms;
-			va_list args;
-
-			va_copy(args, msg->data);
-			ms = va_arg(args, MS_EVENT*);
-			va_end(args);
-			x = (ms->x + (p->stepsize >> 1) - o->locx - (p->barsize >> 1));
-
-			if (ms->tl1) {
-				if (o->xs <= p->barsize) {
-					_d = p->minvalue;
-				} else {
-					_d = x * (p->maxvalue - p->minvalue) / (o->xs - p->barsize) + p->minvalue;
-				}
-
-				if (_d > p->maxvalue) {
-					_d = p->maxvalue;
-				}
-
-				if (_d < p->minvalue) {
-					_d = p->minvalue;
-				}
-
-				if (_d != *d) {
-					*d = _d;
-					redraw_object(o);
-					set_change();
-				}
-			}
-		}
-	}
+void Label::draw(int x, int y, int width, int height) {
+	position(x, y);
+	outtext(_text);
 }
 
-
-
-
-
- void scroll_bar_h(OBJREC *o)
-  {
-  o->runs[0] = (void (*)())scroll_bar_init;
-  o->runs[1] = (void (*)())scroll_bar_h_draw;
-  o->runs[2] = (void (*)())scroll_bar_h_event;
-  o->datasize=4;
-
-  }
-
-
 //-------------------------------------------------------------
-
-
 
 #define MSG_SIZE (Screen_GetXSize()*3/4)
 #define MSG_L_MARGIN 10
@@ -1315,7 +696,7 @@ int msg_box(char *title, char icone, char *text, ... )
   desktop_add_window(create_window(0,0,winx,300,MSG_COLOR,ctl));
   buf[1]='\0';buf[0]=icone;
   xp=text_width(buf);
-  define(-1,(MSG_R_MARGIN>>1)-(xp>>1),20,xp,text_height(buf),1,label,buf);
+  define(new Label(-1, (MSG_R_MARGIN >> 1) - (xp >> 1), 20, xp, text_height(buf), 1, buf));
   cl[1]=ctl->light;
   cl[0]=ctl->shadow;
   property(NULL,msg_icn_font,&cl,MSG_COLOR);
@@ -1338,16 +719,16 @@ int msg_box(char *title, char icone, char *text, ... )
      if (*text=='\n') text++;
      *p='\0';
      txt_h=text_height(buf);
-     define(-1,MSG_L_MARGIN,winy,txt_max,txt_h,0,label,&buf);
+     define(new Label(-1, MSG_L_MARGIN, winy, txt_max, txt_h, 0, buf));
      property(NULL,NULL,flat_color(MSG_F_COLOR),MSG_COLOR);
-     o_end->f_color[0]=0;
+     o_end->setFColor(0, 0);
      winy+=txt_h;
      }
   winy+=40;
   xp=(Screen_GetXSize()>>1)-(winx>>1);
   yp=(Screen_GetYSize()>>1)-(winy>>1);
   waktual->x=xp;waktual->y=yp;waktual->xs=winx;waktual->ys=winy;
-  define(0,1,1,winx-2,text_height(title)+2,0,win_label,title);
+  define(new WindowLabel(0, 1, 1, winx - 2, text_height(title) + 2, 0, title));
   ctl=def_border(5,MSG_COLOR);
   property(ctl,NULL,flat_color(MSG_F_COLOR),0x10);
   ctl=def_border(1,0);
@@ -1358,136 +739,15 @@ int msg_box(char *title, char icone, char *text, ... )
 
      sz=(winx/(temp2+1))>>1;
      if (sz<text_width(*c)) sz=text_width(*c);
-   define((i),i*winx/(temp2+1)-(sz>>1),10,sz+5,20,3,button,*c);
+   define(new Button(i, i * winx / (temp2 + 1) - (sz >> 1), 10, sz + 5, 20, 3, *c));
    property(ctl,NULL,flat_color(0),RGB555(24,24,24));on_change(terminate);
      c++;
      }
   set_window_modal();
   redraw_window();
   escape();
-  temp2=o_aktual->id;
+  temp2 = o_aktual->id();
   close_window(waktual);
   return temp2;
   }
 
-
-//-------------------------------------------------------------
-
-
-void resizer_draw(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  CTL3D ctl;
-
-  highlight(&ctl,o->color);
-  curcolor=o->color;
-  bar(x1,y1,x2,y2);
-  curcolor=ctl.light;
-  line(x2-1,y1+1,x1+1,y2-1);
-  line(x2-1,(y1+y2)>>1,(x1+x2)>>1,y2-1);
-  curcolor=ctl.shadow;
-  line(x2-1,y1+4,x1+4,y2-1);
-  line(x2-1,y1+2,x2-1,y1+4);
-  line(x1+2,y2-1,x1+4,y2-1);
-  line(x2-1,((y1+y2)>>1)+4,((x1+x2)>>1)+4,y2-1);
-  line(x2-1,((y1+y2)>>1)+2,x2-1,((y1+y2)>>1)+4);
-  line(((x1+x2)>>1)+2,y2-1,((x1+x2)>>1)+4,y2-1);
-  }
-
-void resizer_event(EVENT_MSG *msg, OBJREC *o) {
-	MS_EVENT *ms;
-	static char run = 0;
-	static uint16_t xref, yref;
-	static WINDOW w;
-	static int moved = 0;
-	static int drawed = 0;
-
-	if (msg->msg == E_INIT) {
-		return;
-	}
-
-	if (msg->msg == E_TIMER && !drawed) {
-		if (!moved) {
-			drawed = 1;
-			redraw_desktop();
-			moved = 0;
-		} else {
-			drawed = 0;
-			moved = 0;
-		}
-	}
-
-	if (msg->msg == E_MOUSE) {
-		va_list args;
-
-		va_copy(args, msg->data);
-		ms = va_arg(args, MS_EVENT*);
-		va_end(args);
-
-		if (run) {
-			char force_redraw = 0;
-			int next;
-
-			if (ms->event_type & 4) {
-				run = 0;
-				redraw_desktop();
-				send_message(E_DONE, E_MOUSE, resizer_event);
-				msg->msg = -1;
-				return;
-			}
-
-			next = ms->x - waktual->x + xref;
-
-			if (next < w.xs) {
-				force_redraw = 1;
-			}
-
-			w.xs = next;
-			next = ms->y - waktual->y + yref;
-
-			if (next < w.ys) {
-				force_redraw = 1;
-			}
-
-			w.ys = next;
-			check_window(&w);
-			movesize_win(waktual, w.x, w.y, w.xs, w.ys);
-			moved = 1;
-			drawed = 0;
-			redraw_window();
-
-			if (force_redraw) {
-				redraw_desktop();
-			}
-		} else if (ms->event_type & 2) {
-			run = 1;
-			memcpy(&w, waktual, sizeof(WINDOW));
-			xref = waktual->xs - (ms->x - waktual->x);
-			yref = waktual->ys - (ms->y - waktual->y);
-			send_message(E_ADD, E_MOUSE, resizer_event);
-			freeze_on_exit = 1;
-		}
-	}
-
-	if (msg->msg == E_LOST_FOCUS && run) {
-		run = 0;
-		redraw_desktop();
-		send_message(E_DONE, E_MOUSE, resizer_event);
-		msg->msg = -1;
-		return;
-	}
-
-	if (msg->msg != E_TIMER) {
-		msg->msg = -1;
-	}
-
-	return;
-}
-
-
-
-void resizer(OBJREC *o)
-  {
-  //o->runs[0]=resizer_init;
-  o->runs[1] = (void (*)())resizer_draw;
-  o->runs[2] = (void (*)())resizer_event;
-  }

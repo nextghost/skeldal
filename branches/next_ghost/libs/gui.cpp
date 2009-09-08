@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 #include "libs/memman.h"
 #include "libs/event.h"
 #include "libs/devices.h"
@@ -40,35 +41,183 @@ uint16_t *gui_background=NULL;
 extern T_EVENT_ROOT *ev_tree;
 
 WINDOW *desktop={NULL},*waktual={NULL};;
-OBJREC *o_aktual={NULL},*o_end={NULL},*o_start={NULL};
+GUIObject *o_aktual={NULL},*o_end={NULL},*o_start={NULL};
 CTL3D noneborder={0,0,0,0};
 FC_TABLE f_default;
 uint16_t desktop_y_size;
 char force_redraw_desktop=0;
 static char change_flag=0,f_cancel_event=0;
 uint16_t *default_font;
-void empty()
-  {
-  }
 
+void empty() {
 
-void empty1(OBJREC *o)
-  {
-  o;
-  }
+}
 
-void empty3(EVENT_MSG *ms,OBJREC *o)
-  {
-  o;ms;
-  }
+void empty2(EVENT_MSG *msg) {
 
+}
 
-void empty2(int x1,int y1,int x2,int y2,OBJREC *o)
-  {
-  o;x1;y1;x2;y2;
-  }
+GUIObject::GUIObject(int id, int x, int y, int width, int height, int align) :
+	_id(id), _x(x), _y(y), _width(width), _height(height), _align(align),
+	_autoResizeX(false), _autoResizeY(false), _enabled(true),
+	_drawError(false), _color(waktual->color), _font(default_font),
+	_onEvent(empty2), _gotFocus(empty), _lostFocus(empty),
+	_onActivate(empty){
 
+	memcpy(_fColor, f_default, sizeof(f_default));
+	memcpy(&_border, &noneborder, sizeof(CTL3D));
+}
 
+GUIObject::~GUIObject(void) {
+
+}
+
+void GUIObject::event(EVENT_MSG *msg) {
+
+}
+
+void GUIObject::onEvent(EVENT_MSG *msg) {
+	_onEvent(msg);
+}
+
+void GUIObject::gotFocus() {
+	_gotFocus();
+}
+
+void GUIObject::lostFocus() {
+	_lostFocus();
+}
+
+void GUIObject::onActivate(EVENT_MSG *msg) {
+	_onActivate();
+}
+
+void GUIObject::setOnEvent(void (*proc)(EVENT_MSG *msg)) {
+	_onEvent = proc;
+}
+
+void GUIObject::setGotFocus(void (*proc)()) {
+	_gotFocus = proc;
+}
+
+void GUIObject::setLostFocus(void (*proc)()) {
+	_lostFocus = proc;
+}
+
+void GUIObject::setOnActivate(void (*proc)()) {
+	_onActivate = proc;
+}
+
+void (*GUIObject::getOnActivate(void))() {
+	return _onActivate;
+}
+
+void GUIObject::render(window *w, int show) {
+	int ok;
+
+	if (_drawError) {
+		return;
+	}
+
+	_drawError = true;
+	ok = w->border3d.bsize;
+	align(w, _locx, _locy);
+
+	if (_width < 1 || _height < 1) {
+		_drawError = false;
+		return;
+	}
+
+	schovej_mysku();
+	draw_border(_locx, _locy, _width, _height, &_border);
+	curcolor = _color;
+	curfont = _font;
+	position(_locx, _locy);
+	memcpy(charcolors, _fColor, sizeof(charcolors));
+	draw(_locx, _locy, _width, _height);
+
+	if (!_enabled) {
+		disable_bar(_locx, _locy, _width, _height, _color);
+	}
+
+	ukaz_mysku();
+
+	if (show) {
+		showview(_locx - ok, _locy - ok, _width + 2 * ok, _height + 2 * ok);
+	}
+
+	_drawError = false;
+}
+
+void GUIObject::setFColor(unsigned idx, uint16_t color) {
+	assert(idx < 7);
+	_fColor[idx] = color;
+}
+
+void GUIObject::align(WINDOW *w, int &x, int &y) const {
+	switch (_align) {
+	case 0:
+	case 1:
+		y = _y + w->y;
+		break;
+
+	case 2:
+	case 3:
+		y = (w->y + w->ys) - (_y + _height);
+		break;
+	}
+
+	switch (_align) {
+	case 0:
+	case 3:
+		x = _x + w->x;
+		break;
+
+	case 1:
+	case 2:
+		x = (w->x + w->xs) - (_x + _width);
+		break;
+	}
+}
+
+void GUIObject::property(CTL3D *ctl, uint16_t *font, FC_TABLE *fcolor, uint16_t color) {
+	if (ctl) {
+		memcpy(&_border, ctl, sizeof(CTL3D));
+	}
+
+	if (font) {
+		_font = font;
+	}
+
+	if (fcolor) {
+		memcpy(_fColor, *fcolor, sizeof(FC_TABLE));
+	}
+
+	if (color != 0xffff) {
+		_color = color;
+	}
+}
+
+bool GUIObject::inside(WINDOW *w, int x, int y) const {
+	int x1, y1;
+
+	align(w, x1, y1);
+	return x >= x1 && x <= x1 + _width && y >= y1 && y <= y1 + _height;
+}
+
+void GUIObject::autoResize(int xdiff, int ydiff) {
+	if (_autoResizeX) {
+		_width += xdiff;
+	}
+
+	if (_autoResizeY) {
+		_height += ydiff;
+	}
+}
+
+void GUIObject::setEnabled(bool value) {
+	_enabled = value;
+}
 
 void draw_border(int16_t x,int16_t y,int16_t xs,int16_t ys,CTL3D *btype)
   {
@@ -140,9 +289,9 @@ int send_lost()
    msg.msg=E_LOST_FOCUS;
   if (o_aktual!=NULL)
      {
-     o_aktual->events[2]();
+     o_aktual->lostFocus();
      if (f_cancel_event) return -1;
-     ((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg,o_aktual);
+     o_aktual->event(&msg);
      o_aktual=NULL;
      }
   return 0;
@@ -173,10 +322,10 @@ void select_window(long id)
   waktual=p;
   if (waktual->objects!=NULL)
      {
-     o_start=waktual->objects;
+     o_start = waktual->objects;
      o_aktual=NULL;
      o_end=o_start;
-     while(o_end->next!=NULL) o_end=o_end->next;
+     while(o_end->_next!=NULL) o_end=o_end->_next;
      }
   else
      {o_start=NULL;o_aktual=NULL;o_end=NULL;}
@@ -201,8 +350,8 @@ long desktop_add_window(WINDOW *w)
         EVENT_MSG msg;
 
         msg.msg=E_LOST_FOCUS;
-        o_aktual->events[2]();
-        ((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg,o_aktual);
+        o_aktual->lostFocus();
+        o_aktual->event(&msg);
         }
      waktual->next=w;
      waktual=w;
@@ -224,25 +373,6 @@ WINDOW *find_window(long id)
   }
 
 
-
-void absolute_window(WINDOW *w,OBJREC *o, int *x, int *y)
-  {
-    switch (o->align)
-     {
-     case 0:
-     case 1:*y=o->y+w->y;break;
-     case 2:
-     case 3:*y=(w->y+w->ys)-(o->y+o->ys);break;
-     }
-  switch (o->align)
-     {
-     case 0:
-     case 3:*x=o->x+w->x;break;
-     case 1:
-     case 2:*x=(w->x+w->xs)-(o->x+o->xs);break;
-     }
-  }
-
   void disable_bar(int x,int y,int xs,int ys,uint16_t color)
      {
      int i,j;
@@ -260,62 +390,29 @@ void absolute_window(WINDOW *w,OBJREC *o, int *x, int *y)
         }
      }
 
-  void draw_object(WINDOW *w,OBJREC *o,char show)
-  {
-  int x, y;
-  int ok;
-//  WINDOW *ws;
-
-  if (o->draw_error==1) return;
-  o->draw_error=1;
-  ok=w->border3d.bsize;
-  absolute_window(w,o,&x,&y);
-  o->locx=x;o->locy=y;
-  if (o->xs<1 || o->ys<1)
-     {
-     o->draw_error=0;
-     return;
-     }
-  schovej_mysku();
-  draw_border(x,y,o->xs,o->ys,&o->border3d);
-  curcolor=o->color;
-  curfont=o->font;position(x,y);
-  memcpy(&charcolors,&o->f_color,sizeof(charcolors));
-//  ws=waktual;
-//  waktual=w;
-  ((void (*)(int, int, int, int, OBJREC*))o->runs[1])(x, y, x+o->xs, y+o->ys, o);
-//  waktual=ws;
-  if (!o->enabled) disable_bar(x,y,o->xs,o->ys,o->color);
-  ukaz_mysku();
-  if (show) showview(x-ok,y-ok,o->xs+(ok<<1),o->ys+(ok<<1));
-  o->draw_error=0;
-  }
-
-
-void redraw_object(OBJREC *o)
-  {
-  draw_object(waktual,o,1);
-  }
+void redraw_object(GUIObject *o) {
+	o->render(waktual, 1);
+}
 
 
 void redraw_window_call()
   {
-  OBJREC *p;
+  GUIObject *p;
 
   schovej_mysku();
   waktual->draw_event(waktual);
-  p=waktual->objects;
+  p = waktual->objects;
   while (p!=NULL)
      {
-     draw_object(waktual,p,0);
-     p=p->next;
+     p->render(waktual, 0);
+     p=p->_next;
      }
   ukaz_mysku();
   show_window(waktual);
   return;
   }
 
-void add_to_idlist(OBJREC *o)
+void add_to_idlist(GUIObject *o)
   {
   TIDLIST *p,*q;
 
@@ -327,65 +424,33 @@ void add_to_idlist(OBJREC *o)
      waktual->idlist=p;
      return;
      }
-  if (((waktual->idlist)->obj)->id>o->id)
+  if (((waktual->idlist)->obj)->id() > o->id())
      {
      p->next=waktual->idlist;
      waktual->idlist=p;
      return;
      }
   q=waktual->idlist;
-  while (q->next!=NULL && ((q->next)->obj)->id<o->id) q=q->next;
+  while (q->next!=NULL && ((q->next)->obj)->id() < o->id()) q=q->next;
   p->next=q->next;
   q->next=p;
   }
 
 
-void define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC *),...)
-  {
-  OBJREC *o;
-  long *p;
+void define(GUIObject *o) {
+	o->_next = NULL;
+	if (!o_start) {
+		o_start = o;
+		o_end = o;
+		o_aktual = NULL;
+		waktual->objects = o;
+	} else {
+		o_end->_next = o;
+		o_end = o;
+	}
 
-  o=(OBJREC *)getmem(sizeof(OBJREC));
-  o->x=x;o->y=y;o->xs=xs;o->ys=ys;
-  o->id=id;
-  o->runs[0] = (void (*)())empty1;
-  o->runs[1] = (void (*)())empty2;
-  o->runs[2] = (void (*)())empty3;
-  o->runs[3] = (void (*)())empty1;
-  o->autoresizex=0;
-  o->autoresizey=0;
-  o->events[0]=empty;
-  o->events[1]=empty;
-  o->events[2] = (void (*)())empty1;
-  o->events[3] = (void (*)())empty3;
-  o->enabled=1;
-  o->draw_error=0;
-  o->color=waktual->color;memcpy(o->f_color,f_default,sizeof(f_default));
-  memcpy(&(o->border3d),&noneborder,sizeof(CTL3D));
-  o->userptr=NULL;
-  o->align=align;
-  o->font=default_font;
-  o->datasize=0;
-  initproc(o);
-  if (o->datasize) o->data=(void *)getmem(o->datasize); else o->data=NULL;
-  p=(long *)&initproc;p++;
-  ((void (*)(OBJREC*, void*))o->runs[0])(o,p);
-  if (o->datasize && o->data==NULL) o->data=(void *)getmem(o->datasize);
-  o->next=NULL;
-  if (o_start==NULL)
-     {
-     o_start=o;
-     o_end=o;
-     o_aktual=NULL;
-     waktual->objects=o;
-     }
-  else
-     {
-     o_end->next=o;
-     o_end=o;
-     }
-  add_to_idlist(o);
-  }
+	add_to_idlist(o);
+}
 
 CTL3D *border(uint16_t light,uint16_t shadow, uint16_t bsize, uint16_t btype)
   {
@@ -395,13 +460,9 @@ CTL3D *border(uint16_t light,uint16_t shadow, uint16_t bsize, uint16_t btype)
   return &p;
   }
 
-void property(CTL3D *ctl,uint16_t *font,FC_TABLE *fcolor,uint16_t color)
-  {
-  if (ctl!=NULL) memcpy(&o_end->border3d,ctl,sizeof(CTL3D));
-  if (font!=NULL) o_end->font=font;
-  if (fcolor!=NULL) memcpy(&o_end->f_color,fcolor,sizeof(FC_TABLE));
-  if (color!=0xffff) o_end->color=color;
-  }
+void property(CTL3D *ctl,uint16_t *font,FC_TABLE *fcolor,uint16_t color) {
+	o_end->property(ctl, font, fcolor, color);
+}
 
 FC_TABLE *flat_color(uint16_t color)
   {
@@ -458,13 +519,13 @@ void redraw_desktop_call(EVENT_MSG *msg,void **data)
   w=desktop;
   while (w!=NULL)
      {
-     OBJREC *p;
+     GUIObject *p;
            w->draw_event(w);
            p=w->objects;
            while (p!=NULL)
            {
-              draw_object(w,p,0);
-              p=p->next;
+	      p->render(w, 0);
+              p=p->_next;
            }
      w=w->next;
      *oz=0;
@@ -490,7 +551,7 @@ void redraw_window()
 void close_window(WINDOW *w)
   {
   WINDOW *p;
-  OBJREC *q;
+  GUIObject *q;
 
   if (waktual==w && send_lost()) return;
   if (w==waktual && waktual!=desktop)
@@ -514,11 +575,8 @@ void close_window(WINDOW *w)
   while (w->objects!=NULL)
      {
      q=w->objects;
-     w->objects=q->next;
-     ((void (*)(OBJREC*))q->runs[3])(q);
-     if (q->userptr!=NULL) free(q->userptr);
-     if (q->data!=NULL) free(q->data);
-     free(q);
+     w->objects=q->_next;
+	delete q;
      }
   while (w->idlist!=NULL)
      {
@@ -539,20 +597,7 @@ void close_window(WINDOW *w)
 
 //-------------------------------- GUI EVENTS -------------------------
 
-char mouse_in_object(MS_EVENT *ms,OBJREC *o, WINDOW *w)
-  {
-  int x1, y1, x2, y2;
-
-  absolute_window(w,o,&x1,&y1);
-  x2=x1+o->xs;
-  y2=y1+o->ys;
-  if (ms->x>=x1 && ms->x<=x2 && ms->y>=y1 && ms->y<=y2)
-     return 1;
-  else
-     return 0;
-  }
-
-OBJREC *get_last_id()
+GUIObject *get_last_id()
   {
   TIDLIST *p;
 
@@ -561,7 +606,7 @@ OBJREC *get_last_id()
   return p->obj;
   }
 
-OBJREC *get_next_id(OBJREC *o)
+GUIObject *get_next_id(GUIObject *o)
   {
   TIDLIST *p;
 
@@ -574,12 +619,12 @@ OBJREC *get_next_id(OBJREC *o)
      p=p->next;
      if (p==NULL) p=waktual->idlist;
      o=p->obj;
-     if (o->enabled && o->runs[2] != (void (*)())empty3) return o;
+     if (o->isActive()) return o;
      }
   while (1);
   }
 
-OBJREC *get_prev_id(OBJREC *o)
+GUIObject *get_prev_id(GUIObject *o)
   {
   TIDLIST *p,*q;
 
@@ -600,7 +645,7 @@ OBJREC *get_prev_id(OBJREC *o)
         p=q;
         }
      o=p->obj;
-     if (o->enabled && o->runs[2] != (void (*)())empty3) return o;
+     if (o->isActive()) return o;
      }
   while (1);
   }
@@ -611,7 +656,7 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 	EVENT_MSG msg2;
 	char b;
 	static uint16_t cursor_tick = CURSOR_SPEED;
-	OBJREC *p;
+	GUIObject *p;
 	int8_t *oz = otevri_zavoru;
 	va_list args;
 	
@@ -628,7 +673,7 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 	f_cancel_event = 0;
 
 	if (o_aktual != NULL) {
-		((void (*)(EVENT_MSG*, OBJREC*))o_aktual->events[0])(msg, o_aktual);
+		o_aktual->onEvent(msg);
 	}
 
 	if (msg->msg == E_MOUSE) {
@@ -642,8 +687,8 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 		if (o_aktual == NULL) {
 			if (o_start != NULL && (msev->tl1 || msev->tl2 || msev->tl3)) {
 				o_aktual = o_start;
-				while (o_aktual != NULL && (!o_aktual->enabled || !mouse_in_object(msev, o_aktual, waktual) || o_aktual->runs[2] == (void (*)())empty3)) {
-					o_aktual = o_aktual->next;
+				while (o_aktual != NULL && (!o_aktual->isActive() || !o_aktual->inside(waktual, msev->x, msev->y))) {
+					o_aktual = o_aktual->_next;
 				}
 
 				if (o_aktual == NULL) {
@@ -651,36 +696,36 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 				}
 
 				msg2.msg = E_GET_FOCUS;
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg2, o_aktual);
-				o_aktual->events[1]();
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
+				o_aktual->event(&msg2);
+				o_aktual->gotFocus();
+				o_aktual->event(msg);
 			} else {
 				return;
 			}
 		} else {
-			if (o_aktual->enabled) {
-				b = mouse_in_object(msev, o_aktual, waktual);
+			if (o_aktual->isEnabled()) {
+				b = o_aktual->inside(waktual, msev->x, msev->y);
 			} else {
 				b = 0;
 			}
 
 			if (b) {
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
+				o_aktual->event(msg);
 			}
 
 			if ((msev->tl1 || msev->tl2 || msev->tl3) && !b) {
-				o_aktual->events[2]();
+				o_aktual->lostFocus();
 
 				if (f_cancel_event) {
 					return;
 				}
 
 				msg2.msg = E_LOST_FOCUS;
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg2, o_aktual);
+				o_aktual->event(&msg2);
 				p = o_start;
 
-				while (p != NULL && (!p->enabled || !mouse_in_object(msev, p, waktual) || p->runs[2] == (void (*)())empty3)) {
-					p = p->next;
+				while (p != NULL && (!p->isActive() || !p->inside(waktual, msev->x, msev->y))) {
+					p = p->_next;
 				}
 
 				if (p != NULL) {
@@ -688,11 +733,11 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 				}
 
 				msg2.msg = E_GET_FOCUS;
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg2, o_aktual);
-				o_aktual->events[1]();
+				o_aktual->event(&msg2);
+				o_aktual->gotFocus();
 
 				if (p != NULL) {
-					((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
+					o_aktual->event(msg);
 				}
 			}
 		}
@@ -708,7 +753,7 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 		*oz = 1;
 
 		if (o_aktual != NULL) {
-			((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
+			o_aktual->event(msg);
 		}
 
 		if (c >> 8 == 0xf && waktual->idlist != NULL) {
@@ -718,14 +763,14 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 
 			if (o_aktual != NULL) {
 				f_cancel_event = 0;
-				o_aktual->events[2]();
+				o_aktual->lostFocus();
 
 				if (f_cancel_event) {
 					return;
 				}
 
 				msg2.msg = E_LOST_FOCUS;
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg2, o_aktual);
+				o_aktual->event(&msg2);
 			}
 
 			if(c & 0xff == 9) {
@@ -736,19 +781,19 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 
 			if (o_aktual != NULL) {
 				msg2.msg = E_GET_FOCUS;
-				((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg2, o_aktual);
-				o_aktual->events[1]();
+				o_aktual->event(&msg2);
+				o_aktual->gotFocus();
 			}
 		}
 	}
 
 	if (msg->msg == E_TIMER && o_aktual != NULL) {
-		((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
+		o_aktual->event(msg);
 
 		if (!(cursor_tick--)) {
 			msg->msg = E_CURSOR_TICK;
-			((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(msg, o_aktual);
-			((void (*)(EVENT_MSG*, OBJREC*))o_aktual->events[0])(msg, o_aktual);
+			o_aktual->event(msg);
+			o_aktual->onEvent(msg);
 			cursor_tick = CURSOR_SPEED;
 		}
 	}
@@ -772,7 +817,7 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
      }
 */
 	if (msg->msg == E_CHANGE) {
-		run_background(o_aktual->events[3]);
+		run_background(o_aktual->getOnActivate());
 	}
 
 	if (change_flag) {
@@ -807,23 +852,22 @@ void uninstall_gui(void)
 //send_message(E_GUI,cislo,E_UDALOST,data....)
 
 
-void on_change(void (*proc)())
-  {
-  o_end->events[3]=proc;
-  }
+void on_change(void (*proc)()) {
+	o_end->setOnActivate(proc);
+}
 
-void on_enter(void (*proc)())
-  {
-  o_end->events[1]=proc;
-  }
-void on_leave(void (*proc)())
-{
-  o_end->events[2]=proc;
-  }
-void on_event(void (*proc)())
-{
-  o_end->events[0]=proc;
-  }
+void on_enter(void (*proc)()) {
+	o_end->setGotFocus(proc);
+}
+
+void on_leave(void (*proc)()) {
+	o_end->setLostFocus(proc);
+}
+
+void on_event(void (*proc)(EVENT_MSG *msg)) {
+	o_end->setOnEvent(proc);
+}
+
 void terminate(void)
   {
   exit_wait=1;
@@ -838,29 +882,20 @@ void set_window_modal(void)
   waktual->modal=1;
   }
 
-void set_object_value(char redraw,OBJREC *o,const void *value)
+GUIObject *find_object(WINDOW *w,int id)
   {
-  if (memcmp(o->data,value,o->datasize))
-     {
-     memcpy(o->data,value,o->datasize);
-     if (redraw) redraw_object(o);
-     }
-  }
-
-OBJREC *find_object(WINDOW *w,int id)
-  {
-  OBJREC *p;
+  GUIObject *p;
 
   p=w->objects;
   if (p==NULL) return NULL;
-  while (p!=NULL && p->id!=id) p=p->next;
+  while (p!=NULL && p->id() != id) p=p->_next;
   return p;
   }
 
-OBJREC *find_object_desktop(int win_id,int obj_id,WINDOW **wi)
+GUIObject *find_object_desktop(int win_id,int obj_id,WINDOW **wi)
 {
   WINDOW *w;
-  OBJREC *o;
+  GUIObject *o;
 
   if (win_id<0) return NULL;
   if (win_id==0) w=waktual;
@@ -871,19 +906,6 @@ OBJREC *find_object_desktop(int win_id,int obj_id,WINDOW **wi)
   *wi=w;
   return o;
 }
-void set_value(int win_id,int obj_id,void *value)
-  {
-  OBJREC *o;
-  WINDOW *w;
-
-  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL)return;
-  set_object_value((w==waktual),o,value);
-  }
-
-void set_default(const void *value)
-  {
-  set_object_value(0,o_end,value);
-  }
 
 void goto_control(int obj_id)
   {
@@ -891,44 +913,8 @@ void goto_control(int obj_id)
   if (send_lost()) return;
   o_aktual=find_object(waktual,obj_id);
   msg.msg=E_GET_FOCUS;
-  ((void (*)(EVENT_MSG*, OBJREC*))o_aktual->events[0])(&msg,o_aktual);
-  ((void (*)(EVENT_MSG*, OBJREC*))o_aktual->runs[2])(&msg,o_aktual);
-  }
-
-void c_set_value(int win_id,int obj_id,int cnst)
-  {
-  OBJREC *o;
-  WINDOW *w;
-
-  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL)return;
-  set_object_value((w==waktual),o,&cnst);
-  }
-
-void c_default(int cnst)
-  {
-  set_object_value(0,o_end,&cnst);
-  }
-
-
-
-int f_get_value(int win_id,int obj_id)
-  {
-  OBJREC *o;
-  WINDOW *w;
-  int v;
-
-  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL) return 0;
-  memcpy(&v,o->data,o->datasize);
-  return v;
-  }
-
-void get_value(int win_id,int obj_id,void *buff)
-  {
-  OBJREC *o;
-  WINDOW *w;
-
-  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL)return;
-  memcpy(buff,o->data,o->datasize);
+  o_aktual->onEvent(&msg);
+  o_aktual->event(&msg);
   }
 
 void cancel_event()
@@ -938,18 +924,18 @@ void cancel_event()
 
 void set_enable(int win_id,int obj_id,int condition)
 {
- OBJREC *o;
+ GUIObject *o;
  WINDOW *w;
 
- condition=(condition!=0);
+ bool cond = (condition!=0);
  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL) return;
  if (o==o_aktual)
      if (send_lost()) return;
      else
       o_aktual=NULL;
- if (o->enabled!=condition)
+ if (o->isEnabled() != cond)
   {
-  o->enabled=condition;
+  o->setEnabled(cond);
   if (w==waktual) redraw_object(o);
   }
 }
@@ -962,7 +948,7 @@ void close_current()
 void background_runner(EVENT_MSG *msg,void **prog) {
 	void (*p)();
 	char i = 1;
-	
+
 	if (msg->msg == E_INIT) {
 		va_list args;
 		va_copy(args, msg->data);
@@ -988,7 +974,7 @@ void run_background(void (*p)())
 void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys)
   {
   int xsdif,ysdif;
-  OBJREC *p;
+  GUIObject *p;
 
 
   if (newxs<w->minsizx) newxs=w->minsizx;
@@ -1000,9 +986,8 @@ void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys)
   p=w->objects;
   while (p!=NULL)
      {
-     if (p->autoresizex) p->xs+=xsdif;
-     if (p->autoresizey) p->ys+=ysdif;
-     p=p->next;
+     p->autoResize(xsdif, ysdif);
+     p=p->_next;
      }
   w->x=newx;
   w->y=newy;

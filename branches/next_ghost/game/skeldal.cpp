@@ -1303,7 +1303,8 @@ static void config_skeldal(const char *line)
   {
   int ndata=0,i,maxi;
 
-  char *data=0;char *c;
+  char *data=0;
+  const char *c;
 
   c=strchr(line,' ');if (c==NULL) return;
   c++;

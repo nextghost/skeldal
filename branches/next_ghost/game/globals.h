@@ -1664,7 +1664,6 @@ char labyrinth_find_path(uint16_t start,uint16_t konec,int flag,char (*proc)(uin
                                           //proc - je procedura volana pro kazdy sektor
                                           //cesta - je ukazatel na ukazatel na vyslednou cestu
                  //pokud je cesta=NULL pak vraci pouze zda cesta existuje ci nikoliv
-void radio_butts_gr();
 void start_check(); //testuje stav pocitace a rozhodne zda lze program spustit
 void check_number_1phase(char *exename); //check serial number! Task!//
 void animate_checkbox(int first_id,int last_id,int step);

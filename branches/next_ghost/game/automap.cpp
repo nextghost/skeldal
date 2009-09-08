@@ -226,25 +226,26 @@ void ukaz_vsechny_texty_v_mape() {
 			if (d == cur_depth) {
 				if (testclip(x, y)) {
 					int h;
-					char *d, e;
+					char *d, *e;
 
-					d = strchr(c, 0);
-					e = 0;
+					h = strlen(c);
+					d = new char[h + 1];
+					strcpy(d, c);
+					e = d + h;
 
-					while((h = text_width(c) + x) > 640) {
-						*d = e;
-						d--;
-						e = *d;
-						*d = 0;
+					while((h = text_width(d) + x) > 640) {
+						*e = '\0';
 
-						if (d == c) {
+						if (e == d) {
 							break;
 						}
+
+						e--;
 					}
 
 					position(x, y);
-					outtext(c);
-					*d = e;
+					outtext(d);
+					delete[] d;
 				} else if(x < 8 && x + text_width(c) > 10 && y > 16 && y < 376) {
 					char cd[2] = " ";
 

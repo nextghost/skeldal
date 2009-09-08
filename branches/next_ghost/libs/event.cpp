@@ -344,7 +344,7 @@ void tree_basics(T_EVENT_ROOT **ev_tree,EVENT_MSG *msg) {
 		tg.msg = va_arg(tg.data, int);
 		proc = va_arg(tg.data, EV_PROC);
 		find_event_msg_proc(*ev_tree, tg.msg, proc, r);
-		assert(r == NULL);
+//		assert(r == NULL);
 		if (r == NULL) {
 			install_event(ev_tree, tg.msg, proc, tg.data, msg->msg == E_ADDEND);
 		}
