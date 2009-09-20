@@ -468,6 +468,7 @@ void DDLFile::open(const char *filename) {
 
 	for (i = 1; i < _namesize; i++) {
 		_file.read(_nametable[i].name, DDLEntryNameSize);
+		_nametable[i].name[DDLEntryNameSize] = '\0';
 		_nametable[i].offset = _file.readSint32LE();
 	}
 }
