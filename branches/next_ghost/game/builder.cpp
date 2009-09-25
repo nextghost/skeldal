@@ -121,9 +121,6 @@ const char *debug_text;
 char marker=0;
 
 
-SPECTXT_ARR spectxtr;
-static char spt_ptr=0;
-
 void Builder_Init(void) {
 	barvy_skupin[0] = RGB555(8,8,8);
 	barvy_skupin[1] = RGB555(31,28,0);
@@ -134,56 +131,27 @@ void Builder_Init(void) {
 	barvy_skupin[6] = RGB555(0,29,26);
 }
 
-void add_spectxtr(uint16_t sector,uint16_t fhandle,uint16_t count,uint16_t repeat,int16_t xpos)
-  {
-  SPECTXTR *sp=spectxtr+spt_ptr;
+static void draw_spectxtrs(uint16_t sector, int celx, int cely) {
+	int i;
+	char a = 1;
 
-  sp->sector=sector;
-  sp->handle=fhandle;
-  sp->count=count;
-  sp->pos=0;
-  sp->repeat=repeat;
-  sp->xpos=xpos;
-  if (count)
-     if ((++spt_ptr)>=MAX_SPECTXTRS) spt_ptr=0;
-  map_coord[sector].flags |= MC_SPECTXTR;
-  }
+	if (!(gameMap.coord()[sector].flags & MC_SPECTXTR)) {
+		return;
+	}
 
-void calc_spectxtrs(void)
-  {
-  int i;
+	for (i = 0; i < MAX_SPECTXTRS; i++) {
+		if (gameMap.spectxtr()[i].repeat && gameMap.spectxtr()[i].sector == sector) {
+			const SPECTXTR *sp = gameMap.spectxtr() + i;
 
-  for(i=0;i<MAX_SPECTXTRS;i++) if (spectxtr[i].repeat)
-     {
-     SPECTXTR *sp=spectxtr+i;
-     if (++sp->pos>=sp->count)
-        {
-        sp->pos=0;if (sp->repeat>0) sp->repeat--;
-        }
-     }
-  }
+			draw_spectxtr((short*)ablock(sp->handle + sp->pos), celx, cely, sp->xpos);
+			a = 0;
+		}
+	}
 
-static void draw_spectxtrs(uint16_t sector,int celx,int cely)
-  {
-  int i;
-  char a=1;
-
-  if (!(map_coord[sector].flags & MC_SPECTXTR)) return;
-  for(i=0;i<MAX_SPECTXTRS;i++) if (spectxtr[i].repeat && spectxtr[i].sector==sector)
-     {
-     SPECTXTR *sp=spectxtr+i;
-
-     draw_spectxtr((short*)ablock(sp->handle+sp->pos),celx,cely,sp->xpos);
-     a=0;
-     }
-  if (a)
-     map_coord[sector].flags &= ~MC_SPECTXTR;
-  }
-
-void init_spectxtrs(void)
-  {
-  memset(spectxtr,0,sizeof(spectxtr));
-  }
+	if (a) {
+		gameMap.clearCoordFlags(sector, MC_SPECTXTR);
+	}
+}
 
 void ukaz_kompas(unsigned char mode)
   {
@@ -640,39 +608,49 @@ void display_spell_in_icone(int handle,int xicht)
   spell_xicht|=xicht;
   }
 
-int fc_num(int anim_counter,int sector,char floor)
-  {
-  int mode;
-  TSECTOR *s;
-  TMAP_EDIT_INFO *m;
-  int basic;
+int fc_num(int anim_counter, int sector, char floor) {
+	int mode;
+	const TSECTOR *s;
+	const TMAP_EDIT_INFO *m;
+	int basic;
 
-  s=&map_sectors[sector];
-  m=&map_coord[cur_sector];
-  if (floor)
-     {
-     basic=s->floor;
-     mode=s->flags & 0xf;
-     }
-    else
-     {
-     basic=s->ceil;
-     mode=s->flags>>4;
-     }
+	s = gameMap.sectors() + sector;
+	m = gameMap.coord() + cur_sector;
 
-  if (mode & 0x8)
-     return basic+(anim_counter % ((mode & 0x7)+1));
-  switch (mode)
-     {
-     case 0: return basic;
-     case 1: return basic+((m->x+m->y+dirs[1]) & 0x1);
-     case 2: return basic+(dirs[1] & 0x1);
-     case 3: return basic+(dirs[1] & 0x1)*2+((m->x+m->y+(dirs[1]>>1)) & 0x1);
-     case 4: return basic+dirs[1];
-     case 5: return basic+dirs[1]*2+((m->x+m->y+(dirs[1]>>1)) & 0x1);
-     }
-  return basic;
-  }
+	if (floor) {
+		basic = s->floor;
+		mode = s->flags & 0xf;
+	} else {
+		basic = s->ceil;
+		mode = s->flags >> 4;
+	}
+
+	if (mode & 0x8) {
+		return basic + (anim_counter % ((mode & 0x7) + 1));
+	}
+
+	switch (mode) {
+	case 0:
+		return basic;
+
+	case 1:
+		return basic + ((m->x + m->y + dirs[1]) & 0x1);
+
+	case 2:
+		return basic + (dirs[1] & 0x1);
+
+	case 3:
+		return basic + (dirs[1] & 0x1) * 2 + ((m->x + m->y + (dirs[1] >> 1)) & 0x1);
+
+	case 4: return
+		basic + dirs[1];
+
+	case 5:
+		return basic + dirs[1] * 2 + ((m->x + m->y + (dirs[1] >> 1)) & 0x1);
+	}
+
+	return basic;
+}
 
 int enter_tab[VIEW3D_Z+1][VIEW3D_X*2+1]=
   {4,3,3,3,3,3,3,3,4,
@@ -683,52 +661,63 @@ int enter_tab[VIEW3D_Z+1][VIEW3D_X*2+1]=
 
 
 
-void crt_minimap_itr(int sector,int smer,int itrx,int itry,int automap)
-  {
-  static int sector_temp;
-  static long sideflags;
-  static short enter=0;
-  short savee;
+void crt_minimap_itr(int sector, int smer, int itrx, int itry, int automap) {
+	static int sector_temp;
+	static long sideflags;
+	static short enter = 0;
+	short savee;
 
-  if (itrx==VIEW3D_X && itry==0) enter=0;
-  if (itrx<0 || itrx>VIEW3D_X*2 || itry>VIEW3D_Z) return;
-  if (minimap[itry][itrx]) return;
-  minimap[itry][itrx]=sector;
-  if (!set_halucination) map_coord[sector].flags|=automap & (itrx<=VIEW3D_X+1 && itrx>=VIEW3D_X-1)  ;
-  if (itrx<=VIEW3D_X)
-     {
-     sector_temp=map_sectors[sector].step_next[dirs[0]];
-     sideflags=map_sides[sector*4+dirs[0]].flags;
-     if (sector_temp && sideflags & 0x80 && enter>=0)
-        {
-        savee=enter;
-        enter=-enter_tab[itry][itrx];
-        crt_minimap_itr(sector_temp,smer,itrx-1,itry,automap &(sideflags & 1));
-        enter=savee;
-        }
-     }
-  if (itrx>=VIEW3D_X)
-     {
-     sector_temp=map_sectors[sector].step_next[dirs[2]];
-     sideflags=map_sides[sector*4+dirs[2]].flags;
-     if (sector_temp && sideflags & 0x80 && enter<=0)
-        {
-        savee=enter;
-        enter=enter_tab[itry][itrx];
-        crt_minimap_itr(sector_temp,smer,itrx+1,itry,automap &(sideflags & 1));
-        enter=savee;
-        }
-     }
-    sector_temp=map_sectors[sector].step_next[dirs[1]];
-     sideflags=map_sides[sector*4+dirs[1]].flags;
-  if (sector_temp && sideflags & 0x80)
-     {
-     savee=enter;
-     enter-=(enter>0)-(enter<0);
-     crt_minimap_itr(sector_temp,smer,itrx,itry+1,automap &(sideflags & 1));
-     enter=savee;
-     }
-  }
+	if (itrx == VIEW3D_X && itry == 0) {
+		enter = 0;
+	}
+
+	if (itrx < 0 || itrx > VIEW3D_X * 2 || itry > VIEW3D_Z) {
+		return;
+	}
+
+	if (minimap[itry][itrx]) {
+		return;
+	}
+
+	minimap[itry][itrx] = sector;
+
+	if (!set_halucination) {
+		gameMap.setCoordFlags(sector, automap & (itrx <= VIEW3D_X + 1 && itrx >= VIEW3D_X - 1));
+	}
+
+	if (itrx <= VIEW3D_X) {
+		sector_temp = gameMap.sectors()[sector].step_next[dirs[0]];
+		sideflags = gameMap.sides()[sector * 4 + dirs[0]].flags;
+
+		if (sector_temp && sideflags & 0x80 && enter >= 0) {
+			savee = enter;
+			enter = -enter_tab[itry][itrx];
+			crt_minimap_itr(sector_temp, smer, itrx - 1, itry, automap & (sideflags & 1));
+			enter = savee;
+		}
+	}
+
+	if (itrx >= VIEW3D_X) {
+		sector_temp = gameMap.sectors()[sector].step_next[dirs[2]];
+		sideflags = gameMap.sides()[sector * 4 + dirs[2]].flags;
+		if (sector_temp && sideflags & 0x80 && enter <= 0) {
+			savee = enter;
+			enter = enter_tab[itry][itrx];
+			crt_minimap_itr(sector_temp, smer, itrx + 1, itry, automap & (sideflags & 1));
+			enter = savee;
+		}
+	}
+
+	sector_temp = gameMap.sectors()[sector].step_next[dirs[1]];
+	sideflags = gameMap.sides()[sector * 4 + dirs[1]].flags;
+
+	if (sector_temp && sideflags & 0x80) {
+		savee = enter;
+		enter -= (enter > 0) - (enter < 0);
+		crt_minimap_itr(sector_temp, smer, itrx, itry + 1, automap & (sideflags & 1));
+		enter = savee;
+	}
+}
 
 
 void create_minimap(int sector,int smer)
@@ -750,50 +739,37 @@ __inline int toInt( float fval )
 }
 
 
-static uint16_t *check_autofade(uint16_t *image, char ceil, int dark)
-{
-  uint8_t *data=(uint8_t*)image;
-  if (data[5]==0x80) 
-  {
-    uint16_t *xy=image;
-	if (mglob.map_autofadefc==1)
-	{
-	  uint16_t *imgdata=xy+3;
-/*
-	  int br=back_color>>11;
-	  int bg=(back_color>>5) & 0x1F;
-	  int bb=back_color & 0x1F;
-*/
-	  int y;
+static uint16_t *check_autofade(uint16_t *image, char ceil, int dark) {
+	uint8_t *data = (uint8_t*)image;
 
-//      if (dark) br=bg=bb=0;
+	if (data[5] == 0x80) {
+		uint16_t *xy = image;
 
-	  for(y=0;y<xy[1];y++)
-	  {
-		float factor=(float)y/(xy[1]-1);
-		int x;
-		if (!ceil) factor=1.0f-factor;
-		factor=factor*factor;
-		for (x=0;x<xy[0];x++)
-		{
-/*
-		  int r=*imgdata>>11;
-		  int g=(*imgdata>>5) & 0x3F;
-		  int b=*imgdata & 0x1F;
-		  r=toInt(r+factor*(br-r));
-		  g=toInt(g+factor*(bg-g));
-		  b=toInt(b+factor*(bb-b));
-*/
-//		  *imgdata=(r<<11)|(g<<5)|b;
-//		  *imgdata = Screen_RGB(r, g, b);
-			*imgdata = Screen_ColorBlend(*imgdata, dark ? 0 : back_color, factor);
-		  imgdata++;
+		if (gameMap.global().map_autofadefc == 1) {
+			uint16_t *imgdata = xy + 3;
+			int y;
+
+			for (y = 0; y < xy[1]; y++) {
+				float factor = (float)y / (xy[1] - 1);
+				int x;
+
+				if (!ceil) {
+					factor = 1.0f - factor;
+				}
+
+				factor = factor * factor;
+
+				for (x = 0; x < xy[0]; x++) {
+					*imgdata = Screen_ColorBlend(*imgdata, dark ? 0 : back_color, factor);
+					imgdata++;
+				}
+			}
 		}
-	  }
+
+		xy[2] = xy[2] & 0xFF;
 	}
-    xy[2]=xy[2] & 0xFF;
-  }
-  return image;
+
+	return image;
 }
 
 #define draw_floor(s,celx,cely,dark) if (s->floor) draw_floor_ceil(celx,cely,0,check_autofade((uint16_t*)ablock(num_ofsets[FLOOR_NUM]+fc_num(global_anim_counter,sector,1)),0,dark));
@@ -802,17 +778,16 @@ static uint16_t *check_autofade(uint16_t *image, char ceil, int dark)
 
 static int left_shiftup,right_shiftup;
 
-int draw_basic_floor(int celx,int cely,int sector)
-  {
-  TSECTOR *s;
-  int dark;
+int draw_basic_floor(int celx, int cely, int sector) {
+	const TSECTOR *s;
+	int dark;
 
-  s=&map_sectors[sector];
-  dark=map_coord[sector].flags & MC_SHADING;
-  draw_floor(s,celx,cely,dark);
-  draw_ceil(s,celx,cely,dark);
-  return 0;
-  }
+	s = gameMap.sectors() + sector;
+	dark = gameMap.coord()[sector].flags & MC_SHADING;
+	draw_floor(s, celx, cely, dark);
+	draw_ceil(s, celx, cely, dark);
+	return 0;
+}
 
 static int calc_item_shiftup(TITEM *it)
   {
@@ -833,82 +808,125 @@ static int calc_item_shiftup(TITEM *it)
   return t;
   }
 
-void draw_vyklenek(int celx,int cely,int sector,int dir)
-  {
-  int i,j;
-  TVYKLENEK *v;
+void draw_vyklenek(int celx, int cely, int sector, int dir) {
+	int i, j;
+	const TVYKLENEK *v;
+	
+	for (i = 0; i < gameMap.vykCount(); i++) {
+		if (gameMap.vyk()[i].sector == sector && gameMap.vyk()[i].dir == dir) {
+			break;
+		}
+	}
 
-  for(i=0;i<vyk_max;i++) if (map_vyk[i].sector==sector && map_vyk[i].dir==dir) break;
-  if (i==vyk_max) return;
-  v=map_vyk+i;
-  for(i=0;(j=v->items[i])!=0;i++)
-     {
-     TITEM *it=&glob_items[j-1];
-     if (it->shiftup==0xff) it->shiftup=calc_item_shiftup(it);
-     draw_item2(celx,cely,v->xpos,v->ypos-it->shiftup,ablock(it->vzhled+face_arr[0]),i);
-     }
-  }
+	if (i == gameMap.vykCount()) {
+		return;
+	}
+
+	v = gameMap.vyk() + i;
+
+	for (i = 0; (j = v->items[i]) != 0; i++) {
+		TITEM *it = &glob_items[j - 1];
+
+		if (it->shiftup == 0xff) {
+			it->shiftup = calc_item_shiftup(it);
+		}
+
+		draw_item2(celx, cely, v->xpos, v->ypos - it->shiftup, ablock(it->vzhled + face_arr[0]), i);
+	}
+}
 
 
-static int draw_basic_sector(int celx,int cely,int sector)
-  {
-  TSTENA *w,*q;
-  int obl;
+static int draw_basic_sector(int celx, int cely, int sector) {
+	const TSTENA *w, *q;
+	int obl;
 
-  w=&map_sides[sector*4];
-  q=&w[dirs[1]];
-  obl=GET_OBLOUK(q);
-  if (cely<VIEW3D_Z)
-     {
-     if (q->flags & SD_LEFT_ARC && obl)
-        show_cel2(celx,cely,ablock(num_ofsets[OBL_NUM]+obl),0,0,1);
-     if (q->flags & SD_RIGHT_ARC && q->oblouk  & 0x0f)
-        show_cel2(celx,cely,ablock(num_ofsets[OBL2_NUM]+obl),0,0,2);
-     if (q->flags & SD_PRIM_VIS && q->prim)
-        show_cel2(celx,cely,ablock(num_ofsets[MAIN_NUM]+q->prim+(q->prim_anim>>4)),0,0,1+(q->oblouk & SD_POSITION));
-     if (q->flags & SD_SEC_VIS && q->sec)
-        if (q->side_tag & SD_SHIFTUP)
-           {
-           if (cely!=0)
-              show_cel2(celx,cely-1,ablock(num_ofsets[MAIN_NUM]+q->sec+(q->sec_anim>>4)),0,0,1);
-           }
-        else
-           show_cel2(celx,cely,ablock(num_ofsets[MAIN_NUM]+q->sec+(q->sec_anim>>4)),q->xsec<<1,q->ysec<<1,0);
-     if (q->oblouk & 0x10)
-        draw_vyklenek(celx,cely,sector,dirs[1]);
-     }
-  if (celx<=0)
-     {
-     q=&w[dirs[0]];
-     if (left_shiftup)
-         show_cel(celx,cely,ablock(num_ofsets[LEFT_NUM]+left_shiftup),0,0,2),left_shiftup=0;
-     if (q->flags & SD_PRIM_VIS && q->prim)
-      show_cel(-celx,cely,ablock(num_ofsets[LEFT_NUM]+q->prim+(q->prim_anim>>4)),0,0,2+(q->oblouk & SD_POSITION));
-     if (q->flags & SD_SEC_VIS && q->sec)
-      if (q->side_tag & SD_SHIFTUP)
-        if (celx!=0) left_shiftup=q->sec+(q->sec_anim>>4);else left_shiftup=0;
-      else if (q->flags & SD_SPEC)
-      show_cel(celx,cely,ablock(num_ofsets[LEFT_NUM]+q->sec+(q->sec_anim>>4)),0,0,2);
-     else
-      show_cel(celx,cely,ablock(num_ofsets[LEFT_NUM]+q->sec+(q->sec_anim>>4)),q->xsec<<1,q->ysec<<1,0);
-     }
-  if (celx>=0)
-     {
-     q=&w[dirs[2]];
-     if (right_shiftup)
-         show_cel(celx,cely,ablock(num_ofsets[RIGHT_NUM]+right_shiftup),0,0,3),right_shiftup=0;
-     if (q->flags & SD_PRIM_VIS && q->prim)
-      show_cel(celx,cely,ablock(num_ofsets[RIGHT_NUM]+q->prim+(q->prim_anim>>4)),0,0,3+(q->oblouk & SD_POSITION));
-     if (q->flags & SD_SEC_VIS && q->sec)
-      if (q->side_tag  & SD_SHIFTUP)
-        if (celx!=0) right_shiftup=q->sec+(q->sec_anim>>4);else right_shiftup=0;
-      else if (q->flags & SD_SPEC)
-       show_cel(celx,cely,ablock(num_ofsets[RIGHT_NUM]+q->sec+(q->sec_anim>>4)),0,0,3);
-      else
-       show_cel(celx,cely,ablock(num_ofsets[RIGHT_NUM]+q->sec+(q->sec_anim>>4)),500-(q->xsec<<1),q->ysec<<1,1);
-     }
-  return 0;
-  }
+	w = gameMap.sides() + sector * 4;
+	q = w + dirs[1];
+	obl = GET_OBLOUK(q);
+	if (cely < VIEW3D_Z) {
+		if (q->flags & SD_LEFT_ARC && obl) {
+			show_cel2(celx, cely, ablock(num_ofsets[OBL_NUM] + obl), 0, 0, 1);
+		}
+
+		if (q->flags & SD_RIGHT_ARC && q->oblouk  & 0x0f) {
+			show_cel2(celx, cely, ablock(num_ofsets[OBL2_NUM] + obl), 0, 0, 2);
+		}
+
+		if (q->flags & SD_PRIM_VIS && q->prim) {
+			show_cel2(celx, cely, ablock(num_ofsets[MAIN_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 1 + (q->oblouk & SD_POSITION));
+		}
+
+		if (q->flags & SD_SEC_VIS && q->sec) {
+			if (q->side_tag & SD_SHIFTUP) {
+				if (cely != 0) {
+					show_cel2(celx, cely - 1, ablock(num_ofsets[MAIN_NUM] + q->sec + (q->sec_anim >> 4)), 0, 0, 1);
+				}
+			} else {
+				show_cel2(celx, cely, ablock(num_ofsets[MAIN_NUM] + q->sec + (q->sec_anim >> 4)), q->xsec << 1, q->ysec << 1, 0);
+			}
+		}
+
+		if (q->oblouk & 0x10) {
+			draw_vyklenek(celx, cely, sector, dirs[1]);
+		}
+	}
+
+	if (celx <= 0) {
+		q = &w[dirs[0]];
+
+		if (left_shiftup) {
+			show_cel(celx, cely, ablock(num_ofsets[LEFT_NUM] + left_shiftup), 0, 0, 2);
+			left_shiftup = 0;
+		}
+
+		if (q->flags & SD_PRIM_VIS && q->prim) {
+			show_cel(-celx, cely, ablock(num_ofsets[LEFT_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 2 + (q->oblouk & SD_POSITION));
+		}
+
+		if (q->flags & SD_SEC_VIS && q->sec) {
+			if (q->side_tag & SD_SHIFTUP) {
+				if (celx != 0) {
+					left_shiftup = q->sec + (q->sec_anim >> 4);
+				} else {
+					left_shiftup = 0;
+				}
+			} else if (q->flags & SD_SPEC) {
+				show_cel(celx, cely, ablock(num_ofsets[LEFT_NUM] + q->sec + (q->sec_anim >> 4)), 0, 0, 2);
+			} else {
+				show_cel(celx, cely, ablock(num_ofsets[LEFT_NUM] + q->sec + (q->sec_anim >> 4)), q->xsec << 1, q->ysec << 1, 0);
+			}
+		}
+	}
+
+	if (celx >= 0) {
+		q = &w[dirs[2]];
+
+		if (right_shiftup) {
+			show_cel(celx, cely, ablock(num_ofsets[RIGHT_NUM] + right_shiftup), 0, 0, 3);
+			right_shiftup = 0;
+		}
+
+		if (q->flags & SD_PRIM_VIS && q->prim) {
+			show_cel(celx, cely, ablock(num_ofsets[RIGHT_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 3 + (q->oblouk & SD_POSITION));
+		}
+
+		if (q->flags & SD_SEC_VIS && q->sec) {
+			if (q->side_tag & SD_SHIFTUP) {
+				if (celx != 0) {
+					right_shiftup = q->sec + (q->sec_anim >> 4);
+				} else {
+					right_shiftup = 0;
+				}
+			} else if (q->flags & SD_SPEC) {
+				show_cel(celx, cely, ablock(num_ofsets[RIGHT_NUM] + q->sec + (q->sec_anim >> 4)), 0, 0, 3);
+			} else {
+				show_cel(celx, cely, ablock(num_ofsets[RIGHT_NUM] + q->sec + (q->sec_anim >> 4)), 500 - (q->xsec << 1), q->ysec << 1, 1);
+			}
+		}
+	}
+
+	return 0;
+}
 
 static int draw_lodku(int celx,int cely)
   {
@@ -928,120 +946,154 @@ int p_place_table[4][5]=
 int p_positions_x[5]={-32,32,32,-32,0};
 int p_positions_y[5]={32,32,-32,-32,0};
 
-void draw_players(int sector,int dir,int celx,int cely)
-  {
-  if (map_coord[sector].flags & MC_DPLAYER)
-     {
-     int i;
-     THUMAN *p;
-     char freep[5];
-     int j,d,pp=0,f;
+void draw_players(int sector, int dir, int celx, int cely) {
+	if (gameMap.coord()[sector].flags & MC_DPLAYER) {
+		int i;
+		THUMAN *p;
+		char freep[5];
+		int j, d, pp = 0, f;
 
-     memset(freep,0,sizeof(freep));
-     for(i=0,pp=0;i<POCET_POSTAV;i++)
-        {
-        if ((p=&postavy[i])->sektor==sector && ((!p->lives && p->groupnum==0) || p->sektor!=viewsector))
-           {
-           pp++;
-           d=(p->direction-dir)&0x3;
-           if (p->lives)
-                   for(j=0;j<5 && freep[p_place_table[d][j]];j++);
-           else
-                   for(j=4;j>=0 && freep[p_place_table[d][j]];j--);
-           if (j==5 || j==-1) break;
-           freep[f=p_place_table[d][j]]=i+1;
-           }
-        }
-     if (pp==1 && freep[f] & 1)
-        {pp=f+1&3;freep[pp]=freep[f];freep[f]=0;}
-     for(i=0;i<5;i++)
-        if ((j=freep[d=p_place_table[0][i]])!=0)
-           if (postavy[j-1].lives)
-           {
-           set_font(H_FLITT5,barvy_skupin[postavy[j-1].groupnum]);
-           draw_player((uint16_t*)ablock(H_POSTAVY+j-1),celx,cely,p_positions_x[d],p_positions_y[d],HUMAN_ADJUST,postavy[j-1].jmeno);
-           }
-        else
-           draw_player((uint16_t*)ablock(H_KOSTRA),celx,cely,p_positions_x[d],p_positions_y[d]-32,HUMAN_ADJUST,NULL);
+		memset(freep, 0, sizeof(freep));
 
+		for (i = 0, pp = 0; i < POCET_POSTAV; i++) {
+			if ((p = &postavy[i])->sektor == sector && ((!p->lives && p->groupnum == 0) || p->sektor != viewsector)) {
+				pp++;
+				d = (p->direction - dir) & 0x3;
 
-     }
-  }
+				if (p->lives) {
+				        for (j = 0; j < 5 && freep[p_place_table[d][j]]; j++);
+				} else {
+				        for (j = 4; j >= 0 && freep[p_place_table[d][j]]; j--);
+				}
 
+				if (j == 5 || j == -1) {
+					break;
+				}
 
+				freep[f = p_place_table[d][j]] = i + 1;
+			}
+		}
 
-int draw_sloup_sector(int celx,int cely,int sector)
-  {
-  TSTENA *w,*q;
-  int obl;
+		if (pp == 1 && freep[f] & 1) {
+			pp = f + 1 & 3;
+			freep[pp] = freep[f];
+			freep[f] = 0;
+		}
 
-  w=&map_sides[sector*4];
-  q=&w[dirs[1]];
-  obl=GET_OBLOUK(q);
-  if (q->flags & SD_LEFT_ARC && q->oblouk)
-     show_cel2(celx,cely,ablock(num_ofsets[OBL_NUM]+obl),0,0,1);
-  if (q->flags & SD_RIGHT_ARC && q->oblouk)
-     show_cel2(celx,cely,ablock(num_ofsets[OBL2_NUM]+obl),0,0,2);
-  if (q->flags & SD_PRIM_VIS && q->prim)
-      show_cel2(celx,cely,ablock(num_ofsets[MAIN_NUM]+q->prim+(q->prim_anim>>4)),0,0,1+(q->oblouk & SD_POSITION));
-  if (celx<=0)
-     {
-     q=&w[dirs[0]];
-     if (q->flags & SD_PRIM_VIS && q->prim)
-      show_cel(-celx,cely,ablock(num_ofsets[LEFT_NUM]+q->prim+(q->prim_anim>>4)),0,0,2+(q->oblouk & SD_POSITION));
-     }
-  if (celx>=0)
-     {
-     q=&w[dirs[2]];
-     if (q->flags & SD_PRIM_VIS && q->prim)
-      show_cel(celx,cely,ablock(num_ofsets[RIGHT_NUM]+q->prim+(q->prim_anim>>4)),0,0,3+(q->oblouk & SD_POSITION));
-     }
-  q=&w[dirs[1]];
-  if (q->flags & SD_SEC_VIS && q->sec && cely!=0)
-     if (q->flags & SD_SPEC)
-      show_cel2(celx,cely-1,ablock(num_ofsets[MAIN_NUM]+q->sec+(q->sec_anim>>4)),0,0,2);
-     else
-      show_cel2(celx,cely-1,ablock(num_ofsets[MAIN_NUM]+q->sec+(q->sec_anim>>4)),(q->xsec<<1)+celx*(points[0][0][cely].x-points[0][0][cely-1].x)/2,q->ysec<<1,0);
-  return 0;
-  }
+		for (i = 0; i < 5; i++) {
+			if ((j = freep[d = p_place_table[0][i]]) != 0) {
+				if (postavy[j-1].lives) {
+					set_font(H_FLITT5, barvy_skupin[postavy[j-1].groupnum]);
+					draw_player((uint16_t*)ablock(H_POSTAVY+j-1), celx, cely, p_positions_x[d], p_positions_y[d], HUMAN_ADJUST, postavy[j-1].jmeno);
+				} else {
+					draw_player((uint16_t*)ablock(H_KOSTRA), celx, cely, p_positions_x[d], p_positions_y[d] - 32, HUMAN_ADJUST, NULL);
+				}
+			}
+		}
+	}
+}
 
 
-void swap_truesee(int ss)
-  {
-  int i;
-  for(i=0;i<4;i++)
-     {
-     TSTENA *s=map_sides+i+ss;
 
-     if (s->flags & SD_TRUESEE) s->flags^=SD_PRIM_VIS | SD_SEC_VIS | SD_AUTOMAP;
-     }
-  }
+int draw_sloup_sector(int celx, int cely, int sector) {
+	const TSTENA *w, *q;
+	int obl;
 
-void draw_sector(int celx,int cely,int s)
-  {
-  int ss;
-  ss=s<<2;
-  if (true_seeing) swap_truesee(ss);
-  switch (map_sectors[s].sector_type)
-     {
-     case S_SSMRT:
-     case S_SLOUP:
-     case S_TELEPORT:
-          draw_sloup_sector(celx,cely,s);
-          draw_placed_items_normal(celx,cely,s,viewdir);
-          break;
-     case S_LODKA:
-          draw_basic_sector(celx,cely,s);
-          if (cely==0) draw_placed_items_normal(celx,cely,s,viewdir);
-          draw_lodku(celx,cely);
-          break;
-     default:
-          draw_basic_sector(celx,cely,s);
-          draw_placed_items_normal(celx,cely,s,viewdir);
-          break;
-     }
-  if (true_seeing) swap_truesee(ss);
-  }
+	w = gameMap.sides() + sector * 4;
+	q = w + dirs[1];
+	obl = GET_OBLOUK(q);
+
+	if (q->flags & SD_LEFT_ARC && q->oblouk) {
+		show_cel2(celx, cely, ablock(num_ofsets[OBL_NUM] + obl), 0, 0, 1);
+	}
+
+	if (q->flags & SD_RIGHT_ARC && q->oblouk) {
+		show_cel2(celx, cely, ablock(num_ofsets[OBL2_NUM] + obl), 0, 0, 2);
+	}
+
+	if (q->flags & SD_PRIM_VIS && q->prim) {
+		show_cel2(celx, cely, ablock(num_ofsets[MAIN_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 1 + (q->oblouk & SD_POSITION));
+	}
+
+	if (celx<=0) {
+		q = &w[dirs[0]];
+		if (q->flags & SD_PRIM_VIS && q->prim) {
+			show_cel(-celx, cely, ablock(num_ofsets[LEFT_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 2 + (q->oblouk & SD_POSITION));
+		}
+	}
+
+	if (celx >= 0) {
+		q = &w[dirs[2]];
+		if (q->flags & SD_PRIM_VIS && q->prim) {
+			show_cel(celx, cely, ablock(num_ofsets[RIGHT_NUM] + q->prim + (q->prim_anim >> 4)), 0, 0, 3 + (q->oblouk & SD_POSITION));
+		}
+	}
+
+	q = &w[dirs[1]];
+
+	if (q->flags & SD_SEC_VIS && q->sec && cely != 0) {
+		if (q->flags & SD_SPEC) {
+			show_cel2(celx, cely - 1, ablock(num_ofsets[MAIN_NUM] + q->sec + (q->sec_anim >> 4)), 0, 0, 2);
+		} else {
+			show_cel2(celx, cely - 1, ablock(num_ofsets[MAIN_NUM] + q->sec + (q->sec_anim >> 4)), (q->xsec << 1) + celx * (points[0][0][cely].x - points[0][0][cely - 1].x) / 2, q->ysec << 1, 0);
+		}
+	}
+
+	return 0;
+}
+
+
+void swap_truesee(int ss) {
+	int i;
+
+	for (i = 0; i < 4; i++) {
+
+		if (gameMap.sides()[i + ss].flags & SD_TRUESEE) {
+			uint16_t old = gameMap.sides()[i + ss].flags & (SD_PRIM_VIS | SD_SEC_VIS | SD_AUTOMAP);
+
+			gameMap.clearSideFlags(ss + i, old);
+			gameMap.setSideFlags(ss + i, old ^ (SD_PRIM_VIS | SD_SEC_VIS | SD_AUTOMAP));
+		}
+	}
+}
+
+void draw_sector(int celx, int cely, int s) {
+	int ss;
+
+	ss = s << 2;
+
+	if (true_seeing) {
+		swap_truesee(ss);
+	}
+
+	switch (gameMap.sectors()[s].sector_type) {
+	case S_SSMRT:
+	case S_SLOUP:
+	case S_TELEPORT:
+		draw_sloup_sector(celx, cely, s);
+		draw_placed_items_normal(celx, cely, s, viewdir);
+		break;
+
+	case S_LODKA:
+		draw_basic_sector(celx, cely, s);
+
+		if (cely == 0) {
+			draw_placed_items_normal(celx, cely, s, viewdir);
+		}
+
+		draw_lodku(celx, cely);
+		break;
+
+	default:
+		draw_basic_sector(celx, cely, s);
+		draw_placed_items_normal(celx, cely, s, viewdir);
+		break;
+	}
+
+	if (true_seeing) {
+		swap_truesee(ss);
+	}
+}
 
 void back_clear(int celx,int color)
   {
@@ -1113,67 +1165,86 @@ skp: add  edi,2h
   }
 */
 
-static void trace_for_bgr(int dir)
-  {
-	int s,i;
-	static int olddist=0;
-	static int olddir=0;
-	TSTENA *ss;
+static void trace_for_bgr(int dir) {
+	int s, i;
+	static int olddist = 0;
+	static int olddir = 0;
+	const TSTENA *ss;
 
-	bgr_handle=0;
-	bgr_distance=-1;
-	for(i=0,s=0;i<VIEW3D_Z && minimap[i][VIEW3D_X];)
-	  {
-	  s=minimap[i++][VIEW3D_X];
-	  ss=map_sides+s*4+dir;
-	  if (ss->flags & SD_PRIM_VIS && !ss->prim)
-	  	{
-			bgr_distance=i-1;
-			bgr_handle=num_ofsets[BACK_NUM]+dir;
+	bgr_handle = 0;
+	bgr_distance = -1;
+
+	for (i = 0, s = 0; i < VIEW3D_Z && minimap[i][VIEW3D_X];) {
+		s = minimap[i++][VIEW3D_X];
+		ss = gameMap.sides() + s * 4 + dir;
+
+		if (ss->flags & SD_PRIM_VIS && !ss->prim) {
+			bgr_distance = i - 1;
+			bgr_handle = num_ofsets[BACK_NUM] + dir;
 			break;
-			}
 		}
-	if (olddist!=bgr_distance || olddir!=dir)
-			{
-			if (bgr_distance==-1)
-				{
-				uint16_t *w=Screen_GetAddr();int i=Screen_GetXSize()*480;
-				do {if (*w>=NOSHADOW(0)) *w=back_color;w++;} while(--i);
-				}
-			zneplatnit_block(H_BGR_BUFF);
-			}
-	olddist=bgr_distance;
-	olddir=dir;
 	}
 
+	if (olddist != bgr_distance || olddir != dir) {
+		if (bgr_distance == -1) {
+			uint16_t *w = Screen_GetAddr();
+			int i = Screen_GetXSize() * 480;
 
-void render_scene(int sector, int smer)
-  {
-  int i,j,s;
+			do {
+				if (*w >= NOSHADOW(0)) {
+					*w = back_color;
+				}
 
-  cancel_render=0;see_monster=0;
-  destroy_fly_map();
-  build_fly_map();
-  if (set_blind() && cur_mode!=MD_END_GAME && !folow_mode)
-     {
-     clear_buff(NULL,0,360);
-     return;
-     }
-  if (set_halucination)
-     {
-     sector=hal_sector;
-     smer=hal_dir;
-     }
-  cur_sector=sector;
-  create_minimap(sector,smer);
+				w++;
+			} while(--i);
+		}
+
+		zneplatnit_block(H_BGR_BUFF);
+	}
+
+	olddist = bgr_distance;
+	olddir = dir;
+}
+
+
+void render_scene(int sector, int smer) {
+	int i, j, s;
+
+	cancel_render = 0;
+	see_monster = 0;
+	destroy_fly_map();
+	build_fly_map();
+
+	if (set_blind() && cur_mode != MD_END_GAME && !folow_mode) {
+		clear_buff(NULL, 0, 360);
+		return;
+	}
+
+	if (set_halucination) {
+		sector = hal_sector;
+		smer = hal_dir;
+	}
+
+	cur_sector = sector;
+	create_minimap(sector, smer);
 //  trace_for_bgr(smer);
-  i=VIEW3D_Z-1;
-  s=minimap[i][VIEW3D_X];
-  if (s && !map_sectors[s].ceil) clear_buff((uint16_t*)ablock(H_BGR_BUFF),back_color,360);
-  else clear_buff((uint16_t*)ablock(H_BGR_BUFF),back_color,80);
-  for(i=-VIEW3D_X+1;i<VIEW3D_X;i++)
-     if ((s=minimap[VIEW3D_Z-1][VIEW3D_X+i])!=0)
-        if (map_coord[s].flags & MC_SHADING) back_clear(i,0);
+	i = VIEW3D_Z - 1;
+	s = minimap[i][VIEW3D_X];
+
+	if (s && !gameMap.sectors()[s].ceil) {
+		clear_buff((uint16_t*)ablock(H_BGR_BUFF), back_color, 360);
+	} else {
+		clear_buff((uint16_t*)ablock(H_BGR_BUFF), back_color, 80);
+	}
+
+	for (i = -VIEW3D_X + 1; i < VIEW3D_X; i++) {
+		if ((s = minimap[VIEW3D_Z-1][VIEW3D_X+i]) != 0) {
+			if (gameMap.coord()[s].flags & MC_SHADING) {
+				back_clear(i, 0);
+			}
+		}
+	}
+
 /*  if (reverse_draw)
   for(i=0;i<VIEW3D_Z;i++)
      for(j=0;j<VIEW3D_X;j++)
@@ -1184,63 +1255,91 @@ void render_scene(int sector, int smer)
      if (cancel_render) return;
      }
   else*/
-  for(i=VIEW3D_Z-1;i>=0;i--)
-     {
-        uint16_t *p;
+	for (i = VIEW3D_Z - 1; i >= 0; i--) {
+		uint16_t *p;
 
-        p=minimap[i];
-        left_shiftup=0;right_shiftup=0;
-        for(j=VIEW3D_X-1;j>=0;j--)
-           {
-           int s2;
-           if ((s=p[VIEW3D_X+j])!=0)
-              {
-              if (map_coord[s].flags & MC_SHADING) secnd_shade=1; else secnd_shade=0;
-              draw_basic_floor(j,i,s);
-              if (map_sides[(s<<2)+smer].flags & SD_TRANSPARENT)
-                {
-                s2=map_sectors[s].step_next[smer];
-                draw_mob(s2,smer,j,i,1);
-                }
-              draw_sector(j,i,s);
-              }
-           if (j && (s=p[VIEW3D_X-j]))
-              {
-              if (map_coord[s].flags & MC_SHADING) secnd_shade=1; else secnd_shade=0;
-              draw_basic_floor(-j,i,s);
-              if (map_sides[(s<<2)+smer].flags & SD_TRANSPARENT)
-                {
-                s2=map_sectors[s].step_next[smer];
-                draw_mob(s2,smer,-j,i,1);
-                }
-              draw_sector(-j,i,s);
-              }
-           }
-        for(j=VIEW3D_X-1;j>=0;j--)
-           {
-           if ((s=p[VIEW3D_X+j])!=0)
-              {
-              if (map_coord[s].flags & MC_SHADING) secnd_shade=1; else secnd_shade=0;
-              draw_players(s,viewdir,j,i);
-              draw_mob(s,viewdir,j,i,0);
-              draw_fly_items(j,i,s,viewdir);
-              draw_spectxtrs(s,j,i);
-              }
-           if (j && (s=p[VIEW3D_X-j]))
-              {
-              if (map_coord[s].flags & MC_SHADING) secnd_shade=1; else secnd_shade=0;
-              draw_players(s,viewdir,-j,i);
-              draw_mob(s,viewdir,-j,i,0);
-              draw_fly_items(-j,i,s,viewdir);
-              draw_spectxtrs(s,-j,i);
-              }
-           }
-           do_events();
-           if (cancel_render) return;
-     }
-  calc_spectxtrs();
-  if (lodka) zobraz_lodku((uint16_t*)ablock(H_LODKA),LODKA_POS,LODKA_SIZ);
-  }
+		p = minimap[i];
+		left_shiftup = 0;
+		right_shiftup = 0;
+
+		for (j = VIEW3D_X - 1; j >= 0; j--) {
+			int s2;
+
+			if ((s = p[VIEW3D_X + j]) != 0) {
+				if (gameMap.coord()[s].flags & MC_SHADING) {
+					secnd_shade = 1;
+				} else {
+					secnd_shade = 0;
+				}
+
+				draw_basic_floor(j, i, s);
+
+				if (gameMap.sides()[(s << 2) + smer].flags & SD_TRANSPARENT) {
+					s2 = gameMap.sectors()[s].step_next[smer];
+					draw_mob(s2, smer, j, i, 1);
+				}
+
+				draw_sector(j, i, s);
+			}
+
+			if (j && (s = p[VIEW3D_X - j])) {
+				if (gameMap.coord()[s].flags & MC_SHADING) {
+					secnd_shade = 1;
+				} else {
+					secnd_shade = 0;
+				}
+
+				draw_basic_floor(-j, i, s);
+
+				if (gameMap.sides()[(s << 2) + smer].flags & SD_TRANSPARENT) {
+					s2 = gameMap.sectors()[s].step_next[smer];
+					draw_mob(s2, smer, -j, i, 1);
+				}
+
+				draw_sector(-j,i,s);
+			}
+		}
+
+		for (j = VIEW3D_X - 1; j >= 0; j--) {
+			if ((s = p[VIEW3D_X + j]) != 0) {
+				if (gameMap.coord()[s].flags & MC_SHADING) {
+					secnd_shade = 1;
+				} else {
+					secnd_shade = 0;
+				}
+
+				draw_players(s, viewdir, j, i);
+				draw_mob(s, viewdir, j, i, 0);
+				draw_fly_items(j, i, s, viewdir);
+				draw_spectxtrs(s, j, i);
+			}
+
+			if (j && (s = p[VIEW3D_X - j])) {
+				if (gameMap.coord()[s].flags & MC_SHADING) {
+					secnd_shade = 1;
+				} else {
+					secnd_shade = 0;
+				}
+
+				draw_players(s, viewdir, -j, i);
+				draw_mob(s, viewdir, -j, i, 0);
+				draw_fly_items(-j, i, s, viewdir);
+				draw_spectxtrs(s, -j, i);
+			}
+		}
+
+		do_events();
+		if (cancel_render) {
+			return;
+		}
+	}
+
+	gameMap.recalcSpecTextures();
+
+	if (lodka) {
+		zobraz_lodku((uint16_t*)ablock(H_LODKA), LODKA_POS, LODKA_SIZ);
+	}
+}
 
 void debug_print()
   {

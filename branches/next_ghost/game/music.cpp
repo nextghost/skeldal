@@ -339,62 +339,75 @@ void restore_sound_name(TMA_SOUND *p)
      }
   }
 
-void restore_sound_names()
-  {
-  int i;
+void restore_sound_names() {
+	int i;
 
-  for(i=0;i<mapsize*4;i++)
-     if (macros[i]!=NULL)
-        {
-        int *r,mcsiz;
-        TMULTI_ACTION *z;
+	for (i = 0; i < gameMap.coordCount() * 4; i++) {
+		if (gameMap.macros()[i] != NULL) {
+			int mcsiz;
+			const int *r;
+			TMULTI_ACTION *z;
 
-        r=macros[i];
-        while ((mcsiz=*r)!=0)
-           {
-           r++;
-           z=(TMULTI_ACTION *)r;
-           if (z->general.action==MA_SOUND) restore_sound_name(&z->sound);
-           r=(int *)((char *)r+mcsiz);
-           }
-        }
-  }
+			r = (const int*)gameMap.macros()[i];
 
-void recalc_volumes(int sector,int side)
-  {
-  int i;
-  int newx,newy,layer;
+			while ((mcsiz = *r) != 0) {
+				r++;
+				z = (TMULTI_ACTION *)r;
 
-  if (sector>=mapsize) return;
+				if (z->general.action == MA_SOUND) {
+					restore_sound_name(&z->sound);
+				}
 
-  side;
-  SEND_LOG("(SOUND) %s","Recalculating volumes",0);
-  newx=map_coord[sector].x;
-  newy=map_coord[sector].y;
-  layer=map_coord[sector].layer;
-  for(i=0;i<CHANNELS;i++)
-     if (chan_state[i]>=0 && playings[i].side>=0)
-        {
-        calcul_volume(i,newx-playings[i].xpos,newy-playings[i].ypos,/*side-*/playings[i].side,playings[i].volume);
-        if (!Sound_GetChannelState(i)) release_channel(i);
-        }
-     else calcul_volume(i,0,0,-1,playings[i].volume);
-  for(i=1;i<TRACKS;i++) if (track_state[i]<0 && tracks[i].data!=NULL)
-     {
-     if (tracks[i].side<0)
-        {
-        if (have_loop(tracks[i].data))
-          play_effekt(0,0,0,0,-1,-1,tracks[i].data);
-        }
-     else
-        {
-       int x=newx-tracks[i].xpos, y=newy-tracks[i].ypos;
-        if (calc_volume(&x,&y,tracks[i].side)>0)
-           if (have_loop(tracks[i].data))play_effekt(newx,newy,tracks[i].xpos,tracks[i].ypos,side,tracks[i].side,tracks[i].data);
-        }
-     }
-  mute_task=-1;
-  }
+				r = (int *)((char *)r + mcsiz);
+			}
+		}
+	}
+}
+
+void recalc_volumes(int sector, int side) {
+	int i;
+	int newx, newy, layer;
+
+	if (sector >= gameMap.coordCount()) {
+		return;
+	}
+
+	SEND_LOG("(SOUND) %s", "Recalculating volumes", 0);
+	newx = gameMap.coord()[sector].x;
+	newy = gameMap.coord()[sector].y;
+	layer = gameMap.coord()[sector].layer;
+
+	for (i = 0; i < CHANNELS; i++) {
+		if (chan_state[i] >= 0 && playings[i].side >= 0) {
+			calcul_volume(i, newx-playings[i].xpos, newy - playings[i].ypos, /*side-*/playings[i].side, playings[i].volume);
+
+			if (!Sound_GetChannelState(i)) {
+				release_channel(i);
+			}
+		} else {
+			calcul_volume(i, 0, 0, -1, playings[i].volume);
+		}
+	}
+
+	for (i = 1; i < TRACKS; i++) {
+		if (track_state[i] < 0 && tracks[i].data != NULL) {
+			if (tracks[i].side < 0) {
+				if (have_loop(tracks[i].data)) {
+					play_effekt(0, 0, 0, 0, -1, -1, tracks[i].data);
+				}
+			} else {
+				int x = newx - tracks[i].xpos, y = newy - tracks[i].ypos;
+				if (calc_volume(&x, &y, tracks[i].side) > 0) {
+					if (have_loop(tracks[i].data)) {
+						play_effekt(newx, newy, tracks[i].xpos, tracks[i].ypos, side, tracks[i].side, tracks[i].data);
+					}
+				}
+			}
+		}
+	}
+
+	mute_task = -1;
+}
 
 void create_playlist(const char *playlist)
   {
@@ -502,42 +515,55 @@ void purge_playlist()
 	cur_playlist.clear();
   }
 
-void play_sample_at_sector(int sample,int sector1,int sector2,int track, char loop)
-  {
-  int x,y,xd,yd,chan;
-  char *s;
-  struct t_wave *p;
-  int siz;
+void play_sample_at_sector(int sample, int sector1, int sector2, int track, char loop) {
+	int x, y, xd, yd, chan;
+	char *s;
+	struct t_wave *p;
+	int siz;
 	int oldtrack;
 
-  if (!sound_enabled) return;
-  if (map_coord[sector1].layer!=map_coord[sector2].layer) return;
-  x=map_coord[sector1].x;
-  y=map_coord[sector1].y;
-  xd=map_coord[sector2].x;
-  yd=map_coord[sector2].y;
-  chan=find_free_channel(track);
-	oldtrack=track_state[track];
-  if (!track || oldtrack==-1) release_channel(chan);
-  if (calcul_volume(chan,x-xd,y-yd,viewdir,100)) return;
-  if (!track || oldtrack==-1)
-     {
-     alock(sample);
-     s = (char*)ablock(sample);
-     p=(struct t_wave *)s;
-     s+=sizeof(struct t_wave);
-     siz=*(int *)s;s+=4;
-     Sound_PlaySample(chan,s,siz,loop?0:siz,p->freq,(p->freq!=p->bps?2:1));
-     playings[chan].data=NULL;
-     }
-  playings[chan].xpos=xd;
-  playings[chan].ypos=yd;
-  playings[chan].side=viewdir;
-  playings[chan].volume=100;
-  playings[chan].block=sample;
-  chan_state[chan]=track;
-  track_state[track]=chan;
-  }
+	if (!sound_enabled) {
+		return;
+	}
+
+	if (gameMap.coord()[sector1].layer != gameMap.coord()[sector2].layer) {
+		return;
+	}
+
+	x = gameMap.coord()[sector1].x;
+	y = gameMap.coord()[sector1].y;
+	xd = gameMap.coord()[sector2].x;
+	yd = gameMap.coord()[sector2].y;
+	chan = find_free_channel(track);
+	oldtrack = track_state[track];
+
+	if (!track || oldtrack == -1) {
+		release_channel(chan);
+	}
+
+	if (calcul_volume(chan, x - xd, y - yd, viewdir, 100)) {
+		return;
+	}
+
+	if (!track || oldtrack == -1) {
+		alock(sample);
+		s = (char*)ablock(sample);
+		p = (struct t_wave *)s;
+		s += sizeof(struct t_wave);
+		siz = *(int *)s;
+		s += 4;
+		Sound_PlaySample(chan, s, siz, loop ? 0 : siz, p->freq, (p->freq != p->bps ? 2 : 1));
+		playings[chan].data = NULL;
+	}
+
+	playings[chan].xpos = xd;
+	playings[chan].ypos = yd;
+	playings[chan].side = viewdir;
+	playings[chan].volume = 100;
+	playings[chan].block = sample;
+	chan_state[chan] = track;
+	track_state[track] = chan;
+}
 
 void play_sample_at_channel(int sample,int channel,int vol)
   {
@@ -557,21 +583,6 @@ void play_sample_at_channel(int sample,int channel,int vol)
   s+=sizeof(struct t_wave);
   siz=*(int *)s;s+=4;
   Sound_PlaySample(channel,s,siz,siz,p->freq,(p->freq!=p->bps?2:1));
-  }
-
-
-void create_sound_table(char *templ,long size)
-  {
-  char *c,*s;
-  int i=0;
-
-  s=c=templ;
-  while (c-s<size)
-     {
-     if (c[0]!=0) sound_table.replace(i, c);
-     c=strchr(c,0)+1;
-     i++;
-     }
   }
 
 void create_sound_table_old()

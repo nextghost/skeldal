@@ -248,7 +248,7 @@ static char test_kriterii(void)
                       }
                       break;
         case OP_CURMAP:cti_retezec(100,text,1,1);
-                       hodn=!strcmp(level_fname,text);
+                       hodn=!strcmp(gameMap.fname(),text);
                        break;
         case OP_ISDEF:{
                        int c;
@@ -421,51 +421,83 @@ static void do_script(void)
 static int found_place=0;
 
 
-static char flp_validate2(uint16_t sector)
-  {
-  TMOB *m;
-  char c;
+static char flp_validate2(uint16_t sector) {
+	TMOB *m;
+	char c;
 
-  if (mob_map[sector])
-     {
-     m=mobs+mob_map[sector]-1;
-     if (m->vlajky & ~MOB_PASSABLE) return 0;
-     if (!m->next)
-        if (mobs[m->next-1].vlajky & ~MOB_PASSABLE) return 0;
-     }
-  c=map_sectors[sector].sector_type;
-  if (c==S_DIRA || ISTELEPORT(c) || c==S_LAVA || c==S_VODA ) return 0;
-  return 1;
-  }
+	if (mob_map[sector]) {
+		m = mobs + mob_map[sector] - 1;
 
-static char flp_validate(uint16_t sector)
-  {
-  TMOB *m;
-  char c;
+		if (m->vlajky & ~MOB_PASSABLE) {
+			return 0;
+		}
 
-  if (found_place) return 0;
-  if (mob_map[sector])
-     {
-     m=mobs+mob_map[sector]-1;
-     if (m->vlajky & ~MOB_PASSABLE) return 0;
-     if (!m->next)
-        if (mobs[m->next-1].vlajky & ~MOB_PASSABLE) return 0;
-     }
-  c=map_sectors[sector].sector_type;
-  if (~map_coord[sector].flags & 1) return 0;
-  if (c==S_DIRA || ISTELEPORT(c) || c==S_LAVA || c==S_VODA ) return 0;
-  if (c==S_LEAVE && !found_place) found_place=sector;
-  return 1;
-  }
+		if (!m->next) {
+			if (mobs[m->next - 1].vlajky & ~MOB_PASSABLE) {
+				return 0;
+			}
+		}
+	}
+
+	c = gameMap.sectors()[sector].sector_type;
+
+	if (c == S_DIRA || ISTELEPORT(c) || c == S_LAVA || c == S_VODA ) {
+		return 0;
+	}
+
+	return 1;
+}
+
+static char flp_validate(uint16_t sector) {
+	TMOB *m;
+	char c;
+
+	if (found_place) {
+		return 0;
+	}
+
+	if (mob_map[sector]) {
+		m = mobs + mob_map[sector] - 1;
+
+		if (m->vlajky & ~MOB_PASSABLE) {
+			return 0;
+		}
+
+		if (!m->next) {
+			if (mobs[m->next - 1].vlajky & ~MOB_PASSABLE) {
+				return 0;
+			}
+		}
+	}
+
+	c = gameMap.sectors()[sector].sector_type;
+
+	if (~gameMap.coord()[sector].flags & 1) {
+		return 0;
+	}
+
+	if (c == S_DIRA || ISTELEPORT(c) || c == S_LAVA || c == S_VODA ) {
+		return 0;
+	}
+
+	if (c == S_LEAVE && !found_place) {
+		found_place = sector;
+	}
+
+	return 1;
+}
 
 
-static int find_leave_place(int sector)
-  {
-  found_place=0;
-  if (map_sectors[sector].sector_type==S_LEAVE) return sector;
-  labyrinth_find_path(sector,65535,(SD_PLAY_IMPS | SD_SECRET),flp_validate,NULL);
-  return found_place;
-  }
+static int find_leave_place(int sector) {
+	found_place = 0;
+
+	if (gameMap.sectors()[sector].sector_type == S_LEAVE) {
+		return sector;
+	}
+
+	labyrinth_find_path(sector, 65535, (SD_PLAY_IMPS | SD_SECRET), flp_validate, NULL);
+	return found_place;
+}
 
 static int select_mode;
 
@@ -485,7 +517,7 @@ static char load_index_map(int index)
      wire_automap_file(a);
      return 1;
      }
-  if (!strcmp(index_tab[last_index].mapname,level_fname)) return 0;
+  if (!strcmp(index_tab[last_index].mapname,gameMap.fname())) return 0;
   lv=find_leave_place(viewsector);
   if (lv<1)
      {
@@ -663,7 +695,7 @@ static void empty_unwire()
 
 static void unwire_automap_file()
   {
-  load_map_automap(level_fname);
+  load_map_automap(gameMap.fname());
   wire_proc=old_wire_save;
   viewsector=old_viewsector;
   build_player_map();

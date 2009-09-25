@@ -65,34 +65,47 @@ MAP_PROC(map_test)
   }
 
 void spell_teleport(int, int, int);
-MAP_PROC(map_teleport)
-  {
-  side=0;event;
-  teleport_target=value;
-  if (mob_map[sector]!=0)
-     {
-     int i;
-     spell_teleport(-mob_map[sector],-1, teleport_target);
-     if ((i=mobs[mob_map[sector]-1].next)!=0)
-        spell_teleport(-i,-1, teleport_target);
-     side=1;
-     }
-  if (map_coord[sector].flags & MC_DPLAYER)
-     {
-     int i,j=-1;THUMAN *h;
-     int bit=0;
+MAP_PROC(map_teleport) {
+	side = 0;
+	teleport_target = value;
 
-     for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->used && h->sektor==sector && h->sektor==viewsector)
-        {
-        j=i;break;
-        }
-     for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->used && h->sektor==sector) bit|=1<<i;
-     postavy_teleport_effect(teleport_target,h->direction,bit,j!=-1);
-     side=1;
-     auto_group();
-     }
-  return side;
-  }
+	if (mob_map[sector] != 0) {
+		int i;
+
+		spell_teleport(-mob_map[sector], -1, teleport_target);
+
+		if ((i = mobs[mob_map[sector] - 1].next) != 0) {
+			spell_teleport(-i, -1, teleport_target);
+		}
+
+		side = 1;
+	}
+
+	if (gameMap.coord()[sector].flags & MC_DPLAYER) {
+		int i, j = -1;
+		THUMAN *h;
+		int bit = 0;
+
+		for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+			if (h->used && h->sektor == sector && h->sektor == viewsector) {
+				j = i;
+				break;
+			}
+		}
+
+		for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+			if (h->used && h->sektor == sector) {
+				bit |= 1 << i;
+			}
+		}
+
+		postavy_teleport_effect(teleport_target, h->direction, bit, j != -1);
+		side = 1;
+		auto_group();
+	}
+
+	return side;
+}
 
 /*
 static void otoc_obraz1(uint16_t *source,uint16_t *target)
@@ -401,60 +414,83 @@ MAP_PROC(map_identify)
 
 //Mob Procs ---------------------------------------
 
-static int get_dangerous_place(int sector)
-  {
-  int i;
+static int get_dangerous_place(int sector) {
+	int i;
 
-  for(i=0;i<4;i++)
-     {
-     int s=map_sectors[sector].step_next[i];
-     if (s && map_coord[s].flags & MC_PLAYER) return 1;
-     }
-  return 0;
-  }
+	for (i = 0; i < 4; i++) {
+		int s = gameMap.sectors()[sector].step_next[i];
 
-MOB_PROC(mob_open_door)
-  {
-  if (event==SMPR_WALK)
-     if (m->user_data<128 || m->user_data>192)
-        {
-        int sector=m->sector;
-        int i;
-        TSTENA *side;
+		if (s && gameMap.coord()[s].flags & MC_PLAYER) {
+			return 1;
+		}
+	}
 
-        for(i=0,side=map_sides+(sector<<2);i<4;side++,i++)
-           if (side->flags & SD_MONST_IMPS && side->sector_tag!=0 && (~side->flags & (SD_PASS_ACTION | SD_SECRET))==(SD_PASS_ACTION|SD_SECRET))
-              break;
-        if (i!=4)
-           {
-           m->dir=i;stop_mob(m);
-           if (flag_map[(sector<<2)+i] & SD_MONST_IMPS) a_touch(sector,m->dir);
-           m->user_data=128;
-           return 1;
-           }
-        side=map_sides+(sector<<2)+((m->dir+2)&3);
-        if (~side->flags & SD_MONST_IMPS && side->sector_tag!=0 && (~side->flags & (SD_PASS_ACTION | SD_SECRET))==(SD_PASS_ACTION|SD_SECRET))
-           {
-           int ss=map_sectors[sector].step_next[(m->dir+2)&3];
-           int j=mob_map[ss];
-           while (j) if (mobs[j-1].dir==m->dir) return 0;
-              else j=mobs[j-1].next;
-           a_touch(sector,(m->dir+2)&3);
-           return 0;
-           }
-        }
-     else
-        {
-        if (m->user_data>=128 && m->user_data<192) m->user_data++;
-        if (~map_sides[(m->sector<<2)+m->dir].flags & SD_MONST_IMPS)
-           {
-           if (m->dir & 1) m->headx=mob_go_x[m->dir];else  m->heady=mob_go_y[m->dir];
-           m->user_data=map_coord[map_sectors[m->sector].step_next[m->dir]].flags & MC_PLAYER?255:127;
-           }
-        return m->user_data<144;
-        }
-  return 0;
-  }
+	return 0;
+}
+
+MOB_PROC(mob_open_door) {
+	if (event == SMPR_WALK) {
+		if (m->user_data < 128 || m->user_data > 192) {
+			int sector = m->sector;
+			int i;
+			const TSTENA *side;
+
+			for (i = 0, side = gameMap.sides() + (sector << 2); i < 4; side++, i++) {
+				if (side->flags & SD_MONST_IMPS && side->sector_tag != 0 && (~side->flags & (SD_PASS_ACTION | SD_SECRET)) == (SD_PASS_ACTION | SD_SECRET)) {
+					break;
+				}
+			}
+
+			if (i != 4) {
+				m->dir = i;
+				stop_mob(m);
+
+				if (gameMap.flags()[(sector << 2) + i] & SD_MONST_IMPS) {
+					a_touch(sector, m->dir);
+				}
+
+				m->user_data = 128;
+				return 1;
+			}
+
+			side = gameMap.sides() + (sector << 2) + ((m->dir + 2) & 3);
+
+			if (~side->flags & SD_MONST_IMPS && side->sector_tag != 0 && (~side->flags & (SD_PASS_ACTION | SD_SECRET)) == (SD_PASS_ACTION | SD_SECRET)) {
+				int ss = gameMap.sectors()[sector].step_next[(m->dir + 2) & 3];
+				int j = mob_map[ss];
+
+				while (j) {
+					if (mobs[j-1].dir == m->dir) {
+						return 0;
+					} else {
+						j = mobs[j-1].next;
+					}
+				}
+
+				a_touch(sector, (m->dir + 2) & 3);
+				return 0;
+			}
+		} else {
+			if (m->user_data >= 128 && m->user_data < 192) {
+				m->user_data++;
+			}
+
+			if (~gameMap.sides()[(m->sector << 2) + m->dir].flags & SD_MONST_IMPS) {
+				if (m->dir & 1) {
+					m->headx = mob_go_x[m->dir];
+				} else {
+					m->heady = mob_go_y[m->dir];
+				}
+
+				m->user_data = gameMap.coord()[gameMap.sectors()[m->sector].step_next[m->dir]].flags & MC_PLAYER ? 255 : 127;
+			}
+
+			return m->user_data<144;
+		}
+	}
+
+	return 0;
+}
 
 MOB_PROC(mob_open_door_battle)
   {
@@ -497,85 +533,108 @@ static char kouzla[5]={3,8,13,18,80};
   return 0;
   }
 
-static char mob_strelec(int event_type,TMOB *m)
-  {
-  if (event_type==SMPR_ATTACK)
-     {
-     int i,l;
+static char mob_strelec(int event_type, TMOB *m) {
+	if (event_type == SMPR_ATTACK) {
+		int i, l;
 
-     if (m->dostal==0 && ~m->user_data & 128) return 0;
-     for (i=0;i<4;i++)
-        {
-        l=map_sectors[m->sector].step_next[i];
-        if (l!=0 && map_coord[l].flags & MC_PLAYER) break;
-        }
-     if (i==4)
-        {
-        if (m->user_data & 128)
-           {
-           int s=m->sector;
-           m->user_data&=~128;
-           i=m->dir+2&3;
-           while (s && !(map_coord[s].flags & MC_PLAYER)) if (map_sides[(s<<2)+i].flags & SD_MONST_IMPS) s=0;else s=map_sectors[s].step_next[i];
-           if (s) m->dir=i;else return 1;
-           }
-        return 0; //strilej
-        }
-     i=i+2&3;
-     if (mob_check_next_sector(m->sector,i,m->stay_strategy & MOB_BIG,0))
-        {
-        int l=4,z,max=RAND_MAX;
-        for(i=0;i<4;i++)
-           if (!mob_check_next_sector(m->sector,i,m->stay_strategy & MOB_BIG,0))
-              {
-              int s=map_sectors[m->sector].step_next[i];
-              if (!get_dangerous_place(s) && (z=rand())<=max) max=z,l=i;
-              }
-        if (l==4) return 0;
-        i=l;
-        }
-     m->dir=i;
-     MOB_GO(m);
-     m->user_data|=128;
-     return 1;
-     }
-  else
-     {
-     /*
-     int i,l;
-        i=m->dir;
-        l=m->sector;
-        if (map_sides[(l<<2)+i].flags & SD_MONST_IMPS) return 0;
-        l=map_sectors[l].step_next[i];
-        for(i=0;i<4;i++)
-           {
-           int s=map_sectors[l].step_next[i];
-           if (isplayer(s,NULL,0)!=NULL)
-              {
-              m->dir=i+2&3;
-              m->headx=mob_go_x[i];
-              m->heady=mob_go_y[i];
-              return 1;
-              }
-           }
-      */
-      if (m->user_data & 128)
-        {
-        THUMAN *h;
-        int i;
+		if (m->dostal == 0 && ~m->user_data & 128) {
+			return 0;
+		}
 
-        for(i=0,h=postavy;i<POCET_POSTAV;i++,h++)
-           if (h->lives && h->used &&
-               abs(map_coord[h->sektor].x-map_coord[m->sector].x)<2 &&
-               abs(map_coord[h->sektor].y-map_coord[m->sector].y)<2)
-                 {
-                 stop_mob(m);
-                 return 1;
-                 }
-        }
-      return 0; //delej si co chces
-      }
-  }
+		for (i = 0; i < 4; i++) {
+			l = gameMap.sectors()[m->sector].step_next[i];
+
+			if (l != 0 && gameMap.coord()[l].flags & MC_PLAYER) {
+				break;
+			}
+		}
+
+		if (i == 4) {
+			if (m->user_data & 128) {
+				int s = m->sector;
+
+				m->user_data &= ~128;
+				i = m->dir + 2 & 3;
+
+				while (s && !(gameMap.coord()[s].flags & MC_PLAYER)) {
+					if (gameMap.sides()[(s << 2) + i].flags & SD_MONST_IMPS) {
+						s = 0;
+					} else {
+						s = gameMap.sectors()[s].step_next[i];
+					}
+				}
+
+				if (s) {
+					m->dir = i;
+				} else {
+					return 1;
+				}
+			}
+
+			return 0; //strilej
+		}
+
+		i = i + 2 & 3;
+
+		if (mob_check_next_sector(m->sector, i, m->stay_strategy & MOB_BIG, 0)) {
+			int l = 4, z, max = RAND_MAX;
+
+			for (i = 0; i < 4; i++) {
+				if (!mob_check_next_sector(m->sector, i, m->stay_strategy & MOB_BIG, 0)) {
+					int s = gameMap.sectors()[m->sector].step_next[i];
+
+					if (!get_dangerous_place(s) && (z = rand()) <= max) {
+						max = z, l = i;
+					}
+				}
+			}
+
+			if (l == 4) {
+				return 0;
+			}
+
+			i = l;
+		}
+
+		m->dir = i;
+		MOB_GO(m);
+		m->user_data |= 128;
+		return 1;
+	} else {
+		/*
+		int i,l;
+		   i=m->dir;
+		   l=m->sector;
+		   if (map_sides[(l<<2)+i].flags & SD_MONST_IMPS) return 0;
+		   l=map_sectors[l].step_next[i];
+		   for(i=0;i<4;i++)
+		      {
+		      int s=map_sectors[l].step_next[i];
+		      if (isplayer(s,NULL,0)!=NULL)
+		         {
+		         m->dir=i+2&3;
+		         m->headx=mob_go_x[i];
+		         m->heady=mob_go_y[i];
+		         return 1;
+		         }
+		      }
+		 */
+
+		if (m->user_data & 128) {
+			THUMAN *h;
+			int i;
+
+			for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+				if (h->lives && h->used && abs(gameMap.coord()[h->sektor].x - gameMap.coord()[m->sector].x) < 2 && abs(gameMap.coord()[h->sektor].y - gameMap.coord()[m->sector].y) < 2) {
+					stop_mob(m);
+					return 1;
+				}
+			}
+		}
+
+		return 0; //delej si co chces
+	}
+}
 
 
 
@@ -589,38 +648,46 @@ MOB_PROC(mob_krikloun)
   return 0;
   }
 
-static char mob_taktik_recurse(int recall,int sector,int *min_obr,int big,int *csect,int *cdir)
-  {
-     int i;
-     char nasel=0;
+static char mob_taktik_recurse(int recall, int sector, int *min_obr, int big, int *csect, int *cdir) {
+	int i;
+	char nasel = 0;
 
-     //nejprve zjistime kdo je okolo nas
-     for(i=0;i<4;i++)
-        {
-        int s=map_sectors[sector].step_next[i];
-        THUMAN *h=NULL;
+	//nejprve zjistime kdo je okolo nas
+	for (i = 0; i < 4; i++) {
+		int s = gameMap.sectors()[sector].step_next[i];
+		THUMAN *h = NULL;
 
-        if (!s) continue; //pokud tam je stena tak pokracuj jinym smerem
-        if (mob_check_next_sector(sector,i,big,0)==1) continue;
-        if ((h=isplayer(s,h,0))!=NULL) //nekdo tam je - zjisti kdo
-           while(h!=NULL)
-           {
-           if (h->vlastnosti[VLS_OBRAN_H]<*min_obr) // pokud ma nizsi obranu
-               {
-               *csect=sector;
-               *cdir=i;
-               *min_obr=h->vlastnosti[VLS_OBRAN_H];
-               nasel=1;
-               }
-           h=isplayer(s,h,0);
-           }
-        else if (recall) //pokud tam nikdo neni koukni se vedle
-           {
-           if (mob_taktik_recurse(0,s,min_obr,big,csect,cdir)) *cdir=i;
-           }
-        }
-   return nasel;
-  }
+		if (!s) {
+			continue; //pokud tam je stena tak pokracuj jinym smerem
+		}
+
+		if (mob_check_next_sector(sector, i, big, 0) == 1) {
+			continue;
+		}
+
+		//nekdo tam je - zjisti kdo
+		if ((h = isplayer(s, h, 0)) != NULL) {
+			while (h != NULL) {
+				// pokud ma nizsi obranu
+				if (h->vlastnosti[VLS_OBRAN_H] < *min_obr) {
+					*csect = sector;
+					*cdir = i;
+					*min_obr = h->vlastnosti[VLS_OBRAN_H];
+					nasel = 1;
+				}
+
+				h = isplayer(s, h, 0);
+			}
+		//pokud tam nikdo neni koukni se vedle
+		} else if (recall) {
+			if (mob_taktik_recurse(0, s, min_obr, big, csect, cdir)) {
+				*cdir = i;
+			}
+		}
+	}
+
+	return nasel;
+}
 
 
 MOB_PROC(mob_taktik)
@@ -644,32 +711,33 @@ MOB_PROC(mob_taktik)
   return 0;
   }
 
-MOB_PROC(mob_stoji)
-  {
-  if (event==SMPR_ATTACK)
-     {
-     int i;
-     int s;
+MOB_PROC(mob_stoji) {
+	if (event == SMPR_ATTACK) {
+		int i;
+		int s;
 
-     for(i=0;i<4;i++)
-        {
-        s=map_sectors[m->sector].step_next[i];
-        if (s && map_coord[s].flags & MC_PLAYER) return 0;
-        }
-     m->headx=m->locx;
-     m->heady=m->locy;
-     m->stay_strategy&=~(MOB_WALK | MOB_LISTEN);
-     m->vlajky&=~MOB_IN_BATTLE;
-     return 1;
-     }
-  else if (event==SMPR_WALK)
-     {
-     m->headx=m->locx;
-     m->heady=m->locy;
-     }
-  else if (event==SMPR_KNOCK) return 1;
-  return 0;
-  }
+		for (i = 0; i < 4; i++) {
+			s = gameMap.sectors()[m->sector].step_next[i];
+
+			if (s && gameMap.coord()[s].flags & MC_PLAYER) {
+				return 0;
+			}
+		}
+
+		m->headx = m->locx;
+		m->heady = m->locy;
+		m->stay_strategy &= ~(MOB_WALK | MOB_LISTEN);
+		m->vlajky &= ~MOB_IN_BATTLE;
+		return 1;
+	} else if (event==SMPR_WALK) {
+		m->headx = m->locx;
+		m->heady = m->locy;
+	} else if (event == SMPR_KNOCK) {
+		return 1;
+	}
+
+	return 0;
+}
 
 static t_mob_proc sp_mob_table[]=
   {

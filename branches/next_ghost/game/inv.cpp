@@ -185,89 +185,106 @@ static void items_15to16_correct(void **p,long *s)
     }
   }
 
-void load_items()
-  {
-  char *name;
-  FILE *f;THANDLE_DATA *h;
-  int sect,i,hs;
-  long size;
-  void *p;
+void load_items() {
+	char *name;
+	FILE *f;
+	THANDLE_DATA *h;
+	int sect, i, hs;
+	long size;
+	void *p;
+	MemoryReadStream *stream;
 
-  f=NULL;i=0;
-  ikon_libs=hl_ptr;
-  free(glob_items);
-  do
-     {
-		 char name[200];
-     sprintf(name,IT_LIB_NAME,i++);
-     if (test_file_exist(SR_ITEMS,name))
-        h=def_handle(hl_ptr++,name,items_15to16_correct,SR_ITEMS);
-     else break;
-     }
-  while (1);
-	name=find_map_path(ITEM_FILE);
-  f=fopen(name,"rb");free(name);
-  if (f==NULL)
-     {
-        closemode();
-	Sys_ErrorBox("Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.");
-//	    MessageBox(NULL,"Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.",NULL,MB_OK|MB_ICONSTOP);
-        exit(0);
-     }
-  do
-     {
-     load_section(f,&p,&sect,&size);
-     switch (sect)
-        {
-        case 1:
-        case 4:
-           face_arr[sect-1]=hl_ptr-1;
-           prepare_graphics(&hl_ptr,(char *)p,size,pcx_fade_decomp,SR_ITEMS);
-           free(p);
-           break;
-        case 2:
-        case 3:
-           face_arr[sect-1]=hl_ptr-1;
-           prepare_graphics(&hl_ptr,(char *)p,size,pcx_fade_decomp,SR_ITEMS);
-           free(p);
-           break;
-        case 5:
-           face_arr[sect-1]=hl_ptr-1;
-           prepare_graphics(&hl_ptr,(char *)p,size,NULL,SR_ITEMS);
-           free(p);
-           break;
-        case SV_ITLIST:
-           glob_items = (TITEM*)p;
-           it_count_orgn=item_count=size/sizeof(TITEM);
-           break;
-        case SV_SNDLIST:
-           hs=hl_ptr;
-           prepare_graphics(&hl_ptr,(char *)p,size,wav_load,SR_ZVUKY);
-           sound_handle=hs-1;
-           break;
-        default:
-           free(p);
-           break;
-        }
-     }
-  while (sect!=SV_END);
-  fclose(f);
-     {
-     TITEM *t;
-     for(i=0,t=glob_items;i<it_count_orgn;i++,t++) if (t->druh==TYP_SPECIALNI)
-        {
-        if (t->user_value==TSP_WATER_BREATH)  water_breath=i;
-        else if (t->user_value==TSP_FLUTE) flute_item=i;
-        }
-     }
+	f = NULL;
+	i = 0;
+	ikon_libs = hl_ptr;
+	free(glob_items);
 
-  }
+	do {
+		char name[200];
 
-void init_items()
-  {
-  map_items=(short **)getmem(mapsize*4*sizeof(short **));
-  memset(map_items,0,mapsize*4*sizeof(short **));
-  }
+		sprintf(name, IT_LIB_NAME, i++);
+
+		if (test_file_exist(SR_ITEMS, name)) {
+			h = def_handle(hl_ptr++, name, items_15to16_correct, SR_ITEMS);
+		} else {
+			break;
+		}
+	} while (1);
+
+	name = find_map_path(ITEM_FILE);
+	f = fopen(name, "rb");
+	free(name);
+
+	if (f == NULL) {
+		closemode();
+		Sys_ErrorBox("Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.");
+		exit(0);
+	}
+
+	do {
+		load_section(f, &p, &sect, &size);
+
+		switch (sect) {
+		case 1:
+		case 4:
+			face_arr[sect - 1] = hl_ptr - 1;
+			stream = new MemoryReadStream(p, size);
+			prepare_graphics(&hl_ptr, stream, pcx_fade_decomp, SR_ITEMS);
+			free(p);
+			delete stream;
+			break;
+
+		case 2:
+		case 3:
+			face_arr[sect - 1] = hl_ptr - 1;
+			stream = new MemoryReadStream(p, size);
+			prepare_graphics(&hl_ptr, stream, pcx_fade_decomp, SR_ITEMS);
+			free(p);
+			delete stream;
+			break;
+
+		case 5:
+			face_arr[sect - 1] = hl_ptr - 1;
+			stream = new MemoryReadStream(p, size);
+			prepare_graphics(&hl_ptr, stream, NULL, SR_ITEMS);
+			free(p);
+			delete stream;
+			break;
+
+		case SV_ITLIST:
+			glob_items = (TITEM*)p;
+			it_count_orgn = item_count = size / sizeof(TITEM);
+			break;
+
+		case SV_SNDLIST:
+			hs = hl_ptr;
+			stream = new MemoryReadStream(p, size);
+			prepare_graphics(&hl_ptr, stream, wav_load, SR_ZVUKY);
+			sound_handle = hs - 1;
+			free(p);
+			delete stream;
+			break;
+
+		default:
+			free(p);
+			break;
+		}
+	} while (sect!=SV_END);
+
+	fclose(f);
+
+	TITEM *t;
+
+	for (i = 0, t = glob_items; i < it_count_orgn; i++, t++) {
+		if (t->druh == TYP_SPECIALNI) {
+			if (t->user_value == TSP_WATER_BREATH) {
+				water_breath = i;
+			} else if (t->user_value == TSP_FLUTE) {
+				flute_item = i;
+			}
+		}
+	}
+}
 
 static short expand_itemlist(void)
   {
@@ -379,70 +396,57 @@ short create_item_money(int obnos)
   return i+1;
   }
 
-void load_item_map(void *p,long s)
-  {
-  uint16_t itmc;
-  int sect;
-  short *c,*d;
-
-  c=(short *)p;
-  while (s>0)
-     {
-     sect=*(int *)c;
-     c+=sizeof(sect)/sizeof(short);s-=sizeof(sect);
-     d=c;itmc=1;
-     while (*d++) itmc++;
-     map_items[sect]=(short *)getmem(itmc*sizeof(short));
-     d=c;
-     itmc=0;
-     do
-        {
-        map_items[sect][itmc++]=*d;
-        s-=sizeof(short);
-        }
-     while (*d++);
-     c=d;
-     }
-  }
-
 char possx[]={0,1,1,0};
 char possy[]={1,1,0,0};
 
-void draw_placed_items_normal(int celx,int cely,int sect,int side)
-  {
-  int i,j,k;
-  short *c;
-  short nl=0,vzh;
-  short cnt;
+void draw_placed_items_normal(int celx, int cely, int sect, int side) {
+	int i, j, k;
+	short *c;
+	short nl = 0, vzh;
+	short cnt;
 
+	sect <<= 2;
+	cnt = (cely == 0) ? 2 : 4;
 
-  sect<<=2;
-  cnt=(cely==0)?2:4;
-  for(i=0;i<cnt;i++)
-     {
-     j=(i+side)&3;
-     if (map_items[sect+j]!=NULL) c=map_items[sect+j];else c=&nl;
-     k=0;
-     while (*c)
-        {
-        if (*c>0)
-           {
-           vzh=glob_items[(*c)-1].vzhled;
-           if (vzh) draw_item(celx,cely,possx[i],possy[i],(uint16_t*)ablock(vzh+face_arr[0]),k);
-           }
-        c++;k++;
-        }
-     }
-  }
+	for (i = 0; i < cnt; i++) {
+		j = (i + side) & 3;
 
-int count_items_total(short *place)
-  {
-  int c=0;
+		if (gameMap.items()[sect + j] != NULL) {
+			c = gameMap.items()[sect + j];
+		} else {
+			c = &nl;
+		}
 
-  if (place==NULL) return 0;
-  while (*place++) c++;
-  return c;
-  }
+		k = 0;
+
+		while (*c) {
+			if (*c > 0) {
+				vzh = glob_items[(*c) - 1].vzhled;
+
+				if (vzh) {
+					draw_item(celx, cely, possx[i], possy[i], (uint16_t*)ablock(vzh + face_arr[0]), k);
+				}
+			}
+
+			c++;
+			k++;
+		}
+	}
+}
+
+int count_items_total(short *place) {
+	int c = 0;
+
+	if (place == NULL) {
+		return 0;
+	}
+
+	while (*place++) {
+		c++;
+	}
+
+	return c;
+}
 
 int count_items_visible(short *place)
   {
@@ -458,15 +462,21 @@ int count_items_visible(short *place)
   }
 
 
-int count_items_inside(short *place)
-  {
-  int c=1;
+int count_items_inside(short *place) {
+	int c = 1;
 
-  if (place==NULL) return 0;
-  place++;
-  while (*place++<0) c++;
-  return c;
-  }
+	if (place == NULL) {
+		return 0;
+	}
+
+	place++;
+
+	while (*place++ < 0) {
+		c++;
+	}
+
+	return c;
+}
 
 int find_item(short *place,int mask)
   {
@@ -484,80 +494,60 @@ int find_item(short *place,int mask)
 
 static int lastsector;
 
-static char ValidateSector(uint16_t sector)
-  {  
-  int pp=map_sectors[sector].sector_type;
-  if (pp==S_NORMAL || pp==S_SMER || pp==S_LEAVE || pp==S_FLT_SMER) 
-	{
-	lastsector=sector;
-	return 1;
+static char ValidateSector(uint16_t sector) {
+	int pp = gameMap.sectors()[sector].sector_type;
+
+	if (pp == S_NORMAL || pp == S_SMER || pp == S_LEAVE || pp == S_FLT_SMER) {
+		lastsector = sector;
+		return 1;
 	}
-  return 0;
-  }
 
-void push_item(int sect,int pos,short *picked_item)
-  {
-  int bc;
-  int pc;
-  int tc;
-  short *p;
+	return 0;
+}
 
-  if (map_sectors[sect].sector_type==S_DIRA || ISTELEPORTSECT(sect))
-     sect=map_sectors[sect].sector_tag;
-  if (sect==0 || map_sectors[sect].sector_type==S_VODA)
-     {
-	 if (game_extras & EX_RECOVER_DESTROYED_ITEMS)
-	   {
-	   labyrinth_find_path(viewsector,65535,SD_PLAY_IMPS,ValidateSector,NULL);
-	   push_item(lastsector,viewdir,picked_item);
-	   return;
-	   }
-	 else
-	   {
-	   free(picked_item);
-	   picked_item=NULL;
-	   return;
-	   }
-     }
-  sect=(sect<<2)+pos;
-  bc=count_items_total(map_items[sect]);
-  pc=count_items_total(picked_item);
-  tc=bc+pc;
-  if (tc==0) return;
-  tc++;
-  p=(short *)grealloc(map_items[sect],tc*sizeof(short));
-  if (pc) memcpy(p+bc,picked_item,pc*sizeof(short));
-  p[tc-1]=0;
-  map_items[sect]=p;
-  recheck_button(sect>>2,1);
-  }
+void push_item(int sect, int pos, short *picked_item) {
+	int bc;
+	int pc;
+	int tc;
+	short *p;
 
-void pop_item(int sect,int pos,int mask,short **picked_item)
-  {
-  int picked;
-  int bc,tc,pc;
-  short *s,*t,*b;
+	if (gameMap.sectors()[sect].sector_type == S_DIRA || ISTELEPORT(gameMap.sectors()[sect].sector_type)) {
+		sect = gameMap.sectors()[sect].sector_tag;
+	}
 
-  *picked_item=NULL;
-  sect=(sect<<2)+pos;
-  picked=find_item(map_items[sect],mask);
-  if (picked==-1) return;
-  s=map_items[sect]+picked;
-  pc=count_items_inside(s);
-  bc=count_items_total(map_items[sect]);
-  tc=bc-pc;
-  *picked_item=(short *)getmem((pc+1)*sizeof(short));
-  memcpy(*picked_item,s,pc*sizeof(short));(*picked_item)[pc]=0;
-  if (tc) b=NewArr(short,tc+1);else b=NULL;
-  if (picked) memcpy(b,map_items[sect],picked*sizeof(short));
-  t=b+picked;
-  s=s+pc;
-  while (*s) *t++=*s++;
-  if (b!=NULL) b[tc]=0;
-  free(map_items[sect]);
-  map_items[sect]=b;
-  recheck_button(sect>>2,1);
-  }
+	if (sect == 0 || gameMap.sectors()[sect].sector_type == S_VODA) {
+		if (game_extras & EX_RECOVER_DESTROYED_ITEMS) {
+			labyrinth_find_path(viewsector, 65535, SD_PLAY_IMPS, ValidateSector, NULL);
+			push_item(lastsector, viewdir, picked_item);
+			return;
+		} else {
+			free(picked_item);
+			picked_item = NULL;
+			return;
+		}
+	}
+
+	sect = (sect << 2) + pos;
+	gameMap.pushItem(sect, picked_item);
+	recheck_button(sect >> 2, 1);
+}
+
+void pop_item(int sect, int pos, int mask, short **picked_item) {
+	int picked;
+	int bc, tc, pc;
+	short *s, *t, *b;
+
+	*picked_item = NULL;
+	sect = (sect << 2) + pos;
+	picked = find_item(gameMap.items()[sect], mask);
+
+	if (picked == -1) {
+		return;
+	}
+
+	*picked_item = gameMap.popItem(sect, picked);
+	recheck_button(sect >> 2, 1);
+}
 
 void pick_set_cursor(void)
   {
@@ -627,131 +617,155 @@ void do_items_specs(void)
            }
         }
 
-static char check_pick(int sect,int id,int idd,int y)
-  {
-  short c;
-  int min=480,d;
-  short *place=map_items[(sect<<2)+idd];
-  int vzl;
+static char check_pick(int sect, int id, int idd, int y) {
+	short c;
+	int min = 480, d;
+	short *place = gameMap.items()[(sect << 2) + idd];
+	int vzl;
 
-  if (place==NULL) return 0;
-  while (*place)
-     {
-     c=*place;
-     if (c>0)
-        {
-        vzl=glob_items[c-1].vzhled;
-        if (vzl) d=get_item_top(0,id>1,possx[id],possy[id],(uint16_t*)ablock(vzl+face_arr[0]),count_items_visible(place)-1);
-        else d=get_item_top(0,id>1,possx[id],possy[id],NULL,count_items_visible(place))-32;
-        if (d<min) min=d;
-        }
-     place++;
-     }
-  return y>min;
-  }
+	if (place == NULL) {
+		return 0;
+	}
 
-static int get_top_of_next(int sect,int id) //vraci souradnici predmetu na nasledujicim sektoru
-  {
-  int cnt,idd;
+	while (*place) {
+		c = *place;
 
-  sect=map_sectors[sect].step_next[viewdir];
-  if (sect==0) return 0;
-  id=3-id;
-  idd=id+viewdir & 3;sect<<=2;
-  cnt=count_items_visible(map_items[sect+idd])-1;
-  if (cnt<0) cnt=0;
-  return get_item_top(0,1,possx[id],possy[id],NULL,cnt);
+		if (c > 0) {
+			vzl = glob_items[c-1].vzhled;
 
-  }
-
-char pick_item_(int id,int xa,int ya,int xr,int yr)
-  {
-  int sect;
-  int idd;
-
-  xa,ya,xr,yr;
-  if (id>1)
-     {
-     (sect=map_sectors[viewsector].step_next[viewdir]);
-  if ((map_sides[(viewsector<<2)+viewdir].flags & SD_THING_IMPS) && !(map_sides[(viewsector<<2)+viewdir].oblouk & SD_ITPUSH)) return 0;
-     }
-  else sect=viewsector;
-  idd=(id+viewdir)&0x3;
-  if (picked_item!=NULL)
-     {
-     if (map_sectors[sect].sector_type==S_DIRA)
-        {
-        throw_fly(xa,ya,0);
-        letici_veci->speed=0;
-        letici_veci->sector=sect;
-        letici_veci->xpos=-32;
-        letici_veci->velocity=0;
-        letici_veci->flags &= ~FLY_NEHMOTNA;
-        }
-     else
-     if (id>1 || ya>=get_top_of_next(sect,id))
-        {
-//		if ((game_extras & EX_BAG_EXTENDED) && (GetKeyState(VK_CONTROL) & 0x80) &&
-		if ((game_extras & EX_BAG_EXTENDED) && get_control_state() &&
-		  (glob_items[*picked_item-1].nosnost>0))
-		  {
-		  int curinside=count_items_inside(picked_item);
-		  int nosnost=(glob_items[*picked_item-1].nosnost);
-		  short *batoh=(short *)getmem(nosnost*2+20);		  
-		  short *cur=batoh;
-		  memcpy(cur,picked_item,(curinside+1)*sizeof(short));
-		  cur+=curinside;
-		  free(picked_item);
-		  picked_item=NULL;		
-		  nosnost-=curinside-1;
-		  while (1)
-			{
-			pop_item(sect,idd,0,&picked_item);		              
-			if (picked_item!=NULL) do_items_specs(); else break;
-			if (picked_item!=NULL)
-			  {
-			  short *p=picked_item;
-			  int cnt=count_items_total(picked_item);
-			  if (cnt>nosnost) 
-				{
-				push_item(sect,idd,picked_item);
-				free(picked_item);
-				picked_item=NULL;
-				break;
-				}
-			  while (*p)
-				{				
-				*cur++=-abs(*p++);
-				nosnost--;
-				}
-			  free(picked_item);
-			  picked_item=NULL;
-			  }
+			if (vzl) {
+				d = get_item_top(0, id > 1, possx[id], possy[id], (uint16_t*)ablock(vzl + face_arr[0]), count_items_visible(place) - 1);
+			} else {
+				d = get_item_top(0, id > 1, possx[id], possy[id], NULL, count_items_visible(place)) - 32;
 			}
-		  *cur=0;
-		  picked_item=batoh;
-		  pick_set_cursor();
-		  return 1;
-		  }
-        push_item(sect,idd,picked_item);
-        free(picked_item);
-        picked_item=NULL;
-        pick_set_cursor();
-        return 1;
-        }
-     return 0;
-     }
-  else
-     {
-     if (id>1 || check_pick(sect,id,idd,ya))
-        {
-        pop_item(sect,idd,0,&picked_item);
-        if (picked_item!=NULL) do_items_specs();
-        pick_set_cursor();
-        }
-     return (picked_item!=NULL);
-     }
-  }
+
+			if (d < min) {
+				min = d;
+			}
+		}
+
+		place++;
+	}
+
+	return y > min;
+}
+
+//vraci souradnici predmetu na nasledujicim sektoru
+static int get_top_of_next(int sect, int id) {
+	int cnt, idd;
+
+	sect = gameMap.sectors()[sect].step_next[viewdir];
+
+	if (sect == 0) {
+		return 0;
+	}
+
+	id = 3 - id;
+	idd = id + viewdir & 3;
+	sect <<= 2;
+	cnt = count_items_visible(gameMap.items()[sect + idd]) - 1;
+
+	if (cnt < 0) {
+		cnt = 0;
+	}
+
+	return get_item_top(0, 1, possx[id], possy[id], NULL, cnt);
+}
+
+char pick_item_(int id, int xa, int ya, int xr, int yr) {
+	int sect;
+	int idd;
+
+	if (id > 1) {
+		sect = gameMap.sectors()[viewsector].step_next[viewdir];
+
+		if ((gameMap.sides()[(viewsector << 2) + viewdir].flags & SD_THING_IMPS) && !(gameMap.sides()[(viewsector << 2) + viewdir].oblouk & SD_ITPUSH)) {
+			return 0;
+		}
+	} else {
+		sect = viewsector;
+	}
+
+	idd = (id + viewdir) & 0x3;
+
+	if (picked_item != NULL) {
+		if (gameMap.sectors()[sect].sector_type == S_DIRA) {
+			throw_fly(xa, ya, 0);
+			letici_veci->speed = 0;
+			letici_veci->sector = sect;
+			letici_veci->xpos = -32;
+			letici_veci->velocity = 0;
+			letici_veci->flags &= ~FLY_NEHMOTNA;
+		} else if (id > 1 || ya >= get_top_of_next(sect, id)) {
+//			if ((game_extras & EX_BAG_EXTENDED) && (GetKeyState(VK_CONTROL) & 0x80) &&
+			if ((game_extras & EX_BAG_EXTENDED) && get_control_state() && (glob_items[*picked_item - 1].nosnost > 0)) {
+				int curinside = count_items_inside(picked_item);
+				int nosnost = (glob_items[*picked_item - 1].nosnost);
+				short *batoh = (short *)getmem(nosnost * 2 + 20);
+				short *cur = batoh;
+				memcpy(cur, picked_item, (curinside + 1) * sizeof(short));
+				cur += curinside;
+				free(picked_item);
+				picked_item = NULL;
+				nosnost -= curinside - 1;
+
+				while (1) {
+					pop_item(sect, idd, 0, &picked_item);
+
+					if (picked_item != NULL) {
+						do_items_specs();
+					} else {
+						break;
+					}
+
+					if (picked_item != NULL) {
+						short *p = picked_item;
+						int cnt=count_items_total(picked_item);
+						if (cnt > nosnost) {
+							push_item(sect, idd, picked_item);
+							free(picked_item);
+							picked_item = NULL;
+							break;
+						}
+
+						while (*p) {
+							*cur++ = -abs(*p++);
+							nosnost--;
+						}
+
+						free(picked_item);
+						picked_item = NULL;
+					}
+				}
+
+				*cur = 0;
+				picked_item = batoh;
+				pick_set_cursor();
+				return 1;
+			}
+
+			push_item(sect, idd, picked_item);
+			free(picked_item);
+			picked_item = NULL;
+			pick_set_cursor();
+			return 1;
+		}
+
+		return 0;
+	} else {
+		if (id > 1 || check_pick(sect, id, idd, ya)) {
+			pop_item(sect, idd, 0, &picked_item);
+
+			if (picked_item != NULL) {
+				do_items_specs();
+			}
+
+			pick_set_cursor();
+		}
+
+		return (picked_item != NULL);
+	}
+}
 
 int celkova_vaha(short *p)
   {
@@ -923,7 +937,7 @@ void definuj_postavy()
            case 129:r=sscanf(c,"%hhd",&p->female);break;
            case 130:r=sscanf(c,"%hhd",&p->xicht);break;
            case 131:r=sscanf(c,"%hd",&p->level);break;
-           case 132:r=sscanf(c,"%ld",&p->exp);break;
+           case 132:r=sscanf(c,"%d",&p->exp);break;
            case 133:r=sscanf(c,"%d",&num1);
                     while(r==1 && num1!=-1)
                        {
@@ -1066,18 +1080,34 @@ char check_jidlo_voda(THUMAN *p)
   return 0;
   }
 
-char check_map_specials(THUMAN *p)
-  {
-  char c=0;
-  switch(mglob.map_effector)
-     {
-     case ME_NORMAL:break;
-     case ME_SOPKA:if (~p->vlastnosti[VLS_KOUZLA] & SPL_FIRE_RES) player_hit(p,10,0),c=1;break;
-     case ME_LEDOV:if (~p->vlastnosti[VLS_KOUZLA] & SPL_ICE_RES) player_hit(p,10,0),c=1;break;
-     }
-  if (c) bott_draw(0);
-  return c;
-  }
+char check_map_specials(THUMAN *p) {
+	char c = 0;
+
+	switch (gameMap.global().map_effector) {
+	case ME_NORMAL:
+		break;
+
+	case ME_SOPKA:
+		if (~p->vlastnosti[VLS_KOUZLA] & SPL_FIRE_RES) {
+			player_hit(p, 10, 0);
+			c = 1;
+		}
+		break;
+
+	case ME_LEDOV:
+		if (~p->vlastnosti[VLS_KOUZLA] & SPL_ICE_RES) {
+			player_hit(p, 10, 0);
+			c = 1;
+		}
+		break;
+	}
+
+	if (c) {
+		bott_draw(0);
+	}
+
+	return c;
+}
 
 void pomala_regenerace_postavy(THUMAN *p)
   {
@@ -2267,92 +2297,143 @@ static LETICI_VEC *fly_map=NULL;
 static int fly_map_size=0;  //velikost mapy
 static int fly_count; //vyuziti mapy
 
-void draw_fly_items(int celx,int cely,int sector,int side)
-  {
-  LETICI_VEC *p;
-  int xpos,ypos;
-  short *pic,picnum;char turn,smr;
-  TITEM *it;
-  int i;
+void draw_fly_items(int celx, int cely, int sector, int side) {
+	LETICI_VEC *p;
+	int xpos, ypos;
+	short *pic, picnum;
+	char turn, smr;
+	TITEM *it;
+	int i;
 
-  p=fly_map;
-  if (map_coord[sector].flags & 2)
-     {
-     i=fly_count;
-     while (i--)
-       if (p->sector==sector && (p->items!=NULL || p->item!=0))
-          {
-          switch(smr=(p->smer-side)&0x3)
-             {
-             case 0: xpos=p->ypos;ypos=p->xpos;turn=(celx*128+xpos)<0;break;
-             case 1: xpos=p->xpos;ypos=-p->ypos;turn=1;break;
-             case 2: xpos=-p->ypos;ypos=-p->xpos;turn=(celx*128+xpos)<0;break;
-             case 3: xpos=-p->xpos;ypos=p->ypos;turn=0;break;
-             }
-          xpos+=64;
-          ypos+=64;
-          if (p->items==NULL) it=glob_items+p->item-1;else it=&glob_items[*(p->items)-1];
-          if (p->flags & FLY_DESTROY_SEQ) smr=3;
-          else if (smr==3) smr=1;
-          picnum=it->v_letu[(smr<<2)+p->anim_pos];
-          if (!picnum)
-            if (it->vzhled)
-              picnum=it->vzhled+face_arr[0];
-            else
-              picnum=0;
-          else picnum+=face_arr[3];
-          if (picnum)
-           {
-           pic = (short*)ablock(picnum);
-           draw_placed_texture(pic,celx,cely,xpos,ypos,p->zpos,turn);
-           }
-          p++;
-          }
-       else p++;
-     }
-  }
+	p = fly_map;
 
-void build_fly_map()
-  {
-  LETICI_VEC *p,*p2;
-  static int counter=0;
+	if (gameMap.coord()[sector].flags & 2) {
+		i = fly_count;
 
-  fly_count=0;
-  for(p=letici_veci;p!=NULL;p=p->next) if (!(p->flags & (FLY_BURNT|FLY_UNUSED))) fly_count++;
-  if (fly_count>fly_map_size || !counter)
-     {
-     free(fly_map);fly_map=NewArr(LETICI_VEC,fly_count);
-     if (!counter)
-       SEND_LOG("(FLY) Fly_map was reduced - capacity: %d flies in game / was: %d",fly_count,fly_map_size);
-     else
-       SEND_LOG("(FLY) Fly_map was expanded - capacity: %d flies in game ",fly_count,fly_map_size);
-     counter=1000;
-     fly_map_size=fly_count;
-     }
-  else counter--;
-  for(p=letici_veci,p2=fly_map;p!=NULL;p=p->next) if (!(p->flags & (FLY_BURNT|FLY_UNUSED)))
-     {
-     map_coord[p->sector].flags|=2;
-     p->anim_pos++;p->anim_pos&=3;
-     memcpy(p2,p,sizeof(LETICI_VEC));
-     if (p->flags & FLY_DESTROY_SEQ && p->anim_pos==3)
-        {
-        stop_fly(p,1);
-        }
-     p2++;
-     }
-  else
-     p->flags|=FLY_UNUSED;
-  }
+		while (i--) {
+			if (p->sector == sector && (p->items != NULL || p->item != 0)) {
+				switch (smr = (p->smer - side) & 0x3) {
+				case 0:
+					xpos = p->ypos;
+					ypos = p->xpos;
+					turn = (celx * 128 + xpos) < 0;
+					break;
 
-void destroy_fly_map()
-  {
-  int i;
-  LETICI_VEC *f;
+				case 1:
+					xpos = p->xpos;
+					ypos = -p->ypos;
+					turn = 1;
+					break;
 
-  for(i=0,f=fly_map;i<fly_count;i++,f++) map_coord[f->sector].flags &=~MC_FLY;
-  fly_count=0;
-  }
+				case 2:
+					xpos = -p->ypos;
+					ypos = -p->xpos;
+					turn = (celx * 128 + xpos) < 0;
+					break;
+
+				case 3:
+					xpos = -p->xpos;
+					ypos = p->ypos;
+					turn = 0;
+					break;
+				}
+
+				xpos += 64;
+				ypos += 64;
+
+				if (p->items == NULL) {
+					it = glob_items + p->item - 1;
+				} else {
+					it = &glob_items[*(p->items) - 1];
+				}
+
+				if (p->flags & FLY_DESTROY_SEQ) {
+					smr = 3;
+				} else if (smr == 3) {
+					smr = 1;
+				}
+
+				picnum = it->v_letu[(smr << 2) + p->anim_pos];
+
+				if (!picnum) {
+					if (it->vzhled) {
+						picnum = it->vzhled + face_arr[0];
+					} else {
+						picnum = 0;
+					}
+				} else {
+					picnum += face_arr[3];
+				}
+
+				if (picnum) {
+					pic = (short*)ablock(picnum);
+					draw_placed_texture(pic, celx, cely, xpos, ypos, p->zpos, turn);
+				}
+
+				p++;
+			} else {
+				p++;
+			}
+		}
+	}
+}
+
+void build_fly_map() {
+	LETICI_VEC *p, *p2;
+	static int counter = 0;
+
+	fly_count = 0;
+
+	for (p = letici_veci; p != NULL; p = p->next) {
+		if (!(p->flags & (FLY_BURNT | FLY_UNUSED))) {
+			fly_count++;
+		}
+	}
+
+	if (fly_count > fly_map_size || !counter) {
+		free(fly_map);
+		fly_map = NewArr(LETICI_VEC, fly_count);
+
+		if (!counter) {
+			SEND_LOG("(FLY) Fly_map was reduced - capacity: %d flies in game / was: %d", fly_count, fly_map_size);
+		} else {
+			SEND_LOG("(FLY) Fly_map was expanded - capacity: %d flies in game ", fly_count, fly_map_size);
+		}
+
+		counter = 1000;
+		fly_map_size = fly_count;
+	} else {
+		counter--;
+	}
+
+	for (p = letici_veci, p2 = fly_map; p != NULL; p = p->next) {
+		if (!(p->flags & (FLY_BURNT | FLY_UNUSED))) {
+			gameMap.setCoordFlags(p->sector, MC_FLY);
+			p->anim_pos++;
+			p->anim_pos &= 3;
+			memcpy(p2, p, sizeof(LETICI_VEC));
+
+			if (p->flags & FLY_DESTROY_SEQ && p->anim_pos == 3) {
+				stop_fly(p, 1);
+			}
+
+			p2++;
+		} else {
+			p->flags |= FLY_UNUSED;
+		}
+	}
+}
+
+void destroy_fly_map() {
+	int i;
+	LETICI_VEC *f;
+
+	for (i = 0, f = fly_map; i < fly_count; i++, f++) {
+		gameMap.clearCoordFlags(f->sector, MC_FLY);
+	}
+
+	fly_count = 0;
+}
 
 
 
@@ -2364,36 +2445,60 @@ void add_fly(LETICI_VEC *p)
   }
 
 
-LETICI_VEC *throw_fly(int x,int y, char rovne)
-  {
-  LETICI_VEC *p;
-  int m;
+LETICI_VEC *throw_fly(int x, int y, char rovne) {
+	LETICI_VEC *p;
+	int m;
 
-  p=create_fly();
-  p->zpos=128-y*128/360;
-  p->ypos=(x>320)?32:-32;
-  p->sector=viewsector;
-  p->smer=viewdir;
-  p->items=picked_item;
-  p->counter=0;
-  p->hit_bonus=0;
-  p->damage=0;
-  m=abs(celkova_vaha(picked_item));
-  if (mglob.map_effector==ME_PVODA) m+=50;
-  p->flags=(rovne?FLY_NEHMOTNA:0) | (glob_items[*picked_item-1].flags & ITF_DESTROY?FLY_DESTROY:0);
-  if (m) p->speed=1000/(m)+1;else p->speed=24;
-  if (p->speed>56) p->speed=56;
-  p->xpos=p->speed+1;
-  p->velocity=-(360-y)/72;
-  if (rovne) p->velocity=0;
-  if (select_player==-1 || !battle) p->owner=postavy-human_selected+1;
-  else p->owner=select_player+1;
-  p->hit_bonus=0;
-  add_fly(p);
-  picked_item=NULL;
-  if (!battle) pick_set_cursor();
-  return p;
-  }
+	p = create_fly();
+	p->zpos = 128 - y * 128 / 360;
+	p->ypos = (x > 320) ? 32 : -32;
+	p->sector = viewsector;
+	p->smer = viewdir;
+	p->items = picked_item;
+	p->counter = 0;
+	p->hit_bonus = 0;
+	p->damage = 0;
+	m = abs(celkova_vaha(picked_item));
+
+	if (gameMap.global().map_effector == ME_PVODA) {
+		m += 50;
+	}
+
+	p->flags = (rovne ? FLY_NEHMOTNA : 0) | (glob_items[*picked_item - 1].flags & ITF_DESTROY ? FLY_DESTROY : 0);
+
+	if (m) {
+		p->speed = 1000 / m + 1;
+	} else {
+		p->speed = 24;
+	}
+
+	if (p->speed > 56) {
+		p->speed = 56;
+	}
+
+	p->xpos = p->speed + 1;
+	p->velocity = -(360 - y) / 72;
+
+	if (rovne) {
+		p->velocity = 0;
+	}
+
+	if (select_player == -1 || !battle) {
+		p->owner = postavy - human_selected + 1;
+	} else {
+		p->owner = select_player + 1;
+	}
+
+	p->hit_bonus = 0;
+	add_fly(p);
+	picked_item = NULL;
+
+	if (!battle) {
+		pick_set_cursor();
+	}
+
+	return p;
+}
 
 void build_all_players()
   {

@@ -38,8 +38,6 @@
 #include "game/globals.h"
 #include "libs/system.h"
 
-#define STATE_CUR_VER 1
-
 #define _GAME_ST "_GAME.TMP"
 #define _GLOBAL_ST "_GLOBEV.TMP"
 #define _SLOT_SAV "slot%02d.SAV"
@@ -133,431 +131,138 @@ static void unable_write_temp(const char *c)
   exit(1);
   }
 
-void expand_map_file_name(char *s) //prepise *.map na fullpath\*.TMP
-  {
-  char *c;
-  char *st;
-  c=strchr(s,0);
-  while (c!=s && *c!='.' && *c!='\\') c--;
-  if (*c=='.') strcpy(c,".TMP");
+//prepise *.map na fullpath\*.TMP
+void expand_map_file_name(char *s) {
+	char *c;
+	char *st;
+
+	c = strchr(s, 0);
+
+	while (c != s && *c != '.' && *c != '\\') {
+		c--;
+	}
+
+	if (*c == '.') {
+		strcpy(c,".TMP");
+	}
+
 //  concat(st,pathtable[SR_TEMP],s);
 //  strcpy(s,st);
 	strcpy(s, Sys_FullPath(SR_TEMP, s));
-  }
+}
 
-int load_org_map(char *filename,TSTENA **sides,TSECTOR **sectors,TMAP_EDIT_INFO **coords,int *mapsize)
-  {
-  FILE *f;
-  void *temp;
-  int sect;
-  long size,r;
-  char nmapend=1;
-  char *c;
+void save_daction(WriteStream &stream, int count, D_ACTION *ptr) {
+	if (ptr) {
+		save_daction(stream, count + 1, ptr->next);
+		stream.writeUint16LE(ptr->action);
+		stream.writeUint16LE(ptr->sector);
+		stream.writeUint16LE(ptr->side);
+		stream.writeUint16LE(ptr->flags);
+		stream.writeUint16LE(ptr->nocopy);
+		stream.writeUint16LE(ptr->delay);
+		stream.writeUint32LE(ptr->next != NULL);
+	} else {
+		stream.writeUint16LE(count);
+	}
+}
 
-	c=find_map_path(filename);
-	f=fopen(c,"rb");free(c);
-  if (f==NULL) return -1;
-  do
-     {
-     r=load_section(f,&temp,&sect,&size);
-     if (r==size)
-        switch (sect)
-         {
-         case A_SIDEMAP:
-                  *sides = (TSTENA*)temp;
-                  break;
-         case A_SECTMAP:
-                  *sectors = (TSECTOR*)temp;
-                  if (mapsize!=NULL) *mapsize=size/sizeof(TSECTOR);
-                  break;
-         case A_MAPINFO:
-                  if (coords!=NULL) *coords = (TMAP_EDIT_INFO*)temp;else free(temp);
-                  break;
-         case A_MAPGLOB:
-                  //memcpy(&mglob,temp,min(sizeof(mglob),size));
-                  free(temp);
-                  break;
-         case A_MAPEND :
-                  nmapend=0;
-                  free(temp);
-                  break;
-         default: free(temp);
-         }
-     else
-        {
-        if (temp!=NULL)free(temp);
-        fclose(f);
-        return -1;
-        }
-     }
-  while (nmapend);
-  fclose(f);
-  return 0;
-  }
+void load_daction(ReadStream &stream) {
+	int i, j;
 
-void save_daction(FILE *f,int count,D_ACTION *ptr)
-  {
-  if (ptr!=NULL)
-     {
-     save_daction(f,count+1,ptr->next);
-     fwrite(ptr,1,sizeof(D_ACTION),f);
-     }
-  else
-     fwrite(&count,1,2,f);
-  }
+	i = 0;
 
-void load_daction(FILE *fsta)
-  {
-  int i,j;
-  i=0;
-  while (d_action!=NULL) //vymaz pripadne delaited actions
-     {
-     D_ACTION *p;
-     p=d_action; d_action=p->next;free(p);
-     }
-  fread(&i,1,2,fsta);d_action=NULL;
-  for(j=0;j<i;j++)
-     {
-     D_ACTION *p;
+	//vymaz pripadne delaited actions
+	while (d_action != NULL) {
+		D_ACTION *p;
+		p = d_action;
+		d_action = p->next;
+		free(p);
+	}
 
-     p=(D_ACTION *)getmem(sizeof(D_ACTION));
-     fread(p,1,sizeof(D_ACTION),fsta);
-     p->next=d_action;
-     d_action=p;
-     }
-  }
+	i = stream.readUint16LE();
+	d_action = NULL;
 
-void save_items(FILE *f)
-  {
-  int i,j;
-  short *c;
+	for (j = 0; j < i; j++) {
+		D_ACTION *p;
 
-  for(i=0;i<mapsize*4;i++)
-     if (map_items[i]!=NULL)
-        {
-        for(j=1,c=map_items[i];*c;c++,j++);
-        fwrite(&i,1,2,f);
-        fwrite(&j,1,2,f);
-        fwrite(map_items[i],2,j,f);
-        }
-  i=-1;
-  fwrite(&i,1,2,f);
-  }
-
-void restore_items(FILE *f)
-  {
-  short i,j;
-
-  for(i=0;i<mapsize*4;i++) if (map_items[i]!=NULL) free(map_items[i]);
-  memset(map_items,0,mapsize*16);
-  while(fread(&i,1,2,f) && i!=-1)
-     {
-     fread(&j,1,2,f);
-     map_items[i]=(short *)getmem(j*2);
-     fread(map_items[i],2,j,f);
-     }
-  }
+		p = (D_ACTION *)getmem(sizeof(D_ACTION));
+		p->action = stream.readUint16LE();
+		p->sector = stream.readUint16LE();
+		p->side = stream.readUint16LE();
+		p->flags = stream.readUint16LE();
+		p->nocopy = stream.readUint16LE();
+		p->delay = stream.readUint16LE();
+		stream.readUint32LE();	// p->next; the value is meaningless
+		p->next = d_action;
+		d_action = p;
+	}
+}
 
 extern StringList texty_v_mape;
 
-void save_map_description(FILE *f)
-  {
-  int count,max;
-  int i;
+void save_map_description(WriteStream &stream) {
+	int count, max;
+	int i;
 
-  max = texty_v_mape.size();
-  for(i=0,count=0;i<max;i++) if (texty_v_mape[i]!=NULL) count++;
-  fwrite(&count,1,sizeof(count),f);
-  for(i=0;i<max;i++) if (texty_v_mape[i]!=NULL)
-     {
-     int len;
-     len=strlen(texty_v_mape[i]+12)+12+1;
-     fwrite(&len,1,2,f);
-     fwrite(texty_v_mape[i],1,len,f);
-     }
-  }
+	max = texty_v_mape.size();
 
-void load_map_description(FILE *f)
-  {
-  int32_t count;
-  int i;
-  uint16_t len;
+	for (i = 0, count = 0; i < max; i++) {
+		if (texty_v_mape[i] != NULL) {
+			count++;
+		}
+	}
 
-  texty_v_mape.clear();
-  fread(&count,1,sizeof(count),f);
-  if (!count)
-     {
-     return;
-     }
-  for(i=0;i<count;i++)
-     {
-     fread(&len,sizeof(uint16_t),1,f);
-        {
-        char *s;
-        s=(char *)alloca(len);
-        fread(s,1,len,f);
-	texty_v_mape.replace(i, s, len-1);
-        }
-     }
-  }
+	stream.writeSint32LE(count);
 
-void save_vyklenky(FILE *fsta)
-  {
-  fwrite(&vyk_max,1,sizeof(vyk_max),fsta);
-  if (vyk_max)
-     fwrite(map_vyk,vyk_max,sizeof(TVYKLENEK),fsta);
-  }
+	for (i = 0; i < max; i++) {
+		if (texty_v_mape[i] != NULL) {
+			int len;
 
-int load_vyklenky(FILE *fsta)
-  {
-  int i=0;
-  fread(&i,1,sizeof(vyk_max),fsta);
-  if (vyk_max)
-     {
-     if (i>vyk_max) return -2;
-     fread(map_vyk,vyk_max,sizeof(TVYKLENEK),fsta);
-     }
-  return 0;
-  }
+			len = strlen(texty_v_mape[i] + 12) + 12 + 1;
+			stream.writeUint16LE(len);
+			stream.write(texty_v_mape[i], len);
+		}
+	}
+}
 
+void load_map_description(ReadStream &stream) {
+	int i, count, len;
 
-void save_all_fly(FILE *fsta)
-  {
-  LETICI_VEC *f;
+	texty_v_mape.clear();
+	count = stream.readSint32LE();
 
-  f=letici_veci;
-  fwrite(&f,1,sizeof(f),fsta);
-  while (f!=NULL)
-     {
-     short *c;
-     fwrite(f,1,sizeof(*f),fsta);
-     c=f->items;
-     if (c!=NULL) do fwrite(c,1,2,fsta); while (*c++);
-     f=f->next;
-     }
-  }
+	if (!count) {
+		return;
+	}
 
-int load_all_fly(FILE *fsta)
-  {
-  LETICI_VEC *f=NULL,*n,*p;
-  fread(&f,1,sizeof(f),fsta);
-  p=letici_veci;
-  while (f!=NULL)
-     {
-     short items[100],*c;
-     n=New(LETICI_VEC);
-     c=items;memset(items,0,sizeof(items));
-     if (fread(n,1,sizeof(*n),fsta)!=sizeof(*n))
-        {
-        free(n);
-        if (p!=NULL) p->next=NULL;
-        return -2;
-        }
-     if (n->items!=NULL)
-        {
-        do
-          fread(c,1,2,fsta);
-        while (*c++);
-        n->items=NewArr(short,c-items);
-        memcpy(n->items,items,(c-items)*sizeof(short));
-        }
-     if (p==NULL) p=letici_veci=n;else p->next=n;
-     p=n;
-     f=n->next;
-     n->next=NULL;
-     }
-  return 0;
-  }
+	for (i = 0; i < count; i++) {
+		char *s;
 
+		len = stream.readUint16LE();
+		s = new char[len];
+		stream.read(s, len);
+		texty_v_mape.replace(i, s, len - 1);
+		delete[] s;
+	}
+}
 
+//uklada stav mapy pro savegame (neuklada aktualni pozici);
+int save_map_state() {
+	restore_sound_names();
+	return gameMap.save();
+}
 
+//obnovuje stav mapy; nutno volat po zavolani load_map;
+int load_map_state() {
+	return gameMap.restore();
+}
 
-int save_map_state() //uklada stav mapy pro savegame (neuklada aktualni pozici);
-  {
-  char sta[200];
-  char *bf;
-  FILE *fsta;
-  int i;
-  long siz;
- TSTENA *org_sides;
- TSECTOR *org_sectors;
-  short res=-1;
-  int ver=0;
-
-  restore_sound_names();
-  strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"wb");if (fsta==NULL) unable_open_temp(sta);
-  SEND_LOG("(SAVELOAD) Saving map state for current map",0,0);
-  if (load_org_map(level_fname,&org_sides,&org_sectors,NULL,NULL)) goto err;
-  siz=(mapsize+7)/8;
-  bf=(char *)getmem(siz);
-  ver=0;
-  fwrite(&ver,sizeof(ver),1,fsta);  //<-------------------------
-  ver=STATE_CUR_VER;
-  fwrite(&ver,sizeof(ver),1,fsta);  //<-------------------------
-  fwrite(&mapsize,sizeof(mapsize),1,fsta);  //<-------------------------
-  memset(bf,0,siz);
-  fwrite(&siz,1,sizeof(siz),fsta);          //<-------------------------
-  for(i=0;i<mapsize;i++)  //save automap
-    if (map_coord[i].flags & MC_AUTOMAP) bf[i>>3]|=1<<(i & 7);
-  if (!fwrite(bf,siz,1,fsta)) goto err;     //<-------------------------
-  for(i=0;i<mapsize;i++)  //save disclosed
-    if (map_coord[i].flags & MC_DISCLOSED) bf[i>>3]|=1<<(i & 7);
-  if (!fwrite(bf,siz,1,fsta)) goto err;     //<-------------------------
-  save_map_description(fsta);
-  for(i=0;i<mapsize*4;i++)  //save changed sides
-     if (memcmp(map_sides+i,org_sides+i,sizeof(TSTENA)))
-        {
-        fwrite(&i,1,2,fsta);
-        if (fwrite(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
-        }
-  i=-1;
-  fwrite(&i,1,2,fsta);
-  for(i=0;i<mapsize;i++)   //save changed sectors
-     if (memcmp(map_sectors+i,org_sectors+i,sizeof(TSECTOR)))
-        {
-        fwrite(&i,1,2,fsta);
-        if (fwrite(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
-        }
-  i=-1;
-  fwrite(&i,1,2,fsta);
-  for(i=0;i<MAX_MOBS;i++) if (mobs[i].vlajky & MOB_LIVE)
-     {
-     fwrite(&i,1,2,fsta);
-     fwrite(mobs+i,1,sizeof(TMOB),fsta); //save_mobmap
-     }
-  i=-1;
-  fwrite(&i,1,2,fsta);
-  i=mapsize*4;
-  fwrite(&i,1,sizeof(i),fsta); //save flag maps //<-------------------------
-  if (fwrite(flag_map,1,i,fsta)!=(unsigned)i) goto err;   //<-------------------------
-  save_daction(fsta,0,d_action); //save dactions//<-------------------------
-  fwrite(&macro_block_size,1,sizeof(macro_block_size),fsta);
-  if (macro_block_size)fwrite(macro_block,1,macro_block_size,fsta);//save_macros
-  if (save_codelocks(fsta)) goto err;
-  save_items(fsta);
-  save_vyklenky(fsta);
-  save_all_fly(fsta);
-  save_enemy_paths(fsta);
-  res=0;
-  err:
-  SEND_LOG("(SAVELOAD) State of current map saved (err:%d)",res,0);
-  fclose(fsta);
-  free(org_sectors);
-  free(org_sides);
-  free(bf);
-  if (res)
-     {
-     remove(sta);
-     unable_write_temp(sta);
-     }
-  return res;
-  }
-
-int load_map_state() //obnovuje stav mapy; nutno volat po zavolani load_map;
-  {
-  char sta[200];
-  char *bf;
-  FILE *fsta;
-  int i;
-  long siz;
-  short res=-2;
-  int ver=0;
-
-
-  strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"rb");if (fsta==NULL) return -1;
-  i=0;fread(&i,sizeof(mapsize),1,fsta);
-  if (i==0)
-  {
-    if (!fread(&ver,sizeof(ver),1,fsta)) goto err;
-    if (ver>STATE_CUR_VER) goto err;
-    if (!fread(&i,sizeof(mapsize),1,fsta)) goto err;
-    if (mapsize!=i) goto err;
-    SEND_LOG("(SAVELOAD) Loading map state for current map",0,0);
-    fread(&siz,1,sizeof(siz),fsta);
-    bf=(char *)getmem(siz);
-    if (!fread(bf,siz,1,fsta)) goto err;
-    for (i=0;i<mapsize;i++)
-      if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_AUTOMAP;
-    if (!fread(bf,siz,1,fsta)) goto err;
-    for (i=0;i<mapsize;i++)
-      if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_DISCLOSED;
-   }
-  else
-  {
-    if (mapsize!=i) return fclose(fsta);
-    SEND_LOG("(SAVELOAD) Loading map state for current map",0,0);
-    fread(&siz,1,sizeof(siz),fsta);
-    bf=(char *)getmem(siz);
-    if (!fread(bf,siz,1,fsta)) goto err;
-    for (i=0;i<mapsize;i++)
-       map_coord[i].flags|=(bf[i>>3]>>(i & 7)) & 1;
-  }
-  load_map_description(fsta);
-  while (fread(&i,1,2,fsta) && i<=mapsize*4)
-     if (fread(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
-  while (fread(&i,1,2,fsta) && i<=mapsize)
-     if (fread(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
-  if (reset_mobiles)  //reloads mobiles if flag present
-    {
-    char mm[MAX_MOBS];
-    for(i=0;i<MAX_MOBS;mobs[i].vlajky &=~MOB_LIVE,i++)
-      if (mobs[i].vlajky & MOB_LIVE) mm[i]=1;else mm[i]=0;
-    while (fread(&i,1,2,fsta) && i<=MAX_MOBS)
-      {
-      if (mm[i]) mobs[i].vlajky |=MOB_LIVE;
-      fseek(fsta,sizeof(TMOB),SEEK_CUR);
-      }
-    reset_mobiles=0;
-    }
-  else
-    {
-    for(i=0;i<MAX_MOBS;(mobs[i].vlajky &=~MOB_LIVE),i++);
-    while (fread(&i,1,2,fsta) && i<=MAX_MOBS)
-       if (fread(mobs+i,1,sizeof(TMOB),fsta)!=sizeof(TMOB)) goto err;
-    }
-  for(i=0;i<MAX_MOBS;i++) mobs[i].vlajky &=~MOB_IN_BATTLE;
-  refresh_mob_map();
-  fread(&i,1,sizeof(i),fsta);
-  fread(flag_map,1,i,fsta);
-  load_daction(fsta);
-  fread(&i,1,sizeof(macro_block_size),fsta);
-  if (macro_block_size && i==macro_block_size)fread(macro_block,1,macro_block_size,fsta);
-  else
-     {
-     fseek(fsta,i,SEEK_CUR);
-     SEND_LOG("(ERROR) Multiaction: Sizes mismatch %d != %d",i,macro_block_size);
-     }
-  if (load_codelocks(fsta)) goto err;
-  restore_items(fsta);
-  res=0;
-  res|=load_vyklenky(fsta);
-  res|=load_all_fly(fsta);
-  res|=load_enemy_paths(fsta);
-  err:
-  SEND_LOG("(SAVELOAD) State of current map loaded (err:%d)",res,0);
-  fclose(fsta);
-  free(bf);
-  return res;
-  }
-
-void restore_current_map() //pouze obnovuje ulozeny stav aktualni mapy
-  {
-  int i;
-
-  SEND_LOG("(SAVELOAD) Restore map...",0,0);
-  kill_all_sounds();
-  for(i=0;i<mapsize;i++) map_coord[i].flags&=~0x7f; //vynuluj flags_info
-  free(map_sides);        //uvolni informace o stenach
-  free(map_sectors);      //uvolni informace o sektorech
-  free(map_coord);       //uvolni minfo informace
-  load_org_map(level_fname,&map_sides,&map_sectors,&map_coord,NULL); //nahrej originalni mapu
-  load_map_state(); //nahrej ulozenou mapu
-  for(i=1;i<mapsize*4;i++) call_macro(i,MC_STARTLEV);
-  }
+//pouze obnovuje ulozeny stav aktualni mapy
+void restore_current_map() {
+	SEND_LOG("(SAVELOAD) Restore map...", 0, 0);
+	kill_all_sounds();
+	gameMap.quickRestore();
+}
 
 /*
 inline char rotate(char c)
@@ -578,91 +283,84 @@ inline char rotate(char c)
       2 internal error
       3 checksum error
  */
-int pack_status_file(FILE *f,char *status_name)
-  {
-//  int stt;
-  FILE *stt;
-  char rcheck=0;
-  long fsz;
-  char *fullnam;
-  uint8_t *buffer, *c;
-  uint16_t crc;
+int pack_status_file(FILE *f, char *status_name) {
+	FILE *stt;
+	char rcheck = 0;
+	long fsz;
+	char *fullnam;
+	uint8_t *buffer, *c;
+	uint16_t crc;
+	size_t stfu;
 
-  SEND_LOG("(SAVELOAD) Packing status file '%s'",status_name,0);
-//  fullnam=alloca(strlen(status_name)+strlen(pathtable[SR_TEMP])+1);
-//  if (fullnam==NULL) return 2;
-//  strcpy(fullnam,pathtable[SR_TEMP]);
-//  strcat(fullnam,status_name);
-// O_BINARY is Windows-specific
-//  stt=open(fullnam,O_RDONLY | O_BINARY);
-//  stt=fopen(fullnam,"rb");
+	SEND_LOG("(SAVELOAD) Packing status file '%s'", status_name, 0);
 	stt = fopen(Sys_FullPath(SR_TEMP, status_name), "rb");
-//  fsz=filelength(stt);
-  fseek(stt, 0, SEEK_END);
-  fsz = ftell(stt);
-  fseek(stt, 0, SEEK_SET);
-  c = buffer = (uint8_t*)getmem(fsz+12+4+2);
-  strcpy((char*)c,status_name);c+=12;
-  *(long *)c=fsz+2;
-  c+=sizeof(long);
-  fread(c,fsz,1,stt);
-  fclose(stt);
-  crc = vypocet_crc(c,fsz);
-  c+=fsz;
-  memcpy(c,&crc,sizeof(crc));
-  fsz+=12+4+2;
-  rcheck=(fwrite(buffer,1,fsz,f)!=(unsigned)fsz);
-  free(buffer);
-  return  rcheck;
-  }
+	fseek(stt, 0, SEEK_END);
+	fsz = ftell(stt);
+	fseek(stt, 0, SEEK_SET);
+	c = buffer = (uint8_t*)getmem(fsz + 12 + 4 + 2);
+	strcpy((char*)c, status_name);
+	c += 12;
+	*(long *)c = fsz + 2;
+	c += sizeof(long);
+	stfu = fread(c, fsz, 1, stt);
+	fclose(stt);
+	crc = vypocet_crc(c, fsz);
+	c += fsz;
+	memcpy(c, &crc, sizeof(crc));
+	fsz += 12 + 4 + 2;
+	rcheck = (fwrite(buffer, 1, fsz, f) != (unsigned)fsz);
+	free(buffer);
+	return rcheck;
+}
 
-int unpack_status_file(FILE *f)
-  {
-//  int stt;
-  FILE *stt;
-  char rcheck=0;
-  long fsz;
-  char *fullnam;
-  uint8_t *buffer,*c;
-  char name[13];
-  uint16_t crc,crccheck;
+int unpack_status_file(FILE *f) {
+	FILE *stt;
+	char rcheck = 0;
+	long fsz;
+	char *fullnam;
+	uint8_t *buffer, *c;
+	char name[13];
+	uint16_t crc, crccheck;
+	size_t stfu;
 
-  name[12]=0;
-  name[11]=0;
-  fread(name,1,12,f);
-  SEND_LOG("(SAVELOAD) Unpacking status file '%s'",name,0);
-  if (name[0]==0) return -1;
-  fread(&fsz,1,4,f);
-  c = buffer = (uint8_t*)getmem(fsz);
-  if (fread(buffer,1,fsz,f)!=(unsigned)fsz) return 1;
-//  fullnam=alloca(strlen(name)+strlen(pathtable[SR_TEMP])+2);
-//  if (fullnam==NULL) return 2;
-//  strcpy(fullnam,pathtable[SR_TEMP]);
-//  strcat(fullnam,name);
-  fsz-=2;
-  crc=vypocet_crc(c,fsz);
-  c+=fsz;memcpy(&crccheck,c,sizeof(crccheck));
-  if (crc!=crccheck)
-     {
-     free(buffer);
-     return 3;
-     }
-// O_BINARY and _S_IREAD/_S_IWRITE are Windows-specific flags
-//  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
-//  stt=fopen(fullnam, "wb+");
-//  if (stt==-1)
+	name[12] = 0;
+	name[11] = 0;
+	stfu = fread(name, 1, 12, f);
+	SEND_LOG("(SAVELOAD) Unpacking status file '%s'", name, 0);
+
+	if (name[0] == 0) {
+		return -1;
+	}
+
+	stfu = fread(&fsz, 1, 4, f);
+	c = buffer = (uint8_t*)getmem(fsz);
+
+	if (fread(buffer, 1, fsz, f) != (unsigned)fsz) {
+		return 1;
+	}
+
+	fsz -= 2;
+	crc = vypocet_crc(c, fsz);
+	c += fsz;
+	memcpy(&crccheck, c, sizeof(crccheck));
+
+	if (crc != crccheck) {
+		free(buffer);
+		return 3;
+	}
+
 	stt = fopen(Sys_FullPath(SR_TEMP, name), "wb+");
-  if (!stt)
-     {
-     free(buffer);
-     return 1;
-     }
-//  rcheck=(write(stt,buffer,fsz)!=fsz) ;
-  rcheck=fwrite(buffer,1,fsz,stt)!=fsz;
-  free(buffer);
-  fclose(stt);
-  return rcheck;
-  }
+
+	if (!stt) {
+		free(buffer);
+		return 1;
+	}
+
+	rcheck = fwrite(buffer, 1, fsz, stt) != fsz;
+	free(buffer);
+	fclose(stt);
+	return rcheck;
+}
 
 int unpack_all_status(FILE *f)
   {
@@ -674,148 +372,208 @@ int unpack_all_status(FILE *f)
   return i;
   }
 
-int save_basic_info()
-  {
-  FILE *f;
-  char *c;
-  S_SAVE s;
-  short *p;
-  int i;
-  char res=0;
-  THUMAN *h;
+int save_basic_info() {
+	FILE *f;
+	char *c;
+	S_SAVE s;
+	short *p;
+	int i;
+	char res = 0;
+	THUMAN *h;
+	size_t stfu;
 
-//  concat(c,pathtable[SR_TEMP],_GAME_ST);
 	c = Sys_FullPath(SR_TEMP, _GAME_ST);
-  SEND_LOG("(SAVELOAD) Saving basic info for game (file:%s)",c,0);
-  f=fopen(c,"wb");
-  if (f==NULL) return 1;
-  s.viewsector=viewsector;
-  s.viewdir=viewdir;
-  s.version=SSAVE_VERSION;
-  s.not_used=0;
-  s.gold=money;
-  s.cur_group=cur_group;
-  s.shownames=show_names;
-  s.showlives=show_lives;
-  s.autoattack=autoattack;
-  s.turn_speed=turn_speed(-1);
-  s.zoom_speed=zoom_speed(-1);
-  s.game_time=game_time;
-  s.enable_sort=enable_sort;
-  s.sleep_long=sleep_ticks;
-  s.sample_vol=Sound_GetEffect(SND_GFX);
-  s.music_vol=Sound_GetEffect(SND_MUSIC);
-  s.xbass=Sound_GetEffect(SND_XBASS);
-  s.bass=Sound_GetEffect(SND_BASS);
-  s.treble=Sound_GetEffect(SND_TREBL);
-  s.stereing=Sound_GetEffect(SND_LSWAP);
-  s.swapchans=Sound_GetEffect(SND_SWAP);
-  s.out_filter=Sound_GetEffect(SND_OUTFILTER);
-  s.autosave=autosave_enabled;
-	s.game_flags=(enable_glmap!=0);
-  strncpy(s.level_name,level_fname,12);
-  for(i=0;i<5;i++) s.runes[i]=runes[i];
-  if (picked_item!=NULL)
-     for(i=1,p=picked_item;*p;i++,p++);else i=0;
-  s.picks=i;
-  s.items_added=item_count-it_count_orgn;
-  res|=(fwrite(&s,1,sizeof(s),f)!=sizeof(s));
-  if (i)
-     res|=(fwrite(picked_item,2,i,f)!=(unsigned)i);
-  if (s.items_added)
-     res|=(fwrite(glob_items+it_count_orgn,sizeof(TITEM),s.items_added,f)!=(unsigned)s.items_added);
-  res|=save_spells(f);
-  if (!res) res|=(fwrite(postavy,1,sizeof(postavy),f)!=sizeof(postavy));
-  for(i=0,h=postavy;i<POCET_POSTAV;h++,i++) if (h->demon_save!=NULL)
-     fwrite(h->demon_save,sizeof(THUMAN),1,f);       //ulozeni polozek s demony
-  res|=save_dialog_info(f);
-  fclose(f);
-  SEND_LOG("(SAVELOAD) Done... Result: %d",res,0);
-  return res;
-  }
+	SEND_LOG("(SAVELOAD) Saving basic info for game (file:%s)", c, 0);
+	f = fopen(c, "wb");
 
-int load_basic_info()
-  {
-  FILE *f;
-  char *c;
-  S_SAVE s;
-  int i;
-  char res=0;
-  TITEM *itg;
-  THUMAN *h;
+	if (f == NULL) {
+		return 1;
+	}
 
-//  concat(c,pathtable[SR_TEMP],_GAME_ST);
+	s.viewsector = viewsector;
+	s.viewdir = viewdir;
+	s.version = SSAVE_VERSION;
+	s.not_used = 0;
+	s.gold = money;
+	s.cur_group = cur_group;
+	s.shownames = show_names;
+	s.showlives = show_lives;
+	s.autoattack = autoattack;
+	s.turn_speed = turn_speed(-1);
+	s.zoom_speed = zoom_speed(-1);
+	s.game_time = game_time;
+	s.enable_sort = enable_sort;
+	s.sleep_long = sleep_ticks;
+	s.sample_vol = Sound_GetEffect(SND_GFX);
+	s.music_vol = Sound_GetEffect(SND_MUSIC);
+	s.xbass = Sound_GetEffect(SND_XBASS);
+	s.bass = Sound_GetEffect(SND_BASS);
+	s.treble = Sound_GetEffect(SND_TREBL);
+	s.stereing = Sound_GetEffect(SND_LSWAP);
+	s.swapchans = Sound_GetEffect(SND_SWAP);
+	s.out_filter = Sound_GetEffect(SND_OUTFILTER);
+	s.autosave = autosave_enabled;
+	s.game_flags = (enable_glmap != 0);
+	strncpy(s.level_name, gameMap.fname(), 12);
+
+	for (i = 0; i < 5; i++) {
+		s.runes[i] = runes[i];
+	}
+
+	if (picked_item != NULL) {
+		for (i = 1, p = picked_item; *p; i++, p++);
+	} else {
+		i = 0;
+	}
+
+	s.picks = i;
+	s.items_added = item_count - it_count_orgn;
+	res |= (fwrite(&s, 1, sizeof(s), f) != sizeof(s));
+
+	if (i) {
+		res |= (fwrite(picked_item, 2, i, f) != (unsigned)i);
+	}
+
+	if (s.items_added) {
+		res |= (fwrite(glob_items + it_count_orgn, sizeof(TITEM), s.items_added, f) != (unsigned)s.items_added);
+	}
+
+	res |= save_spells(f);
+
+	if (!res) {
+		res |= (fwrite(postavy, 1, sizeof(postavy), f) != sizeof(postavy));
+	}
+
+	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
+		if (h->demon_save != NULL) {
+			stfu = fwrite(h->demon_save, sizeof(THUMAN), 1, f);       //ulozeni polozek s demony
+		}
+	}
+
+	res |= save_dialog_info(f);
+	fclose(f);
+	SEND_LOG("(SAVELOAD) Done... Result: %d", res, 0);
+	return res;
+}
+
+int load_basic_info() {
+	FILE *f;
+	char *c;
+	S_SAVE s;
+	int i;
+	char res = 0;
+	TITEM *itg;
+	THUMAN *h;
+	size_t stfu;
+
 	c = Sys_FullPath(SR_TEMP, _GAME_ST);
-  SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)",c,0);
-  f=fopen(c,"rb");
-  if (f==NULL) return 1;
-  res|=(fread(&s,1,sizeof(s),f)!=sizeof(s));
-	if (s.game_flags & GM_MAPENABLE) enable_glmap=1;else enable_glmap=0;
-  i=s.picks;
-  if (picked_item!=NULL) free(picked_item);
-  if (i)
-     {
-     picked_item=NewArr(short,i);
-     res|=(fread(picked_item,2,i,f)!=(unsigned)i);
-     }
-  else picked_item=NULL;
-  itg=NewArr(TITEM,it_count_orgn+s.items_added);
-  memcpy(itg,glob_items,it_count_orgn*sizeof(TITEM));
-  free(glob_items);glob_items=itg;
-  if (s.items_added)
-     res|=(fread(glob_items+it_count_orgn,sizeof(TITEM),s.items_added,f)!=(unsigned)s.items_added);
-  item_count=it_count_orgn+s.items_added;
-  res|=load_spells(f);
-  for(i=0,h=postavy;i<POCET_POSTAV;h++,i++) if (h->demon_save!=NULL) free(h->demon_save);
-  if (!res) res|=(fread(postavy,1,sizeof(postavy),f)!=sizeof(postavy));
-  for(i=0,h=postavy;i<POCET_POSTAV;h++,i++)
-        {
-        h->programovano=0;
-        h->provadena_akce=h->zvolene_akce=NULL;
-        h->dostal=0;
-        if (h->demon_save!=NULL)
-          {
-          h->demon_save=New(THUMAN);
-          fread(h->demon_save,sizeof(THUMAN),1,f);//obnova polozek s demony
-          }
-        }
-  res|=load_dialog_info(f);
-  fclose(f);
-  viewsector=s.viewsector;
-  viewdir=s.viewdir;
-  cur_group=s.cur_group;
-  show_names=s.shownames;
-  show_lives=s.showlives;
-  autoattack=s.autoattack;
-  turn_speed(s.turn_speed);
-  zoom_speed(s.zoom_speed);
-  game_time=s.game_time;
-  sleep_ticks=s.sleep_long;
-  enable_sort=s.enable_sort;
-  autosave_enabled=s.autosave;
-  money=s.gold;
-  for(i=0;i<5;i++) runes[i]=s.runes[i];
-  Sound_SetEffect(SND_GFX,s.sample_vol);
-  Sound_SetEffect(SND_MUSIC,s.music_vol);
-  Sound_SetEffect(SND_XBASS,s.xbass);
-  Sound_SetEffect(SND_BASS,s.bass);
-  Sound_SetEffect(SND_TREBL,s.treble);
-  Sound_SetEffect(SND_LSWAP,s.stereing);
-  Sound_SetEffect(SND_SWAP,s.swapchans);
-  Sound_SetEffect(SND_OUTFILTER,s.out_filter);
-  if (level_fname==NULL || strncmp(s.level_name,level_fname,12))
-     {
-     strncpy(loadlevel.name,s.level_name,12);
-     loadlevel.start_pos=viewsector;
-     loadlevel.dir=viewdir;
-     send_message(E_CLOSE_MAP);
-     load_another=1;
-     }
-  else load_another=0;
-  for(i=0;i<POCET_POSTAV;i++) postavy[i].dostal=0;
-  SEND_LOG("(SAVELOAD) Done... Result: %d",res,0);
-  return res;
-  }
+	SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)", c, 0);
+	f = fopen(c, "rb");
+
+	if (f == NULL) {
+		return 1;
+	}
+
+	res |= (fread(&s, 1, sizeof(s), f) != sizeof(s));
+
+	if (s.game_flags & GM_MAPENABLE) {
+		enable_glmap = 1;
+	} else {
+		enable_glmap = 0;
+	}
+
+	i = s.picks;
+
+	if (picked_item != NULL) {
+		free(picked_item);
+	}
+
+	if (i) {
+		picked_item = NewArr(short, i);
+		res |= (fread(picked_item, 2, i, f) != (unsigned)i);
+	} else {
+		picked_item=NULL;
+	}
+
+	itg = NewArr(TITEM, it_count_orgn + s.items_added);
+	memcpy(itg, glob_items, it_count_orgn * sizeof(TITEM));
+	free(glob_items);
+	glob_items = itg;
+
+	if (s.items_added) {
+		res |= (fread(glob_items + it_count_orgn, sizeof(TITEM), s.items_added, f) != (unsigned)s.items_added);
+	}
+
+	item_count = it_count_orgn + s.items_added;
+	res |= load_spells(f);
+
+	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
+		if (h->demon_save != NULL) {
+			free(h->demon_save);
+		}
+	}
+
+	if (!res) {
+		res |= (fread(postavy, 1, sizeof(postavy), f) != sizeof(postavy));
+	}
+
+	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
+		h->programovano = 0;
+		h->provadena_akce = h->zvolene_akce = NULL;
+		h->dostal = 0;
+
+		if (h->demon_save != NULL) {
+			h->demon_save = New(THUMAN);
+			stfu = fread(h->demon_save, sizeof(THUMAN), 1, f);//obnova polozek s demony
+		}
+	}
+
+	res |= load_dialog_info(f);
+	fclose(f);
+	viewsector = s.viewsector;
+	viewdir = s.viewdir;
+	cur_group = s.cur_group;
+	show_names = s.shownames;
+	show_lives = s.showlives;
+	autoattack = s.autoattack;
+	turn_speed(s.turn_speed);
+	zoom_speed(s.zoom_speed);
+	game_time = s.game_time;
+	sleep_ticks = s.sleep_long;
+	enable_sort = s.enable_sort;
+	autosave_enabled = s.autosave;
+	money = s.gold;
+
+	for (i = 0; i < 5; i++) {
+		runes[i]=s.runes[i];
+	}
+
+	Sound_SetEffect(SND_GFX, s.sample_vol);
+	Sound_SetEffect(SND_MUSIC, s.music_vol);
+	Sound_SetEffect(SND_XBASS, s.xbass);
+	Sound_SetEffect(SND_BASS, s.bass);
+	Sound_SetEffect(SND_TREBL, s.treble);
+	Sound_SetEffect(SND_LSWAP, s.stereing);
+	Sound_SetEffect(SND_SWAP, s.swapchans);
+	Sound_SetEffect(SND_OUTFILTER, s.out_filter);
+
+	if (!gameMap.fname() || strncmp(s.level_name, gameMap.fname(), 12)) {
+		strncpy(loadlevel.name, s.level_name, 12);
+		loadlevel.start_pos = viewsector;
+		loadlevel.dir = viewdir;
+		send_message(E_CLOSE_MAP);
+		load_another = 1;
+	} else {
+		load_another = 0;
+	}
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		postavy[i].dostal = 0;
+	}
+
+	SEND_LOG("(SAVELOAD) Done... Result: %d", res, 0);
+	return res;
+}
 
 /*
 static void MakeSaveGameDir(const char *name)
@@ -827,75 +585,82 @@ static void MakeSaveGameDir(const char *name)
 }
 */
 
-static int save_global_events()
-{
-  FILE *f;
-  char *c;
-//  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-//  f=fopen(c,"wb");
+static int save_global_events() {
+	FILE *f;
+	char *c;
+	size_t stfu;
+
 	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "wb");
-  if (f==NULL) return 1;
-  fwrite(GlobEventList,1,sizeof(GlobEventList),f);
-  fclose(f);
-  return 0;
+
+	if (f == NULL) {
+		return 1;
+	}
+
+	stfu = fwrite(GlobEventList, 1, sizeof(GlobEventList), f);
+	fclose(f);
+	return 0;
 }
 
-static int load_global_events()
-{
-  FILE *f;
-  char *c;
-  memset(GlobEventList,0,sizeof(GlobEventList));
+static int load_global_events() {
+	FILE *f;
+	char *c;
+	size_t stfu;
 
-//  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-//  f=fopen(c,"rb");
+	memset(GlobEventList, 0, sizeof(GlobEventList));
 	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "rb");
-  if (f==NULL) return 1;
-  fread(GlobEventList,1,sizeof(GlobEventList),f);
-  fclose(f);
-  return 0;
+
+	if (f == NULL) {
+		return 1;
+	}
+
+	stfu = fread(GlobEventList, 1, sizeof(GlobEventList), f);
+	fclose(f);
+	return 0;
 }
 
-int save_game(int slotnum, const char *gamename)
-  {
-  char *sn,*ssn,*gn;
-  FILE *svf;
-  int r;
+int save_game(int slotnum, const char *gamename) {
+	char *sn, *ssn, *gn;
+	FILE *svf;
+	int r;
+	size_t stfu;
 
-  SEND_LOG("(SAVELOAD) Saving game slot %d",slotnum,0);
-  save_map_state();
-//  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
-// FIXME: rewrite
-//  MakeSaveGameDir(pathtable[SR_SAVES]);
+	SEND_LOG("(SAVELOAD) Saving game slot %d", slotnum, 0);
+	save_map_state();
 	sn = Sys_FullPath(SR_SAVES, _SLOT_SAV);
-  ssn = (char*)alloca(strlen(sn)+3);
-  sprintf(ssn,sn,slotnum);
-  gn = (char*)alloca(SAVE_NAME_SIZE);
-  strncpy(gn,gamename,SAVE_NAME_SIZE);
-  if ((r=save_shops())!=0) return r;
-  if ((r=save_basic_info())!=0) return r;
-  save_leaving_places();
-  save_book();
-  save_global_events();
-  svf=fopen(ssn,"wb");
-  if (svf==NULL) 
-  {
-	char buff[256];
-	sprintf(buff,"Nelze ulozit pozici na cestu: %s", ssn);
-	Sys_ErrorBox(buff);
-//    MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP|MB_SYSTEMMODAL);  
-  }
-  else
-  {
-	fwrite(gn,1,SAVE_NAME_SIZE,svf);
-	close_story_file();
-	r=Sys_PackStatus(svf);
-	open_story_file();
-	fclose(svf);
-  }
-  SEND_LOG("(SAVELOAD) Game saved.... Result %d",r,0);
-  disable_intro();
-  return r;
-  }
+	ssn = (char*)alloca(strlen(sn) + 3);
+	sprintf(ssn, sn, slotnum);
+	gn = (char*)alloca(SAVE_NAME_SIZE);
+	strncpy(gn, gamename, SAVE_NAME_SIZE);
+
+	if ((r = save_shops()) != 0) {
+		return r;
+	}
+
+	if ((r = save_basic_info()) != 0) {
+		return r;
+	}
+
+	save_leaving_places();
+	save_book();
+	save_global_events();
+	svf = fopen(ssn, "wb");
+
+	if (svf == NULL) {
+		char buff[256];
+		sprintf(buff, "Nelze ulozit pozici na cestu: %s", ssn);
+		Sys_ErrorBox(buff);
+	} else {
+		stfu = fwrite(gn, 1, SAVE_NAME_SIZE, svf);
+		close_story_file();
+		r=Sys_PackStatus(svf);
+		open_story_file();
+		fclose(svf);
+	}
+
+	SEND_LOG("(SAVELOAD) Game saved.... Result %d", r, 0);
+	disable_intro();
+	return r;
+}
 
 extern char running_battle;
 
@@ -945,46 +710,51 @@ int load_game(int slotnum)
   return r;
   }
 
-static void load_specific_file(int slot_num,const char *filename,void **out,long *size) //call it in task!
-  {
-  FILE *slot;
-  char *c,*d;
-  long siz;
-  char fname[12];
-  char succes=0;
+//call it in task!
+static void load_specific_file(int slot_num, const char *filename, void **out, long *size) {
+	FILE *slot;
+	char *c, *d;
+	long siz;
+	char fname[12];
+	char succes = 0;
+	size_t stfu;
 
-//  concat(c,pathtable[SR_SAVES],_SLOT_SAV);
 	c = Sys_FullPath(SR_SAVES, _SLOT_SAV);
-  d = (char*)alloca(strlen(c)+2);
-  sprintf(d,c,slot_num);
-  slot=fopen(d,"rb");
-  if (slot==NULL)
-     {
-     *out=NULL;
-     return;
-     }
-  fseek(slot,SAVE_NAME_SIZE,SEEK_CUR);
-  fread(fname,1,12,slot);
-  while(fname[0] && !succes)
-     {
-//     Task_Sleep(NULL);
-//     if (Task_QuitMsg()) break;
-     fread(&siz,1,4,slot);
-     if (!strncmp(fname,filename,12)) succes=1; else
-           {
-           fseek(slot,siz,SEEK_CUR);
-           fread(fname,1,12,slot);
-           }
-     }
-  if (succes)
-     {
-     *out=getmem(siz);
-     fread(*out,1,siz,slot);
-     *size=siz;
-     }
-  else *out=NULL;
-  fclose(slot);
-  }
+	d = (char*)alloca(strlen(c) + 2);
+	sprintf(d, c, slot_num);
+	slot = fopen(d, "rb");
+
+	if (slot == NULL) {
+		*out = NULL;
+		return;
+	}
+
+	fseek(slot, SAVE_NAME_SIZE, SEEK_CUR);
+	stfu = fread(fname, 1, 12, slot);
+
+	while(fname[0] && !succes) {
+//		Task_Sleep(NULL);
+//		if (Task_QuitMsg()) break;
+		stfu = fread(&siz, 1, 4, slot);
+
+		if (!strncmp(fname, filename, 12)) {
+			succes = 1;
+		} else {
+			fseek(slot, siz, SEEK_CUR);
+			stfu = fread(fname, 1, 12, slot);
+		}
+	}
+
+	if (succes) {
+		*out = getmem(siz);
+		stfu = fread(*out, 1, siz, slot);
+		*size = siz;
+	} else {
+		*out = NULL;
+	}
+
+	fclose(slot);
+}
 
 //------------------------ SAVE LOAD DIALOG ----------------------------
 static char force_save;
@@ -1004,32 +774,33 @@ static char load_mode;
 #define STORY_XS (298-57)
 #define STORY_YS (302-50)
 
-void read_slot_list()
-  {
-  int i;
-  char *mask,*name;
-  char slotname[SAVE_NAME_SIZE];
+void read_slot_list() {
+	int i;
+	char *mask, *name;
+	char slotname[SAVE_NAME_SIZE];
+	size_t stfu;
+
 	mask = Sys_FullPath(SR_SAVES, _SLOT_SAV);
-  name = (char*)alloca(strlen(mask)+1);
-  for(i=0;i<SLOTS_MAX;i++)
-     {
-     FILE *f;
-     sprintf(name,mask,i);
-     f=fopen(name,"rb");
-     if (f!=NULL)
-        {
-        fread(slotname,1,SAVE_NAME_SIZE,f);
-        fclose(f);
-        used_pos[i]=1;
-        }
-     else
-        {
-        strcpy(slotname,texty[75]);
-        used_pos[i]=0;
-        }
-     slot_list.replace(i, slotname);
-     }
-  }
+	name = (char*)alloca(strlen(mask) + 1);
+
+	for (i = 0; i < SLOTS_MAX; i++) {
+		FILE *f;
+
+		sprintf(name, mask, i);
+		f = fopen(name, "rb");
+
+		if (f != NULL) {
+			stfu = fread(slotname, 1, SAVE_NAME_SIZE, f);
+			fclose(f);
+			used_pos[i] = 1;
+		} else {
+			strcpy(slotname, texty[75]);
+			used_pos[i] = 0;
+		}
+
+		slot_list.replace(i, slotname);
+	}
+}
 
 static void place_name(int c,int i,char show)
   {
@@ -1292,41 +1063,46 @@ T_CLK_MAP clk_load_menu[]=
   {-1,0,0,639,479,empty_clk,0xff,H_MS_DEFAULT},
   };
 
-static char clk_load_proc(int id,int xa,int ya,int xr,int yr)
-  {
-  id=bright_slot(yr-18);
-  xa;ya;xr;yr;
-  if (ms_last_event.event_type & 0x2 && id>=0 && used_pos[id])
-     {
-     if (load_game(id))
-        {
-        message(1,0,0,"",texty[79],texty[80]);
-        redraw_load();
-        showview(0,0,0,0);
-        change_click_map(clk_load_error,CLK_LOAD_ERROR);
-        }
-     else
-        {
-        unwire_proc();
-        wire_proc();
-        if (battle) konec_kola();
-        unwire_proc();
-        if (!load_another)
-		  {
-		  wire_main_functs();
-		  cur_mode=MD_GAME;
-		  bott_draw(1);
-		  pick_set_cursor();
-		  for(id=0;id<mapsize;id++) map_coord[id].flags&=~MC_DPLAYER;
-  		  build_player_map();
-		  }
-		reg_grafiku_postav();
-		build_all_players();
-  	    cancel_render=1;
-        }
-     }
-  return 1;
-  }
+static char clk_load_proc(int id, int xa, int ya, int xr, int yr) {
+	id = bright_slot(yr - 18);
+
+	if (ms_last_event.event_type & 0x2 && id >= 0 && used_pos[id]) {
+		if (load_game(id)) {
+			message(1, 0, 0, "", texty[79], texty[80]);
+			redraw_load();
+			showview(0, 0, 0, 0);
+			change_click_map(clk_load_error, CLK_LOAD_ERROR);
+		} else {
+			unwire_proc();
+			wire_proc();
+
+			if (battle) {
+				konec_kola();
+			}
+
+			unwire_proc();
+
+			if (!load_another) {
+				wire_main_functs();
+				cur_mode = MD_GAME;
+				bott_draw(1);
+				pick_set_cursor();
+
+				for (id = 0; id < gameMap.coordCount(); id++) {
+					gameMap.clearCoordFlags(id, MC_DPLAYER);
+				}
+
+				build_player_map();
+			}
+
+			reg_grafiku_postav();
+			build_all_players();
+			cancel_render = 1;
+		}
+	}
+
+	return 1;
+}
 
 static char global_gamename[SAVE_NAME_SIZE];
 static int slot_pos;
@@ -1569,51 +1345,9 @@ void close_story_file()
   SEND_LOG("(STORY) Story temp file is closed...",0,0);
   }
 
-static int load_map_state_partial(char *level_fname,int mapsize) //obnovuje stav mapy; castecne
-  {
-  char sta[200];
-  char *bf;
-  FILE *fsta;
-  int i;
-  long siz;
-  short res=-2;
-
-
-  strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"rb");if (fsta==NULL) return -1;
-  i=0;fread(&i,sizeof(mapsize),1,fsta);if (mapsize!=i)goto err;
-  SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)",level_fname,"START");
-  fread(&siz,1,sizeof(siz),fsta);
-  bf=(char *)getmem(siz);
-  if (!fread(bf,siz,1,fsta)) goto err;
-  for (i=0;i<mapsize;i++)
-     map_coord[i].flags|=(bf[i>>3]>>(i & 7)) & 1;
-  load_map_description(fsta);
-  while (fread(&i,1,2,fsta) && i<=mapsize*4)
-     if (fread(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
-  while (fread(&i,1,2,fsta) && i<=mapsize)
-     if (fread(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
-  res=0;
-  err:
-  free(bf);
-  fclose(fsta);
-  SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)",level_fname,"DONE");
-  return res;
-  }
-
-
-int load_map_automap(char *mapfile)
-  {
-  int i;
-
-  SEND_LOG("(SAVEGAME) CRITICAL SECTION - Swapping maps: %s <-> %s",level_fname,mapfile);
-  kill_all_sounds();
-  for(i=0;i<mapsize;i++) map_coord[i].flags&=~0x7f; //vynuluj flags_info
-  free(map_sides);        //uvolni informace o stenach
-  free(map_sectors);      //uvolni informace o sektorech
-  free(map_coord);       //uvolni minfo informace
-  load_org_map(mapfile,&map_sides,&map_sectors,&map_coord,&mapsize); //nahrej originalni mapu
-  return load_map_state_partial(mapfile,mapsize); //nahrej ulozenou mapu
-  }
+int load_map_automap(const char *mapfile) {
+	SEND_LOG("(SAVEGAME) CRITICAL SECTION - Swapping maps: %s <-> %s", level_fname, mapfile);
+	kill_all_sounds();
+	return gameMap.automapRestore(mapfile);
+}
 //po teto akci se nesmi spustit TM_SCENE!!!! pokud mapfile!=level_fname

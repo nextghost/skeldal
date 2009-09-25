@@ -36,9 +36,6 @@
 #include "game/globals.h"
 #include "game/specproc.h"
 
-int **macros=NULL;
-void *macro_block;
-int macro_block_size;
 long sound_side_flags=0; //kopie flagu steny pro zvuk
 static char codelock_memory[16][8];
 static short rand_value;
@@ -63,25 +60,9 @@ char save_load_trigger(short load)
   return trig_group;
   }
 
-void load_macros(int size,void *data)
-  {
-  int *r;
-
-  if (macros!=NULL) free(macros);
-  macros=(int **)getmem(mapsize*sizeof(int *)*4);
-  memset(macros,0,mapsize*sizeof(char *)*4);
-  memset(codelock_memory,0,sizeof(codelock_memory));
-  r = (int*)data;
-  while (*r)
-     {
-     macros[*r]=r+1;
-     r++;
-     while(*r) r=(int *)((char *)r+*r+4);
-     r++;
-     }
-  macro_block=data;
-  macro_block_size=size;
-  }
+void load_macros(void) {
+	memset(codelock_memory, 0, sizeof(codelock_memory));
+}
 
 void macro_disp_text(int text,char glob)
   {
@@ -114,16 +95,21 @@ void macro_fireball(TMA_FIREBALL *z,int sector,int dir)
   add_fly(fly);
   }
 
-void macro_sound(TMA_SOUND *p,int psect,int pdir,int sect,int dir)
-  {
-  char up=4;
-  if (sound_side_flags & SD_PRIM_FORV) up=2;
-  if (~(p->bit16) & up)
-     if (psect)
-       play_effekt(map_coord[sect].x,map_coord[sect].y,map_coord[psect].x,map_coord[psect].y,dir,pdir,p);
-     else
-       play_effekt(0,0,0,0,-1,-1,p);
-  }
+void macro_sound(TMA_SOUND *p, int psect, int pdir, int sect, int dir) {
+	char up = 4;
+
+	if (sound_side_flags & SD_PRIM_FORV) {
+		up = 2;
+	}
+
+	if (~(p->bit16) & up) {
+		if (psect) {
+			play_effekt(gameMap.coord()[sect].x, gameMap.coord()[sect].y, gameMap.coord()[psect].x, gameMap.coord()[psect].y, dir, pdir, p);
+		} else {
+			play_effekt(0, 0, 0, 0, -1, -1, p);
+		}
+	}
+}
 
 void macro_send_act(TMA_SEND_ACTION *p)
   {
@@ -304,48 +290,53 @@ __asm
 	}
 }
 
-static void propadnout(int sector)
-  {
-  short *i,c,m1,m2;
+static void propadnout(int sector) {
+	short *i, c, m1, m2;
 
-   for(c=0;c<4;c++)
-     {
-     pop_item(sector,c,0,&i);
-     while(i!=NULL)
-        {
-        push_item(sector,c,i);
-        pop_item(sector,c,0,&i);
-        }
-     }
-  if (mob_map[sector])
-     {
-     m1=mob_map[sector]-1;
-     m2=mobs[m1].next-1;
-     mob_map[sector]=0;
-     if (map_sectors[sector].sector_type==S_DIRA)
-        {
-        mobs[m1].sector=map_sectors[sector].sector_tag;
-        if (m2>=0) mobs[m2].sector=mobs[m1].sector;
-        }
-     mob_map[mobs[m1].sector]=m1+1;
-     }
-  postavy_propadnout(sector);
-  }
+	for (c = 0; c < 4; c++) {
+		pop_item(sector, c, 0, &i);
 
-static void swap_sectors(TMA_SWAPS *sws)
-  {
-  TSECTOR *ss1=&map_sectors[sws->sector1],*ss2=&map_sectors[sws->sector2];
-  TSTENA *sd1=&map_sides[sws->sector1<<2],*sd2=&map_sides[sws->sector2<<2];
-  char c=4;
-  char st1=ss2->sector_type,st2=ss1->sector_type;
+		while (i != NULL) {
+			push_item(sector, c, i);
+			pop_item(sector, c, 0, &i);
+		}
+	}
 
-  for(c=0;c<4;c++) xchg_block(sd1+c,sd2+c,sizeof(TSTENA));
-  xchg_block(ss1,ss2,sizeof(TSECTOR));
-  if (st1==S_DIRA || st1==S_VODA) propadnout(sws->sector1);
-  if (st2==S_DIRA || st2==S_VODA) propadnout(sws->sector2);
-  recheck_button(sws->sector1,0);
-  recheck_button(sws->sector2,0);
-  }
+	if (mob_map[sector]) {
+		m1 = mob_map[sector] - 1;
+		m2 = mobs[m1].next - 1;
+		mob_map[sector] = 0;
+
+		if (gameMap.sectors()[sector].sector_type == S_DIRA) {
+			mobs[m1].sector = gameMap.sectors()[sector].sector_tag;
+
+			if (m2 >= 0) {
+				mobs[m2].sector = mobs[m1].sector;
+			}
+		}
+
+		mob_map[mobs[m1].sector] = m1 + 1;
+	}
+
+	postavy_propadnout(sector);
+}
+
+static void swap_sectors(TMA_SWAPS *sws) {
+	char st1 = gameMap.sectors()[sws->sector2].sector_type;
+	char st2 = gameMap.sectors()[sws->sector1].sector_type;
+	gameMap.swapSectors(sws->sector1, sws->sector2);
+
+	if (st1 == S_DIRA || st1 == S_VODA) {
+		propadnout(sws->sector1);
+	}
+
+	if (st2 == S_DIRA || st2 == S_VODA) {
+		propadnout(sws->sector2);
+	}
+
+	recheck_button(sws->sector1, 0);
+	recheck_button(sws->sector2, 0);
+}
 
 static void hit_1_player(int postava,TMA_WOUND *w,int chaos)
   {
@@ -398,24 +389,30 @@ static void hit_player(TMA_WOUND *w,int sector)
   bott_draw(1);
   }
 
-static TMULTI_ACTION *go_macro(int side, int abs_pos)
-  {
-  int *r;
-  int mcsiz;
+static TMULTI_ACTION *go_macro(int side, int abs_pos) {
+	const int *r;
+	int mcsiz;
 
+	program_counter = abs_pos;
+	r = (const int*)gameMap.macros()[side];
 
-  program_counter=abs_pos;
-  r=macros[side];
-  if (r==NULL) return NULL;
-  mcsiz=*r++;
-  while (abs_pos--)
-     {
-     r=(int *)((char *)r+mcsiz);
-     mcsiz=*r++;
-     if (!mcsiz) return NULL;
-     }
-  return (TMULTI_ACTION *)r;
-  }
+	if (r == NULL) {
+		return NULL;
+	}
+
+	mcsiz = *r++;
+
+	while (abs_pos--) {
+		r = (int *)((char *)r + mcsiz);
+		mcsiz = *r++;
+
+		if (!mcsiz) {
+			return NULL;
+		}
+	}
+
+	return (TMULTI_ACTION *)r;
+}
 
 static char monster_in_game(void)
   {
@@ -446,25 +443,37 @@ static char monster_in_room(int sector)
   return monster_test;
   }
 
-static int if_jump(TMA_TWOP *i,int side,int abs_pos)
-  {
-  TSTENA *sd=map_sides+side;
-  int go,test,flag;
-  char ok=0;
+static int if_jump(TMA_TWOP *i, int side, int abs_pos) {
+	const TSTENA *sd = gameMap.sides() + side;
+	int go, test, flag;
+	char ok = 0;
 
-  test=abs(i->parm1)-1;
-  go=i->parm2;
-  flag=sd->flags;
-  if (test<32) ok=(flag & (1<<test))!=0;
-  else
-     switch(test)
-     {
-     case 32:ok=monster_in_game();break;
-     case 33:ok=monster_in_room(side>>2);break;
-     }
-  if (i->parm1<0) ok=!ok;
-  if (ok) return go+abs_pos;else return -1;
-  }
+	test = abs(i->parm1) - 1;
+	go = i->parm2;
+	flag = sd->flags;
+
+	if (test < 32) {
+		ok = (flag & (1 << test)) != 0;
+	} else switch(test) {
+	case 32:
+		ok = monster_in_game();
+		break;
+
+	case 33:
+		ok = monster_in_room(side >> 2);
+		break;
+	}
+
+	if (i->parm1 < 0) {
+		ok = !ok;
+	}
+
+	if (ok) {
+		return go + abs_pos;
+	} else {
+		return -1;
+	}
+}
 
 static int if_have_item(TMA_TWOP *i,int abs_pos)
   {
@@ -684,147 +693,297 @@ void call_macro(int side,int flags)
 
 
 
-void call_macro_ex(int side,int flags, int runatside)
-  {
-  TMULTI_ACTION *z,*p;
-  int *r;
-  int mcsiz;
-  int c;
-  short saved_trigger;
-  short ls=last_send_action;
-  short save_rand;
+void call_macro_ex(int side, int flags, int runatside) {
+	TMULTI_ACTION *z, *p;
+	const int *r;
+	int mcsiz;
+	int c;
+	short saved_trigger;
+	short ls=last_send_action;
+	short save_rand;
 
-  if (side>=mapsize*4) return;
-  if (runatside>=mapsize*4) return;
-  save_rand=rand_value;rand_value=-1;
-  r=macros[runatside];
-  program_counter=0;
-  if (r==NULL) return;
-  SEND_LOG("(MULTIACTIONS) Start: Side %.1f Call %X",(float)(runatside/4)+((float)(runatside & 3)/10),flags);
-  saved_trigger=save_load_trigger(-1);
-  if (flags & (MC_PASSSUC | MC_PASSFAIL | MC_EXIT)) build_trig_group(TRIG_GROUP,0);else build_trig_group(TRIG_SECTOR,side);
-  while ((mcsiz=*r)!=0)
-     {
-     r++;
-     zde:
-     z=(TMULTI_ACTION *)r;
-     if (z->general.flags & flags)
-        {
-        c=-1;
-        switch (z->general.action)
-          {
-          case MA_GEN:break;
-          case MA_SOUND:macro_sound(&z->sound,side>>2,side & 3,viewsector,viewdir);break;
-          case MA_TEXTG:macro_disp_text(z->text.textindex,1);break;
-          case MA_TEXTL:macro_disp_text(z->text.textindex,0);break;
-          case MA_SENDA:macro_send_act(&z->send_a);break;
-          case MA_FIREB:macro_fireball(&z->fireball,side>>2,side & 3);break;
-          case MA_DESTI:if (picked_item!=NULL)
-                             {
-                             destroy_items(picked_item);
-                             free(picked_item);
-                             picked_item=NULL;
-                             pick_set_cursor();
-                             }
-                        break;
-          case MA_LOADL:macro_load_another_map(&z->loadlev);break;
-          case MA_DROPI:macro_drop_item(side>>2,side & 0x3,z->dropi.item);break;
-          case MA_CREAT:macro_create_item(z->dropi.item);break;
-          case MA_DIALG:start_dialog(z->text.textindex,-1);break;
-          case MA_SSHOP:enter_shop(z->text.textindex);break;
-          case MA_CLOCK:z->general.cancel=decode_lock(z->clock.znak,z->clock.string,z->clock.codenum);break;
-          case MA_CACTN:cancel_action(z->cactn.sector,z->cactn.dir);break;
-          case MA_LOCK :z->general.cancel=if_lock(side,z->lock.key_id,z->lock.thieflevel,&z->lock);break;
-          case MA_SWAPS:swap_sectors(&z->swaps);break;
-          case MA_WOUND:hit_player(&z->wound,side>>2);break;
-          case MA_IFJMP:c=if_jump(&z->twop,side,program_counter);break;
-          case MA_STORY:write_story_text(level_texts[z->text.textindex]);break;
-          case MA_HAVIT:c=if_have_item(&z->twop,program_counter);break;
-          case MA_SNDEX:ma_send_experience(z->twop.parm1);break;
-          case MA_IFACT:c=ma_test_action(&z->twop,ls,program_counter);break;
-          case MA_CALLS:if (call_map_event(z->twop.parm1,side>>2,side & 3,z->twop.parm2,flags)) call_macro(side,MC_SPEC_SUCC);break;
-          case MA_MOVEG:ma_move_group(z->twop.parm1,z->twop.parm2 & 3,z->twop.parm2>>7);break;
-          case MA_PLAYA:ma_play_anim(z->loadlev.name,z->loadlev.dir);break;
-          case MA_ISFLG:c=ma_if_flag(&z->twop,program_counter);break;
-          case MA_CHFLG:change_flag(z->twop.parm1,(char)z->twop.parm2);break;
-          case MA_CUNIQ:macro_drop_item(side>>2,side & 0x3,create_unique_item(&z->uniq.item)-1);break;
-          case MA_MONEY:ma_drop_money(side>>2,side & 0x3,z);break;
-          case MA_GUNIQ:macro_create_item(create_unique_item(&z->uniq.item)-1);break;
-          case MA_PICKI:c=ma_picki(&z->twop,program_counter);break;
-          case MA_WBOOK:ma_wbook(&z->loadlev);break;
-          case MA_RANDJ:c=ma_randjmp(&z->twop,program_counter);break;
-          case MA_ENDGM:
-	  	unwire_proc();
-		map_ret = 255;
-		send_message(E_CLOSE_MAP,(void *)255);
-		break;
-          case MA_GOMOB:ma_control_mob(z->twop.parm1,z->twop.parm2);break;
-		  case MA_SHRMA:call_macro_ex(side,flags,z->twop.parm1*4+z->twop.parm2);break;
-		  case MA_MUSIC:macro_change_music(z->text.textindex);break;
-          case MA_GLOBE:macro_register_global_event(z);break;
-          }
-       if (c!=-1) p=go_macro(runatside,c);else p=NULL;
-       if (p!=NULL) {r=(int *)p;program_counter=c;mcsiz=r[-1];goto zde;}
-       if (z->general.once)
-          {
-          z->general.action=0;
-          z->general.once=0;
-          if (z->general.cancel)
-             {
-             z->general.cancel=0;
-             goto end;
-             }
-          }
-        if (z->general.cancel) return;
-       }
-     r=(int *)((char *)r+mcsiz);
-     program_counter++;
-     }
-  end:
-  rand_value=save_rand;
-  save_load_trigger(saved_trigger);
-  SEND_LOG("(MULTIACTIONS) End: Side %.1f Call %X",(float)(runatside/4)+((float)(runatside & 3)/10),flags);
-  }
+	if (side >= gameMap.coordCount() * 4) {
+		return;
+	}
 
-static char lock_saved=255;
-static char lock_empty=254;
+	if (runatside >= gameMap.coordCount() * 4) {
+		return;
+	}
+
+	save_rand = rand_value;
+	rand_value = -1;
+	r = (const int*)gameMap.macros()[runatside];
+	program_counter = 0;
+
+	if (r == NULL) {
+		return;
+	}
+
+	SEND_LOG("(MULTIACTIONS) Start: Side %.1f Call %X", (float)(runatside / 4) + ((float)(runatside & 3) / 10), flags);
+	saved_trigger = save_load_trigger(-1);
+
+	if (flags & (MC_PASSSUC | MC_PASSFAIL | MC_EXIT)) {
+		build_trig_group(TRIG_GROUP, 0);
+	} else {
+		build_trig_group(TRIG_SECTOR, side);
+	}
+
+	while ((mcsiz = *r) != 0) {
+		r++;
+
+zde:
+		z = (TMULTI_ACTION *)r;
+
+		if (z->general.flags & flags) {
+			c = -1;
+
+			switch (z->general.action) {
+			case MA_GEN:
+				break;
+
+			case MA_SOUND:
+				macro_sound(&z->sound, side >> 2, side & 3, viewsector, viewdir);
+				break;
+
+			case MA_TEXTG:
+				macro_disp_text(z->text.textindex, 1);
+				break;
+
+			case MA_TEXTL:
+				macro_disp_text(z->text.textindex, 0);
+				break;
+
+			case MA_SENDA:
+				macro_send_act(&z->send_a);
+				break;
+
+			case MA_FIREB:
+				macro_fireball(&z->fireball, side>>2, side & 3);
+				break;
+
+			case MA_DESTI:
+				if (picked_item != NULL) {
+					destroy_items(picked_item);
+					free(picked_item);
+					picked_item = NULL;
+					pick_set_cursor();
+				}
+				break;
+
+			case MA_LOADL:
+				macro_load_another_map(&z->loadlev);
+				break;
+
+			case MA_DROPI:
+				macro_drop_item(side >> 2, side & 0x3, z->dropi.item);
+				break;
+
+			case MA_CREAT:
+				macro_create_item(z->dropi.item);
+				break;
+
+			case MA_DIALG:
+				start_dialog(z->text.textindex, -1);
+				break;
+
+			case MA_SSHOP:
+				enter_shop(z->text.textindex);
+				break;
+
+			case MA_CLOCK:
+				z->general.cancel = decode_lock(z->clock.znak, z->clock.string, z->clock.codenum);
+				break;
+
+			case MA_CACTN:
+				cancel_action(z->cactn.sector, z->cactn.dir);
+				break;
+
+			case MA_LOCK:
+				z->general.cancel = if_lock(side, z->lock.key_id, z->lock.thieflevel, &z->lock);
+				break;
+
+			case MA_SWAPS:
+				swap_sectors(&z->swaps);
+				break;
+
+			case MA_WOUND:
+				hit_player(&z->wound, side >> 2);
+				break;
+
+			case MA_IFJMP:
+				c = if_jump(&z->twop, side, program_counter);
+				break;
+
+			case MA_STORY:
+				write_story_text(level_texts[z->text.textindex]);
+				break;
+
+			case MA_HAVIT:
+				c = if_have_item(&z->twop, program_counter);
+				break;
+
+			case MA_SNDEX:
+				ma_send_experience(z->twop.parm1);
+				break;
+
+			case MA_IFACT:
+				c = ma_test_action(&z->twop, ls, program_counter);
+				break;
+
+			case MA_CALLS:
+				if (call_map_event(z->twop.parm1, side >> 2, side & 3, z->twop.parm2, flags)) {
+					call_macro(side, MC_SPEC_SUCC);
+				}
+				break;
+
+			case MA_MOVEG:
+				ma_move_group(z->twop.parm1, z->twop.parm2 & 3, z->twop.parm2 >> 7);
+				break;
+
+			case MA_PLAYA:
+				ma_play_anim(z->loadlev.name, z->loadlev.dir);
+				break;
+
+			case MA_ISFLG:
+				c = ma_if_flag(&z->twop, program_counter);
+				break;
+
+			case MA_CHFLG:
+				change_flag(z->twop.parm1, (char)z->twop.parm2);
+				break;
+
+			case MA_CUNIQ:
+				macro_drop_item(side >> 2, side & 0x3, create_unique_item(&z->uniq.item) - 1);
+				break;
+
+			case MA_MONEY:
+				ma_drop_money(side >> 2, side & 0x3, z);
+				break;
+
+			case MA_GUNIQ:
+				macro_create_item(create_unique_item(&z->uniq.item) - 1);
+				break;
+
+			case MA_PICKI:
+				c = ma_picki(&z->twop, program_counter);
+				break;
+
+			case MA_WBOOK:
+				ma_wbook(&z->loadlev);
+				break;
+
+			case MA_RANDJ:
+				c = ma_randjmp(&z->twop, program_counter);
+				break;
+
+			case MA_ENDGM:
+				unwire_proc();
+				map_ret = 255;
+				send_message(E_CLOSE_MAP, (void *)255);
+				break;
+
+			case MA_GOMOB:
+				ma_control_mob(z->twop.parm1, z->twop.parm2);
+				break;
+
+			case MA_SHRMA:
+				call_macro_ex(side, flags, z->twop.parm1 * 4 + z->twop.parm2);
+				break;
+
+			case MA_MUSIC:
+				macro_change_music(z->text.textindex);
+				break;
+
+			case MA_GLOBE:
+				macro_register_global_event(z);
+				break;
+			}
+
+			if (c != -1) {
+				p = go_macro(runatside, c);
+			} else {
+				p = NULL;
+			}
+
+			if (p != NULL) {
+				r = (int *)p;
+				program_counter = c;
+				mcsiz=r[-1];
+				goto zde;
+			}
+
+			if (z->general.once) {
+				z->general.action = 0;
+				z->general.once = 0;
+
+				if (z->general.cancel) {
+					z->general.cancel = 0;
+					goto end;
+				}
+			}
+
+			if (z->general.cancel) {
+				return;
+			}
+		}
+
+		r = (int *)((char *)r + mcsiz);
+		program_counter++;
+	}
+
+end:
+	rand_value = save_rand;
+	save_load_trigger(saved_trigger);
+	SEND_LOG("(MULTIACTIONS) End: Side %.1f Call %X", (float)(runatside / 4) + ((float)(runatside & 3) / 10), flags);
+}
+
+static unsigned char lock_saved = 255;
+static unsigned char lock_empty = 254;
 
 
-char save_codelocks(FILE *fsta)
-  {
-  char *c;
-  int i;
+char save_codelocks(WriteStream &stream) {
+	char *c;
+	int i;
 
-  c=(char *)&codelock_memory;
-  i=sizeof(codelock_memory);
-  while(*c==0 && i) c++,i--;
-  if (!i)
-     {
-     SEND_LOG("(SAVELOAD) Codelocks wasn't used in this map... not saved",0,0);
-     return !fwrite(&lock_empty,sizeof(lock_empty),1,fsta);
-     }
-  SEND_LOG("(SAVELOAD) Storing code-locks...",0,0);
-  if (!fwrite(&lock_saved,sizeof(lock_saved),1,fsta)) return 1;
-  return !fwrite(codelock_memory,sizeof(codelock_memory),1,fsta);
-  }
+	c = (char *)&codelock_memory;
+	i = sizeof(codelock_memory);
+
+	while (*c == 0 && i) {
+		c++;
+		i--;
+	}
+
+	if (!i) {
+		SEND_LOG("(SAVELOAD) Codelocks wasn't used in this map... not saved", 0, 0);
+		stream.writeUint8(lock_empty);
+		return 0;
+	}
+
+	SEND_LOG("(SAVELOAD) Storing code-locks...", 0, 0);
+	stream.writeUint8(lock_saved);
+	return stream.write(codelock_memory, sizeof(codelock_memory)) != sizeof(codelock_memory);
+}
 
 
-char load_codelocks(FILE *fsta)
-  {
-  char c;
+char load_codelocks(SeekableReadStream &stream) {
+	unsigned char c;
 
-  if (!fread(&c,sizeof(lock_empty),1,fsta)) return 1;
-  if (c!=lock_saved)
-     {
-     if (c!=lock_empty)
-        {
-        fseek(fsta,-1,SEEK_CUR); //uprav pripadne stare verze savegamu ktere nemaji codelocky
-        SEND_LOG("(ERROR) Invalid value for codelocks... may be it's old version of savegame",0,0);
-        }
-     memset(codelock_memory,0,sizeof(codelock_memory));
-     return 0;
-     }
-  SEND_LOG("(SAVELOAD) Restoring code-locks for this map...",0,0);
-  return !fread(codelock_memory,sizeof(codelock_memory),1,fsta);
-  }
+	c = stream.readUint8();
+	if (stream.eos()) {
+		return 1;
+	}
+
+	if (c != lock_saved) {
+		if (c != lock_empty) {
+			stream.seek(-1, SEEK_CUR);
+			SEND_LOG("(ERROR) Invalid value for codelocks... may be it's old version of savegame", 0, 0);
+		}
+
+		memset(codelock_memory, 0, sizeof(codelock_memory));
+		return 0;
+	}
+
+	SEND_LOG("(SAVELOAD) Restoring code-locks for this map...",0,0);
+	return stream.read(codelock_memory, sizeof(codelock_memory)) != sizeof(codelock_memory);
+}
 

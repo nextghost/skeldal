@@ -126,7 +126,6 @@ int snd_devnum,snd_parm1,snd_parm2,snd_parm3,snd_mixing=22050;
 char gamespeed=6;
 char gamespeedbattle=0;
 char level_preload=1;
-char *level_fname=NULL;
 int game_extras=0;
 
 char default_map[20]="LESPRED.MAP";
@@ -383,16 +382,16 @@ int ask_video()
   }
 */
 
-void pcx_fade_decomp(void **p,long *s)
-  {
-  uint8_t *buff;
-  load_pcx((char*)*p,*s,A_FADE_PAL,&buff,mglob.fade_r,mglob.fade_g,mglob.fade_b);
+void pcx_fade_decomp(void **p, long *s) {
+	uint8_t *buff;
+
+	load_pcx((char*)*p, *s, A_FADE_PAL, &buff, gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
 // TODO: rewrite this properly
 //  *s=_msize(buff);
-  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 10*512 + 16;
-  free(*p);
-  *p=buff;
-  }
+	*s = *(unsigned short*)buff * *(unsigned short*)(buff + 2) + 10 * 512 + 16;
+	free(*p);
+	*p = buff;
+}
 
 void pcx_15bit_decomp(void **p,long *s)
   {
@@ -614,7 +613,7 @@ void back_music(the_timer *arg)
 /*void *anim_idle(EVENT_MSG *msg,void **usr)
   {
   usr;
-  if (msg->msg==E_TIMER) calc_animations();
+  if (msg->msg==E_TIMER) gameMap.calcAnimations();
   return &anim_idle;
   }*/
 
@@ -944,7 +943,7 @@ void error_exception(EVENT_MSG *msg,void **unused)
      closemode();
      printf("Program zpñsobil bàhovou chybu a bude ukonáen\n"
             "Posledn° zpracov†van† data màla rukojeü á°slo %xh\n",memman_handle);
-     printf("Map: %s Sector %d Direction %d\n",level_fname==NULL?"<unknown>":level_fname,viewsector,viewdir);
+     printf("Map: %s Sector %d Direction %d\n",gameMap.fname()==NULL?"<unknown>":gameMap.fname(),viewsector,viewdir);
      printf("Nyn° se program pokus° uloëit hru...\n\n");
      autosave_enabled=1;
      autosave();
@@ -1211,7 +1210,6 @@ static void reload_map_handler(EVENT_MSG *msg, void **usr) {
 void enter_game()
   {
   int end;
-  init_spectxtrs();
   chod_s_postavama(0);
   bott_draw(1);
   norefresh=0;
@@ -1509,71 +1507,97 @@ void play_anim(int anim_num)
 
 #define H_ETOPBAR (H_MENUS_FREE+100)
 #define H_EDESK (H_MENUS_FREE+101)
-static void game_big_circle(char enforced)
-  {
-  int err;
-  int r;
-  char s[13];
-  SEND_LOG("\n(GAME) --------- Entering big loop ------------",0,0);
-  purge_playlist();
-  s[12]=0;strncpy(s,loadlevel.name,12);
-	strupr(s);
-  err=load_map(s);
-  if (!enforced)
-     {
-     loadlevel.start_pos=mglob.start_sector;
-     loadlevel.dir=mglob.direction;
-     }
-  while (loadlevel.name[0])
-     {
-     if (err)
-       {
-	   char buff[256];
-       closemode();
-       switch (err)
-          {
-          case -1: sprintf(buff,"Error while loading map (%s) ....file not found\n",s);break;
-          case -2: sprintf(buff,"Missing -1 at the end of map string table");break;
-          case -3: sprintf(buff,"Map file is corrupted!\n");break;
-          default: sprintf(buff,"Error in string table at line %d",err);break;
-          }
-	  Sys_ErrorBox(buff);
-//	   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
-       exit(1);
-       }
-    viewsector=loadlevel.start_pos;
-    viewdir=loadlevel.dir;
-    if (viewsector==0)
-     {
-     viewsector=set_leaving_place();
-     if (viewsector==0)
-        {
-        viewsector=mglob.start_sector;
-        viewdir=mglob.direction;
-        }
-     else
-      {
-      int i;
-      viewdir=0;
-      for (i=0;i<4;i++) if (~map_sides[i+(viewsector<<2)].flags & (SD_PLAY_IMPS | SD_PRIM_VIS))
-         {viewdir=i;break;}
-      }
-     }
-    for(r=0;r<mapsize*4;r++) call_macro(r,MC_STARTLEV);
-    recalc_volumes(viewsector,viewdir);
-    loadlevel.name[0]=0;
-    SEND_LOG("\n(GAME) --------- Entering game ------------",0,0);
-    enter_game();
-    SEND_LOG("(GAME) --------- Leaving game ------------\n",0,0);
-    leave_current_map();
-    s[12]=0;strncpy(s,loadlevel.name,12);
-	strupr(s);
-    if (s[0]!=0)err=load_map(s);
-    memset(GlobEventList,0,sizeof(GlobEventList));
+static void game_big_circle(char enforced) {
+	int err;
+	int r;
+	char s[13];
 
-    }
-  SEND_LOG("(GAME) --------- Leaving big loop ------------\n",0,0);
- }
+	SEND_LOG("\n(GAME) --------- Entering big loop ------------", 0, 0);
+	purge_playlist();
+	s[12] = 0;
+	strncpy(s, loadlevel.name, 12);
+	strupr(s);
+	err = load_map(s);
+
+	if (!enforced) {
+		loadlevel.start_pos = gameMap.global().start_sector;
+		loadlevel.dir = gameMap.global().direction;
+	}
+
+	while (loadlevel.name[0]) {
+		if (err) {
+			char buff[256];
+
+			closemode();
+
+			switch (err) {
+			case -1:
+				sprintf(buff, "Error while loading map (%s) ....file not found\n", s);
+				break;
+
+			case -2:
+				sprintf(buff, "Missing -1 at the end of map string table");
+				break;
+
+			case -3:
+				sprintf(buff, "Map file is corrupted!\n");
+				break;
+
+			default:
+				sprintf(buff, "Error in string table at line %d", err);
+				break;
+			}
+
+			Sys_ErrorBox(buff);
+			exit(1);
+		}
+
+		viewsector = loadlevel.start_pos;
+		viewdir = loadlevel.dir;
+
+		if (viewsector == 0) {
+			viewsector = set_leaving_place();
+
+			if (viewsector == 0) {
+				viewsector = gameMap.global().start_sector;
+				viewdir = gameMap.global().direction;
+			} else {
+				int i;
+
+				viewdir = 0;
+
+				for (i = 0; i < 4; i++) {
+					if (~gameMap.sides()[i + (viewsector << 2)].flags & (SD_PLAY_IMPS | SD_PRIM_VIS)) {
+						viewdir = i;
+						break;
+					}
+				}
+			}
+		}
+
+		for (r = 0; r < gameMap.coordCount() * 4; r++) {
+			call_macro(r, MC_STARTLEV);
+		}
+
+		recalc_volumes(viewsector, viewdir);
+		loadlevel.name[0] = 0;
+		SEND_LOG("\n(GAME) --------- Entering game ------------", 0, 0);
+		enter_game();
+		SEND_LOG("(GAME) --------- Leaving game ------------\n", 0, 0);
+		leave_current_map();
+		s[12] = 0;
+		strncpy(s, loadlevel.name, 12);
+		strupr(s);
+
+		if (s[0] != 0) {
+			err = load_map(s);
+		}
+
+		memset(GlobEventList, 0, sizeof(GlobEventList));
+	}
+
+	SEND_LOG("(GAME) --------- Leaving big loop ------------\n", 0, 0);
+}
 
 extern THUMAN postavy_2[];
 

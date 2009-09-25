@@ -227,19 +227,28 @@ int32_t ReadStream::readSint32BE(void) {
 	return (int32_t)readUint32BE();
 }
 
+MemoryReadStream *ReadStream::readStream(unsigned size) {
+	unsigned char *ptr = new unsigned char[size];
+
+	size = read(ptr, size);
+	return new MemoryReadStream(ptr, size);
+}
+
 MemoryReadStream::MemoryReadStream(const void *ptr, unsigned len) : _data(NULL),
 	_length(0), _pos(0) {
 
 	_length = len;
-	_data = new unsigned char[_length];
+	_data = new unsigned char[_length + 1];
 	memcpy(_data, ptr, _length);
+	_data[_length] = 0;
 }
 
 MemoryReadStream::MemoryReadStream(const MemoryReadStream &src) : _data(NULL),
 	_length(src._length), _pos(src._pos) {
 
-	_data = new unsigned char[_length];
+	_data = new unsigned char[_length + 1];
 	memcpy(_data, src._data, _length);
+	_data[_length] = 0;
 }
 
 MemoryReadStream::~MemoryReadStream(void) {
@@ -309,6 +318,25 @@ char *MemoryReadStream::readLine(char *buf, size_t size) {
 	}
 
 	return buf;
+}
+
+const char *MemoryReadStream::readCString(void) {
+	const char *ptr = (char*)(_data + _pos);
+	int len;
+
+	if (_pos >= _length) {
+		_pos = _length + 1;
+		return NULL;
+	}
+
+	len = strlen(ptr) + 1;
+	_pos += len;
+
+	if (_pos > _length) {
+		_pos = _length;
+	}
+
+	return ptr;
 }
 
 bool MemoryReadStream::eos(void) const {
@@ -422,6 +450,88 @@ char *File::readLine(char *buf, size_t size) {
 bool File::eos() const {
 	assert(_file);
 	return feof(_file);
+}
+
+void WriteStream::writeSint8(int8_t data) {
+	write(&data, 1);
+}
+
+void WriteStream::writeUint8(uint8_t data) {
+	write(&data, 1);
+}
+
+void WriteStream::writeUint16LE(uint16_t data) {
+	writeUint8(data & 0xff);
+	writeUint8(data >> 8);
+}
+
+void WriteStream::writeUint32LE(uint32_t data) {
+	writeUint16LE(data & 0xffff);
+	writeUint16LE(data >> 16);
+}
+
+void WriteStream::writeSint16LE(int16_t data) {
+	writeUint16LE((uint16_t)data);
+}
+
+void WriteStream::writeSint32LE(int32_t data) {
+	writeUint32LE((uint32_t)data);
+}
+
+void WriteStream::writeUint16BE(uint16_t data) {
+	writeUint8(data >> 8);
+	writeUint8(data & 0xff);
+}
+
+void WriteStream::writeUint32BE(uint32_t data) {
+	writeUint16BE(data >> 16);
+	writeUint16BE(data & 0xffff);
+}
+
+void WriteStream::writeSint16BE(int16_t data) {
+	writeUint16BE((uint16_t)data);
+}
+
+void WriteStream::writeSint32BE(int32_t data) {
+	writeUint32BE((uint32_t)data);
+}
+
+WriteFile::WriteFile(void) : _file(NULL), _name(NULL) { }
+
+WriteFile::WriteFile(const char *filename) : _file(NULL), _name(NULL) {
+	open(filename);
+}
+
+WriteFile::~WriteFile(void) {
+	close();
+}
+
+void WriteFile::open(const char *filename) {
+	close();
+
+	_file = fopen(filename, "w");
+
+	if (_file) {
+		_name = new char[strlen(filename) + 1];
+		strcpy(_name, filename);
+	}
+}
+
+void WriteFile::close(void) {
+	if (!_file) {
+		return;
+	}
+
+	fclose(_file);
+	delete[] _name;
+
+	_file = NULL;
+	_name = NULL;
+}
+
+size_t WriteFile::write(const void *buf, size_t size) {
+	assert(_file);
+	return fwrite(buf, 1, size, _file);
 }
 
 DDLFile::DDLFile(void) : _grptable(NULL), _grpsize(0), _namesize(0),
@@ -1286,14 +1396,17 @@ char *get_time_str()
 
 #endif
 
-long get_handle_size(int handle)
-  {
-  THANDLE_DATA *h;
+long get_handle_size(int handle) {
+	THANDLE_DATA *h;
 
-  h=get_handle(handle);
-  if (h->status==BK_NOT_USED) return -1;
-  return h->size;
-  }
+	h = get_handle(handle);
+
+	if (h->status == BK_NOT_USED) {
+		return -1;
+	}
+
+	return h->size;
+}
 
 /*void *malloc(size_t size)
   {

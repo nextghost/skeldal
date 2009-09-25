@@ -482,55 +482,48 @@ typedef struct tdregisters
   int8_t path;
   }TDREGISTERS;
 
-typedef struct tstena
-  {
-  int8_t prim,sec,oblouk,side_tag;
-  uint16_t sector_tag;
-  int8_t xsec,ysec;
-  uint32_t flags;
-  int8_t prim_anim,sec_anim,lclip,action;
-  }TSTENA;
+typedef struct tstena {
+	int8_t prim, sec, oblouk, side_tag;
+	uint16_t sector_tag;
+	int8_t xsec, ysec;
+	uint32_t flags;
+	int8_t prim_anim, sec_anim, lclip, action;
+} TSTENA;
 
-typedef struct tsector
-  {
-  int8_t floor,ceil;
-  int8_t flags,sector_type; //sector_type = 0 - sector not used;
-  int8_t action,side_tag;
-  uint16_t step_next[4];
-  uint16_t sector_tag;
-  }TSECTOR;
+typedef struct tsector {
+	int8_t floor, ceil;
+	int8_t flags, sector_type; //sector_type = 0 - sector not used;
+	int8_t action, side_tag;
+	uint16_t step_next[4];
+	uint16_t sector_tag;
+} TSECTOR;
 
-typedef struct tvyklenek
-  {
-  int16_t sector,dir,xpos,ypos,xs,ys;
-  int16_t items[9];
-  int16_t reserved;
-  }TVYKLENEK;
-
-
+typedef struct tvyklenek {
+	int16_t sector, dir, xpos, ypos, xs, ys;
+	int16_t items[9];
+	int16_t reserved;
+} TVYKLENEK;
 
 typedef TSTENA TSIDEDEF[][4];
 typedef TSECTOR TSECTORDEF[];
 
-typedef struct tmap_edit_info
-  {
-  int16_t x,y,layer,flags;
-  }TMAP_EDIT_INFO;
+typedef struct tmap_edit_info {
+	int16_t x, y, layer;
+	uint16_t flags;
+} TMAP_EDIT_INFO;
 
 typedef TMAP_EDIT_INFO TMAP_EDIT[];
 
-typedef
-   struct mapglobal
-   {
-   char back_fnames[4][13];
-   int32_t fade_r,fade_g,fade_b;
-   int32_t start_sector;
-   int32_t direction;
-   char mapname[30];
-   int8_t map_effector;
-   int8_t local_monsters;
-   int8_t map_autofadefc;
-   }MAPGLOBAL;
+typedef struct mapglobal {
+	char back_fnames[4][13];
+	int32_t fade_r, fade_g, fade_b;
+	int32_t start_sector;
+	int32_t direction;
+	char mapname[30];
+	int8_t map_effector;
+	int8_t local_monsters;
+	int8_t map_autofadefc;
+} MAPGLOBAL;
 
 typedef struct the_timer
   {
@@ -543,35 +536,22 @@ typedef struct the_timer
   int8_t zavora;
   }THE_TIMER;
 
-typedef struct d_action
-  {
-  uint16_t action,sector,side,flags,nocopy,delay;
-  struct d_action *next;
-  }D_ACTION;
+typedef struct d_action {
+	uint16_t action, sector, side, flags, nocopy, delay;
+	struct d_action *next;
+}D_ACTION;
 
 extern uint16_t color_topbar[7];
 
-
-extern MAPGLOBAL mglob;            //globalni informace o levelu
-extern TSTENA *map_sides;          //popisy jednotlivych sten (map_sides[(sector<<2)+dir])
-extern TSECTOR *map_sectors;       //popisy sektoru map_sectors[sector]
-extern TVYKLENEK *map_vyk;         //mapa vyklenku
-extern uint16_t vyk_max;               //pocet vyklenku v mape
-extern uint8_t *flag_map;             //mapa prenasenych flagu
-extern TMAP_EDIT_INFO *map_coord;  //mapa souradnic a flagu
 extern int viewsector;             //aktualni sektor vyhledu
 extern int viewdir;                //aktualni smer vyhledu
 extern THE_TIMER timer_tree;       //strom casovych udalosti
 extern D_ACTION *d_action;         //spojovy seznam zpozdenych akci
-//extern char *pathtable[];          //tabulka adresaru
 extern char level_preload;         //informace o preloadingu
 extern StringList texty;               //globalni tabulka textu
 extern StringList level_texts;         //lokalni tabulka textu
-extern char *level_fname;          //jmeno levelu
-extern int mapsize;                //pocet sektoru v mape
 extern int hl_ptr;                 //ukazatel na konec staticke tabulky registraci
 extern int end_ptr;                //ukazatel na uplny konec tabulky registraci
-extern short **map_items;          //ukazatel na mapu predmetu
 extern int default_ms_cursor;      //cislo zakladniho mysiho kurzoru
 extern void *cur_xlat;             //aktualni tabulka pro 256 barev
 extern void (*unwire_proc)();      //procedura zajistujici odpojeni prave ukoncovane interakce
@@ -652,7 +632,6 @@ extern char marker; //tato promenna je 0, jen v pripade ze je 1 probehne assert
 
 int set_video(int mode);
 void *game_keyboard(EVENT_MSG *msg,void **usr);
-void calc_animations(void);
 int load_map(char *filename);
 void other_draw();
 void refresh_scene(the_timer *arg);
@@ -728,11 +707,84 @@ typedef struct spectxtr
 #define MAX_SPECTXTRS 64
 typedef SPECTXTR SPECTXT_ARR[MAX_SPECTXTRS];
 
-extern SPECTXT_ARR spectxtr;
+// TODO: This class is only meant for memory management, it should be improved later
+class Map {
+private:
+	int _coordCount, _vykCount, _sptPtr;
+	char *_fileName;
+	MAPGLOBAL _glob;
+	TSTENA *_sides;
+	TSECTOR *_sectors;
+	TVYKLENEK *_vyk;
+	TMAP_EDIT_INFO *_coord;
+	uint8_t *_flagMap;
+	short **_items;
+	SPECTXT_ARR _spectxtr;
+	unsigned char **_macros;
 
-void add_spectxtr(uint16_t sector,uint16_t fhandle,uint16_t count,uint16_t repeat,int16_t xpos);
-void calc_spectxtrs(void);
-void init_spectxtrs(void);
+	static const int _floorPanels[8];
+
+	int partialLoad(const char *filename);
+
+public:
+	Map();
+	~Map();
+
+	const char *fname(void) const { return _fileName; }
+	const MAPGLOBAL &global(void) const { return _glob; }
+	const TSTENA *sides(void) const { return _sides; }
+	const TSECTOR *sectors(void) const { return _sectors; }
+	const TVYKLENEK *vyk(void) const { return _vyk; }
+	const TMAP_EDIT_INFO *coord(void) const { return _coord; }
+	const uint8_t *flags(void) const { return _flagMap; }
+	const SPECTXTR *spectxtr(void) const { return _spectxtr; }
+	short * const *items(void) const { return _items; }
+	unsigned char * const *macros(void) const { return _macros; }
+
+	int coordCount(void) const { return _coordCount; }
+	int vykCount(void) const { return _vykCount; }
+
+	int load(const char *filename);
+	void close(void);
+
+	void addSpecTexture(uint16_t sector, uint16_t fhandle, uint16_t count, uint16_t repeat, int16_t xpos);
+	void recalcSpecTextures(void);
+	void calcAnimations(void);
+
+	void resetSecAnim(unsigned side);
+	void setSecAnim(unsigned sector, unsigned templ);
+	void clearTag(unsigned sector);
+	void tag(unsigned s1, unsigned s2, int sideTag);
+
+	void setCoordFlags(unsigned coord, uint16_t flags);
+	void clearCoordFlags(unsigned coord, uint16_t flags);
+	void setSideFlags(unsigned side, uint32_t flags);
+	void clearSideFlags(unsigned side, uint32_t flags);
+
+	void clearTeleport(unsigned sector);
+	void setTeleport(unsigned sector);
+	void placePlayer(const struct thuman *player);
+
+	short removeItem(unsigned vyk);
+	void putItem(unsigned vyk, short item);
+	void pushItem(unsigned sector, short *items);
+	short *popItem(unsigned sector, int picked);
+
+	int save(void) const;
+	int restore(void);
+	void quickRestore(void);
+	int automapRestore(const char *filename);
+
+	void swapSectors(unsigned s1, unsigned s2);
+
+	void buttonActivate(unsigned sector);
+	void buttonDeactivate(unsigned sector);
+	int doAction(int action, unsigned sector, int dir, int flags, int nosend);
+	void moveBoat(unsigned from, unsigned to);
+};
+
+extern Map gameMap;
+
 void play_fx(int x,int y);
 void draw_fx();
 void play_fx_at(int where);
@@ -755,10 +807,9 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet);
 void step_zoom(char smer);
 void turn_zoom(int smer);
 void a_touch(int sector,int dir);
-int do_action(int action_numb,int sector,int direct,int flags,int nosend);
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay);
 long load_section(FILE *f,void **section, int *sct_type,long *sect_size);
-void prepare_graphics(int *ofs,char *names,long size,void (*decomp)(void**, long*),int cls);
+void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, long*), int cls);
 void show_automap(char full);
 void draw_medium_map();
 void anim_sipky(int h,int mode);
@@ -783,7 +834,7 @@ void add_leaving_place(int sector);
 void save_leaving_places(void);
 void load_leaving_places(void);
 int set_leaving_place(void);
-int get_leaving_place(char *level_name);
+int get_leaving_place(const char *level_name);
 
 void Automap_Init(void);
 void Builder_Init(void);
@@ -1323,37 +1374,35 @@ typedef union tmulti_action
   struct tma_ifsec ifsec;
   }TMULTI_ACTION;
 
-extern int **macros;                  //tabulka maker
 extern void *macro_block;          //alokovany blok maker (pri unloadu free!)
 extern int macro_block_size;       //velikost bloku;
 
-void load_macros(int size,void *data);
+void load_macros(void);
 void call_macro(int side,int flags);
 void call_macro_ex(int side,int flags, int runatsect);
 char get_player_triggered(int p);  //zjistuje zda hrac s cislem p byl makrem zasazen;
 char save_load_trigger(short load); //uklada/obnovuje trigger vlajky. -1 uklada, jinak hodnota ulozeneho triggeru
-char save_codelocks(FILE *fsta); //uklada do savegame nastaveni kodovych zamku (128 bytu);
-char load_codelocks(FILE *fsta); //obnovuje ze savegame nastaveni kodovych zamku (128 bytu);
+char save_codelocks(WriteStream &stream); //uklada do savegame nastaveni kodovych zamku (128 bytu);
+char load_codelocks(SeekableReadStream &stream); //obnovuje ze savegame nastaveni kodovych zamku (128 bytu);
 void macro_load_another_map(TMA_LOADLEV *z);
 
 
-typedef struct letici_vec
-  {
-  struct letici_vec *next;
-  int32_t sector,smer;
-  int32_t xpos,ypos,zpos;
-  int16_t item;
-  int16_t *items;
-  int32_t counter;
-  int8_t anim_pos;
-  int8_t flags;
-  int16_t owner;
-  int32_t speed;
-  int32_t velocity;
-  int16_t hit_bonus;
-  int16_t damage;
-  int16_t lives;
- }LETICI_VEC;
+typedef struct letici_vec {
+	struct letici_vec *next;
+	int32_t sector, smer;
+	int32_t xpos, ypos, zpos;
+	int16_t item;
+	short *items;
+	int32_t counter;
+	int8_t anim_pos;
+	uint8_t flags;
+	int16_t owner;
+	int32_t speed;
+	int32_t velocity;
+	int16_t hit_bonus;
+	int16_t damage;
+	int16_t lives;
+} LETICI_VEC;
 
 
 extern LETICI_VEC *letici_veci;    //spojovy seznam leticich veci
@@ -1404,7 +1453,7 @@ int save_game(int slotnum, const char *gamename);
 void wire_save_load(char save);
 #define autosave() if (autosave_enabled) save_game(9,"AUTOSAVE");
 extern char autosave_enabled;
-int load_map_automap(char *mapfile);
+int load_map_automap(const char *mapfile);
  /* ^^^ Tato funkce zmeni mapu, bez zmeny grafiky a stavu cele hry.
     Jeji vyuziti je pro zobrazeni automapingu jineho levelu nez aktualniho
     Pred navratem do hry je treba udelat load_map_automap(level_fname);!!!*/
@@ -1474,46 +1523,45 @@ char enable_sound(char enbl);
 #define MOB_LIVE 0x80    //potvora zije
 #define MOB_CASTING 0x20
 
-typedef struct tmob
-  {
-  char name[30];           //jmeno moba
-  int16_t casting;
-  int16_t adjusting[6*16];     //volba stredu pro animace
-  uint16_t sector,dir;        //pozice
-  uint8_t locx,locy;         //presna pozice
-  uint8_t headx,heady;        //pozice kam mob miri
-  int16_t anim_counter;        //citac animaci
-  int16_t vlastnosti[24];     //zakladni vlastnosti potvory
-  int16_t inv[MOBS_INV];      //batoh potvory
-  int16_t lives;              //pocet zivotu potvory
-  int16_t cislo_vzoru;         //informace urcujici ze ktereho vzoru byl mob vytvoren
-  int16_t speed;             //rychlost pohybu
-  int16_t dohled;            //kam dohl‚dne
-  int16_t dosah;             //okam‘ik za‡ tku souboje
-  int8_t stay_strategy;      //chovani moba ve statickem modu (nepronasleduje)
-  uint8_t walk_data;           //cislo potrebne pro pohyb moba v bludisti
-  uint16_t bonus;              //bonus za zabiti
-  int8_t flee_num;             //pravdepodobnost uteku
-  int8_t anim_counts[6];     //pocet animacnich policek pro kazdy pohyb
-  char mobs_name[7];       //zaklad jmena souboru pro moba
-  int32_t experience;          //zkusenost
-  int8_t vlajky;             //BIT0 - 1 v boji
-  int8_t anim_phase;            //cinnost kterou mob dela
-  int16_t csektor;            //Cilovy sektor
-  int16_t home_pos;          //domaci pozice
-  int16_t next;              //Cislo dalsiho moba, ktery stoji na jeho pozici
-  int8_t actions;            //pocet akci ktere muze potvora provest v kole
-  int8_t hit_pos;           //animacni pozice, kdy potvora zasahne
-  uint16_t sounds[4];          //zvuky z listu
-  int8_t palette;           // pocet pouzitelnych palet / cislo palety
-  int8_t mode;              //akce potvory
-  int16_t dialog;           //cislo dialogu, -1 kdyz neni;
-  int8_t dialog_flags;      //vlajky mapovane do dialogu;
-  uint16_t money;             //penize
-  uint16_t specproc;          //specproc
-  uint16_t dostal;             //pocet zivotu, ktere mu byly ubrany poslednim zasahem
-  uint8_t user_data;         //data uzivatelem definovane - treba pro spec.
-  }TMOB;
+typedef struct tmob {
+	char name[30];           //jmeno moba
+	int16_t casting;
+	int16_t adjusting[6*16];     //volba stredu pro animace
+	uint16_t sector, dir;        //pozice
+	uint8_t locx, locy;         //presna pozice
+	uint8_t headx, heady;        //pozice kam mob miri
+	int16_t anim_counter;        //citac animaci
+	int16_t vlastnosti[24];     //zakladni vlastnosti potvory
+	int16_t inv[MOBS_INV];      //batoh potvory
+	int16_t lives;              //pocet zivotu potvory
+	int16_t cislo_vzoru;         //informace urcujici ze ktereho vzoru byl mob vytvoren
+	int16_t speed;             //rychlost pohybu
+	int16_t dohled;            //kam dohl‚dne
+	int16_t dosah;             //okam‘ik za‡ tku souboje
+	int8_t stay_strategy;      //chovani moba ve statickem modu (nepronasleduje)
+	uint8_t walk_data;           //cislo potrebne pro pohyb moba v bludisti
+	uint16_t bonus;              //bonus za zabiti
+	int8_t flee_num;             //pravdepodobnost uteku
+	int8_t anim_counts[6];     //pocet animacnich policek pro kazdy pohyb
+	char mobs_name[7];       //zaklad jmena souboru pro moba
+	int32_t experience;          //zkusenost
+	int8_t vlajky;             //BIT0 - 1 v boji
+	int8_t anim_phase;            //cinnost kterou mob dela
+	int16_t csektor;            //Cilovy sektor
+	int16_t home_pos;          //domaci pozice
+	int16_t next;              //Cislo dalsiho moba, ktery stoji na jeho pozici
+	int8_t actions;            //pocet akci ktere muze potvora provest v kole
+	int8_t hit_pos;           //animacni pozice, kdy potvora zasahne
+	uint16_t sounds[4];          //zvuky z listu
+	int8_t palette;           // pocet pouzitelnych palet / cislo palety
+	int8_t mode;              //akce potvory
+	int16_t dialog;           //cislo dialogu, -1 kdyz neni;
+	int8_t dialog_flags;      //vlajky mapovane do dialogu;
+	uint16_t money;             //penize
+	uint16_t specproc;          //specproc
+	uint16_t dostal;             //pocet zivotu, ktere mu byly ubrany poslednim zasahem
+	uint8_t user_data;         //data uzivatelem definovane - treba pro spec.
+} TMOB;
 
 
 extern TMOB mobs[MAX_MOBS];
@@ -1539,10 +1587,10 @@ char track_mob(int sect,int dir);//trackuje pritomnost potvory v urcitem smeru
 void stop_all_mobs();
 int utok_na_sektor(THUMAN *p,TMOB *m,int chaos,int bonus);
 int vyber_potvoru(int sect,int dir,int *chaos); //vybere potvoru ze sektoru a smeru. Vraci take pocet potvor v promenne *chaos
-void load_enemies(short *data,int size,int *grptr,TMOB *templ,long tsize);
+void load_enemies(SeekableReadStream *stream, int *grptr, TMOB *templ, long tsize);
 char mob_test_na_bitvu(TMOB *p);  //nastavi p->vlajky|MOB_INBATTLE pokud potvora muze vstoupit do bitvy;
 void send_mob_to(int m,uint16_t *path);
-void save_enemy_paths(FILE *f);
+void save_enemy_paths(WriteStream &stream);
 int load_enemy_paths(FILE *f);
 void regen_all_mobs();
 
@@ -1765,6 +1813,9 @@ static __inline char TimerEvents(int sector, int side, long time)
   }
   return 1;
 }
+
+#define STATE_CUR_VER 1
+
 #pragma option align=reset
 
 //extras

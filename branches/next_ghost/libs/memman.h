@@ -28,6 +28,8 @@
 #include <cstdio>
 #include <inttypes.h>
 
+class MemoryReadStream;
+
 class ReadStream {
 public:
 	virtual int8_t readSint8(void);
@@ -49,6 +51,8 @@ public:
 	virtual bool eos() const { return false; }
 
 	virtual ~ReadStream() { }
+
+	MemoryReadStream *readStream(unsigned size);
 };
 
 class SeekableReadStream : public ReadStream {
@@ -62,7 +66,7 @@ public:
 
 class MemoryReadStream : public SeekableReadStream {
 private:
-	unsigned char *_data;
+	unsigned char *_data;	// always add extra null byte at the end
 	unsigned _length, _pos;
 
 public:
@@ -74,6 +78,7 @@ public:
 
 	size_t read(void *buf, size_t size);
 	char *readLine(char *buf, size_t size);
+	const char *readCString(void);
 	bool eos(void) const;
 
 	void seek(long offset, int whence);
@@ -107,6 +112,48 @@ public:
 	inline const char *getName(void) const { return _name; }
 	inline bool isOpen(void) const { return _file; }
 	bool eos() const;
+};
+
+class WriteStream {
+public:
+	virtual void writeSint8(int8_t data);
+	virtual void writeUint8(uint8_t data);
+
+	virtual void writeSint16LE(int16_t data);
+	virtual void writeUint16LE(uint16_t data);
+	virtual void writeSint32LE(int32_t data);
+	virtual void writeUint32LE(uint32_t data);
+
+	virtual void writeSint16BE(int16_t data);
+	virtual void writeUint16BE(uint16_t data);
+	virtual void writeSint32BE(int32_t data);
+	virtual void writeUint32BE(uint32_t data);
+
+	virtual size_t write(const void *buf, size_t size) = 0;
+
+	virtual ~WriteStream() { }
+};
+
+class WriteFile : public WriteStream {
+private:
+	FILE *_file;
+	char *_name;
+
+	// Do not implement
+	WriteFile(const File &src);
+	const WriteFile &operator=(const File &src);
+
+public:
+	WriteFile(void);
+	explicit WriteFile(const char *filename);
+	~WriteFile(void);
+
+	void open(const char *filename);
+	void close(void);
+	inline const char *getName(void) const { return _name; }
+	inline bool isOpen(void) const { return _file; }
+
+	size_t write(const void *buf, size_t size);
 };
 
 class DDLFile {

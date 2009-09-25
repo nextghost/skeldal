@@ -352,67 +352,88 @@ void get_sector_dir(int cil,uint16_t *sector,char *dir)
      }
   }
 
-static void spell_vzplanuti3(int ss,int hit,int zivel)
-  {
-    if (map_coord[ss].flags & MC_PLAYER)
-      {
-      THUMAN *h;int i;
+static void spell_vzplanuti3(int ss, int hit, int zivel) {
+	if (gameMap.coord()[ss].flags & MC_PLAYER) {
+		THUMAN *h;
+		int i;
 
-      for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->used && h->lives && h->sektor==ss)
-        {
-        int ochrana=mgochrana(h->vlastnosti[VLS_OHEN+zivel]);
-        player_hit(h,hit*ochrana/100,1);
-        }
-      }
-    if (mob_map[ss])
-      {
-      int i=mob_map[ss];
-      while(i)
-        {
-        TMOB *m=mobs+i-1;
-        int ochrana=mgochrana(m->vlastnosti[VLS_OHEN+zivel]);
-        vybrana_zbran=-1;
-        mob_hit(m,hit*ochrana/100);
-        i=m->next;
-        }
-      }
+		for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+			if (h->used && h->lives && h->sektor == ss) {
+				int ochrana = mgochrana(h->vlastnosti[VLS_OHEN + zivel]);
 
-  }
+				player_hit(h, hit * ochrana / 100, 1);
+			}
+		}
+	}
 
-static void spell_vzplanuti2(THE_TIMER *tt)
-  {
-  int ss,ss1,ss2,i,dp,dl,du;
-  int zivel;
+	if (mob_map[ss]) {
+		int i = mob_map[ss];
 
-  i=tt->userdata[2];if (i<1) i++;
-  du=tt->userdata[1] & 0xff;
-  ss=tt->userdata[0];
-  zivel=tt->userdata[1] >> 8;
-  if (map_sides[(ss<<2)+du].flags & SD_PLAY_IMPS) return;
-  ss1=ss2=ss=map_sectors[ss].step_next[du];
-  if (ss==0) return;
-  dp=du+1&3;
-  dl=du+3&3;
-  do
-    {
-    if (ss1!=0)
-      {
-      add_spectxtr(ss1,H_ARMAGED,H_ARMA_CNT,1,0);
-      spell_vzplanuti3(ss1,tt->userdata[3],zivel);
-      }
-    if (ss2!=ss1 && ss2!=0)
-      {
-      add_spectxtr(ss2,H_ARMAGED,H_ARMA_CNT,1,0);
-      spell_vzplanuti3(ss2,tt->userdata[3],zivel);
-      }
-    if (~map_sides[(ss1<<2)+dp].flags & SD_PLAY_IMPS) ss1=map_sectors[ss1].step_next[dp];
-    if (~map_sides[(ss2<<2)+dl].flags & SD_PLAY_IMPS) ss2=map_sectors[ss2].step_next[dl];
-    }
-  while(--i);
-  if (tt->userdata[2]) tt->userdata[2]++;
-  //tt->userdata[3]=tt->userdata[3]*2/3;
-  tt->userdata[0]=ss;
-  }
+		while(i) {
+			TMOB *m = mobs + i - 1;
+			int ochrana = mgochrana(m->vlastnosti[VLS_OHEN + zivel]);
+
+			vybrana_zbran = -1;
+			mob_hit(m, hit * ochrana / 100);
+			i = m->next;
+		}
+	}
+}
+
+static void spell_vzplanuti2(THE_TIMER *tt) {
+	int ss, ss1, ss2, i, dp, dl, du;
+	int zivel;
+
+	i = tt->userdata[2];
+
+	if (i < 1) {
+		i++;
+	}
+
+	du = tt->userdata[1] & 0xff;
+	ss = tt->userdata[0];
+	zivel = tt->userdata[1] >> 8;
+
+	if (gameMap.sides()[(ss << 2) + du].flags & SD_PLAY_IMPS) {
+		return;
+	}
+
+	ss1 = ss2 = ss = gameMap.sectors()[ss].step_next[du];
+
+	if (ss == 0) {
+		return;
+	}
+
+	dp = du + 1 & 3;
+	dl = du + 3 & 3;
+
+	do {
+		if (ss1 != 0) {
+			gameMap.addSpecTexture(ss1, H_ARMAGED, H_ARMA_CNT, 1, 0);
+			spell_vzplanuti3(ss1, tt->userdata[3], zivel);
+		}
+
+		if (ss2 != ss1 && ss2 != 0) {
+			gameMap.addSpecTexture(ss2, H_ARMAGED, H_ARMA_CNT, 1, 0);
+			spell_vzplanuti3(ss2, tt->userdata[3], zivel);
+		}
+
+		if (~gameMap.sides()[(ss1 << 2) + dp].flags & SD_PLAY_IMPS) {
+			ss1 = gameMap.sectors()[ss1].step_next[dp];
+		}
+
+		if (~gameMap.sides()[(ss2 << 2) + dl].flags & SD_PLAY_IMPS) {
+			ss2 = gameMap.sectors()[ss2].step_next[dl];
+		}
+	} while(--i);
+
+	if (tt->userdata[2]) {
+		tt->userdata[2]++;
+	}
+
+	//tt->userdata[3]=tt->userdata[3]*2/3;
+	tt->userdata[0] = ss;
+}
 
 static void spell_vzplanuti(int cil,int count,int hit,char mode,char zivel)
   {
@@ -812,312 +833,409 @@ void set_flag(int num,int cil,int flag,int what)
      }
   }
 
-void spell_automap(int kolik,int cil)
-  {
-  int x1,y1;
-  int xx,yy;
-  int i,layer;
-  THUMAN *p;
+void spell_automap(int kolik, int cil) {
+	int x1, y1;
+	int xx, yy;
+	int i, layer;
+	THUMAN *p;
 
-  if (cil<=0) return;
-  cil--;
-  p=&postavy[cil];
-  x1=map_coord[p->sektor].x;
-  y1=map_coord[p->sektor].y;
-  layer=map_coord[p->sektor].layer;
-  for(i=1;i<mapsize;i++) if (map_sectors[i].sector_type!=0)
-     {
-     int l;
-     xx=map_coord[i].x;
-     yy=map_coord[i].y;
-     l=map_coord[i].layer;
-     xx=(x1-xx);yy=(y1-yy);
-     if (abs(xx)<=kolik && abs(yy)<=kolik && sqrt(xx*xx+yy*yy)<=kolik && layer==l && ~map_coord[i].flags & MC_NOAUTOMAP)
-        map_coord[i].flags|=MC_DISCLOSED;
-     }
-  }
+	if (cil <= 0) {
+		return;
+	}
 
+	cil--;
+	p = &postavy[cil];
+	x1 = gameMap.coord()[p->sektor].x;
+	y1 = gameMap.coord()[p->sektor].y;
+	layer = gameMap.coord()[p->sektor].layer;
 
-void spell_pripojeni(int kolik,int cil,int owner)
-  {
-  int i;
-  THUMAN *p;
-  int from_sect;
+	for (i = 1; i < gameMap.coordCount(); i++) {
+		if (gameMap.sectors()[i].sector_type != 0) {
+			int l;
 
-  if (cil<=0) return;
-  cil--;
-  destroy_player_map();
-  p=&postavy[cil];
-  from_sect=p->sektor;
-  if (map_coord[from_sect].flags & MC_NOSUMMON)
-     {
-     char *s;
+			xx = gameMap.coord()[i].x;
+			yy = gameMap.coord()[i].y;
+			l = gameMap.coord()[i].layer;
+			xx = (x1 - xx);
+			yy = (y1 - yy);
 
-     s=(char *)alloca(strlen(texty[87])+30);
-     sprintf(s,texty[87],p->jmeno);
-     bott_disp_text(s);
-     return;
-     }
-  p->sektor=postavy[owner].sektor;
-  kolik--;
-  for(i=0;i<POCET_POSTAV && kolik;i++)
-     if (postavy[i].groupnum==p->groupnum && postavy[i].sektor==from_sect)
-        {
-        postavy[i].sektor=viewsector;
-        kolik--;
-        }
-  for(i=0;i<POCET_POSTAV && kolik;i++)
-     if (postavy[i].sektor==from_sect)
-        {
-        p->sektor=viewsector;
-        kolik--;
-        }
-  add_spectxtr(viewsector,H_TELEP_PCX,14,1,0);
-  auto_group();
-  for(i=0;i<POCET_POSTAV;i++) if (postavy[i].sektor==viewsector) cur_group=postavy[i].groupnum;
-  bott_draw(0);
-  build_player_map();
-  }
-
-void spell_pripojenia(int owner)
-  {
-  int i;
-  THUMAN *h=NULL;
-  char more=0;
-  destroy_player_map();
-  for(i=0;i<POCET_POSTAV;i++) if (postavy[i].used && postavy[i].lives)
-     {
-     int sect;
-     sect=postavy[i].sektor;
-     if (map_coord[sect].flags & MC_NOSUMMON)
-        if (h==NULL) h=postavy+i;else more=1;
-     else
-        {
-        postavy[i].sektor=postavy[owner].sektor;
-        postavy[i].direction=postavy[owner].direction;
-        }
-     }
-  auto_group();
-  if (more) bott_disp_text(texty[89]);
-  else if (h!=NULL)
-     {
-     char *s;
-
-     s=(char *)alloca(strlen(texty[87])+30);
-     sprintf(s,texty[87],h->jmeno);
-     bott_disp_text(s);
-     }
-  bott_draw(0);
-  build_player_map();
-  }
-
-void spell_teleport(int cil,int owner, int teleport_target)
-  {
-  if (teleport_target==-1)
-  {
-    int sektor;
-    int dir;
-    int um;
-
-    if (cil>0) {sektor=postavy[cil-1].sektor;dir=postavy[cil-1].direction;}
-    else if (cil<0) {sektor=mobs[-cil-1].sector;dir=mobs[-cil-1].dir;}
-    if (owner>=0) um=postavy[owner].vlastnosti[VLS_SMAGIE];
-    teleport_target=calculatePhaseDoor(sektor,dir,um);
-  }
-  if (map_coord[teleport_target].flags & MC_NOSUMMON)
-     {
-     if (owner>=0) bott_disp_text(texty[88]);
-     return;
-     }
-  if (cil>0)
-     {
-     if (mob_map[teleport_target])
-        {
-        if (owner>=0) bott_disp_text(texty[85]);
-        return;
-        }
-     destroy_player_map();
-     cil--;
-     postavy_teleport_effect(teleport_target,postavy[cil].direction,1<<cil,owner==cil);
-     cur_group=postavy[cil].groupnum;
-     build_player_map();
-     add_to_group(cil);
-     if (owner>=0)
-        zmen_skupinu(postavy+owner);
-     }
-  else if (cil<0)
-     {
-     if (map_coord[teleport_target].flags & MC_PLAYER)
-        {
-        if (owner>=0) bott_disp_text(texty[85]);
-        return;
-        }
-     cil=-cil-1;
-     play_sample_at_sector(H_SND_TELEPOUT,viewsector,mobs[cil].sector,0,0);
-     add_spectxtr(mobs[cil].sector,H_TELEP_PCX,14,1,0);
-     mobs[cil].sector=teleport_target;
-     play_sample_at_sector(H_SND_TELEPOUT,viewsector,teleport_target,0,0);
-     add_spectxtr(teleport_target,H_TELEP_PCX,14,1,0);
-     mobs[cil].next=0;
-     refresh_mob_map();
-     }
-  //schovej_mysku();
-  }
-
-void spell_teleport_sector(int cil,int owner)
-{
-  if (cil<0)
-  {
-        if (owner>=0) bott_disp_text(texty[85]);
-        return;
-  }
-  if (cil>0)
-  {
-    cil--;
-    if (TelepLocation.map)
-    {
-      destroy_player_map();
-      if (strcasecmp(TelepLocation.map,level_fname)!=0)
-      {
-        int sector=postavy[cil].sektor;
-        int i;
-
-        if (cil!=owner) return;
-        postavy_teleport_effect(0,0,0,1);
-        strncpy(loadlevel.name,TelepLocation.map,12);
-        loadlevel.name[12]=0;
-        loadlevel.start_pos=TelepLocation.sector;
-        loadlevel.dir=TelepLocation.dir;
-        send_message(E_CLOSE_MAP);
-        save_map=1;
-        
-        for(i=0;i<POCET_POSTAV;i++) if (postavy[i].used) 
-        {
-        postavy[i].sektor=TelepLocation.sector;
-        postavy[i].direction=TelepLocation.dir;
-        }
-        battle=0;
-
-      }
-      else
-      {
-        postavy_teleport_effect(TelepLocation.sector,TelepLocation.dir,1<<cil,owner==cil);
-        cur_group=postavy[cil].groupnum;
-        build_player_map();
-        add_to_group(cil);
-        if (owner>=0)
-          zmen_skupinu(postavy+owner);
-      }
-    }
-    else
-    {
-      int sector=postavy[cil].sektor;
-      int dir=postavy[cil].direction;
-      int x=map_coord[sector].x;
-      int y=map_coord[sector].y;
-      int stpx=0,stpy=0,diffx=0,diffy=0;
-      switch (dir)
-      {
-      case 0: stpy=-1;diffx=1;break;
-      case 1: stpx=1;diffy=1;break;
-      case 2: stpy=1;diffx=-1;break;
-      case 3: stpx=-1;diffy=-1;break;
-      };
-      {
-        int newx=x+TelepLocation.loc_x*stpx+TelepLocation.loc_y*diffx;
-        int newy=y+TelepLocation.loc_x*stpx+TelepLocation.loc_y*diffy;
-        int i;
-        int dist;
-        int nearest=0;
-        int nearestdst=0x7FFFFFFF;
-
-        for (i=1;i<mapsize;i++) if (map_coord[i].flags & MC_AUTOMAP)
-        {
-          x=map_coord[i].x-newx;
-          y=map_coord[i].y-newy;
-          dist=x*x+y*y;
-          if(dist<nearestdst) 
-          {
-            nearestdst=dist;
-            nearest=i;
-          }
-        }
-        sector=nearest;
-      }
-     if (map_coord[sector].flags & MC_NOSUMMON)
-      {
-        if (owner>=0) bott_disp_text(texty[88]);
-        return;
-      }
-      destroy_player_map();
-      postavy_teleport_effect(sector,postavy[cil].direction,1<<cil,owner==cil);
-      cur_group=postavy[cil].groupnum;
-      build_player_map();
-      add_to_group(cil);
-      if (owner>=0)
-        zmen_skupinu(postavy+owner);
-    }
-  }
-
+			if (abs(xx) <= kolik && abs(yy) <= kolik && sqrt(xx * xx + yy * yy) <= kolik && layer == l && ~gameMap.coord()[i].flags & MC_NOAUTOMAP) {
+				gameMap.setCoordFlags(i, MC_DISCLOSED);
+			}
+		}
+	}
 }
 
-static void spell_summon(int cil)
-  {
-  short sector,i,rn,rno,slc;
-  char stdir,p;
 
-  if (cil>0) sector=postavy[cil-1].sektor;
-  if (cil<0) sector=mobs[-cil-1].sector;
-  for(i=0;i<MAX_MOBS;i++)
-     {
-     TMOB *m=&mobs[i];
+void spell_pripojeni(int kolik, int cil, int owner) {
+	int i;
+	THUMAN *p;
+	int from_sect;
 
-     if (~m->vlajky & MOB_LIVE && ~m->vlajky & MOB_RELOAD) break;
-     }
-  if (i==MAX_MOBS) return;
-  slc=i;
-  rno=rn=rnd(256)+1;
-  do
-     {
-     for(i=0;i<MAX_MOBS;i++)
-        {
-        TMOB *m=mobs+i;
-        if ((m->stay_strategy & (MOB_WATCH|MOB_WALK)) == (MOB_WATCH|MOB_WALK) &&
-           (m->vlajky & MOB_LIVE) && (~m->vlajky & MOB_PASSABLE) && (~m->vlajky & MOB_MOBILE))
-           {
-           rn--;if (!rn) break;
-           }
-        }
-     }
-  while (i==MAX_MOBS && rn!=rno);
-  if (i==MAX_MOBS) return;
-  memcpy(mobs+slc,mobs+i,sizeof(TMOB));
-  p=map_coord[sector].flags & MC_PLAYER;
-  if (!p)
-     {
-     int m;
-     m=mob_map[sector]-1;
-     p=mobs[m].stay_strategy & MOB_BIG || mobs[m].next;
-     }
-  if (p)
-     {
-     int i;
-     stdir=rnd(4);
+	if (cil <= 0) {
+		return;
+	}
 
-     for(i=0;i<4;i++,stdir=stdir+1&3)
-        if (!mob_check_next_sector(sector,stdir,mobs[slc].stay_strategy,0)) break;
-     if (i==4)
-        {
-        mobs[slc].vlajky&=~MOB_LIVE;
-        return;
-        }
-     sector=map_sectors[sector].step_next[stdir];
-     }
-  mobs[slc].sector=sector;
-  if (cil>0) mobs[slc].dir=postavy[cil-1].direction+2&3;
-  if (cil<0) mobs[slc].dir=mobs[-cil-1].dir;
-  refresh_mob_map();
-  }
+	cil--;
+	destroy_player_map();
+	p = &postavy[cil];
+	from_sect = p->sektor;
+
+	if (gameMap.coord()[from_sect].flags & MC_NOSUMMON) {
+		char *s;
+
+		s = (char *)alloca(strlen(texty[87]) + 30);
+		sprintf(s, texty[87], p->jmeno);
+		bott_disp_text(s);
+		return;
+	}
+
+	p->sektor = postavy[owner].sektor;
+	kolik--;
+
+	for (i = 0; i < POCET_POSTAV && kolik; i++) {
+		if (postavy[i].groupnum == p->groupnum && postavy[i].sektor == from_sect) {
+			postavy[i].sektor = viewsector;
+			kolik--;
+		}
+	}
+
+	for (i = 0; i < POCET_POSTAV && kolik; i++) {
+		if (postavy[i].sektor == from_sect) {
+			p->sektor = viewsector;
+			kolik--;
+		}
+	}
+
+	gameMap.addSpecTexture(viewsector, H_TELEP_PCX, 14, 1, 0);
+	auto_group();
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		if (postavy[i].sektor == viewsector) {
+			cur_group = postavy[i].groupnum;
+		}
+	}
+
+	bott_draw(0);
+	build_player_map();
+}
+
+void spell_pripojenia(int owner) {
+	int i;
+	THUMAN *h = NULL;
+	char more = 0;
+
+	destroy_player_map();
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		if (postavy[i].used && postavy[i].lives) {
+			int sect;
+
+			sect = postavy[i].sektor;
+
+			if (gameMap.coord()[sect].flags & MC_NOSUMMON) {
+				if (h == NULL) {
+					h = postavy + i;
+				} else {
+					more = 1;
+				}
+			} else {
+				postavy[i].sektor = postavy[owner].sektor;
+				postavy[i].direction = postavy[owner].direction;
+			}
+		}
+	}
+
+	auto_group();
+
+	if (more) {
+		bott_disp_text(texty[89]);
+	} else if (h != NULL) {
+		char *s;
+
+		s = (char *)alloca(strlen(texty[87]) + 30);
+		sprintf(s, texty[87], h->jmeno);
+		bott_disp_text(s);
+	}
+
+	bott_draw(0);
+	build_player_map();
+}
+
+void spell_teleport(int cil, int owner, int teleport_target) {
+	if (teleport_target == -1) {
+		int sektor;
+		int dir;
+		int um;
+
+		if (cil > 0) {
+			sektor = postavy[cil - 1].sektor;
+			dir = postavy[cil - 1].direction;
+		} else if (cil < 0) {
+			sektor = mobs[-cil - 1].sector;
+			dir = mobs[-cil - 1].dir;
+		}
+
+		if (owner >= 0) {
+			um = postavy[owner].vlastnosti[VLS_SMAGIE];
+		}
+
+		teleport_target = calculatePhaseDoor(sektor, dir, um);
+	}
+
+	if (gameMap.coord()[teleport_target].flags & MC_NOSUMMON) {
+		if (owner >= 0) {
+			bott_disp_text(texty[88]);
+		}
+
+		return;
+	}
+
+	if (cil > 0) {
+		if (mob_map[teleport_target]) {
+			if (owner >= 0) {
+				bott_disp_text(texty[85]);
+			}
+
+			return;
+		}
+
+		destroy_player_map();
+		cil--;
+		postavy_teleport_effect(teleport_target, postavy[cil].direction, 1 << cil, owner == cil);
+		cur_group = postavy[cil].groupnum;
+		build_player_map();
+		add_to_group(cil);
+
+		if (owner >= 0) {
+			zmen_skupinu(postavy+owner);
+		}
+	} else if (cil < 0) {
+		if (gameMap.coord()[teleport_target].flags & MC_PLAYER) {
+			if (owner >= 0) {
+				bott_disp_text(texty[85]);
+			}
+
+			return;
+		}
+
+		cil = -cil - 1;
+		play_sample_at_sector(H_SND_TELEPOUT, viewsector, mobs[cil].sector, 0, 0);
+		gameMap.addSpecTexture(mobs[cil].sector, H_TELEP_PCX, 14, 1, 0);
+		mobs[cil].sector = teleport_target;
+		play_sample_at_sector(H_SND_TELEPOUT, viewsector, teleport_target, 0, 0);
+		gameMap.addSpecTexture(teleport_target, H_TELEP_PCX, 14, 1, 0);
+		mobs[cil].next = 0;
+		refresh_mob_map();
+	}
+	//schovej_mysku();
+}
+
+void spell_teleport_sector(int cil, int owner) {
+	if (cil < 0) {
+		if (owner >= 0) {
+			bott_disp_text(texty[85]);
+		}
+
+		return;
+	}
+
+	if (cil > 0) {
+		cil--;
+
+		if (TelepLocation.map) {
+			destroy_player_map();
+
+			if (strcasecmp(TelepLocation.map, gameMap.fname()) != 0) {
+				int sector = postavy[cil].sektor;
+				int i;
+
+				if (cil != owner) {
+					return;
+				}
+
+				postavy_teleport_effect(0, 0, 0, 1);
+				strncpy(loadlevel.name, TelepLocation.map, 12);
+				loadlevel.name[12] = 0;
+				loadlevel.start_pos = TelepLocation.sector;
+				loadlevel.dir = TelepLocation.dir;
+				send_message(E_CLOSE_MAP);
+				save_map = 1;
+
+				for (i = 0; i < POCET_POSTAV; i++) {
+					if (postavy[i].used) {
+						postavy[i].sektor = TelepLocation.sector;
+						postavy[i].direction = TelepLocation.dir;
+					}
+				}
+
+				battle = 0;
+			} else {
+				postavy_teleport_effect(TelepLocation.sector, TelepLocation.dir, 1 << cil, owner == cil);
+				cur_group = postavy[cil].groupnum;
+				build_player_map();
+				add_to_group(cil);
+
+				if (owner >= 0) {
+					zmen_skupinu(postavy+owner);
+				}
+			}
+		} else {
+			int sector = postavy[cil].sektor;
+			int dir = postavy[cil].direction;
+			int x = gameMap.coord()[sector].x;
+			int y = gameMap.coord()[sector].y;
+			int stpx = 0, stpy = 0, diffx = 0, diffy = 0;
+
+			switch (dir) {
+			case 0:
+				stpy = -1;
+				diffx = 1;
+				break;
+
+			case 1:
+				stpx = 1;
+				diffy = 1;
+				break;
+
+			case 2:
+				stpy = 1;
+				diffx = -1;
+				break;
+
+			case 3:
+				stpx = -1;
+				diffy = -1;
+				break;
+			}
+
+			int newx = x + TelepLocation.loc_x * stpx + TelepLocation.loc_y * diffx;
+			int newy = y + TelepLocation.loc_x * stpx + TelepLocation.loc_y * diffy;
+			int i;
+			int dist;
+			int nearest = 0;
+			int nearestdst = 0x7FFFFFFF;
+
+			for (i = 1; i < gameMap.coordCount(); i++) {
+				if (gameMap.coord()[i].flags & MC_AUTOMAP) {
+					x = gameMap.coord()[i].x - newx;
+					y = gameMap.coord()[i].y - newy;
+					dist = x * x + y * y;
+
+					if (dist < nearestdst) {
+						nearestdst = dist;
+						nearest = i;
+					}
+				}
+			}
+
+			sector = nearest;
+
+			if (gameMap.coord()[sector].flags & MC_NOSUMMON) {
+				if (owner >= 0) {
+					bott_disp_text(texty[88]);
+				}
+
+				return;
+			}
+
+			destroy_player_map();
+			postavy_teleport_effect(sector, postavy[cil].direction, 1 << cil, owner == cil);
+			cur_group = postavy[cil].groupnum;
+			build_player_map();
+			add_to_group(cil);
+
+			if (owner >= 0) {
+				zmen_skupinu(postavy+owner);
+			}
+		}
+	}
+}
+
+static void spell_summon(int cil) {
+	short sector, i, rn, rno, slc;
+	char stdir, p;
+
+	if (cil >0 ) {
+		sector = postavy[cil - 1].sektor;
+	}
+
+	if (cil < 0) {
+		sector = mobs[-cil - 1].sector;
+	}
+
+	for (i = 0; i < MAX_MOBS; i++) {
+		TMOB *m = &mobs[i];
+
+		if (~m->vlajky & MOB_LIVE && ~m->vlajky & MOB_RELOAD) {
+			break;
+		}
+	}
+
+	if (i == MAX_MOBS) {
+		return;
+	}
+
+	slc = i;
+	rno = rn = rnd(256) + 1;
+
+	do {
+		for (i = 0; i < MAX_MOBS; i++) {
+			TMOB *m = mobs + i;
+
+			if ((m->stay_strategy & (MOB_WATCH | MOB_WALK)) == (MOB_WATCH | MOB_WALK) && (m->vlajky & MOB_LIVE) && (~m->vlajky & MOB_PASSABLE) && (~m->vlajky & MOB_MOBILE)) {
+				rn--;
+
+				if (!rn) {
+					break;
+				}
+			}
+		}
+	} while (i == MAX_MOBS && rn != rno);
+
+	if (i == MAX_MOBS) {
+		return;
+	}
+
+	memcpy(mobs + slc, mobs + i, sizeof(TMOB));
+	p = gameMap.coord()[sector].flags & MC_PLAYER;
+
+	if (!p) {
+		int m;
+		m = mob_map[sector] - 1;
+		p = mobs[m].stay_strategy & MOB_BIG || mobs[m].next;
+	}
+
+	if (p) {
+		int i;
+		stdir = rnd(4);
+
+		for (i = 0; i < 4; i++, stdir = stdir + 1 & 3) {
+			if (!mob_check_next_sector(sector, stdir, mobs[slc].stay_strategy, 0)) {
+				break;
+			}
+		}
+
+		if (i == 4) {
+			mobs[slc].vlajky &= ~MOB_LIVE;
+			return;
+		}
+
+		sector = gameMap.sectors()[sector].step_next[stdir];
+	}
+
+	mobs[slc].sector = sector;
+
+	if (cil > 0) {
+		mobs[slc].dir = postavy[cil - 1].direction + 2 & 3;
+	}
+
+	if (cil < 0) {
+		mobs[slc].dir = mobs[-cil - 1].dir;
+	}
+
+	refresh_mob_map();
+}
 
 static void spell_manabat(int cil)
   {
@@ -1160,111 +1278,135 @@ static void spell_vahy_osudu(int zivel,char povaha)
   bott_draw(1);
   }
 
-static void spell_open_teleport(int cil, int owner)
-{
-  int sector;
-  int dir;
-  if (cil<0) {sector=mobs[-cil-1].sector;dir=mobs[-cil-1].dir;}
-  else if (cil>0) {sector=postavy[cil-1].sektor;dir=postavy[cil-1].direction;}
-  else return;
+static void spell_open_teleport(int cil, int owner) {
+	int sector;
+	int dir;
 
-  if (map_sectors[sector].step_next[dir] && (~map_sides[sector*4+dir].flags & SD_THING_IMPS)) 
-    sector=map_sectors[sector].step_next[dir];
+	if (cil < 0) {
+		sector = mobs[-cil - 1].sector;
+		dir = mobs[-cil - 1].dir;
+	} else if (cil > 0) {
+		sector = postavy[cil - 1].sektor;
+		dir = postavy[cil - 1].direction;
+	} else {
+		return;
+	}
+	
+	if (gameMap.sectors()[sector].step_next[dir] && (~gameMap.sides()[sector * 4 + dir].flags & SD_THING_IMPS)) {
+		sector = gameMap.sectors()[sector].step_next[dir];
+	}
 
-  if (map_coord[sector].flags & MC_NOSUMMON)
-  {
-      if (owner>=0) bott_disp_text(texty[88]);
-      return;
-  }
+	if (gameMap.coord()[sector].flags & MC_NOSUMMON) {
+		if (owner >= 0) {
+			bott_disp_text(texty[88]);
+		}
 
-  if (mob_map[sector])
-  {
-      if (owner>=0) bott_disp_text(texty[85]);
-      return;
-  }
+		return;
+	}
+	
+	if (mob_map[sector]) {
+		if (owner >= 0) {
+			bott_disp_text(texty[85]);
+		}
 
+		return;
+	}
 
-  if (map_sectors[sector].sector_type>=S_USERTELEPORT && 
-    map_sectors[sector].sector_type<=S_USERTELEPORT_END)
-  {
-    int i;
-    int otherside;
-    map_sectors[sector].sector_type-=S_USERTELEPORT ;
-    otherside=map_sectors[sector].sector_tag;    
-    for (i=0;i<4;i++)  {map_sides[sector*4+i].flags&=~SD_SEC_VIS;map_sides[sector*4+i].sec_anim=0;map_sides[sector*4+i].sec=0;}
-    map_sectors[sector].sector_tag=0;
-    add_spectxtr(sector,H_TELEP_PCX,14,1,0);  
-    play_sample_at_sector(H_SND_TELEPOUT,viewsector,sector,0,0);
-    if (otherside!=sector && otherside)
-    {
-      map_sectors[otherside].sector_type-=S_USERTELEPORT ;
-      for (i=0;i<4;i++)  {map_sides[otherside*4+i].flags&=~SD_SEC_VIS;map_sides[otherside*4+i].sec_anim=0;map_sides[otherside*4+i].sec=0;}
-      map_sectors[otherside].sector_tag=0;
-      add_spectxtr(otherside,H_TELEP_PCX,14,1,0);  
-      play_sample_at_sector(H_SND_TELEPOUT,viewsector,otherside,0,0);
-    }
-  }
-  else
-  {
-    int type=map_sectors[sector].sector_type;
-    int i;
-    char allowed=1;
-    if (type!=S_NORMAL && (type<S_SMER || type>=S_VODA)) allowed=0;
-    if (allowed && map_sectors[sector].sector_tag!=0) allowed=0;
-    if (allowed)
-      for (i=0;i<4;i++) 
-        if (map_sides[sector*4+i].sec) allowed=0;
-    if (allowed)
-    {
-      TSTENA *st,*stt;
-      int templateSect=0;
-      int i,j;
-      for (i=0;templateSect==0 && i<mapsize;i++)
-      {        
-        if (ISTELEPORTSECT(i))
-          for (j=0;j<4 && templateSect==0;j++)
-          {
-            int sd=i*4+j;
-            if (map_sides[sd].sec && (map_sides[sd].flags & SD_SEC_VIS) && map_sides[sd].sec_anim!=0)
-              templateSect=i;
-          }
-      }      
-      if (templateSect==0)
-      {
-        if (owner>=0) bott_disp_text(texty[85]);
-        return;
-      }
-      map_sectors[sector].sector_type+=S_USERTELEPORT;
-      st=map_sides+4*sector;
-      stt=map_sides+4*templateSect;
-      for (i=0;i<4;i++)
-      {
-        st->flags|=SD_SEC_VIS|SD_SEC_ANIM;
-        st->sec_anim=stt->sec_anim;
-        st->sec=stt->sec;
-        st++;
-      }
-      for (i=0;i<mapsize;i++)
-        if (map_sectors[i].sector_type>=S_USERTELEPORT && map_sectors[i].sector_type<=S_USERTELEPORT_END)
-          if (map_sectors[i].sector_tag==i) break;
-      if (i!=mapsize)
-      {
-        map_sectors[sector].sector_tag=i;
-        map_sectors[sector].side_tag=map_sectors[i].side_tag;
-        map_sectors[i].sector_tag=sector;
-        map_sectors[i].side_tag=(dir+2)&3;
-      }
-      else
-      {
-        map_sectors[sector].sector_tag=sector;
-        map_sectors[sector].side_tag=(dir+2)&3;
-      }
-      add_spectxtr(sector,H_TELEP_PCX,14,1,0);  
-      play_sample_at_sector(H_SND_TELEPOUT,viewsector,sector,0,0);
-    }
-    else
-      if (owner>=0) bott_disp_text(texty[85]);
-  }
+	if (gameMap.sectors()[sector].sector_type >= S_USERTELEPORT && gameMap.sectors()[sector].sector_type <= S_USERTELEPORT_END) {
+		int i;
+		int otherside;
+
+		gameMap.clearTeleport(sector);
+		otherside = gameMap.sectors()[sector].sector_tag;
+
+		for (i = 0; i < 4; i++) {
+			gameMap.resetSecAnim(sector * 4 + i);
+		}
+
+		gameMap.clearTag(sector);
+		gameMap.addSpecTexture(sector,H_TELEP_PCX,14,1,0);
+		play_sample_at_sector(H_SND_TELEPOUT, viewsector, sector, 0, 0);
+
+		if (otherside != sector && otherside) {
+			gameMap.clearTeleport(sector);
+
+			for (i = 0; i < 4; i++) {
+				gameMap.resetSecAnim(otherside * 4 + i);
+			}
+
+			gameMap.clearTag(otherside);
+			gameMap.addSpecTexture(otherside, H_TELEP_PCX, 14, 1, 0);  
+			play_sample_at_sector(H_SND_TELEPOUT, viewsector, otherside, 0, 0);
+		}
+	} else {
+		int type = gameMap.sectors()[sector].sector_type;
+		int i;
+		char allowed = 1;
+
+		if (type != S_NORMAL && (type < S_SMER || type >= S_VODA)) {
+			allowed = 0;
+		}
+
+		if (allowed && gameMap.sectors()[sector].sector_tag != 0) {
+			allowed = 0;
+		}
+
+		if (allowed) {
+			for (i = 0; i < 4; i++) {
+				if (gameMap.sides()[sector * 4 + i].sec) {
+					allowed = 0;
+				}
+			}
+		}
+
+		if (allowed) {
+			TSTENA *st, *stt;
+			int templateSect = 0;
+			int i, j;
+
+			for (i = 0; templateSect == 0 && i < gameMap.coordCount(); i++) {
+				if (ISTELEPORT(gameMap.sectors()[i].sector_type)) {
+					for (j = 0; j < 4 && templateSect == 0; j++) {
+						int sd = i * 4 + j;
+
+						if (gameMap.sides()[sd].sec && (gameMap.sides()[sd].flags & SD_SEC_VIS) && gameMap.sides()[sd].sec_anim != 0) {
+							templateSect = i;
+						}
+					}
+				}
+			}
+
+			if (templateSect == 0) {
+				if (owner >= 0) {
+					bott_disp_text(texty[85]);
+				}
+
+				return;
+			}
+
+			gameMap.setTeleport(sector);
+			gameMap.setSecAnim(sector, templateSect);
+
+			for (i = 0; i < gameMap.coordCount(); i++) {
+				if (gameMap.sectors()[i].sector_type >= S_USERTELEPORT && gameMap.sectors()[i].sector_type <= S_USERTELEPORT_END) {
+					if (gameMap.sectors()[i].sector_tag == i) {
+						break;
+					}
+				}
+			}
+
+			if (i != gameMap.coordCount()) {
+				gameMap.tag(sector, i, (dir + 2) & 3);
+			} else {
+				gameMap.tag(sector, sector, (dir + 2) & 3);
+			}
+
+			gameMap.addSpecTexture(sector, H_TELEP_PCX, 14, 1, 0);  
+			play_sample_at_sector(H_SND_TELEPOUT, viewsector, sector, 0, 0);
+		} else if (owner >= 0) {
+			bott_disp_text(texty[85]);
+		}
+	}
 }
 
 static void spell_rychlost(int num,int cil)
@@ -1291,7 +1433,7 @@ void spell_special(int num,TKOUZLO *spl,int spc)
      case SP_TRUE_SEEING: true_seeing=1;_flag_map[num]|=FLG_TRUESEEING;break;
      case SP_SCORE:show_lives=1;_flag_map[num]|=FLG_SCORE;break;
      case SP_HALUCINACE:set_halucination=1;_flag_map[num]|=FLG_HALUCINACE;
-                       hal_sector=rnd(mapsize-1)+1;hal_dir=rnd(4);
+                       hal_sector=rnd(gameMap.coordCount()-1)+1;hal_dir=rnd(4);
                        break;
      case SP_TELEPORT:if (hod_na_uspech(spl->cil,spl)) spell_teleport(spl->cil,spl->owner,spl->teleport_target);break;
      case SP_PHASEDOOR:if (hod_na_uspech(spl->cil,spl)) spell_teleport(spl->cil,spl->owner,-1);break;     
@@ -1315,41 +1457,45 @@ void spell_special(int num,TKOUZLO *spl,int spc)
      }
   }
 
-void spell_drain(TKOUZLO *p,int cil,int min,int max)
-  {
-  int drw;
-  int sect,dir;
+void spell_drain(TKOUZLO *p, int cil, int min, int max) {
+	int drw;
+	int sect, dir;
 
-  drw=min+rnd(max-min);
-  if (cil>0)
-     {
-     cil--;
-     sect=postavy[cil].sektor;
-     dir=postavy[cil].direction;
-     if (map_sides[(sect<<2)+dir].flags & SD_PLAY_IMPS)
-        {
-        postavy[cil].lives-=drw;
-        player_check_death(&postavy[cil],0);
-        }
-     else
-        {
-        int chaos;int potvora,ochrana;
-        TMOB *m;
+	drw = min + rnd(max - min);
 
-        potvora=vyber_potvoru(sect,dir,&chaos);
-        if (potvora==-1) return;
-        m=mobs+potvora;
-        ochrana=mgochrana(m->vlastnosti[VLS_OHEN+p->pc]);
-        drw=ochrana*drw/100;
-        vybrana_zbran=-1;
-        mob_hit(m,drw);
-        battle=1;
-        postavy[cil].lives+=drw/4;
-        if (postavy[cil].lives>postavy[cil].vlastnosti[VLS_MAXHIT])
-           postavy[cil].lives=postavy[cil].vlastnosti[VLS_MAXHIT];
-        }
-     }
-  }
+	if (cil > 0) {
+		cil--;
+		sect = postavy[cil].sektor;
+		dir = postavy[cil].direction;
+
+		if (gameMap.sides()[(sect << 2) + dir].flags & SD_PLAY_IMPS) {
+			postavy[cil].lives -= drw;
+			player_check_death(&postavy[cil], 0);
+		} else {
+			int chaos;
+			int potvora, ochrana;
+			TMOB *m;
+
+			potvora = vyber_potvoru(sect, dir, &chaos);
+
+			if (potvora == -1) {
+				return;
+			}
+
+			m = mobs + potvora;
+			ochrana = mgochrana(m->vlastnosti[VLS_OHEN + p->pc]);
+			drw = ochrana * drw / 100;
+			vybrana_zbran = -1;
+			mob_hit(m, drw);
+			battle = 1;
+			postavy[cil].lives += drw / 4;
+
+			if (postavy[cil].lives > postavy[cil].vlastnosti[VLS_MAXHIT]) {
+				postavy[cil].lives = postavy[cil].vlastnosti[VLS_MAXHIT];
+			}
+		}
+	}
+}
 
 static void set_kondice_mana(int kolik,TKOUZLO *p,int what,char clip)
   {
@@ -1573,40 +1719,55 @@ void kouzla_anm(EVENT_MSG *msg,void **unused)
   }
 
 
-char add_group_spell(int num,int sector,int owner,int mode,char noanim)
-  {
-  char c=1;
-  if (mob_map[sector])
-     {
-     int m;
-     m=mob_map[sector];
-     add_spell(num,-m,owner,noanim);
-     c=0;
-     if (mobs[m-1].next) add_spell(num,-mobs[m-1].next,owner,noanim);
-     }
-  if (map_coord[sector].flags & MC_PLAYER)
-     {
-     int i,j;
-     if (mode==C_nahodna_postava)
-        {
-        i=0;j=rnd(POCET_POSTAV)+1;
-        do
-           {
-           if (i>=POCET_POSTAV) i=0;
-           if (postavy[i].sektor==sector) j--;
-           if (j) i++;
-           }
-        while (j);
-        add_spell(num,i+1,owner,noanim);
-        }
-     else
-        {
-        for(i=0;i<POCET_POSTAV;i++)
-           if (postavy[i].used && postavy[i].sektor==sector) add_spell(num,i+1,owner,noanim),c=0;
-        }
-     }
-  return c;
-  }
+char add_group_spell(int num, int sector, int owner, int mode, char noanim) {
+	char c = 1;
+
+	if (mob_map[sector]) {
+		int m;
+
+		m = mob_map[sector];
+		add_spell(num, -m, owner, noanim);
+		c = 0;
+
+		if (mobs[m-1].next) {
+			add_spell(num, -mobs[m - 1].next, owner, noanim);
+		}
+	}
+
+	if (gameMap.coord()[sector].flags & MC_PLAYER) {
+		int i, j;
+
+		if (mode == C_nahodna_postava) {
+			i = 0;
+			j = rnd(POCET_POSTAV) + 1;
+
+			do {
+				if (i >= POCET_POSTAV) {
+					i = 0;
+				}
+
+				if (postavy[i].sektor == sector) {
+					j--;
+				}
+
+				if (j) {
+					i++;
+				}
+			} while (j);
+
+			add_spell(num, i + 1, owner, noanim);
+		} else {
+			for (i = 0; i < POCET_POSTAV; i++) {
+				if (postavy[i].used && postavy[i].sektor == sector) {
+					add_spell(num, i + 1, owner, noanim);
+					c = 0;
+				}
+			}
+		}
+	}
+
+	return c;
+}
 
 char ask_who(int num)
   {
@@ -1629,198 +1790,277 @@ static char get_valid_sector(uint16_t sector)
   }
 
 
-void cast(int num,THUMAN *p,int owner, char backfire)
-  {
-  int i,um,cil,num2;
-  TKOUZLO *k;
+void cast(int num, THUMAN *p, int owner, char backfire) {
+	int i, um, cil, num2;
+	TKOUZLO *k;
 
-  if (num>511)
-     {
-     cil=num>>9;
-     num2=num & 511;
-     }
-  else
-     {
-     cil=0;
-     num2=num;
-     }
-  
-  
-  SEND_LOG("(SPELLS) Cast num %d cil %d",num2,cil);
-  k=((TKOUZLO *)ablock(H_KOUZLA))+num2;
-  SEND_LOG("(SPELLS) Cast spell name %s",k->spellname,0);
-  
-  if (cil>0 && k->cil!=C_postava_jinde)
-        {
-        THUMAN *h1=postavy+cil-1;
-        char s[256];
-        if ((abs(map_coord[h1->sektor].x-map_coord[p->sektor].x)>5) ||
-           (abs(map_coord[h1->sektor].y-map_coord[p->sektor].y)>5) )
-           {
-           sprintf(s,texty[37+(h1->female==1)],h1->jmeno,p->jmeno);
-           bott_disp_text(s);
-           return;
-           }
-        }
-  if (battle && k->traceon & 1 && trace_path(p->sektor,p->direction)==-255) return;
-  if (!backfire && p->mana<k->mge) return;
-  if (p->vlastnosti[VLS_KOUZLA] & SPL_INVIS)
-     {
-     p->stare_vls[VLS_KOUZLA]&=~SPL_INVIS;
-     prepocitat_postavu(p);
-     build_all_players();
-     }
-  if (!backfire && (um=p->vlastnosti[VLS_SMAGIE])<k->um)
-     {
-     int per1,per2;
-     if (um*2<k->um) return;
-     per1=(um-k->um/2)*128/k->um;
-     per2=rnd(64);
-     if ((per1/2+32)<per2 && (k->backfire || (game_extras & EX_RANDOM_BACKFIRES)!=0))
-           {
-           p->mana-=k->mge;
-		   if ((game_extras & EX_RANDOM_BACKFIRES)!=0) 
-			 {
-			 labyrinth_find_path(p->sektor,65535,SD_PLAY_IMPS,get_valid_sector,NULL);
-			 teleport_target=last_sector;
-			 cast(rand()*105/RAND_MAX+(cil*512),p,p-postavy,1);
-			 return;
-			 }
-           cast(k->backfire+(cil<<9),p,owner,1);
-           return;
-           }
-     if(per1<per2)
-        {
-        p->mana-=k->mge/2;
-        return;
-        }
-     per1=(64-per1)/2;
-     per2=rnd(64);
-     if(per1>per2) p->stare_vls[VLS_SMAGIE]++;
-     }
+	if (num > 511) {
+		cil = num >> 9;
+		num2 = num & 511;
+	} else {
+		cil = 0;
+		num2 = num;
+	}
 
-  if (!GlobEvent(MAGLOB_BEFOREMAGIC,p->sektor,p->direction)) return;
-  if (!GlobEvents(MAGLOB_ONSPELLID1,MAGLOB_ONSPELLID9,p->sektor,p->direction,num2)) return;
+	SEND_LOG("(SPELLS) Cast num %d cil %d", num2, cil);
+	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num2;
+	SEND_LOG("(SPELLS) Cast spell name %s", k->spellname, 0);
 
-  if (cil && (k->cil==C_postava || k->cil==C_mrtva_postava || k->cil==C_postava_jinde)) i=add_spell(num2,cil,owner,0);
-  else
-     {
-     if (k->cil==C_policko) if (add_group_spell(num2,p->sektor,owner,C_policko,0)) goto end;
-     if (k->cil==C_kouzelnik) add_spell(num2,p-postavy+1,owner,0);
-     if (k->cil==C_policko_pred || k->cil==C_nahodna_postava)
-        {
-        int s;
-        s=p->sektor;
-        if (!(map_sides[(s<<2)+p->direction].flags & SD_PLAY_IMPS) && !backfire)
-           s=map_sectors[s].step_next[p->direction];
-        if (add_group_spell(num2,s,owner,k->cil,0)) goto end;
-        }
-     }
-  if (!backfire) p->mana-=k->mge;
-  p->exp+=k->mge;
-  check_player_new_level(p);
-  if (p->mana>p->mana_battery)
-     {
-     if (p->mana_battery>=0)p->mana=p->mana_battery;
-     else SEND_LOG("(ERROR) Mana battery error on character %d",p-postavy,0);
-     p->mana_battery=32767;
-     }
+	if (cil > 0 && k->cil != C_postava_jinde) {
+		THUMAN *h1 = postavy + cil - 1;
+		char s[256];
+
+		if ((abs(gameMap.coord()[h1->sektor].x - gameMap.coord()[p->sektor].x) > 5) || (abs(gameMap.coord()[h1->sektor].y - gameMap.coord()[p->sektor].y) > 5)) {
+			sprintf(s, texty[37 + (h1->female == 1)], h1->jmeno, p->jmeno);
+			bott_disp_text(s);
+			return;
+		}
+	}
+
+	if (battle && k->traceon & 1 && trace_path(p->sektor, p->direction) == -255) {
+		return;
+	}
+
+	if (!backfire && p->mana < k->mge) {
+		return;
+	}
+
+	if (p->vlastnosti[VLS_KOUZLA] & SPL_INVIS) {
+		p->stare_vls[VLS_KOUZLA] &= ~SPL_INVIS;
+		prepocitat_postavu(p);
+		build_all_players();
+	}
+
+	if (!backfire && (um = p->vlastnosti[VLS_SMAGIE]) < k->um) {
+		int per1, per2;
+
+		if (um * 2 < k->um) {
+			return;
+		}
+
+		per1 = (um - k->um / 2) * 128 / k->um;
+		per2 = rnd(64);
+
+		if ((per1 / 2 + 32) < per2 && (k->backfire || (game_extras & EX_RANDOM_BACKFIRES) != 0)) {
+			p->mana -= k->mge;
+
+			if ((game_extras & EX_RANDOM_BACKFIRES) != 0) {
+				labyrinth_find_path(p->sektor, 65535, SD_PLAY_IMPS, get_valid_sector, NULL);
+				teleport_target = last_sector;
+				cast(rand() * 105 / RAND_MAX + (cil * 512), p, p - postavy, 1);
+				return;
+			}
+
+			cast(k->backfire + (cil << 9), p, owner, 1);
+			return;
+		}
+
+		if (per1 < per2) {
+			p->mana -= k->mge / 2;
+			return;
+		}
+
+		per1 = (64 - per1) / 2;
+		per2 = rnd(64);
+
+		if (per1 > per2) {
+			p->stare_vls[VLS_SMAGIE]++;
+		}
+	}
+
+	if (!GlobEvent(MAGLOB_BEFOREMAGIC, p->sektor, p->direction)) {
+		return;
+	}
+
+	if (!GlobEvents(MAGLOB_ONSPELLID1, MAGLOB_ONSPELLID9, p->sektor, p->direction, num2)) {
+		return;
+	}
+
+	if (cil && (k->cil == C_postava || k->cil == C_mrtva_postava || k->cil == C_postava_jinde)) {
+		i = add_spell(num2, cil, owner, 0);
+	} else {
+		if (k->cil == C_policko) {
+			if (add_group_spell(num2, p->sektor, owner, C_policko, 0)) {
+				goto end;
+			}
+		}
+
+		if (k->cil == C_kouzelnik) {
+			add_spell(num2, p - postavy + 1, owner, 0);
+		}
+
+		if (k->cil == C_policko_pred || k->cil == C_nahodna_postava) {
+			int s;
+
+			s = p->sektor;
+
+			if (!(gameMap.sides()[(s << 2) + p->direction].flags & SD_PLAY_IMPS) && !backfire) {
+				s = gameMap.sectors()[s].step_next[p->direction];
+			}
+
+			if (add_group_spell(num2, s, owner, k->cil, 0)) {
+				goto end;
+			}
+		}
+	}
+
+	if (!backfire) {
+		p->mana -= k->mge;
+	}
+
+	p->exp += k->mge;
+	check_player_new_level(p);
+
+	if (p->mana > p->mana_battery) {
+		if (p->mana_battery >= 0) {
+			p->mana = p->mana_battery;
+		} else {
+			SEND_LOG("(ERROR) Mana battery error on character %d", p - postavy, 0);
+		}
+
+		p->mana_battery = 32767;
+	}
+
 end:
-	 GlobEvent(MAGLOB_AFTERMAGIC,p->sektor,p->direction);
-  }
-
-void mob_cast(int num,TMOB *m,int mob_num)
-  {
-  TKOUZLO *k;
-
-  SEND_LOG("(SPELLS) Enemy tries to cast the spell (mob: %d, spell: %d",mob_num,num);
-  k=((TKOUZLO *)ablock(H_KOUZLA))+num;
-  switch (k->cil)
-     {
-     case C_postava:
-     case C_kouzelnik:add_spell(num,-(mob_num+1),-1,1);break;
-     case C_policko:add_group_spell(num,m->sector,-1,C_policko,1);break;
-     case C_policko_pred:
-     case C_nahodna_postava:
-        {
-        int s;
-        s=m->sector;
-        if (!(map_sides[(s<<2)+m->dir].flags & SD_PLAY_IMPS))
-           s=map_sectors[s].step_next[m->dir];
-        add_group_spell(num,s,-1,k->cil,1);
-        }
-        break;
-     }
-  }
-
-static int calculatePhaseDoor(int sector, int dir, int um)
-{
-  int x=map_coord[sector].x;
-  int y=map_coord[sector].y;
-  int stpx=0,stpy=0,diffx=0,diffy=0;
-  switch (dir)
-  {
-  case 0: stpy=-1;diffx=1;break;
-  case 1: stpx=1;diffy=1;break;
-  case 2: stpy=1;diffx=1;break;
-  case 3: stpx=-1;diffy=1;break;
-  };
-  {
-    int dist=1+rand()*(um/4)/RAND_MAX;
-    int difs=rand()*2*dist/RAND_MAX-dist;
-    int newx=x+dist*stpx+difs*diffx;
-    int newy=y+dist*stpy+difs*diffy;
-    int i;
-    int nearest=0;
-    int nearestdst=0x7FFFFFFF;
-
-    for (i=1;i<mapsize;i++) if (map_coord[i].flags & MC_AUTOMAP)
-    {
-      x=map_coord[i].x-newx;
-      y=map_coord[i].y-newy;
-      dist=x*x+y*y;
-      if(dist<nearestdst) 
-      {
-        nearestdst=dist;
-        nearest=i;
-      }
-    }
-    sector=nearest;
-  }
-  return sector;
+	GlobEvent(MAGLOB_AFTERMAGIC, p->sektor, p->direction);
 }
 
-void thing_cast(int num,int postava,int sector,TMOB *victim,char noanim)
-  {
-  TKOUZLO *k;
-  THUMAN *h=postavy+postava;
-  char telep=get_spell_teleport(num);
+void mob_cast(int num, TMOB *m, int mob_num) {
+	TKOUZLO *k;
 
-  SEND_LOG("(SPELLS) Item casts the spell (sector: %d, spell: %d)",sector,num);
-  k=((TKOUZLO *)ablock(H_KOUZLA))+num;  
-  if (telep)
-  {
-    teleport_target=calculatePhaseDoor(h->sektor,h->direction,h->vlastnosti[VLS_SMAGIE]);
-  }
-  switch (k->cil)
-     {
-     case C_nahodna_postava:
-     case C_postava:
-     case C_kouzelnik:if (postavy[postava].lives) add_spell(num,postava+1,postava,noanim);break;
-     case C_mrtva_postava:if (!postavy[postava].lives) add_spell(num,postava+1,postava,noanim);break;
-     case C_policko:add_group_spell(num,sector,postava,k->cil,noanim);break;
-     case C_policko_pred:
-        {
-        int s;
-        s=sector;
-        if (~map_sides[(s<<2)+h->direction].flags & SD_PLAY_IMPS)
-           s=map_sectors[s].step_next[h->direction];
-        add_group_spell(num,s,postava,k->cil,noanim);
-        }
-        break;
-     case C_jiny_cil:if (victim!=NULL) add_spell(num,-(victim-mobs+1),postava,noanim);break;
-     }
-  }
+	SEND_LOG("(SPELLS) Enemy tries to cast the spell (mob: %d, spell: %d", mob_num, num);
+	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num;
+
+	switch (k->cil) {
+	case C_postava:
+	case C_kouzelnik:
+		add_spell(num, -(mob_num + 1), -1, 1);
+		break;
+
+	case C_policko:
+		add_group_spell(num, m->sector, -1, C_policko, 1);
+		break;
+
+	case C_policko_pred:
+	case C_nahodna_postava: {
+		int s;
+
+		s = m->sector;
+
+		if (!(gameMap.sides()[(s << 2) + m->dir].flags & SD_PLAY_IMPS)) {
+			s = gameMap.sectors()[s].step_next[m->dir];
+		}
+
+		add_group_spell(num, s, -1, k->cil, 1);
+		break;
+	}
+	}
+}
+
+static int calculatePhaseDoor(int sector, int dir, int um) {
+	int x = gameMap.coord()[sector].x;
+	int y = gameMap.coord()[sector].y;
+	int stpx = 0, stpy = 0, diffx = 0, diffy = 0;
+
+	switch (dir) {
+	case 0:
+		stpy = -1;
+		diffx = 1;
+		break;
+
+	case 1:
+		stpx = 1;
+		diffy = 1;
+		break;
+
+	case 2:
+		stpy = 1;
+		diffx = 1;
+		break;
+
+	case 3:
+		stpx = -1;
+		diffy = 1;
+		break;
+	}
+
+	int dist = 1 + rand() * (um / 4) / RAND_MAX;
+	int difs = rand() * 2 * dist / RAND_MAX - dist;
+	int newx = x + dist * stpx + difs * diffx;
+	int newy = y + dist * stpy + difs * diffy;
+	int i;
+	int nearest = 0;
+	int nearestdst = 0x7FFFFFFF;
+
+	for (i = 1; i < gameMap.coordCount(); i++) {
+		if (gameMap.coord()[i].flags & MC_AUTOMAP) {
+			x = gameMap.coord()[i].x - newx;
+			y = gameMap.coord()[i].y - newy;
+			dist = x * x + y * y;
+
+			if (dist < nearestdst) {
+				nearestdst = dist;
+				nearest = i;
+			}
+		}
+	}
+
+	sector = nearest;
+
+	return sector;
+}
+
+void thing_cast(int num, int postava, int sector, TMOB *victim, char noanim) {
+	TKOUZLO *k;
+	THUMAN *h = postavy + postava;
+	char telep = get_spell_teleport(num);
+
+	SEND_LOG("(SPELLS) Item casts the spell (sector: %d, spell: %d)", sector, num);
+	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num;
+
+	if (telep) {
+		teleport_target = calculatePhaseDoor(h->sektor, h->direction, h->vlastnosti[VLS_SMAGIE]);
+	}
+
+	switch (k->cil) {
+	case C_nahodna_postava:
+	case C_postava:
+	case C_kouzelnik:
+		if (postavy[postava].lives) {
+			add_spell(num, postava + 1, postava, noanim);
+		}
+		break;
+
+	case C_mrtva_postava:
+		if (!postavy[postava].lives) {
+			add_spell(num, postava + 1, postava, noanim);
+		}
+		break;
+
+	case C_policko:
+		add_group_spell(num, sector, postava, k->cil, noanim);
+		break;
+
+	case C_policko_pred: {
+		int s;
+
+		s = sector;
+
+		if (~gameMap.sides()[(s << 2) + h->direction].flags & SD_PLAY_IMPS) {
+			s = gameMap.sectors()[s].step_next[h->direction];
+		}
+
+		add_group_spell(num, s, postava, k->cil, noanim);
+		break;
+	}
+
+	case C_jiny_cil:
+		if (victim != NULL) {
+			add_spell(num, -(victim-mobs + 1), postava, noanim);
+		}
+		break;
+	}
+}
 
 void area_cast(int num,int sector,int owner,char noanim)
   {

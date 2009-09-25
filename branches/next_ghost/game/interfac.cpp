@@ -682,94 +682,114 @@ void type_text_v2(va_list args) {
 }
 
 
-void col_load(void **data,long *size)
-  {
-  int siz=*size;
-  char *s;
-  uint8_t *c;
-  int palcount;
-  int i;//,j,k;
+void col_load(void **data, long *size) {
+	int siz = *size;
+	char *s;
+	uint8_t *c;
+	int palcount;
+	int i;
 
-  palcount=siz/COL_SIZE;
-  *size=PIC_FADE_PAL_SIZE*palcount;
-  s = (char*)getmem(*size);
-  c = (uint8_t*)*data;
-  c+=8;
-  for(i=0;i<palcount;i++,c+=COL_SIZE)
-     palette_shadow(c,(pal_t*)&s[i*PIC_FADE_PAL_SIZE],mglob.fade_r,mglob.fade_g,mglob.fade_b);
-  free(*data);
-  *data=s;
-  }
+	palcount = siz / COL_SIZE;
+	*size = PIC_FADE_PAL_SIZE * palcount;
+	s = (char*)getmem(*size);
+	c = (uint8_t*)*data;
+	c += 8;
+
+	for (i = 0; i < palcount; i++, c += COL_SIZE) {
+		palette_shadow(c, (pal_t*)&s[i * PIC_FADE_PAL_SIZE], gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
+	}
+
+	free(*data);
+	*data = s;
+}
 
 
 #define Hi(x) ((x)>>16)
 #define Lo(x) ((x)& 0xffff)
 
 
-char labyrinth_find_path(uint16_t start,uint16_t konec,int flag,char (*proc)(uint16_t),uint16_t **cesta)
-  {
-  int32_t *stack;
-  int32_t *stk_free;
-  int32_t *stk_cur;
-  char *ok_flags;
-  char vysl;
+char labyrinth_find_path(uint16_t start, uint16_t konec, int flag, char (*proc)(uint16_t), uint16_t **cesta) {
+	int32_t *stack;
+	int32_t *stk_free;
+	int32_t *stk_cur;
+	char *ok_flags;
+	char vysl;
 
-  if (cesta!=NULL) *cesta=NULL;
-  stk_free = stk_cur = stack = (int32_t*)getmem((mapsize+2) * sizeof(int32_t));
-  memset(ok_flags = (char*)getmem((mapsize+8)/8),0,(mapsize+8)/8);
-  ok_flags[start>>3]|=1<<(start & 0x7);
-  for(*stk_free++=start;stk_free!=stk_cur;stk_cur++)
-     {
-     char i;uint16_t s,d,ss;
-     s=(ss=Lo(*stk_cur))<<2;
-     for(i=0;i<4;i++) if (!(map_sides[s+i].flags & flag))
-        {
-        char c;
-        uint16_t w;
-        d=map_sectors[ss].step_next[i];
-        c=1<<(d & 0x7);
-        w=d>>3;
-        if (!(ok_flags[w] & c) && proc(d))
-           {
-           ok_flags[w]|=c;
-          *stk_free++=d | ((stk_cur-stack)<<16);
-           }
-        if (d==konec) break;
-        }
-     if (d==konec) break;
-     }
-  vysl=0;
-  if (stk_free!=stk_cur)
-     {
-     if (cesta!=NULL)
-        {
-        int count=0;
-        int32_t *p,*z;
-        uint16_t *x;
+	if (cesta != NULL) {
+		*cesta = NULL;
+	}
 
-        z=p=stk_free-1;
-        while (Lo(*p)!=start)
-          {
-          int l;
-          count++;
-          l=*p;
-          p=Hi(l)+stack;
-          *z--=Lo(l);
-          }
-        x = *cesta = (uint16_t*)getmem((count+1) * sizeof(uint16_t));
-        z++;
-        while (count--)
-           {
-           *x++=(uint16_t)*z++;
-           }
-        *x++=0;
-        }
-     vysl=1;
-     }
-  free(stack);
-  free(ok_flags);
-  return vysl;
-  }
+	stk_free = stk_cur = stack = (int32_t*)getmem((gameMap.coordCount() + 2) * sizeof(int32_t));
+	memset(ok_flags = (char*)getmem((gameMap.coordCount() + 8) / 8), 0, (gameMap.coordCount() + 8) / 8);
+	ok_flags[start >> 3] |= 1 << (start & 0x7);
+
+	for (*stk_free++ = start; stk_free != stk_cur; stk_cur++) {
+		char i;
+		uint16_t s, d, ss;
+
+		s = (ss = Lo(*stk_cur)) << 2;
+
+		for (i = 0; i < 4; i++) {
+			if (!(gameMap.sides()[s+i].flags & flag)) {
+				char c;
+				uint16_t w;
+
+				d = gameMap.sectors()[ss].step_next[i];
+				c = 1 << (d & 0x7);
+				w = d >> 3;
+
+				if (!(ok_flags[w] & c) && proc(d)) {
+					ok_flags[w] |= c;
+					*stk_free++ = d | ((stk_cur - stack) << 16);
+				}
+
+				if (d == konec) {
+					break;
+				}
+			}
+		}
+
+		if (d == konec) {
+			break;
+		}
+	}
+
+	vysl = 0;
+
+	if (stk_free != stk_cur) {
+		if (cesta != NULL) {
+			int count = 0;
+			int32_t *p, *z;
+			uint16_t *x;
+
+			z = p = stk_free - 1;
+
+			while (Lo(*p) != start) {
+				int l;
+
+				count++;
+				l = *p;
+				p = Hi(l) + stack;
+				*z-- = Lo(l);
+			}
+
+			x = *cesta = (uint16_t*)getmem((count + 1) * sizeof(uint16_t));
+			z++;
+
+			while (count--) {
+				*x++ = (uint16_t)*z++;
+			}
+
+			*x++ = 0;
+		}
+
+		vysl = 1;
+	}
+
+	free(stack);
+	free(ok_flags);
+	return vysl;
+}
 
 typedef struct radio_butt_data
   {
@@ -1233,30 +1253,33 @@ static void play_correct_sound(int sector,int dir)
   play_wav(H_SND_SEVER+dir,sector);
   }
 
-void check_fletna(THE_TIMER *t)
-  {
-  char len;
-  char *s;
-  int sec;
-  int dir;
+void check_fletna(THE_TIMER *t) {
+	char len;
+	char *s;
+	int sec;
+	int dir;
 
-  t;
-  if (!pos) return;
-  sec=t->userdata[0];
-  dir=t->userdata[1];
-  s=smery[dir];
-  len=strlen(s);
-  if (len==pos)
-     {
-     if (!strncmp(s,fletna_str,pos) && map_sectors[sec].sector_type==dir+S_FLT_SMER)
-        play_correct_sound(sec,dir);
-     else
-        play_random_sound(sec,dir,pos);
-     }
-  else
-     play_random_sound(sec,dir,pos);
-  pos=0;
-  }
+	if (!pos) {
+		return;
+	}
+
+	sec = t->userdata[0];
+	dir = t->userdata[1];
+	s = smery[dir];
+	len = strlen(s);
+
+	if (len == pos) {
+		if (!strncmp(s, fletna_str, pos) && gameMap.sectors()[sec].sector_type == dir + S_FLT_SMER) {
+			play_correct_sound(sec, dir);
+		} else {
+			play_random_sound(sec, dir, pos);
+		}
+	} else {
+		play_random_sound(sec, dir, pos);
+	}
+
+	pos = 0;
+}
 
 char fletna_get_buffer_pos()
   {
@@ -1326,22 +1349,8 @@ void check_global_fletna(THE_TIMER *t)
 
 //---------------------------------------
 
-char *find_map_path(const char *filename)
-	{
-	char *p1,*p;
-
-/*
-	if (pathtable[SR_MAP2]!=NULL)
-		{
-		concat(p1,pathtable[SR_MAP2],filename);
-		if (!access(p1,0)) goto found;
-		}
-	concat(p1,pathtable[SR_MAP],filename);
-	found:
-	p=NewArr(char,strlen(p1)+1);
-	strcpy(p,p1);
-	return p;
-*/
+char *find_map_path(const char *filename) {
+	char *p1, *p;
 
 	p1 = Sys_FullPath(SR_MAP2, filename);
 
@@ -1352,7 +1361,7 @@ char *find_map_path(const char *filename)
 	p = (char*)malloc((strlen(p1) + 1) * sizeof (char));
 	strcpy(p, p1);
 	return p;
-	}
+}
 
 SeekableReadStream *enc_open(const char *filename) {
 	File *f;

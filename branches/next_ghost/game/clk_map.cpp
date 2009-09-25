@@ -55,103 +55,123 @@ char clk_step(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-char clk_touch_vyk(int sector,int side,int xr,int yr)
-  {
-  int i;
-  TVYKLENEK *v;
-  int x1,y1,x2,y2;
+char clk_touch_vyk(int sector, int side, int xr, int yr) {
+	int i;
+	const TVYKLENEK *v;
+	int x1, y1, x2, y2;
 
-  if (picked_item!=NULL && picked_item[1]!=0) return 0;
-  for(i=0;v=map_vyk+i,i<vyk_max;i++) if (v->sector==sector && v->dir==side) break;
-  if (i==vyk_max) return 0;
-  x1=v->xpos-v->xs/2;
-  x2=v->xpos+v->xs/2;
-  y1=320-(v->ypos+v->ys);
-  y2=320-(v->ypos);
-  x1+=MIDDLE_X-points[0][1][1].x;
-  x2+=MIDDLE_X-points[0][1][1].x;
-  y1+=MIDDLE_Y+points[0][1][1].y;
-  y2+=MIDDLE_Y+points[0][1][1].y;
-  if (x1<=xr && xr<=x2 && y1<=yr && yr<=y2)
-     {
-     if (picked_item==NULL)
-        {
-        for(i=0;v->items[i];i++);if (!i) return 0;
-        i--;
-        picked_item=NewArr(short,2);
-        picked_item[0]=v->items[i];picked_item[1]=0;
-        v->items[i]=0;
-        do_items_specs();
-        pick_set_cursor();
-        call_macro(viewsector*4+viewdir,MC_VYKEVENT);
-        return 1;
-        }
-     else
-        {
-        int fc;
-        uint16_t *w;
-        for(i=0;v->items[i];i++);if (i==8)
-           {
-           bott_disp_text(texty[36]);
-           return 1;
-           }
-        fc=picked_item[0];fc=glob_items[fc-1].vzhled+face_arr[0];
-        w = (uint16_t*)ablock(fc);
-        if (v->xs<w[0] || v->ys<w[0])
-           {
-           bott_disp_text(texty[35]);
-           return 1;
-           }
-        v->items[i]=picked_item[0];
-        v->items[i+1]=0;
-        call_macro(viewsector*4+viewdir,MC_VYKEVENT);
-        free(picked_item);picked_item=NULL;
-        pick_set_cursor();
-        return 1;
-        }
-     }
-  return 0;
-  }
+	if (picked_item != NULL && picked_item[1] != 0) {
+		return 0;
+	}
 
-char clk_touch(int id,int xa,int ya,int xr,int yr)
-  {
-  int x1,y1,x2,y2;
-  uint16_t *p;
-  int ext=0;
+	for (i = 0, v = gameMap.vyk(); i < gameMap.vykCount(); i++, v++) {
+		if (v->sector == sector && v->dir == side) {
+			break;
+		}
+	}
 
-  xa;ya;id;
-  spell_cast=0;
-  pick_set_cursor();
-  id=viewsector*4+viewdir;
-  if (map_sides[id].oblouk & 0x10) if (clk_touch_vyk(viewsector,viewdir,xr,yr))return 1;
-  if (map_sides[id].flags & SD_SEC_VIS && map_sides[id].sec!=0)
-     {
-     xa=map_sides[id].xsec<<1;
-     ya=320-(map_sides[id].ysec<<1);
-     p=(uint16_t *)ablock(map_sides[id].sec+num_ofsets[MAIN_NUM]);
-     x1=*p++;y1=*p++;
-     x2=xa+x1/2;y2=ya+y1/2;y1=y2-y1;x1=x2-x1;
-     x1+=MIDDLE_X-points[0][1][1].x;
-     x2+=MIDDLE_X-points[0][1][1].x;
-     y1+=MIDDLE_Y+points[0][1][1].y;
-     y2+=MIDDLE_Y+points[0][1][1].y;
-     ext=1;
-     }
-  else if (map_sides[id].sec==0)
-     {
-     x1=MIDDLE_X-points[0][0][1].x;
-     y1=MIDDLE_Y+points[0][1][1].y;
-     x2=640-x1;
-     y2=MIDDLE_Y+points[0][0][1].y;
-     ext=((map_sides[id].flags & SD_THING_IMPS) && !(map_sides[id].oblouk & SD_ITPUSH));
-     }
-  if (x1<=xr && xr<=x2 && y1<=yr && yr<=y2)
-     {
-     a_touch(viewsector,viewdir);
-     return ext;
-     }
-  return 0;
- }
+	if (i == gameMap.vykCount()) {
+		return 0;
+	}
+
+	x1 = v->xpos - v->xs / 2;
+	x2 = v->xpos + v->xs / 2;
+	y1 = 320 - (v->ypos + v->ys);
+	y2 = 320 - (v->ypos);
+	x1 += MIDDLE_X - points[0][1][1].x;
+	x2 += MIDDLE_X - points[0][1][1].x;
+	y1 += MIDDLE_Y + points[0][1][1].y;
+	y2 += MIDDLE_Y + points[0][1][1].y;
+
+	if (x1 <= xr && xr <= x2 && y1 <= yr && yr <= y2) {
+		if (picked_item == NULL) {
+			if (!v->items[0]) {
+				return 0;
+			}
+
+			picked_item = NewArr(short, 2);
+			picked_item[0] = gameMap.removeItem(v - gameMap.vyk());
+			picked_item[1] = 0;
+			do_items_specs();
+			pick_set_cursor();
+			call_macro(viewsector * 4 + viewdir, MC_VYKEVENT);
+			return 1;
+		} else {
+			int fc;
+			uint16_t *w;
+
+			for (i = 0; v->items[i]; i++);
+
+			if (i >= 8) {
+				bott_disp_text(texty[36]);
+				return 1;
+			}
+
+			fc = picked_item[0];
+			fc = glob_items[fc-1].vzhled + face_arr[0];
+			w = (uint16_t*)ablock(fc);
+
+			if (v->xs < w[0] || v->ys < w[0]) {
+				bott_disp_text(texty[35]);
+				return 1;
+			}
+
+			gameMap.putItem(v - gameMap.vyk(), picked_item[0]);
+			call_macro(viewsector * 4 + viewdir, MC_VYKEVENT);
+			free(picked_item);
+			picked_item = NULL;
+			pick_set_cursor();
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+char clk_touch(int id, int xa, int ya, int xr, int yr) {
+	int x1, y1, x2, y2;
+	uint16_t *p;
+	int ext = 0;
+
+	spell_cast = 0;
+	pick_set_cursor();
+	id = viewsector * 4 + viewdir;
+
+	if (gameMap.sides()[id].oblouk & 0x10) {
+		if (clk_touch_vyk(viewsector, viewdir, xr, yr)) {
+			return 1;
+		}
+	}
+
+	if (gameMap.sides()[id].flags & SD_SEC_VIS && gameMap.sides()[id].sec != 0) {
+		xa = gameMap.sides()[id].xsec << 1;
+		ya = 320 - (gameMap.sides()[id].ysec << 1);
+		p = (uint16_t *)ablock(gameMap.sides()[id].sec + num_ofsets[MAIN_NUM]);
+		x1 = *p++;
+		y1 = *p++;
+		x2 = xa + x1 / 2;
+		y2 = ya + y1 / 2;
+		y1 = y2 - y1;
+		x1 = x2 - x1;
+		x1 += MIDDLE_X - points[0][1][1].x;
+		x2 += MIDDLE_X - points[0][1][1].x;
+		y1 += MIDDLE_Y + points[0][1][1].y;
+		y2 += MIDDLE_Y + points[0][1][1].y;
+		ext = 1;
+	} else if (gameMap.sides()[id].sec == 0) {
+		x1 = MIDDLE_X - points[0][0][1].x;
+		y1 = MIDDLE_Y + points[0][1][1].y;
+		x2 = 640 - x1;
+		y2 = MIDDLE_Y + points[0][0][1].y;
+		ext = ((gameMap.sides()[id].flags & SD_THING_IMPS) && !(gameMap.sides()[id].oblouk & SD_ITPUSH));
+	}
+
+	if (x1 <= xr && xr <= x2 && y1 <= yr && yr <= y2) {
+		a_touch(viewsector, viewdir);
+		return ext;
+	}
+	return 0;
+}
 
 char clk_fly_cursor(int id,int xa,int ya,int xr,int yr)
   {
@@ -233,19 +253,23 @@ char spell_casting(int id,int xa,int ya,int xr,int yr)
  }
 
 
-char clk_sleep(int id,int xa,int ya,int xr,int yr)
-  {
-  id;xa;ya;xr;yr;
-  if (cur_mode==MD_ANOTHER_MAP) unwire_proc(),wire_proc();
-  if (mglob.map_effector==ME_MESTO)
-     {
-     bott_disp_text(texty[120]);
-     return 1;
-     }
-//  if (!battle) Task_Add(8100,sleep_players);
-  if (!battle) sleep_players();
-  return 1;
-  }
+char clk_sleep(int id,int xa,int ya,int xr,int yr) {
+	if (cur_mode == MD_ANOTHER_MAP) {
+		unwire_proc();
+		wire_proc();
+	}
+
+	if (gameMap.global().map_effector == ME_MESTO) {
+		bott_disp_text(texty[120]);
+		return 1;
+	}
+
+	if (!battle) {
+		sleep_players();
+	}
+
+	return 1;
+}
 
 
 char start_invetory(int id,int xa,int ya,int xr,int yr)
@@ -370,28 +394,31 @@ char return_game(int id,int xa,int ya,int xr,int yr)
   return 0;
   }
 
-char clk_mob_alter(int id,int xa,int ya,int xr,int yr)
-  {
-  id;xa;ya;xr;yr;
+char clk_mob_alter(int id, int xa, int ya, int xr, int yr) {
+	xa = viewsector;
+	id = mob_map[xa];
 
-  xa=viewsector;
-  id=mob_map[xa];
-  while (id==0 || mobs[id-1].dialog==-1)
-     {
-     if (id) id=mobs[id-1].next;
-     if (id==0 && xa==viewsector)
-        if (~map_sides[(xa<<2)+viewdir].flags & SD_PLAY_IMPS)
-           {
-           xa=map_sectors[xa].step_next[viewdir];
-           id=mob_map[xa];
-           }
-        else return 0;
-     else return 0;
-     }
-  id--;
-  start_dialog(mobs[id].dialog,id);
-  return 1;
-  }
+	while (id == 0 || mobs[id-1].dialog == -1) {
+		if (id) {
+			id = mobs[id-1].next;
+		}
+
+		if (id == 0 && xa == viewsector) {
+			if (~gameMap.sides()[(xa << 2) + viewdir].flags & SD_PLAY_IMPS) {
+				xa = gameMap.sectors()[xa].step_next[viewdir];
+				id = mob_map[xa];
+			} else {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+
+	id--;
+	start_dialog(mobs[id].dialog, id);
+	return 1;
+}
 
 char empty_clk(int id,int xa,int ya,int xr,int yr) //tato udalost slouzi ke zruseni nekterych mist v globalni mape
   {
@@ -399,69 +426,65 @@ char empty_clk(int id,int xa,int ya,int xr,int yr) //tato udalost slouzi ke zrus
   return 1;
   }
 
-static char sing_song_clk(int id,int xa,int ya,int xr,int yr)
-  {
-  int8_t *xadr;
-  uint16_t *xs;
-  static char playing=0;
-  char standardflute=map_sectors[viewsector].sector_type>=S_FLT_SMER &&
-            map_sectors[viewsector].sector_type<S_FLT_SMER+4;
+static char sing_song_clk(int id, int xa, int ya, int xr, int yr) {
+	int8_t *xadr;
+	uint16_t *xs;
+	static char playing = 0;
+	char standardflute = gameMap.sectors()[viewsector].sector_type >= S_FLT_SMER && gameMap.sectors()[viewsector].sector_type < S_FLT_SMER + 4;
 
-  id,xa,ya,xr,yr;
+	if (bott_display != BOTT_FLETNA) {
+		return 0;
+	}
 
+	xadr = (int8_t*)ablock(H_FLETNA_MASK);
+	xs = (uint16_t *)xadr;
+	xadr += 6;
+	xadr += *xs * yr + xr;
+	id = *xadr;
+	id--;
 
-  if (bott_display!=BOTT_FLETNA) return 0;
-  xadr = (int8_t*)ablock(H_FLETNA_MASK);
-  xs=(uint16_t *)xadr;
-  xadr+=6;
-  xadr+=*xs*yr+xr;
-  id=*xadr;
-  id--;
-  if (id<0 || id>12 || (ms_last_event.event_type & 0x4))
-     {
-     if (playing)
-        {
-        THE_TIMER *t;
-        stop_play_flute();
-        playing=0;
-        if (standardflute)
-        {
-        if (fletna_get_buffer_pos())
-           {
-           THE_TIMER *t;
-           if (standardflute)
-           {
-            t=add_to_timer(TM_FLETNA,100,1,check_fletna);
-            t->userdata[0]=viewsector;
-            t->userdata[1]=viewdir;
-           }
-           }
-        }
-           else
-           {
-            t=add_to_timer(TM_FLETNA,100,1,check_global_fletna);
-            t->userdata[0]=viewsector;
-            t->userdata[1]=viewdir;
-           }
-           
-        }
-     return id<12;
-     }
-  if (~ms_last_event.event_type & 0x2) return 1;
-  start_play_flute(id);
-  playing=1;
-  if (standardflute)
-            {
-              fletna_pridej_notu(id);
-              delete_from_timer(TM_FLETNA);
-            }
-  else
-  {
-    fletna_glob_add_note(id);
-    delete_from_timer(TM_FLETNA);
-  }
-  return 1;
-  }
+	if (id < 0 || id > 12 || (ms_last_event.event_type & 0x4)) {
+		if (playing) {
+			THE_TIMER *t;
+			stop_play_flute();
+			playing = 0;
+
+			if (standardflute) {
+				if (fletna_get_buffer_pos()) {
+					THE_TIMER *t;
+					if (standardflute) {
+						t = add_to_timer(TM_FLETNA, 100, 1, check_fletna);
+						t->userdata[0] = viewsector;
+						t->userdata[1] = viewdir;
+					}
+				}
+			} else {
+				t = add_to_timer(TM_FLETNA, 100, 1, check_global_fletna);
+				t->userdata[0] = viewsector;
+				t->userdata[1] = viewdir;
+			}
+		}
+
+		return id < 12;
+	}
+
+	if (~ms_last_event.event_type & 0x2) {
+		return 1;
+	}
+
+	start_play_flute(id);
+	playing = 1;
+
+	if (standardflute) {
+		fletna_pridej_notu(id);
+		delete_from_timer(TM_FLETNA);
+	} else {
+		fletna_glob_add_note(id);
+		delete_from_timer(TM_FLETNA);
+	}
+
+	return 1;
+}
 
 
 T_CLK_MAP clk_main_view[]=

@@ -190,14 +190,18 @@ void save_text_to_map(int32_t x, int32_t y, int32_t depth, char *text) {
 	texty_v_mape.insert(c, strlen(text) + 3 * sizeof(int32_t) + 1);
 }
 
-static char check_for_layer(int layer)
-  {
-  int i;
-  TMAP_EDIT_INFO *m=map_coord;
+static char check_for_layer(int layer) {
+	int i;
+	const TMAP_EDIT_INFO *m = gameMap.coord();
 
-  for(i=0;i<mapsize;i++,m++) if (m->layer==layer && m->flags & MC_MARKED && m->flags & MC_AUTOMAP) return 1;
-  return 0;
-  }
+	for(i = 0; i < gameMap.coordCount(); i++, m++) {
+		if (m->layer == layer && m->flags & MC_MARKED && m->flags & MC_AUTOMAP) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 void ukaz_vsechny_texty_v_mape() {
 	int32_t x, y, d;
@@ -453,72 +457,110 @@ static void print_symbol(int x,int y,char znak)
   }
 
 
-static void draw_amap_sector(int x,int y,int sector,int mode,int turn,int line1,int line2)
-  {
-  int j,i,k;
-  TSTENA *q;
-  TSECTOR *ss;
+static void draw_amap_sector(int x,int y,int sector,int mode,int turn,int line1,int line2) {
+	int j, i, k;
+	const TSTENA *q;
+	const TSECTOR *ss;
 
-        q=&map_sides[sector<<2];
-        ss=&map_sectors[sector];
-        if (ss->sector_type==S_VODA || ss->sector_type==S_LODKA) curcolor=AUTOMAP_VODA;
-        else if (ss->sector_type==S_LAVA) curcolor=AUTOMAP_LAVA;
-        else curcolor=AUTOMAP_FORE;
-        if (!mode)
-           {
-           trans_bar(x,y,8,8,curcolor);
-           if ((k=map_coord[sector].flags & 0x600)!=0)
-              {
-              int i;
+	q = gameMap.sides() + (sector << 2);
+	ss = gameMap.sectors() + sector;
 
-              i=map_sectors[sector].sector_type;
-              set_font(H_FSYMB,0);k>>=9;
-              switch (k)
-                 {
-                 case 3:break;
-                 case 2:set_font(H_FSYMB,0);
-                        font_color(stairs_colors);
-                        print_symbol(x,y,'s');break;
-                 case 1:set_font(H_FSYMB,0);
-                        font_color(arrow_colors);
-                        print_symbol(x,y,4+((i-S_SMER+4-turn) & 0x3));break;
+	if (ss->sector_type == S_VODA || ss->sector_type == S_LODKA) {
+		curcolor = AUTOMAP_VODA;
+	} else if (ss->sector_type == S_LAVA) {
+		curcolor = AUTOMAP_LAVA;
+	} else {
+		curcolor = AUTOMAP_FORE;
+	}
 
-                 }
-              }
-           else
-           switch(map_sectors[sector].sector_type)
-              {
-              int i;
-              TSTENA *sd;
-              case S_SCHODY:set_font(H_FSYMB,0x3e0);
-                            memcpy(charcolors,stairs_colors,sizeof(stairs_colors));
-                            print_symbol(x,y,'s');break;
-              case S_TELEPORT:for(i=0,sd=map_sides+sector*4;i<4 && ~sd->flags & SD_SEC_VIS;i++,sd++);
-                             if (i!=4) {set_font(H_FSYMB,0x3e0);print_symbol(x,y,'T');}break;
-              case S_DIRA:set_font(H_FSYMB,NOSHADOW(0));print_symbol(x,y,'N');break;
-              }
-           }
-        else
-        for(j=0;j<4;j++)
-           {
-           i=(j+turn)&3;
-           if (!(q[i].flags & SD_TRANSPARENT)||(q[i].flags & SD_SECRET)) curcolor=line1;
-           else if (q[i].flags & SD_PLAY_IMPS) curcolor=line2;
-           else curcolor=AUTOMAP_FORE;
-           if (q[i].flags & SD_INVIS) curcolor=AUTOMAP_FORE;
-           if (curcolor!=AUTOMAP_FORE)
-              {
-              switch (j)
-                 {
-                 case 0:hor_line(x,y,x+8);break;
-                 case 1:ver_line(x+8,y,y+8);break;
-                 case 2:hor_line(x,y+8,x+8);break;
-                 case 3:ver_line(x,y,y+8);break;
-                 }
-              }
-           }
+	if (!mode) {
+		trans_bar(x, y, 8, 8, curcolor);
 
-  }
+		if ((k = gameMap.coord()[sector].flags & 0x600) != 0) {
+			int i;
+
+			i = gameMap.sectors()[sector].sector_type;
+			set_font(H_FSYMB, 0);
+			k >>= 9;
+
+			switch (k) {
+			case 3:
+				break;
+
+			case 2:
+				set_font(H_FSYMB, 0);
+				font_color(stairs_colors);
+				print_symbol(x, y, 's');
+				break;
+
+			case 1:
+				set_font(H_FSYMB, 0);
+				font_color(arrow_colors);
+				print_symbol(x, y, 4 + ((i - S_SMER + 4 - turn) & 0x3));
+				break;
+			}
+		} else switch(gameMap.sectors()[sector].sector_type) {
+			int i;
+			const TSTENA *sd;
+
+		case S_SCHODY:
+			set_font(H_FSYMB, 0x3e0);
+			memcpy(charcolors, stairs_colors, sizeof(stairs_colors));
+			print_symbol(x, y, 's');
+			break;
+
+		case S_TELEPORT:
+			for (i = 0, sd = gameMap.sides() + sector * 4; i < 4 && ~sd->flags & SD_SEC_VIS; i++, sd++);
+
+			if (i != 4) {
+				set_font(H_FSYMB, 0x3e0);
+				print_symbol(x, y, 'T');
+			}
+			break;
+
+		case S_DIRA:
+			set_font(H_FSYMB, NOSHADOW(0));
+			print_symbol(x, y, 'N');
+			break;
+		}
+	} else {
+		for(j=0;j<4;j++) {
+			i = (j + turn) & 3;
+
+			if (!(q[i].flags & SD_TRANSPARENT) ||(q[i].flags & SD_SECRET)) {
+				curcolor = line1;
+			} else if (q[i].flags & SD_PLAY_IMPS) {
+				curcolor = line2;
+			} else {
+				curcolor = AUTOMAP_FORE;
+			}
+
+			if (q[i].flags & SD_INVIS) {
+				curcolor = AUTOMAP_FORE;
+			}
+
+			if (curcolor != AUTOMAP_FORE) {
+				switch (j) {
+				case 0:
+					hor_line(x, y, x + 8);
+					break;
+
+				case 1:
+					ver_line(x + 8, y, y + 8);
+					break;
+
+				case 2:
+					hor_line(x, y + 8, x + 8);
+					break;
+
+				case 3:
+					ver_line(x, y, y+8);
+					break;
+				}
+			}
+		}
+	}
+}
 
 void herni_cas(char *s)
   {
@@ -597,89 +639,98 @@ static void displ_button(char disable, const char **text)
   }
 
 
-void draw_automap(int xr,int yr)
-{
-  int i,k,x,y,xp,yp;
-  int depth;
-  TSTENA *q;
-  uint16_t *s;
+void draw_automap(int xr, int yr) {
+	int i, k, x, y, xp, yp;
+	int depth;
+	const TSTENA *q;
+	const uint16_t *s;
 
-  update_mysky();
-  schovej_mysku();
-  put_textured_bar((uint16_t*)ablock(H_BACKMAP),0,17,640,360,-xr*8,-yr*8);
-  curcolor=AUTOMAP_BACK;
-  xp=map_coord[viewsector].x*8;
-  yp=map_coord[viewsector].y*8;
-  depth=cur_depth;
-  map_xr=xp-xr*8;
-  map_yr=yp-yr*8;
-  for(k=0;k<2;k++)
-  for(i=1;i<mapsize;i++)
-  {    
-    int flagmask=MC_AUTOMAP|(k!=0?MC_DISCLOSED:0);
-     if ((map_coord[i].flags & flagmask) &&  (map_coord[i].flags & MC_MARKED) && map_coord[i].layer==depth)
-     {       
-     x=(map_coord[i].x*8+xr*8);
-     y=(map_coord[i].y*8+yr*8);
-     q=map_sides+(i*4);
-     s=map_sectors[i].step_next;
-     x-=xp;y-=yp;
-     if (y>=-178 && y<170 && x>=-312 && x<310)
-        {
+	update_mysky();
+	schovej_mysku();
+	put_textured_bar((uint16_t*)ablock(H_BACKMAP), 0, 17, 640, 360, -xr * 8, -yr * 8);
+	curcolor = AUTOMAP_BACK;
+	xp = gameMap.coord()[viewsector].x * 8;
+	yp = gameMap.coord()[viewsector].y * 8;
+	depth = cur_depth;
+	map_xr = xp - xr * 8;
+	map_yr = yp - yr * 8;
+	for(k = 0; k < 2; k++) {
+		for(i = 1; i < gameMap.coordCount(); i++) {
+			int flagmask = MC_AUTOMAP | (k != 0 ? MC_DISCLOSED : 0);
 
-        x+=320;y+=197;
-        draw_amap_sector(x,y,i,k,0,AUTOMAP_LINE1,AUTOMAP_LINE2);
-           if (map_coord[i].flags & MC_PLAYER && !noarrows)
-              {
-              int j,l=-1;
+			if ((gameMap.coord()[i].flags & flagmask) && (gameMap.coord()[i].flags & MC_MARKED) && gameMap.coord()[i].layer == depth) {
+				x = (gameMap.coord()[i].x * 8 + xr * 8);
+				y = (gameMap.coord()[i].y * 8 + yr * 8);
+				q = gameMap.sides() + (i * 4);
+				s = gameMap.sectors()[i].step_next;
+				x -= xp;
+				y -= yp;
+				if (y >= -178 && y < 170 && x >= -312 && x < 310) {
+					x += 320;
+					y += 197;
+					draw_amap_sector(x, y, i, k, 0, AUTOMAP_LINE1, AUTOMAP_LINE2);
+					if (gameMap.coord()[i].flags & MC_PLAYER && !noarrows) {
+						int j, l = -1;
 
-              for(j=0;j<POCET_POSTAV;j++)
-               {
-               if (postavy[j].used)
-                 if (postavy[j].sektor==i)
-                    if (postavy[j].groupnum==cur_group) break;
-                    else l=j;
-               }
-              if (j==POCET_POSTAV) j=l;
-              if (j!=-1)
-                 {
-                 char c[2];
+						for (j = 0; j < POCET_POSTAV; j++) {
+							if (postavy[j].used && postavy[j].sektor==i) {
+								if (postavy[j].groupnum == cur_group) {
+									break;
+								} else {
+									l = j;
+								}
+							}
+						}
 
-                 position(x+1,y+1);
-                 set_font(H_FSYMB,postavy[j].groupnum==cur_group?RGB888(255,255,255):barvy_skupin[postavy[j].groupnum]);
-                 c[0]=postavy[j].direction+4;
-                 c[1]=0;
-                 outtext(c);
-                 }
-              }
-        }
-     }
-  }
-  ukaz_vsechny_texty_v_mape();
-  zobraz_herni_cas();
-     {
-     char s[50];
-     sprintf(s,texty[153],mglob.mapname,depth);
-     set_aligned_position(5,372,0,2,s);
-     outtext(s);
-     }
-  ukaz_mysku();
-  wait_retrace();
-  showview(0,16,640,360);
+						if (j == POCET_POSTAV) {
+							j = l;
+						}
+
+						if (j != -1) {
+							char c[2];
+
+							position(x + 1, y + 1);
+							set_font(H_FSYMB, postavy[j].groupnum == cur_group ? RGB888(255, 255, 255) : barvy_skupin[postavy[j].groupnum]);
+							c[0] = postavy[j].direction + 4;
+							c[1] = 0;
+							outtext(c);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ukaz_vsechny_texty_v_mape();
+	zobraz_herni_cas();
+
+	char str[50];
+	sprintf(str, texty[153], gameMap.global().mapname, depth);
+	set_aligned_position(5, 372, 0, 2, str);
+	outtext(str);
+
+	ukaz_mysku();
+	wait_retrace();
+	showview(0, 16, 640, 360);
 }
+
 void *map_keyboard(EVENT_MSG *msg,void **usr);
 
-void enable_all_map(void)
-  {
-  int i;
-  for(i=1;i<mapsize;i++) map_coord[i].flags|=MC_MARKED;
-  }
+void enable_all_map(void) {
+	unsigned i;
 
-void disable_all_map(void)
-  {
-  int i;
-  for(i=1;i<mapsize;i++) map_coord[i].flags&=~MC_MARKED;
-  }
+	for (i = 1; i < gameMap.coordCount(); i++) {
+		gameMap.setCoordFlags(i, MC_MARKED);
+	}
+}
+
+void disable_all_map(void) {
+	int i;
+
+	for (i = 1; i < gameMap.coordCount(); i++) {
+		gameMap.clearCoordFlags(i, MC_MARKED);
+	}
+}
 
 
 void unwire_automap()
@@ -804,7 +855,7 @@ void show_automap(char full) {
 
 	ukaz_mysku();
 	showview(0, 376, 640, 480);
-	cur_depth = map_coord[viewsector].layer;
+	cur_depth = gameMap.coord()[viewsector].layer;
 	draw_automap(0, 0);
 	send_message(E_ADD, E_KEYBOARD, map_keyboard);
 	send_message(E_ADD, E_AUTOMAP_REDRAW, map_keyboard);
@@ -824,58 +875,82 @@ static char mob_not_invis(int sector)
   return 1;
   }
 
-void draw_medium_map()
-  {
-  int xr, yr;
-  int xp, yp;
-  int xc,yc,x,y;
-  int j,i,k,layer;
-  //char c=" ";
+void draw_medium_map() {
+	int xr, yr;
+	int xp, yp;
+	int xc, yc, x, y;
+	int j, i, k, layer;
 
-  xp=MEDIUM_MMAP*8+5;
-  yp=MEDIUM_MMAP*8+20;
-  layer=map_coord[viewsector].layer;
-  xr=map_coord[viewsector].x;
-  yr=map_coord[viewsector].y;
-  trans_bar(0,17,MEDIUM_MAP*8+6*2,MEDIUM_MAP*8+4*2,0);
-  for(j=0;j<2;j++)
-     for(i=1;i<mapsize;i++)
-        if (map_coord[i].flags & 1 && map_coord[i].layer==layer)
-           {
-           switch (viewdir & 3)
-              {
-              case 0:xc=map_coord[i].x-xr;yc=map_coord[i].y-yr;break;
-              case 1:yc=-map_coord[i].x+xr;xc=map_coord[i].y-yr;break;
-              case 2:xc=-map_coord[i].x+xr;yc=-map_coord[i].y+yr;break;
-              case 3:yc=map_coord[i].x-xr;xc=-map_coord[i].y+yr;break;
-              }
-           if (xc>=-MEDIUM_MMAP && yc>=-MEDIUM_MMAP && yc<=MEDIUM_MMAP && xc<=MEDIUM_MMAP)
-              {
-              draw_amap_sector(x=xc*8+xp,y=yc*8+yp,i,j,viewdir &3,MEDIUM_MAP_LINE1,MEDIUM_MAP_LINE2);
-              if (j)
-              if (mob_map[i] && mob_not_invis(i) && battle)
-                 {
-                 position(x+1,y+1);set_font(H_FSYMB,AUTOMAP_MOB);
-                 outtext("N");
-                 }
-              if (map_coord[i].flags & MC_PLAYER)
-                 {
-                 int u=-1,z=-1;
-                 for(k=0;k<POCET_POSTAV;k++)
-                    if (postavy[k].sektor==i)
-                       if (postavy[k].groupnum==cur_group) z=k;else u=k;
-                 if (z!=-1) u=z;
-                 if (u!=-1)
-                    {
-                    set_font(H_FSYMB,postavy[u].groupnum==cur_group && !battle?RGB888(255,255,255):barvy_skupin[postavy[u].groupnum]);
-                    position(x+1,y+1);
-                    outtext("M");
-                    }
+	xp = MEDIUM_MMAP * 8 + 5;
+	yp = MEDIUM_MMAP * 8 + 20;
+	layer = gameMap.coord()[viewsector].layer;
+	xr = gameMap.coord()[viewsector].x;
+	yr = gameMap.coord()[viewsector].y;
+	trans_bar(0, 17, MEDIUM_MAP * 8 + 6 * 2, MEDIUM_MAP * 8 + 4 * 2, 0);
 
-                 }
-              }
-           }
-  }
+	for (j = 0; j < 2; j++) {
+		for (i = 1; i < gameMap.coordCount(); i++) {
+			if (gameMap.coord()[i].flags & 1 && gameMap.coord()[i].layer == layer) {
+				switch (viewdir & 3) {
+				case 0:
+					xc = gameMap.coord()[i].x - xr;
+					yc = gameMap.coord()[i].y - yr;
+					break;
+
+				case 1:
+					yc = -gameMap.coord()[i].x + xr;
+					xc = gameMap.coord()[i].y - yr;
+					break;
+
+				case 2:
+					xc = -gameMap.coord()[i].x + xr;
+					yc = -gameMap.coord()[i].y + yr;
+					break;
+
+				case 3:
+					yc = gameMap.coord()[i].x - xr;
+					xc = -gameMap.coord()[i].y + yr;
+					break;
+				}
+
+				if (xc >= -MEDIUM_MMAP && yc >= -MEDIUM_MMAP && yc <= MEDIUM_MMAP && xc <= MEDIUM_MMAP) {
+					draw_amap_sector(x = xc * 8 + xp, y = yc * 8 + yp, i, j, viewdir & 3, MEDIUM_MAP_LINE1, MEDIUM_MAP_LINE2);
+
+					if (j && mob_map[i] && mob_not_invis(i) && battle) {
+						position(x + 1, y + 1);
+						set_font(H_FSYMB, AUTOMAP_MOB);
+						outtext("N");
+					}
+
+					if (gameMap.coord()[i].flags & MC_PLAYER) {
+						int u = -1, z = -1;
+
+						for (k = 0; k < POCET_POSTAV; k++) {
+							if (postavy[k].sektor == i) {
+								if (postavy[k].groupnum == cur_group) {
+									z = k;
+								} else {
+									u=k;
+								}
+							}
+						}
+
+						if (z != -1) {
+							u = z;
+						}
+
+						if (u != -1) {
+							set_font(H_FSYMB, postavy[u].groupnum == cur_group && !battle ? RGB888(255, 255, 255) : barvy_skupin[postavy[u].groupnum]);
+							position(x + 1, y + 1);
+							outtext("M");
+						}
+					
+					}
+				}
+			}
+		}
+	}
+}
 
 static char map_menu_glob_map(int id,int xa,int ya,int xr,int yr) {
 	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
@@ -1077,53 +1152,53 @@ void map_teleport_keyboard(EVENT_MSG *msg,void **usr) {
 }
 
 
-static char path_ok(uint16_t sector)
-  {
-  map_coord[sector].flags|=MC_MARKED;
-  return 1;
-  }
+static char path_ok(uint16_t sector) {
+	gameMap.setCoordFlags(sector, MC_MARKED);
+	return 1;
+}
 
-char map_target_select(int id,int xa,int ya,int xr,int yr)
-  {
-  int x1,y1,x2,y2;
+char map_target_select(int id, int xa, int ya, int xr, int yr) {
+	int x1, y1, x2, y2;
 
-  ya,xa;
-  for (id=1;id<mapsize;id++)
-     if (map_coord[id].flags & (MC_AUTOMAP|MC_DISCLOSED))
-     {
-     x1=(map_coord[id].x*8-map_xr);
-     y1=(map_coord[id].y*8-map_yr);
-     x1+=320;
-     y1+=197-SCREEN_OFFLINE;
-     x2=x1+8;
-     y2=y1+8;
-     if (xr>=x1 && xr<=x2 && yr>=y1 && yr<=y2)
-        {
-        if (!labyrinth_find_path(viewsector,id,SD_PLAY_IMPS,path_ok,NULL)) return 0;
-        last_selected=id;
-        exit_wait=1;
-        return 1;
-        }
-     }
-  return 0;
-  }
+	for (id = 1; id < gameMap.coordCount(); id++) {
+		if (gameMap.coord()[id].flags & (MC_AUTOMAP | MC_DISCLOSED)) {
+			x1 = (gameMap.coord()[id].x * 8 - map_xr);
+			y1 = (gameMap.coord()[id].y * 8 - map_yr);
+			x1 += 320;
+			y1 += 197 - SCREEN_OFFLINE;
+			x2 = x1 + 8;
+			y2 = y1 + 8;
+
+			if (xr >= x1 && xr <= x2 && yr >= y1 && yr <= y2) {
+				if (!labyrinth_find_path(viewsector, id, SD_PLAY_IMPS, path_ok, NULL)) {
+					return 0;
+				}
+
+				last_selected = id;
+				exit_wait = 1;
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 
-int select_teleport_target()
-  {
-  *otevri_zavoru=1;
-  unwire_proc();
-  disable_all_map();
-  labyrinth_find_path(viewsector,65535,SD_PLAY_IMPS,path_ok,NULL);
-  map_coord[viewsector].flags|=MC_MARKED;
-  schovej_mysku();
-  send_message(E_ADD,E_KEYBOARD,map_teleport_keyboard);
-  show_automap(0);
-  change_click_map(clk_teleport_view,CLK_TELEPORT_VIEW);
-  last_selected=0;
-  ukaz_mysku();
-  escape();
-  send_message(E_DONE,E_KEYBOARD,map_teleport_keyboard);
-  disable_all_map();
-  return last_selected;
-  }
+int select_teleport_target() {
+	*otevri_zavoru = 1;
+	unwire_proc();
+	disable_all_map();
+	labyrinth_find_path(viewsector, 65535, SD_PLAY_IMPS, path_ok, NULL);
+	gameMap.setCoordFlags(viewsector, MC_MARKED);
+	schovej_mysku();
+	send_message(E_ADD, E_KEYBOARD, map_teleport_keyboard);
+	show_automap(0);
+	change_click_map(clk_teleport_view, CLK_TELEPORT_VIEW);
+	last_selected = 0;
+	ukaz_mysku();
+	escape();
+	send_message(E_DONE, E_KEYBOARD, map_teleport_keyboard);
+	disable_all_map();
+	return last_selected;
+}
