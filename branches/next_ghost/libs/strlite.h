@@ -38,9 +38,9 @@ public:
 	~StringList(void);
 
 	/// Insert string into first empty space
-	unsigned insert(const char *str, unsigned len = 0);
+	unsigned insert(const char *str);
 	/// Replace string on position idx
-	void replace(unsigned idx, const char *str, unsigned len = 0);
+	void replace(unsigned idx, const char *str);
 	/// Delete selected string
 	void remove(unsigned idx);
 	/// Remove all NULL pointers

@@ -64,8 +64,6 @@
 #define DIS (char *)0x1
 #define START_HANDLE hl_ptr
 
-extern StringList texty_v_mape;
-
 static StringList leaving_places;
 
 char pass_zavora=0;
@@ -212,7 +210,16 @@ static void loadCoord(TMAP_EDIT_INFO &coord, ReadStream &stream) {
 	coord.y = stream.readSint16LE();
 	coord.layer = stream.readSint16LE();
 	coord.flags = stream.readUint16LE();
+}
 
+static void loadMapText(MapText &note, ReadStream &stream) {
+	unsigned size = stream.readUint16LE();
+
+	note.x = stream.readSint32LE();
+	note.y = stream.readSint32LE();
+	note.depth = stream.readSint32LE();
+	note.text = new char[size - 12];
+	stream.read(note.text, size - 12);
 }
 
 long actn_flags(const TSTENA *q,long flags) {
@@ -242,7 +249,8 @@ void check_codelock_log(int sector, unsigned long flags) {
 
 Map::Map() : _coordCount(0), _vykCount(0), _sptPtr(0), _fileName(NULL),
 	_sides(NULL), _sectors(NULL), _vyk(NULL), _coord(NULL), _flagMap(NULL),
-	_items(NULL), _macros(NULL) {
+	_items(NULL), _macros(NULL), _mapNotes(NULL), _notesSize(0),
+	_notesCount(0) {
 
 	memset(&_glob, 0, sizeof(_glob));
 	memset(_spectxtr, 0, sizeof(_spectxtr));
@@ -589,6 +597,10 @@ void Map::close(void) {
 		}
 	}
 
+	for (i = 0; i < _notesSize; i++) {
+		delete[] _mapNotes[i].text;
+	}
+
 	delete[] _fileName;
 	delete[] _sides;
 	delete[] _sectors;
@@ -597,6 +609,7 @@ void Map::close(void) {
 	delete[] _flagMap;
 	delete[] _items;
 	delete[] _macros;
+	delete[] _mapNotes;
 
 	_fileName = NULL;
 	_sides = NULL;
@@ -606,10 +619,13 @@ void Map::close(void) {
 	_flagMap = NULL;
 	_items = NULL;
 	_macros = NULL;
+	_mapNotes = NULL;
 
 	_coordCount = 0;
 	_vykCount = 0;
 	_sptPtr = 0;
+	_notesSize = 0;
+	_notesCount = 0;
 }
 
 void Map::addSpecTexture(uint16_t sector, uint16_t fhandle, uint16_t count, uint16_t repeat, int16_t xpos) {
@@ -840,8 +856,6 @@ void Map::putItem(unsigned vyk, short item) {
 
 	int i;
 
-	fprintf(stderr, "Map::putItem()\n");
-
 	for (i = 0; _vyk[vyk].items[i]; i++);
 	assert(i < 8);
 	_vyk[vyk].items[i++] = item;
@@ -889,9 +903,6 @@ short *Map::popItem(unsigned sector, int picked) {
 
 // FIXME: get rid of temps
 void expand_map_file_name(char *s);
-
-// FIXME: move this function into this file
-void save_map_description(WriteStream &stream);
 
 void save_daction(WriteStream &stream, int count, D_ACTION *ptr);
 
@@ -956,7 +967,19 @@ int Map::save(void) const {
 		file.writeUint8(byte);
 	}
 
-	save_map_description(file);
+	// save automap notes
+	file.writeSint32LE(_notesCount);
+
+	for (i = 0; i < _notesSize; i++) {
+		if (_mapNotes[i].text) {
+			size = strlen(_mapNotes[i].text) + 1;
+			file.writeUint16LE(size + 12);
+			file.writeSint32LE(_mapNotes[i].x);
+			file.writeSint32LE(_mapNotes[i].y);
+			file.writeSint32LE(_mapNotes[i].depth);
+			file.write(_mapNotes[i].text, size);
+		}
+	}
 
 	// save changed sides
 	for (i = 0; i < _coordCount * 4; i++) {
@@ -1151,9 +1174,6 @@ int Map::save(void) const {
 // FIXME: verify and delete
 extern char reset_mobiles;
 
-// FIXME: move this function into this file
-void load_map_description(ReadStream &stream);
-
 // FIXME: rewrite MOB structure to class
 void free_path(int mob);
 void register_mob_path(int mob, uint16_t *path);
@@ -1242,7 +1262,18 @@ int Map::restore(void) {
 		}
 	}
 
-	load_map_description(file);
+	// load automap notes
+	for (i = 0; i < _notesSize; i++) {
+		delete[] _mapNotes[i].text;
+	}
+
+	delete[] _mapNotes;
+	_notesCount = _notesSize = file.readSint32LE();
+	_mapNotes = new MapText[_notesSize];
+
+	for (i = 0; i < _notesCount; i++) {
+		loadMapText(_mapNotes[i], file);
+	}
 
 	for (i = file.readUint16LE(); !file.eos() && i < _coordCount * 4; i = file.readUint16LE()) {
 		loadSide(_sides[i], file);
@@ -1444,7 +1475,18 @@ int Map::automapRestore(const char *filename) {
 		return -2;
 	}
 
-	load_map_description(file);
+	// load automap notes
+	for (i = 0; i < _notesSize; i++) {
+		delete[] _mapNotes[i].text;
+	}
+
+	delete[] _mapNotes;
+	_notesCount = _notesSize = file.readSint32LE();
+	_mapNotes = new MapText[_notesSize];
+
+	for (i = 0; i < _notesCount; i++) {
+		loadMapText(_mapNotes[i], file);
+	}
 
 	for (i = file.readUint16LE(); !file.eos() && i != 0xffff; i = file.readUint16LE()) {
 		loadSide(_sides[i], file);
@@ -1694,6 +1736,54 @@ void Map::moveBoat(unsigned from, unsigned to) {
 	}
 }
 
+void Map::addNote(int x, int y, int depth, const char *str) {
+	unsigned i;
+
+	if (!*str) {
+		return;
+	}
+
+	if (_notesCount >= _notesSize) {
+		MapText *ptr = new MapText[_notesSize + 32];
+
+		memcpy(ptr, _mapNotes, _notesSize * sizeof(MapText));
+		memset(ptr + _notesSize, 0, 32 * sizeof(MapText));
+		delete[] _mapNotes;
+		_mapNotes = ptr;
+		_notesSize += 32;
+	}
+
+	for (i = 0; i < _notesSize && _mapNotes[i].text; i++);
+
+	_mapNotes[i].x = x;
+	_mapNotes[i].y = y;
+	_mapNotes[i].depth = depth;
+	_mapNotes[i].text = new char[strlen(str) + 1];
+	strcpy(_mapNotes[i].text, str);
+	_notesCount++;
+}
+
+void Map::removeNote(unsigned idx) {
+	unsigned i;
+
+	if (idx >= _notesSize || !_mapNotes[idx].text) {
+		return;
+	}
+
+	// free the note
+	delete[] _mapNotes[idx].text;
+	_mapNotes[idx].text = NULL;
+	_notesCount--;
+
+	// pack the array
+	for (i = idx + 1; i < _notesSize; i++) {
+		if (_mapNotes[i].text) {
+			_mapNotes[idx++] = _mapNotes[i];
+			_mapNotes[i].text = NULL;
+		}
+	}
+}
+
 long load_section(FILE *f, void **section, int *sct_type, long *sect_size) {
 	long s;
 	char c[20];
@@ -1931,7 +2021,6 @@ void leave_current_map() {
 	destroy_fly_map();
 	stop_all_fly();
 	save_map = 1;
-	texty_v_mape.clear();
 
 	while (d_action != NULL) {
 		void *p = d_action;

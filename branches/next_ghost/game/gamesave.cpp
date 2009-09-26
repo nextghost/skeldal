@@ -198,54 +198,6 @@ void load_daction(ReadStream &stream) {
 	}
 }
 
-extern StringList texty_v_mape;
-
-void save_map_description(WriteStream &stream) {
-	int count, max;
-	int i;
-
-	max = texty_v_mape.size();
-
-	for (i = 0, count = 0; i < max; i++) {
-		if (texty_v_mape[i] != NULL) {
-			count++;
-		}
-	}
-
-	stream.writeSint32LE(count);
-
-	for (i = 0; i < max; i++) {
-		if (texty_v_mape[i] != NULL) {
-			int len;
-
-			len = strlen(texty_v_mape[i] + 12) + 12 + 1;
-			stream.writeUint16LE(len);
-			stream.write(texty_v_mape[i], len);
-		}
-	}
-}
-
-void load_map_description(ReadStream &stream) {
-	int i, count, len;
-
-	texty_v_mape.clear();
-	count = stream.readSint32LE();
-
-	if (!count) {
-		return;
-	}
-
-	for (i = 0; i < count; i++) {
-		char *s;
-
-		len = stream.readUint16LE();
-		s = new char[len];
-		stream.read(s, len);
-		texty_v_mape.replace(i, s, len - 1);
-		delete[] s;
-	}
-}
-
 //uklada stav mapy pro savegame (neuklada aktualni pozici);
 int save_map_state() {
 	restore_sound_names();

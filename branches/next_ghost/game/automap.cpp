@@ -78,7 +78,6 @@ char enable_glmap=0;
 
 static int map_xr,map_yr;
 static int cur_depth;
-StringList texty_v_mape;
 
 #define BOTT 378
 #define LEFT 520
@@ -166,28 +165,7 @@ char testclip(int x,int y)
  */
 
 void save_text_to_map(int32_t x, int32_t y, int32_t depth, char *text) {
-	char c[512], *d;
-
-	if (!text[0]) {
-		return;
-	}
-
-//	memset(c, 1, sizeof(c));
-	strcpy(c + 3 * sizeof(int32_t), text);
-
-/*
-	if (!texty_v_mape) {
-		texty_v_mape = create_list(8);
-	}
-*/
-
-//	d = texty_v_mape[str_add(&texty_v_mape, c)];
-	x = (x - 320) + map_xr;
-	y = (y - 197) + map_yr;
-	memcpy(c, &x, sizeof(int32_t));
-	memcpy(c + sizeof(int32_t), &y, sizeof(int32_t));
-	memcpy(c + 2 * sizeof(int32_t), &depth, sizeof(int32_t));
-	texty_v_mape.insert(c, strlen(text) + 3 * sizeof(int32_t) + 1);
+	gameMap.addNote(x - 320 + map_xr, y - 197 + map_yr, depth, text);
 }
 
 static char check_for_layer(int layer) {
@@ -204,37 +182,33 @@ static char check_for_layer(int layer) {
 }
 
 void ukaz_vsechny_texty_v_mape() {
-	int32_t x, y, d;
-	int i, cn;
-	const char *c;
+	int x, y;
+	int i, j, cn;
+	const MapText *ptr;
 
-	if (!texty_v_mape.count()) {
+	if (!gameMap.notesCount()) {
 		return;
 	}
 
 	set_font(H_FLITT5, NOSHADOW(0));
-	cn = texty_v_mape.size();
+	cn = gameMap.notesSize();
+	ptr = gameMap.notes();
 
 	for(i = 0; i < cn; i++) {
-		c = texty_v_mape[i];
-		if (c) {
-			memcpy(&x, c, sizeof(int32_t));
-			memcpy(&y, c + sizeof(int32_t), sizeof(int32_t));
-			memcpy(&d, c + 2*sizeof(int32_t), sizeof(int32_t));
-			c += 3*sizeof(int32_t);
-			x = x - map_xr;
-			y = y - map_yr;
+		if (ptr[i].text) {
+			x = ptr[i].x - map_xr;
+			y = ptr[i].y - map_yr;
 			x += 320;
 			y += 197;
 
-			if (d == cur_depth) {
+			if (ptr[i].depth == cur_depth) {
 				if (testclip(x, y)) {
 					int h;
 					char *d, *e;
 
-					h = strlen(c);
+					h = strlen(ptr[i].text);
 					d = new char[h + 1];
-					strcpy(d, c);
+					strcpy(d, ptr[i].text);
 					e = d + h;
 
 					while((h = text_width(d) + x) > 640) {
@@ -250,16 +224,16 @@ void ukaz_vsechny_texty_v_mape() {
 					position(x, y);
 					outtext(d);
 					delete[] d;
-				} else if(x < 8 && x + text_width(c) > 10 && y > 16 && y < 376) {
+				} else if(x < 8 && x + text_width(ptr[i].text) > 10 && y > 16 && y < 376) {
 					char cd[2] = " ";
 
-					while (x < 10 && *c) {
-						cd[0] = *c++;
+					for (j = 0; x < 10 && ptr[i].text[j]; j++) {
+						cd[0] = ptr[i].text[j];
 						x += text_width(cd);
 					}
 
 					position(x, y);
-					outtext(c);
+					outtext(ptr[i].text + j);
 				}
 			}
 		}
@@ -370,75 +344,82 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 	}
 }
 
-int hledej_poznamku(int x,int y,int depth)
-  {
-  int i,count;
+int hledej_poznamku(int x, int y, int depth) {
+	int i, count;
+	const MapText *ptr;
 
-  x=(x-320)+map_xr;
-  y=(y-197)+map_yr;
-  if (!texty_v_mape.count()) return -1;
-  count = texty_v_mape.size();
-  set_font(H_FLITT5,NOSHADOW(0));
-  for(i=0;i<count;i++)
-     if (texty_v_mape[i]!=NULL)
-        {
-        int xa,ya,xb,yb,dep;
-        int xas,yas,xbs,ybs,xs,ys;
+	x = (x - 320) + map_xr;
+	y = (y - 197) + map_yr;
 
-        xa=*(int *)(texty_v_mape[i]);
-        ya=*(int *)(texty_v_mape[i]+4);
-        dep=*(int *)(texty_v_mape[i]+8);
-        xs=text_width(texty_v_mape[i]+12);
-        ys=text_height(texty_v_mape[i]+12);
-        xb=xa+xs;
-        yb=ya+ys;
-        if (x>=xa && y>=ya && x<=xb && y<=yb && dep==depth)
-           {
-           xas=(xa+320)-map_xr;
-           yas=(ya+197)-map_yr;
-           xbs=xas+xs;
-           ybs=yas+ys;
-           if (xas>0 && xbs<640 && yas>16 && ybs<360+16) return i;
-           return -2;
-           }
-        }
-  return -1;
-  }
+	if (!gameMap.notesCount()) {
+		return -1;
+	}
 
-char psani_poznamek(int id,int xa,int ya,int xr,int yr)
-  {
-  xa;ya;xr;yr;
+	count = gameMap.notesSize();
+	ptr = gameMap.notes();
+	set_font(H_FLITT5, NOSHADOW(0));
 
-  if (noarrows) return 1;
-  if ((id=hledej_poznamku(xa,ya,cur_depth))==-1)
-     {
-     xa&=~7;xa+=2;
-     ya&=~7;ya-=4;
-     send_message(E_ADD,E_KEYBOARD,psani_poznamek_event,xa,ya,"");
-     send_message(E_ADD,E_MOUSE,psani_poznamek_event,xa,ya,"");
-     }
-  else if (id!=-2)
-     {
-     char *s;
+	for (i = 0; i < count; i++) {
+		if (ptr[i].text) {
+			int xb, yb;
+			int xas, yas, xbs, ybs, xs, ys;
 
-     xa=*(int *)(texty_v_mape[id]);
-     ya=*(int *)(texty_v_mape[id]+4);
-     xa=(xa+320)-map_xr;
-     ya=(ya+197)-map_yr;
-     s=(char *)getmem(strlen(texty_v_mape[id]+12)+1);
-     strcpy(s,texty_v_mape[id]+12);
-//     str_remove(&texty_v_mape,id);
-//     str_delfreelines(&texty_v_mape);
-     texty_v_mape.remove(id);
-     texty_v_mape.pack();
-     send_message(E_AUTOMAP_REDRAW);
-     for(xr=0;xr<10;xr++) do_events();
-     send_message(E_ADD,E_KEYBOARD,psani_poznamek_event,xa,ya,s);
-     send_message(E_ADD,E_MOUSE,psani_poznamek_event,xa,ya,s);
-     free(s);
-     }
-  return 0;
-  }
+			xs = text_width(ptr[i].text);
+			ys = text_height(ptr[i].text);
+			xb = ptr[i].x + xs;
+			yb = ptr[i].y + ys;
+
+			if (x >= ptr[i].x && y >= ptr[i].y && x <= xb && y <= yb && ptr[i].depth == depth) {
+				xas = (ptr[i].x + 320) - map_xr;
+				yas = (ptr[i].y + 197) - map_yr;
+				xbs = xas + xs;
+				ybs = yas + ys;
+
+				if (xas > 0 && xbs < 640 && yas > 16 && ybs < 360 + 16) {
+					return i;
+				}
+
+				return -2;
+			}
+		}
+	}
+	return -1;
+}
+
+char psani_poznamek(int id, int xa, int ya, int xr, int yr) {
+	if (noarrows) {
+		return 1;
+	}
+
+	if ((id = hledej_poznamku(xa, ya, cur_depth)) == -1) {
+		xa &= ~7;
+		xa += 2;
+		ya &= ~7;
+		ya -= 4;
+		send_message(E_ADD, E_KEYBOARD, psani_poznamek_event, xa, ya, "");
+		send_message(E_ADD, E_MOUSE, psani_poznamek_event, xa, ya, "");
+	} else if (id != -2) {
+		const MapText *ptr = gameMap.notes() + id;
+		char *s;
+
+		xa = (ptr->x + 320) - map_xr;
+		ya = (ptr->y + 197) - map_yr;
+		s = new char[strlen(ptr->text) + 1];
+		strcpy(s, ptr->text);
+		gameMap.removeNote(id);
+		send_message(E_AUTOMAP_REDRAW);
+
+		for (xr = 0; xr < 10; xr++) {
+			do_events();
+		}
+
+		send_message(E_ADD, E_KEYBOARD, psani_poznamek_event, xa, ya, s);
+		send_message(E_ADD, E_MOUSE, psani_poznamek_event, xa, ya, s);
+		delete[] s;
+	}
+
+	return 0;
+}
 
 char shift_map(int id,int xa,int ya,int xr,int yr)
   {

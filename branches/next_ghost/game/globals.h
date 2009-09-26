@@ -704,13 +704,18 @@ typedef struct spectxtr
   int8_t repeat;
   }SPECTXTR;
 
+struct MapText {
+	int x, y, depth;
+	char *text;
+};
+
 #define MAX_SPECTXTRS 64
 typedef SPECTXTR SPECTXT_ARR[MAX_SPECTXTRS];
 
 // TODO: This class is only meant for memory management, it should be improved later
 class Map {
 private:
-	int _coordCount, _vykCount, _sptPtr;
+	int _coordCount, _vykCount, _sptPtr, _notesSize, _notesCount;
 	char *_fileName;
 	MAPGLOBAL _glob;
 	TSTENA *_sides;
@@ -721,6 +726,7 @@ private:
 	short **_items;
 	SPECTXT_ARR _spectxtr;
 	unsigned char **_macros;
+	MapText *_mapNotes;
 
 	static const int _floorPanels[8];
 
@@ -740,9 +746,12 @@ public:
 	const SPECTXTR *spectxtr(void) const { return _spectxtr; }
 	short * const *items(void) const { return _items; }
 	unsigned char * const *macros(void) const { return _macros; }
+	const MapText *notes(void) const { return _mapNotes; }
 
 	int coordCount(void) const { return _coordCount; }
 	int vykCount(void) const { return _vykCount; }
+	int notesSize(void) const { return _notesSize; }
+	int notesCount(void) const { return _notesCount; }
 
 	int load(const char *filename);
 	void close(void);
@@ -781,6 +790,8 @@ public:
 	void buttonDeactivate(unsigned sector);
 	int doAction(int action, unsigned sector, int dir, int flags, int nosend);
 	void moveBoat(unsigned from, unsigned to);
+	void addNote(int x, int y, int depth, const char *str);
+	void removeNote(unsigned idx);
 };
 
 extern Map gameMap;

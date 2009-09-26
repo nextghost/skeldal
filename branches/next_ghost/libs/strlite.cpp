@@ -40,16 +40,16 @@ StringList::~StringList(void) {
 	delete[] _data;
 }
 
-unsigned StringList::insert(const char *str, unsigned len) {
+unsigned StringList::insert(const char *str) {
 	unsigned i;
 
 	for (i = 0; i < _size && _data[i]; i++);
 
-	replace(i, str, len);
+	replace(i, str);
 	return i;
 }
 
-void StringList::replace(unsigned idx, const char *str, unsigned len) {
+void StringList::replace(unsigned idx, const char *str) {
 	if (idx >= _size) {
 		char **tmp = new char*[idx + _size];
 		memcpy(tmp, _data, _size * sizeof(char*));
@@ -65,14 +65,8 @@ void StringList::replace(unsigned idx, const char *str, unsigned len) {
 		_count++;
 	}
 
-	if (len) {
-		_data[idx] = new char[len + 1];
-		memcpy(_data[idx], str, len * sizeof(char));
-		_data[idx][len] = '\0';
-	} else {
-		_data[idx] = new char[strlen(str) + 1];
-		strcpy(_data[idx], str);
-	}
+	_data[idx] = new char[strlen(str) + 1];
+	strcpy(_data[idx], str);
 }
 
 void StringList::remove(unsigned idx) {
