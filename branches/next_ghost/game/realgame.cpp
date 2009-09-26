@@ -1248,7 +1248,6 @@ int Map::restore(void) {
 
 		for (i = 0; i < _coordCount; i++) {
 			if ((i & 0x7) == 0) {
-				size++;
 				tmp = file.readUint8();
 			}
 
@@ -1436,6 +1435,7 @@ void Map::quickRestore(void) {
 	}
 }
 
+// FIXME: replace this method with partial load in another instance of Map
 int Map::automapRestore(const char *filename) {
 	char buf[PATH_MAX];
 	int i;
@@ -1445,7 +1445,7 @@ int Map::automapRestore(const char *filename) {
 
 	partialLoad(filename);
 
-	strcpy(buf, _fileName);
+	strcpy(buf, filename);
 	expand_map_file_name(buf);
 	file.open(buf);
 
@@ -1455,24 +1455,68 @@ int Map::automapRestore(const char *filename) {
 
 	i = file.readSint32LE();
 
-	if (i != _coordCount) {
-		return -2;
-	}
-
 	SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)", level_fname, "START");
 
-	for (i = 0; i < _coordCount; i++) {
-		if (i & 0x7 == 0) {
-			tmp = file.readUint8();
+	if (!i) {
+		i = file.readSint32LE();	// game version
+
+		if (file.eos() || i > STATE_CUR_VER) {
+			return -2;
 		}
 
-		if ((tmp >> (i & 0x7)) & 0x1) {
-			_coord[i].flags |= MC_AUTOMAP;
-		}
-	}
+		i = file.readSint32LE();	// map size
 
-	if (file.eos()) {
+		if (file.eos() || i != _coordCount) {
+			return -2;
+		}
+
+		file.readUint32LE();	// size of automap bitmap, ignore
+
+		for (i = 0; i < _coordCount; i++) {
+			if ((i & 0x7) == 0) {
+				tmp = file.readUint8();
+			}
+
+			if ((tmp >> (i & 0x7)) & 0x1) {
+				_coord[i].flags |= MC_AUTOMAP;
+			}
+		}
+
+		if (file.eos()) {
+			return -2;
+		}
+
+		for (i = 0; i < _coordCount; i++) {
+			if ((i & 0x7) == 0) {
+				tmp = file.readUint8();
+			}
+
+			if ((tmp >> (i & 0x7)) & 0x1) {
+				_coord[i].flags |= MC_DISCLOSED;
+			}
+		}
+
+		if (file.eos()) {
+			return -2;
+		}
+	} else if (i != _coordCount) {
 		return -2;
+	} else {
+		i = file.readUint32LE();	// size of automap bitmap, ignore
+
+		for (i = 0; i < _coordCount; i++) {
+			if ((i & 0x7) == 0) {
+				tmp = file.readUint8();
+			}
+
+			if ((tmp >> (i & 0x7)) & 0x1) {
+				_coord[i].flags |= MC_AUTOMAP;
+			}
+		}
+
+		if (file.eos()) {
+			return -2;
+		}
 	}
 
 	// load automap notes
