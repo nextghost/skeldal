@@ -1092,26 +1092,24 @@ int weigth_defect(THUMAN *p);
 #define SHP_TYPE 0x80     //objekt je popis typu
 #define SHP_NOEDIT 0x40   //objekt se nenahrava do editoru.
 
-typedef struct tproduct
-  {
-  int16_t item;          //cislo predmetu ktere nabizi
-  int32_t cena;           //cena za jeden
-  int16_t trade_flags;    //vlajky
-  int32_t pocet;           //pocet predmetu na sklade
-  int32_t max_pocet;
-  }TPRODUCT;
+typedef struct tproduct {
+	int16_t item;          //cislo predmetu ktere nabizi
+	int32_t cena;           //cena za jeden
+	int16_t trade_flags;    //vlajky
+	int32_t pocet;           //pocet predmetu na sklade
+	int32_t max_pocet;
+} TPRODUCT;
 
-typedef struct tshop
-  {
-  char keeper[16];
-  char picture[13];
-  int32_t koef;
-  int32_t products;
-  int32_t shop_id;
-  int32_t list_size;
-  int16_t spec_max;     //maximalni pocet specialnich predmetu
-  TPRODUCT *list;
-  }TSHOP;
+typedef struct tshop {
+	char keeper[16];
+	char picture[13];
+	int32_t koef;
+	int32_t products;
+	int32_t shop_id;
+	int32_t list_size;
+	int16_t spec_max;     //maximalni pocet specialnich predmetu
+	TPRODUCT *list;
+} TSHOP;
 
 
 void enter_shop(int shopid);

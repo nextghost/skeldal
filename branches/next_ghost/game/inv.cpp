@@ -78,10 +78,8 @@ int item_in_cursor=0;
 void (*inv_redraw)();
 
 TSHOP *cur_shop;
-TSHOP **shop_list=NULL;int max_shops=0; //shop_list=prima spojeni s obchody
-void *shop_hacek=NULL; //hacek za ktery visi cely shop strom (free(shop_hacek) - odalokuje shopy)
-                       //hacek lze ulozit do savegame -> ulozi se cely stav obchodu
-long shop_hacek_size=0; //toto je jeho delka
+TSHOP *shop_list = NULL;
+int max_shops = 0; //shop_list=prima spojeni s obchody
 
 #define ico_extract(icnnum) (((char*)ablock(ikon_libs+(icnnum)/IT_LIB_SIZE))+IT_ICONE_SIZE*((icnnum)%IT_LIB_SIZE))
 
@@ -2631,51 +2629,60 @@ static void shop_mouse_event(EVENT_MSG *msg, void **unused) {
 	}
 }
 
-static void rebuild_shops(void)
-  {
-  char *c=(char *)shop_hacek;
-  int i;
+static void loadShop(TSHOP &shop, ReadStream &stream) {
+	int i;
 
-  SEND_LOG("(SHOP) Rebuilding shops....",0,0);
-  if (shop_list!=NULL) free(shop_list);
-  shop_list=NewArr(TSHOP *,max_shops);
-  c+=4;
-  for(i=0;i<max_shops;i++)
-     {
-     TSHOP *p;
+	stream.read(shop.keeper, 16);
+	stream.read(shop.picture, 13);
+	shop.koef = stream.readSint32LE();
+	shop.products = stream.readSint32LE();
+	shop.shop_id = stream.readSint32LE();
+	shop.list_size = stream.readSint32LE();
+	shop.spec_max = stream.readSint16LE();
+	stream.readUint32LE();	// pointer, ignore
 
-     shop_list[i]=(TSHOP *)c;
-     p=shop_list[i];
-     c+=sizeof(TSHOP);
-     p->list=(TPRODUCT *)c;
-     c+=p->products*sizeof(TPRODUCT);
-     SEND_LOG("(SHOP) Shop found: '%s'",p->keeper,0);
-     }
-  }
+	shop.list = new TPRODUCT[shop.products];
 
-void load_shops(void)
-  {
-  char *c;
-  int *d;
-  if (!test_file_exist(SR_MAP,SHOP_NAME))
-     {
-     shop_hacek=NULL;
-     shop_list=NULL;
-     return;
-     }
-  shop_hacek = afile(SHOP_NAME,SR_MAP,&shop_hacek_size);
-  d = (int*)shop_hacek;
-  c = (char*)shop_hacek;
-  max_shops=*d;
-  if (!max_shops)
-     {
-     free(shop_hacek);
-     shop_hacek=NULL;
-     shop_list=NULL;
-     return;
-     }
-  rebuild_shops();
-  }
+	for (i = 0; i < shop.products; i++) {
+		shop.list[i].item = stream.readSint16LE();
+		shop.list[i].cena = stream.readSint32LE();
+		shop.list[i].trade_flags = stream.readSint16LE();
+		shop.list[i].pocet = stream.readSint32LE();
+		shop.list[i].max_pocet = stream.readSint32LE();
+	}
+}
+
+void load_shops(void) {
+	void *ptr;
+	long size, i;
+
+	for (i = 0; i < max_shops; i++) {
+		delete[] shop_list[i].list;
+	}
+
+	delete[] shop_list;
+
+	if (!test_file_exist(SR_MAP, SHOP_NAME)) {
+		shop_list = NULL;
+		return;
+	}
+
+	ptr = afile(SHOP_NAME, SR_MAP, &size);
+	MemoryReadStream stream(ptr, size);
+	free(ptr);
+	max_shops = stream.readSint32LE();
+
+	if (!max_shops) {
+		shop_list = NULL;
+		return;
+	}
+
+	shop_list = new TSHOP[max_shops];
+
+	for (i = 0; i < max_shops; i++) {
+		loadShop(shop_list[i], stream);
+	}
+}
 
 static void rebuild_keepers_items()
   {
@@ -3062,34 +3069,56 @@ void wire_shop()
   update_mysky();
   }
 
-void enter_shop(int shopid)
-  {
-  int i;
+void enter_shop(int shopid) {
+	int i;
 
-  SEND_LOG("(SHOP) Entering shop...",0,0);
-  for(i=0;i<POCET_POSTAV;i++) if (isdemon(postavy+i)) unaffect_demon(i);
-  for(i=0;i<POCET_POSTAV && postavy[i].sektor!=viewsector;i++);
-  if (i==POCET_POSTAV) return; //nesmysl, nemelo by nikdy nastat.
-  if (battle) return;
-  select_player=i;
-  inv_view_mode=0;
-  human_selected=postavy+i;
-  top_item=0;cur_owner=(picked_item!=NULL);
-  for(i=0;i<max_shops;i++) if (shop_list[i]->shop_id==shopid) break;
-  if (i==max_shops) return;
-  unwire_proc();
-  cur_shop=shop_list[i];
-  curcolor=0;
-  bar(0,0,639,479);
-  rebuild_keepers_items();
-  bott_draw(1);
-  shop_sector=viewsector;
-  wire_shop();
-  cancel_render=1;
-  cancel_pass=1;
-  norefresh=1;
-  cur_mode=MD_SHOP;
-  }
+	SEND_LOG("(SHOP) Entering shop...", 0, 0);
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		if (isdemon(postavy + i)) {
+			unaffect_demon(i);
+		}
+	}
+
+	for (i = 0; i < POCET_POSTAV && postavy[i].sektor != viewsector; i++);
+
+	if (i == POCET_POSTAV) {
+		return; //nesmysl, nemelo by nikdy nastat.
+	}
+
+	if (battle) {
+		return;
+	}
+
+	select_player = i;
+	inv_view_mode = 0;
+	human_selected = postavy + i;
+	top_item = 0;
+	cur_owner = (picked_item != NULL);
+
+	for (i = 0; i < max_shops; i++) {
+		if (shop_list[i].shop_id == shopid) {
+			break;
+		}
+	}
+
+	if (i == max_shops) {
+		return;
+	}
+
+	unwire_proc();
+	cur_shop = shop_list + i;
+	curcolor = 0;
+	bar(0, 0, 639, 479);
+	rebuild_keepers_items();
+	bott_draw(1);
+	shop_sector = viewsector;
+	wire_shop();
+	cancel_render = 1;
+	cancel_pass = 1;
+	norefresh = 1;
+	cur_mode = MD_SHOP;
+}
 
   uint16_t *xs;
 
@@ -3183,30 +3212,59 @@ static void reroll_shop(TSHOP *p)
      }
   }
 
-void reroll_all_shops()
-  {
-  int i;
-  for(i=0;i<max_shops;i++) reroll_shop(shop_list[i]);
-  }
+void reroll_all_shops() {
+	int i;
 
-char save_shops()
-  {
-  FILE *f;
-  char *c;
-  int res=0;
+	for (i = 0; i < max_shops; i++) {
+		reroll_shop(shop_list + i);
+	}
+}
 
-  SEND_LOG("(SHOP) Saving shops...",0,0);
-  if (max_shops==0 || shop_hacek==NULL) return 0;
-//  concat(c,pathtable[SR_TEMP],_SHOP_ST);
-//  f=fopen(c,"wb");
-	f = fopen(Sys_FullPath(SR_TEMP, _SHOP_ST), "wb");
-  if (f==NULL) return 1;
-  fwrite(&max_shops,1,sizeof(max_shops),f);
-  fwrite(&shop_hacek_size,1,sizeof(shop_hacek_size),f);
-  res=(fwrite(shop_hacek,1,shop_hacek_size,f)!=(unsigned)shop_hacek_size);
-  fclose(f);
-  return res;
-  }
+char save_shops() {
+	int i, j, size;
+	WriteFile file;
+
+	SEND_LOG("(SHOP) Saving shops...", 0, 0);
+
+	if (!max_shops) {
+		return 0;
+	}
+
+	file.open(Sys_FullPath(SR_TEMP, _SHOP_ST));
+
+	if (!file.isOpen()) {
+		return 1;
+	}
+
+	for (i = 0, size = 0; i < max_shops; i++) {
+		size += shop_list[i].products;
+	}
+
+	file.writeSint32LE(max_shops);
+	file.writeSint32LE(size * 16 + max_shops * 51 + 4);
+	file.writeSint32LE(max_shops);
+
+	for (i = 0; i < max_shops; i++) {
+		file.write(shop_list[i].keeper, 16);
+		file.write(shop_list[i].picture, 13);
+		file.writeSint32LE(shop_list[i].koef);
+		file.writeSint32LE(shop_list[i].products);
+		file.writeSint32LE(shop_list[i].shop_id);
+		file.writeSint32LE(shop_list[i].list_size);
+		file.writeSint16LE(shop_list[i].spec_max);
+		file.writeUint32LE(shop_list[i].list != NULL);
+
+		for (j = 0; j < shop_list[i].products; j++) {
+			file.writeSint16LE(shop_list[i].list[j].item);
+			file.writeSint32LE(shop_list[i].list[j].cena);
+			file.writeSint16LE(shop_list[i].list[j].trade_flags);
+			file.writeSint32LE(shop_list[i].list[j].pocet);
+			file.writeSint32LE(shop_list[i].list[j].max_pocet);
+		}
+	}
+
+	return 0;
+}
 
 
 char load_saved_shops() {
@@ -3222,14 +3280,17 @@ char load_saved_shops() {
 	}
 
 	i = file.readSint32LE();
-	j = file.readSint32LE();
+	file.readSint32LE();	// size of shop data, ignore
+	file.readSint32LE();	// should be the same as i, ignore
 
-	if (i != max_shops || j != shop_hacek_size) {
+	if (i != max_shops) {
 		return 0;
 	}
 
-	// FIXME: rewrite properly
-	res = file.read(shop_hacek, shop_hacek_size) != (unsigned)shop_hacek_size;
-	rebuild_shops();
+	for (i = 0; i < max_shops; i++) {
+		delete[] shop_list[i].list;
+		loadShop(shop_list[i], file);
+	}
+
 	return res;
 }
