@@ -3209,27 +3209,27 @@ char save_shops()
   }
 
 
-char load_saved_shops()
-  {
-  FILE *f;
-  char *c;
-  int res=0;
-  int i=0,j=0;
+char load_saved_shops() {
+	char *c;
+	int res = 0;
+	int i = 0, j = 0;
+	File file(Sys_FullPath(SR_TEMP, _SHOP_ST));
 
-  SEND_LOG("(SHOP) Loading saved shops...",0,0);
-//  concat(c,pathtable[SR_TEMP],_SHOP_ST);
-//  f=fopen(c,"rb");
-	f = fopen(Sys_FullPath(SR_TEMP, _SHOP_ST), "rb");
-  if (f==NULL) return 0;
-  fread(&i,1,sizeof(max_shops),f);
-  fread(&j,1,sizeof(shop_hacek_size),f);
-  if (i!=max_shops || j!=shop_hacek_size)
-     {
-     fclose(f);
-     return 0;
-     }
-  res=(fread(shop_hacek,1,shop_hacek_size,f)!=(unsigned)shop_hacek_size);
-  fclose(f);
-  rebuild_shops();
-  return res;
-  }
+	SEND_LOG("(SHOP) Loading saved shops...", 0, 0);
+
+	if (!file.isOpen()) {
+		return 0;
+	}
+
+	i = file.readSint32LE();
+	j = file.readSint32LE();
+
+	if (i != max_shops || j != shop_hacek_size) {
+		return 0;
+	}
+
+	// FIXME: rewrite properly
+	res = file.read(shop_hacek, shop_hacek_size) != (unsigned)shop_hacek_size;
+	rebuild_shops();
+	return res;
+}
