@@ -185,16 +185,66 @@ static void items_15to16_correct(void **p,long *s)
     }
   }
 
+static void loadItem(TITEM &item, ReadStream &stream) {
+	int i;
+
+	stream.read(item.jmeno, 32);
+	stream.read(item.popis, 32);
+
+	for (i = 0; i < 24; i++) {
+		item.zmeny[i] = stream.readSint16LE();
+	}
+
+	item.podminky[0] = stream.readSint16LE();
+	item.podminky[1] = stream.readSint16LE();
+	item.podminky[2] = stream.readSint16LE();
+	item.podminky[3] = stream.readSint16LE();
+	item.hmotnost = stream.readSint16LE();
+	item.nosnost = stream.readSint16LE();
+	item.druh = stream.readSint16LE();
+	item.umisteni = stream.readSint16LE();
+	item.flags = stream.readUint16LE();
+	item.spell = stream.readSint16LE();
+	item.magie = stream.readSint16LE();
+	item.sound_handle = stream.readSint16LE();
+	item.use_event = stream.readSint16LE();
+	item.ikona = stream.readUint16LE();
+	item.vzhled = stream.readUint16LE();
+	item.user_value = stream.readSint16LE();
+	item.keynum = stream.readSint16LE();
+	item.polohy[0][0] = stream.readSint16LE();
+	item.polohy[0][1] = stream.readSint16LE();
+	item.polohy[1][0] = stream.readSint16LE();
+	item.polohy[1][1] = stream.readSint16LE();
+	item.typ_zbrane = stream.readSint8();
+	item.unused = stream.readSint8();
+	item.sound = stream.readSint16LE();
+
+	for (i = 0; i < 16; i++) {
+		item.v_letu[i] = stream.readSint16LE();
+	}
+
+	item.cena = stream.readSint32LE();
+	item.weapon_attack = stream.readSint8();
+	item.hitpos = stream.readSint8();
+	item.shiftup = stream.readUint8();
+	item.byteres = stream.readSint8();
+
+	for (i = 0; i < 12; i++) {
+		item.rezerva[i] = stream.readSint16LE();
+	}
+}
+
+#define BLOCK_HEADER_SIZE 8
+
 void load_items() {
-	char *name;
-	FILE *f;
+	char *name, blockHeader[BLOCK_HEADER_SIZE];
 	THANDLE_DATA *h;
 	int sect, i, hs;
 	long size;
-	void *p;
 	MemoryReadStream *stream;
+	File file;
 
-	f = NULL;
 	i = 0;
 	ikon_libs = hl_ptr;
 	free(glob_items);
@@ -212,78 +262,73 @@ void load_items() {
 	} while (1);
 
 	name = find_map_path(ITEM_FILE);
-	f = fopen(name, "rb");
+	file.open(name);
 	free(name);
 
-	if (f == NULL) {
+	if (!file.isOpen()) {
 		closemode();
 		Sys_ErrorBox("Selhalo otevreni souboru ITEMS.DAT. Zkotroluj zda vubec existuje.");
 		exit(0);
 	}
 
 	do {
-		load_section(f, &p, &sect, &size);
+		file.read(blockHeader, BLOCK_HEADER_SIZE);
+
+		if (strcmp(blockHeader, "<BLOCK>")) {
+			return;
+		}
+
+		sect = file.readUint32LE();
+		size = file.readUint32LE();
+		file.readUint32LE();	// offset of next block, ignore
+		stream = file.readStream(size);
 
 		switch (sect) {
 		case 1:
 		case 4:
 			face_arr[sect - 1] = hl_ptr - 1;
-			stream = new MemoryReadStream(p, size);
 			prepare_graphics(&hl_ptr, stream, pcx_fade_decomp, SR_ITEMS);
-			free(p);
-			delete stream;
 			break;
 
+		// FIXME: what's the difference from the previous case? merge?
 		case 2:
 		case 3:
 			face_arr[sect - 1] = hl_ptr - 1;
-			stream = new MemoryReadStream(p, size);
 			prepare_graphics(&hl_ptr, stream, pcx_fade_decomp, SR_ITEMS);
-			free(p);
-			delete stream;
 			break;
 
 		case 5:
 			face_arr[sect - 1] = hl_ptr - 1;
-			stream = new MemoryReadStream(p, size);
 			prepare_graphics(&hl_ptr, stream, NULL, SR_ITEMS);
-			free(p);
-			delete stream;
 			break;
 
 		case SV_ITLIST:
-			glob_items = (TITEM*)p;
-			it_count_orgn = item_count = size / sizeof(TITEM);
+			size /= 222;
+			it_count_orgn = size;
+			glob_items = new TITEM[size];
+
+			for (i = 0; i < size; i++) {
+				loadItem(glob_items[i], *stream);
+
+				if (glob_items[i].druh == TYP_SPECIALNI) {
+					if (glob_items[i].user_value == TSP_WATER_BREATH) {
+						water_breath = i;
+					} else if (glob_items[i].user_value == TSP_FLUTE) {
+						flute_item = i;
+					}
+				}
+			}
 			break;
 
 		case SV_SNDLIST:
 			hs = hl_ptr;
-			stream = new MemoryReadStream(p, size);
 			prepare_graphics(&hl_ptr, stream, wav_load, SR_ZVUKY);
 			sound_handle = hs - 1;
-			free(p);
-			delete stream;
-			break;
-
-		default:
-			free(p);
 			break;
 		}
-	} while (sect!=SV_END);
 
-	fclose(f);
-
-	TITEM *t;
-
-	for (i = 0, t = glob_items; i < it_count_orgn; i++, t++) {
-		if (t->druh == TYP_SPECIALNI) {
-			if (t->user_value == TSP_WATER_BREATH) {
-				water_breath = i;
-			} else if (t->user_value == TSP_FLUTE) {
-				flute_item = i;
-			}
-		}
-	}
+		delete stream;
+	} while (sect != SV_END);
 }
 
 static short expand_itemlist(void)

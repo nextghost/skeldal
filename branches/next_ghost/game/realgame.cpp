@@ -71,7 +71,6 @@ char pass_zavora=0;
 Map gameMap;
 StringList level_texts;
 int num_ofsets[10]; //tabulka ofsetu pro cisla sten k levelu
-char sekceid[]="<BLOCK>";
 char datapath;
 D_ACTION *d_action={NULL};
 int end_ptr;
@@ -1827,27 +1826,6 @@ void Map::removeNote(unsigned idx) {
 		}
 	}
 }
-
-long load_section(FILE *f, void **section, int *sct_type, long *sect_size) {
-	long s;
-	char c[20];
-	size_t stfu;
-
-	*section = NULL;
-	stfu = fread(c, 1, sizeof(sekceid), f);
-
-	if (strcmp(c, sekceid)) {
-		return -1;
-	}
-
-	stfu = fread(sct_type, 1, sizeof(*sct_type), f);
-	stfu = fread(sect_size, 1, sizeof(*sect_size), f);
-	stfu = fread(&s, 1, sizeof(s), f);
-	*section = getmem(*sect_size);
-	s = fread(*section, 1, *sect_size, f);
-	return s;
-}
-
 
 void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, long*), int cls) {
 	const char *ptr;

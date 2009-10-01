@@ -819,7 +819,6 @@ void step_zoom(char smer);
 void turn_zoom(int smer);
 void a_touch(int sector,int dir);
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay);
-long load_section(FILE *f,void **section, int *sct_type,long *sect_size);
 void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, long*), int cls);
 void show_automap(char full);
 void draw_medium_map();
@@ -970,32 +969,31 @@ void draw_placed_items_normal(int celx,int cely,int sect,int side);
 
 #define MAX_SLEEP 4320
 
-typedef struct titem
-  {
-  char jmeno[32];   //32        Jmeno predmetu
-  char popis[32];   //64
-  int16_t zmeny[24];  //112       Tabulka, jakych zmen ma na hracovy vlastnosti
-  int16_t podminky[4];//120       Tabulka, jake vlastnosti musi mit hrac k pouziti predmetu
-  int16_t hmotnost,nosnost,druh; //126  druh = Typ predmetu
-  int16_t umisteni;              //128  Kam se predmet umisti?
-  uint16_t flags;                  //130  ruzne vlajky
-  int16_t spell,magie,sound_handle;//136  specialni kouzla / rukojet zvuku
-  int16_t use_event;             //140  specialni udalost
-  uint16_t ikona,vzhled; //144  ikony a vzhled
-  int16_t user_value;            //146  uzivatelska hodnota
-  int16_t keynum;                //148 cislo klice
-  int16_t polohy[2][2];          //156 souradnice poloh pro zobrazeni v inv
-  int8_t typ_zbrane;              //160 Typ zbrane
-  int8_t unused;
-  int16_t sound;                  //cislo zvuku
-  int16_t v_letu[16];             //192
-  int32_t cena;
-  int8_t weapon_attack;           //relativni handle k souboru s animaci utok
-  int8_t hitpos;                  //pozice zasahu animace
-  uint8_t shiftup;
-  int8_t byteres;
-  int16_t rezerva[12];           //224 rezervovane
-  }TITEM;
+typedef struct titem {
+	char jmeno[32];   //32        Jmeno predmetu
+	char popis[32];   //64
+	int16_t zmeny[24];  //112       Tabulka, jakych zmen ma na hracovy vlastnosti
+	int16_t podminky[4];//120       Tabulka, jake vlastnosti musi mit hrac k pouziti predmetu
+	int16_t hmotnost, nosnost, druh; //126  druh = Typ predmetu
+	int16_t umisteni;              //128  Kam se predmet umisti?
+	uint16_t flags;                  //130  ruzne vlajky
+	int16_t spell, magie, sound_handle;//136  specialni kouzla / rukojet zvuku
+	int16_t use_event;             //140  specialni udalost
+	uint16_t ikona, vzhled; //144  ikony a vzhled
+	int16_t user_value;            //146  uzivatelska hodnota
+	int16_t keynum;                //148 cislo klice
+	int16_t polohy[2][2];          //156 souradnice poloh pro zobrazeni v inv
+	int8_t typ_zbrane;              //160 Typ zbrane
+	int8_t unused;
+	int16_t sound;                  //cislo zvuku
+	int16_t v_letu[16];             //192
+	int32_t cena;
+	int8_t weapon_attack;           //relativni handle k souboru s animaci utok
+	int8_t hitpos;                  //pozice zasahu animace
+	uint8_t shiftup;
+	int8_t byteres;
+	int16_t rezerva[12];           //224 rezervovane
+} TITEM;
 
 #define PLAYER_MAX_LEVEL 40
 
