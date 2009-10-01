@@ -57,38 +57,37 @@ static char load_another;
 char reset_mobiles=0;
 
 #pragma pack(1)
-typedef struct s_save
-  {
-  int32_t viewsector;
-  int8_t viewdir;
-  int16_t version;
-  int8_t not_used;
-  int32_t gold;
-  int16_t cur_group;
-  int8_t autosave;
-  int8_t enable_sort;
-  int8_t shownames;
-  int8_t showlives;
-  int8_t zoom_speed;
-  int8_t turn_speed;
-  int8_t autoattack;
-  uint8_t music_vol;
-  uint8_t sample_vol;
-  int8_t xbass;
-  int8_t bass;
-  int8_t treble;
-  int8_t stereing;
-  int8_t swapchans;
-  int8_t out_filter;
-  int32_t glob_flags;
-  int32_t game_time;
-  int8_t runes[5];
-  char level_name[12];
-  int16_t picks;  //pocet_sebranych predmetu v mysi
-  int16_t items_added; //pocet_pridanych predmetu
-  int32_t sleep_long;
+typedef struct s_save {
+	int32_t viewsector;
+	int8_t viewdir;
+	int16_t version;
+	int8_t not_used;
+	int32_t gold;
+	int16_t cur_group;
+	int8_t autosave;
+	int8_t enable_sort;
+	int8_t shownames;
+	int8_t showlives;
+	int8_t zoom_speed;
+	int8_t turn_speed;
+	int8_t autoattack;
+	uint8_t music_vol;
+	uint8_t sample_vol;
+	int8_t xbass;
+	int8_t bass;
+	int8_t treble;
+	int8_t stereing;
+	int8_t swapchans;
+	int8_t out_filter;
+	int32_t glob_flags;
+	int32_t game_time;
+	int8_t runes[5];
+	char level_name[12];
+	int16_t picks;  //pocet_sebranych predmetu v mysi
+	int16_t items_added; //pocet_pridanych predmetu
+	int32_t sleep_long;
 	int32_t game_flags;
-  }S_SAVE;
+} S_SAVE;
 #pragma option align=reset
 
 #define ZAKLAD_CRC 0xC005
@@ -408,56 +407,158 @@ int save_basic_info() {
 	return res;
 }
 
-int load_basic_info() {
-	FILE *f;
-	char *c;
-	S_SAVE s;
+static void loadHuman(THUMAN &human, ReadStream &stream) {
 	int i;
-	char res = 0;
+
+	human.used = stream.readSint8();
+	human.spell = stream.readSint8();
+	human.groupnum = stream.readSint8();
+	human.xicht = stream.readSint8();
+	human.direction = stream.readSint8();
+	human.sektor = stream.readSint16LE();
+
+	for (i = 0; i < VLS_MAX; i++) {
+		human.vlastnosti[i] = stream.readSint16LE();
+	}
+
+	for (i = 0; i < TPW_MAX; i++) {
+		human.bonus_zbrani[i] = stream.readSint16LE();
+	}
+
+	human.lives = stream.readSint16LE();
+	human.mana = stream.readSint16LE();
+	human.kondice = stream.readSint16LE();
+	human.actions = stream.readSint16LE();
+	human.mana_battery = stream.readSint16LE();
+
+	for (i = 0; i < VLS_MAX; i++) {
+		human.stare_vls[i] = stream.readSint16LE();
+	}
+
+	for (i = 0; i < HUMAN_PLACES; i++) {
+		human.wearing[i] = stream.readSint16LE();
+	}
+
+	for (i = 0; i < HUMAN_RINGS; i++) {
+		human.prsteny[i] = stream.readSint16LE();
+	}
+
+	human.sipy = stream.readSint16LE();
+	human.inv_size = stream.readSint16LE();
+
+	for (i = 0; i < MAX_INV; i++) {
+		human.inv[i] = stream.readSint16LE();
+	}
+
+	human.level = stream.readSint16LE();
+
+	for (i = 0; i < TPW_MAX; i++) {
+		human.weapon_expy[i] = stream.readSint16LE();
+	}
+
+	human.exp = stream.readSint32LE();
+	human.female = stream.readSint8();
+	human.utek = stream.readSint8();
+	stream.readUint32LE();	// pointers, ignore
+	stream.readUint32LE();
+	human.zvolene_akce = NULL;
+	human.provadena_akce = NULL;
+	human.programovano = stream.readSint8();
+	stream.read(human.jmeno, 15);
+	human.zasah = stream.readSint16LE();
+	human.dostal = stream.readSint16LE();
+	human.bonus = stream.readSint16LE();
+	human.jidlo = stream.readSint32LE();
+	human.voda = stream.readSint32LE();
+	human.demon_save = stream.readUint32LE() ? &human : NULL;
+}
+
+// FIXME: move this function here
+void loadItem(TITEM &item, ReadStream &stream);
+
+int load_basic_info() {
+	char *c, level_name[13];
+	int i, size, items_added, game_flags;
 	TITEM *itg;
 	THUMAN *h;
-	size_t stfu;
+	File file;
 
 	c = Sys_FullPath(SR_TEMP, _GAME_ST);
 	SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)", c, 0);
-	f = fopen(c, "rb");
+	file.open(c);
 
-	if (f == NULL) {
+	if (!file.isOpen()) {
 		return 1;
 	}
 
-	res |= (fread(&s, 1, sizeof(s), f) != sizeof(s));
+	viewsector = file.readSint32LE();
+	viewdir = file.readSint8();
+	file.readSint16LE();	// version, ignore
+	file.readSint8();	// not used, ignore
+	money = file.readSint32LE();
+	cur_group = file.readSint16LE();
+	autosave_enabled = file.readSint8();
+	enable_sort = file.readSint8();
+	show_names = file.readSint8();
+	show_lives = file.readSint8();
+	zoom_speed(file.readSint8());
+	turn_speed(file.readSint8());
+	autoattack = file.readSint8();
 
-	if (s.game_flags & GM_MAPENABLE) {
+	Sound_SetEffect(SND_MUSIC, file.readUint8());
+	Sound_SetEffect(SND_GFX, file.readUint8());
+	Sound_SetEffect(SND_XBASS, file.readSint8());
+	Sound_SetEffect(SND_BASS, file.readSint8());
+	Sound_SetEffect(SND_TREBL, file.readSint8());
+	Sound_SetEffect(SND_LSWAP, file.readSint8());
+	Sound_SetEffect(SND_SWAP, file.readSint8());
+	Sound_SetEffect(SND_OUTFILTER, file.readSint8());
+	file.readSint32LE();	// global flags, ignore
+	game_time = file.readSint32LE();
+	runes[0] = file.readSint8();
+	runes[1] = file.readSint8();
+	runes[2] = file.readSint8();
+	runes[3] = file.readSint8();
+	runes[4] = file.readSint8();
+	file.read(level_name, 12);
+	level_name[12] = '\0';
+	size = file.readSint16LE();
+	items_added = file.readSint16LE();
+	sleep_ticks = file.readSint32LE();
+	game_flags = file.readSint32LE();
+
+	if (game_flags & GM_MAPENABLE) {
 		enable_glmap = 1;
 	} else {
 		enable_glmap = 0;
 	}
 
-	i = s.picks;
-
 	if (picked_item != NULL) {
-		free(picked_item);
+		free(picked_item);	// FIXME: rewrite to new/delete
 	}
 
-	if (i) {
-		picked_item = NewArr(short, i);
-		res |= (fread(picked_item, 2, i, f) != (unsigned)i);
+	if (size) {
+		picked_item = NewArr(short, size);	// FIXME: rewrite to new/delete
+
+		for (i = 0; i < size; i++) {
+			picked_item[i] = file.readSint16LE();
+		}
 	} else {
-		picked_item=NULL;
+		picked_item = NULL;
 	}
 
-	itg = NewArr(TITEM, it_count_orgn + s.items_added);
+	// FIXME: rewrite to new/delete
+	itg = NewArr(TITEM, it_count_orgn + items_added);
 	memcpy(itg, glob_items, it_count_orgn * sizeof(TITEM));
 	free(glob_items);
 	glob_items = itg;
 
-	if (s.items_added) {
-		res |= (fread(glob_items + it_count_orgn, sizeof(TITEM), s.items_added, f) != (unsigned)s.items_added);
+	for (i = 0; i < items_added; i++) {
+		loadItem(glob_items[it_count_orgn + i], file);
 	}
 
-	item_count = it_count_orgn + s.items_added;
-	res |= load_spells(f);
+	item_count = it_count_orgn + items_added;
+	load_spells(file);
 
 	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
 		if (h->demon_save != NULL) {
@@ -465,8 +566,10 @@ int load_basic_info() {
 		}
 	}
 
-	if (!res) {
-		res |= (fread(postavy, 1, sizeof(postavy), f) != sizeof(postavy));
+	if (!file.eos()) {
+		for (i = 0; i < POCET_POSTAV; i++) {
+			loadHuman(postavy[i], file);
+		}
 	}
 
 	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
@@ -475,42 +578,15 @@ int load_basic_info() {
 		h->dostal = 0;
 
 		if (h->demon_save != NULL) {
-			h->demon_save = New(THUMAN);
-			stfu = fread(h->demon_save, sizeof(THUMAN), 1, f);//obnova polozek s demony
+			h->demon_save = New(THUMAN);	// FIXME: rewrite to new/delete
+			loadHuman(*h->demon_save, file);
 		}
 	}
 
-	res |= load_dialog_info(f);
-	fclose(f);
-	viewsector = s.viewsector;
-	viewdir = s.viewdir;
-	cur_group = s.cur_group;
-	show_names = s.shownames;
-	show_lives = s.showlives;
-	autoattack = s.autoattack;
-	turn_speed(s.turn_speed);
-	zoom_speed(s.zoom_speed);
-	game_time = s.game_time;
-	sleep_ticks = s.sleep_long;
-	enable_sort = s.enable_sort;
-	autosave_enabled = s.autosave;
-	money = s.gold;
+	load_dialog_info(file);
 
-	for (i = 0; i < 5; i++) {
-		runes[i]=s.runes[i];
-	}
-
-	Sound_SetEffect(SND_GFX, s.sample_vol);
-	Sound_SetEffect(SND_MUSIC, s.music_vol);
-	Sound_SetEffect(SND_XBASS, s.xbass);
-	Sound_SetEffect(SND_BASS, s.bass);
-	Sound_SetEffect(SND_TREBL, s.treble);
-	Sound_SetEffect(SND_LSWAP, s.stereing);
-	Sound_SetEffect(SND_SWAP, s.swapchans);
-	Sound_SetEffect(SND_OUTFILTER, s.out_filter);
-
-	if (!gameMap.fname() || strncmp(s.level_name, gameMap.fname(), 12)) {
-		strncpy(loadlevel.name, s.level_name, 12);
+	if (!gameMap.fname() || strcmp(level_name, gameMap.fname())) {
+		strcpy(loadlevel.name, level_name);
 		loadlevel.start_pos = viewsector;
 		loadlevel.dir = viewdir;
 		send_message(E_CLOSE_MAP);
@@ -523,8 +599,8 @@ int load_basic_info() {
 		postavy[i].dostal = 0;
 	}
 
-	SEND_LOG("(SAVELOAD) Done... Result: %d", res, 0);
-	return res;
+	SEND_LOG("(SAVELOAD) Done... Result: %d", file.eos(), 0);
+	return file.eos();
 }
 
 /*

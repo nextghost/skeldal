@@ -1005,43 +1005,42 @@ typedef struct hum_action
 
 
 
-typedef struct thuman
-  {
-  int8_t used;                    //1 kdyz je pozice pouzita
-  int8_t spell;                   //1 kdyz postava ma na sobe aspon 1 kouzlo.
-  int8_t groupnum;                //cislo skupiny 0-6
-  int8_t xicht;                   //cislo obliceje 0-5
-  int8_t direction;               //smer otoceni
-  int16_t sektor;                 //sektor postaveni
-  int16_t vlastnosti[VLS_MAX];    //mapa aktualnich vlastnosti po korekcich
-  int16_t bonus_zbrani[TPW_MAX];  //bonusy za zbrane
-  int16_t lives;                  //pocet zraneni
-  int16_t mana;                   //mnozstvi many
-  int16_t kondice;                //kondice postavy
-  int16_t actions;                //aktualni pocet AP
-  int16_t mana_battery;           //udaj po nabyti nakouzlene many
-  int16_t stare_vls[VLS_MAX];     //mapa vlastnosti pred korekcemi
-  int16_t wearing[HUMAN_PLACES];  //nosene predmety
-  int16_t prsteny[HUMAN_RINGS];   //nosene prsteny
-  int16_t sipy;                   //pocet sipu v toulci
-  int16_t inv_size;               //velikost inventare 6-30
-  int16_t inv[MAX_INV];           //inventar
-  int16_t level;                  //uroven
-  int16_t weapon_expy[TPW_MAX];    //zkusenosti za zbrane
-  int32_t exp;                     //zkusenost
-  int8_t female;                  //1 kdyz zena
-  int8_t utek;                    //hodnota udavajici pocet kroku pri uteku
-  HUM_ACTION *zvolene_akce;     //ukazatel na tabulku zvolenych akci
-  HUM_ACTION *provadena_akce;   //ukazatel na aktualni akci
-  int8_t programovano;            //pocet programovanych akci
-  char jmeno[15];               //jmeno
-  int16_t zasah;                   //posledni zasah postavy ???
-  int16_t dostal;                  //cislo ktere se ukazuje na obrazku s postavou jako zasah
-  int16_t bonus;                  //bonus pro rozdeleni vlastnosti
-  int32_t jidlo;   //max 25000      //pocet kol o hladu zbyvajicich
-  int32_t voda;    //max 20000      //pocet kol o zizny zbyvajicich
-  struct thuman *demon_save;    //ukazatel na postavu ulozenou behem kouzla demon
-  }THUMAN;
+typedef struct thuman {
+	int8_t used;                    //1 kdyz je pozice pouzita
+	int8_t spell;                   //1 kdyz postava ma na sobe aspon 1 kouzlo.
+	int8_t groupnum;                //cislo skupiny 0-6
+	int8_t xicht;                   //cislo obliceje 0-5
+	int8_t direction;               //smer otoceni
+	int16_t sektor;                 //sektor postaveni
+	int16_t vlastnosti[VLS_MAX];    //mapa aktualnich vlastnosti po korekcich
+	int16_t bonus_zbrani[TPW_MAX];  //bonusy za zbrane
+	int16_t lives;                  //pocet zraneni
+	int16_t mana;                   //mnozstvi many
+	int16_t kondice;                //kondice postavy
+	int16_t actions;                //aktualni pocet AP
+	int16_t mana_battery;           //udaj po nabyti nakouzlene many
+	int16_t stare_vls[VLS_MAX];     //mapa vlastnosti pred korekcemi
+	int16_t wearing[HUMAN_PLACES];  //nosene predmety
+	int16_t prsteny[HUMAN_RINGS];   //nosene prsteny
+	int16_t sipy;                   //pocet sipu v toulci
+	int16_t inv_size;               //velikost inventare 6-30
+	int16_t inv[MAX_INV];           //inventar
+	int16_t level;                  //uroven
+	int16_t weapon_expy[TPW_MAX];    //zkusenosti za zbrane
+	int32_t exp;                     //zkusenost
+	int8_t female;                  //1 kdyz zena
+	int8_t utek;                    //hodnota udavajici pocet kroku pri uteku
+	HUM_ACTION *zvolene_akce;     //ukazatel na tabulku zvolenych akci
+	HUM_ACTION *provadena_akce;   //ukazatel na aktualni akci
+	int8_t programovano;            //pocet programovanych akci
+	char jmeno[15];               //jmeno
+	int16_t zasah;                   //posledni zasah postavy ???
+	int16_t dostal;                  //cislo ktere se ukazuje na obrazku s postavou jako zasah
+	int16_t bonus;                  //bonus pro rozdeleni vlastnosti
+	int32_t jidlo;   //max 25000      //pocet kol o hladu zbyvajicich
+	int32_t voda;    //max 20000      //pocet kol o zizny zbyvajicich
+	struct thuman *demon_save;    //ukazatel na postavu ulozenou behem kouzla demon
+} THUMAN;
 
 extern TITEM *glob_items;             //tabulka predmetu
 extern int ikon_libs;
@@ -1682,7 +1681,7 @@ void reinit_kouzla_full();
 char get_rune_enable(THUMAN *p,int strnum);
 void remove_all_mob_spells();
 int save_spells(FILE *f);
-int load_spells(FILE *f);
+int load_spells(ReadStream &stream);
 char get_spell_track(int num);
 void mob_cast(int num,TMOB *m,int mob_num);
 void thing_cast(int num,int postava,int sector,TMOB *victim,char noanim);//vyvolavaji veci
@@ -1747,7 +1746,7 @@ void show_jrc_logo(const char *filename);
 //dialogy
 void call_dialog(int entr,int mob);
 char save_dialog_info(FILE *f);
-char load_dialog_info(FILE *f);
+char load_dialog_info(SeekableReadStream &stream);
 short *q_item_one(int i,int itnum); //test zda postava i ma vec itnum
 short *q_item(int itnum,int sector); //test zda-li aspon jeden na sectoru ma vec itnum
 void change_flag(int flag,char mode); //meni vlajku = 0 - reset, 1 - set, 2 - neg

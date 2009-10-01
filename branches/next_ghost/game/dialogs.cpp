@@ -38,14 +38,13 @@
 #include "game/globals.h"
 #include "libs/system.h"
 
-typedef struct t_paragraph
-  {
-  unsigned num:15;
-  unsigned alt:15;
-  unsigned visited:1;
-  unsigned first:1;
-  int32_t position;
-  }T_PARAGRAPH;
+typedef struct t_paragraph {
+	unsigned num:15;
+	unsigned alt:15;
+	unsigned visited:1;
+	unsigned first:1;
+	int32_t position;
+} T_PARAGRAPH;
 
 #define STR_BUFF_SIZ 4096
 #define SAVE_POSTS 20
@@ -1432,40 +1431,47 @@ char save_dialog_info(FILE *f)
   return res;
   }
 
-char load_dialog_info(FILE *f)
-  {
-  int pgf_pocet;
-  int *p,i;
-  size_t siz;
-  char *c,res=0;
-  T_PARAGRAPH *q;
+char load_dialog_info(SeekableReadStream &stream) {
+	int pgf_pocet;
+	int *p, i;
+	size_t siz;
+	char *c, res = 0;
+	T_PARAGRAPH *q;
 
-  SEND_LOG("(DIALOGS)(SAVELOAD) Loading dialogs info...",0,0);
-  p = (int*)ablock(H_DIALOGY_DAT);
-  aswap(H_DIALOGY_DAT);
-  fread(&pgf_pocet,1,4,f);
-  siz=(pgf_pocet+3)/4;
-  if (pgf_pocet!=*p)
-     {
-     SEND_LOG("(ERROR) Dialogs has different sizes %d!=%d (can be skipped)",pgf_pocet,*p);
-     fseek(f,siz+sizeof(_flag_map),SEEK_CUR);
-     return 0;
-     }
-  if (siz)
-     {
-     c = (char*)getmem(siz);
-     res|=(fread(c,1,siz,f)!=siz);
-     p = (int*)ablock(H_DIALOGY_DAT);
-     q=(T_PARAGRAPH *)(p+2);
-     for(i=0;i<pgf_pocet;i++)
-       {
-       int j=(i & 3)<<1;
-       q[i].visited=(c[i>>2]>>j);
-       q[i].first=(c[i>>2]>>(j+1));
-       }
-     free(c);
-     }
-  res|=(fread(_flag_map,1,sizeof(_flag_map),f)!=sizeof(_flag_map));
-  SEND_LOG("(DIALOGS)(SAVELOAD) Done...",0,0);
-  return res;
-  }
+	SEND_LOG("(DIALOGS)(SAVELOAD) Loading dialogs info...",0,0);
+	p = (int*)ablock(H_DIALOGY_DAT);
+	aswap(H_DIALOGY_DAT);
+	pgf_pocet = stream.readSint32LE();
+	siz = (pgf_pocet + 3) / 4;
+
+	if (pgf_pocet != *p) {
+		SEND_LOG("(ERROR) Dialogs has different sizes %d!=%d (can be skipped)", pgf_pocet, *p);
+		stream.seek(siz + 32, SEEK_CUR);
+		return 0;
+	}
+
+	if (siz) {
+		// FIXME: rewrite properly
+		p = (int*)ablock(H_DIALOGY_DAT);
+		q = (T_PARAGRAPH *)(p + 2);
+
+		for (i = 0; i < pgf_pocet; i++) {
+			int j = (i & 3) << 1;
+			unsigned char c;
+			
+			if ((i & 0x3) == 0) {
+				c = stream.readUint8();
+			}
+
+			q[i].visited = (c >> j);
+			q[i].first = (c >> (j + 1));
+		}
+	}
+
+	for (i = 0; i < 32; i++) {
+		_flag_map[i] = stream.readSint8();
+	}
+
+	SEND_LOG("(DIALOGS)(SAVELOAD) Done...", 0, 0);
+	return stream.eos();
+}

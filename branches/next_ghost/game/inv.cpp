@@ -185,7 +185,7 @@ static void items_15to16_correct(void **p,long *s)
     }
   }
 
-static void loadItem(TITEM &item, ReadStream &stream) {
+void loadItem(TITEM &item, ReadStream &stream) {
 	int i;
 
 	stream.read(item.jmeno, 32);
@@ -247,7 +247,7 @@ void load_items() {
 
 	i = 0;
 	ikon_libs = hl_ptr;
-	free(glob_items);
+	free(glob_items);	// FIXME: rewrite to new/delete
 
 	do {
 		char name[200];
@@ -305,7 +305,8 @@ void load_items() {
 		case SV_ITLIST:
 			size /= 222;
 			it_count_orgn = size;
-			glob_items = new TITEM[size];
+			// FIXME: rewrite to new/delete
+			glob_items = (TITEM*)malloc(size * sizeof(TITEM));
 
 			for (i = 0; i < size; i++) {
 				loadItem(glob_items[i], *stream);

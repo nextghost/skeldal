@@ -147,21 +147,20 @@ typedef struct tteleportlocation
 static TTELEPLOCATION TelepLocation;
 
 #pragma pack(1)
-typedef struct tkouzlo
-  {
-  uint16_t num,um,mge;
-  uint16_t pc;
-  int16_t owner,accnum;     //accnum = akumulacni cislo, owner = kdo kouzlo seslal
-  int32_t start;
-  int16_t cil;    //kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
-  int8_t povaha;
-  uint16_t backfire; //backfire / 1 = demon , 0 = bez demona
-  uint16_t wait;   //wait - cekani pocet animaci
-  uint16_t delay;  //delay - cekani pocet kol
-  int8_t traceon;    //jinak noanim - neprehravaji se animace a zvuky
-  char spellname[28];
-  uint16_t teleport_target;
-  }TKOUZLO;
+typedef struct tkouzlo {
+	uint16_t num, um, mge;
+	uint16_t pc;
+	int16_t owner, accnum;     //accnum = akumulacni cislo, owner = kdo kouzlo seslal
+	int32_t start;
+	int16_t cil;    //kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
+	int8_t povaha;
+	uint16_t backfire; //backfire / 1 = demon , 0 = bez demona
+	uint16_t wait;   //wait - cekani pocet animaci
+	uint16_t delay;  //delay - cekani pocet kol
+	int8_t traceon;    //jinak noanim - neprehravaji se animace a zvuky
+	char spellname[28];
+	uint16_t teleport_target;
+} TKOUZLO;
 #pragma option align=reset
 
 TKOUZLO *spell_table[MAX_SPELLS];
@@ -2084,21 +2083,31 @@ void kouzla_init()
   set_halucination=0;
   }
 
-void reinit_kouzla_full()
-  {
-  int i;
+void reinit_kouzla_full() {
+	int i;
 
-  SEND_LOG("(SPELLS) Reinit...",0,0);
-  for(i=0;i<MAX_SPELLS;i++) if (spell_table[i]!=NULL) free(spell_table[i]);
-  for(i=0;i<MAX_SPELLS;i++) if (vls_table[i]!=NULL) free(vls_table[i]);
-  memset(spell_table,0,sizeof(spell_table));
-  memset(vls_table,0,sizeof(vls_table));
-  memset(_flag_map,0,sizeof(_flag_map));
-  true_seeing=0;
-  hlubina_level=0;
-  show_lives=0;
-  set_halucination=0;
-  }
+	SEND_LOG("(SPELLS) Reinit...", 0, 0);
+
+	for (i = 0; i < MAX_SPELLS; i++) {
+		if (spell_table[i] != NULL) {
+			free(spell_table[i]);
+		}
+	}
+
+	for (i = 0; i < MAX_SPELLS; i++) {
+		if (vls_table[i] != NULL) {
+			free(vls_table[i]);
+		}
+	}
+
+	memset(spell_table, 0, sizeof(spell_table));
+	memset(vls_table, 0, sizeof(vls_table));
+	memset(_flag_map, 0, sizeof(_flag_map));
+	true_seeing = 0;
+	hlubina_level = 0;
+	show_lives = 0;
+	set_halucination = 0;
+}
 
 void remove_all_mob_spells()
   {
@@ -2149,30 +2158,48 @@ int save_spells(FILE *f)
   return res;
   }
 
-int load_spells(FILE *f)
-  {
-  char res=0;
+int load_spells(ReadStream &stream) {
+	char res = 0;
+	int i, j, s;
 
-  int i,s;
+	SEND_LOG("(SPELLS) Loading saved spell table...", 0, 0);
+	reinit_kouzla_full();
+	s = stream.readSint32LE();
 
-  SEND_LOG("(SPELLS) Loading saved spell table...",0,0);
-  reinit_kouzla_full();
-  res|=(fread(&s,1,sizeof(s),f)!=sizeof(s));
-  for(i=0;i<s && !res;i++)
-     {
-     spell_table[i]=New(TKOUZLO);
-     vls_table[i]=NewArr(short,24);
-     res|=(fread(spell_table[i],1,sizeof(TKOUZLO),f)!=sizeof(TKOUZLO));
-     res|=(fread(vls_table[i],1,2*24,f)!=2*24);
-     res|=(fread(_flag_map+i,1,4,f)!=4);
-     }
- true_seeing=1;
- hlubina_level=2;
- show_lives=1;
- set_halucination=1;
- spell_end_global();
- return res;
-  }
+	for (i = 0; i < s && !stream.eos(); i++) {
+		// FIXME: rewrite to new/delete
+		spell_table[i] = New(TKOUZLO);
+		vls_table[i] = NewArr(short, 24);
+		spell_table[i]->num = stream.readUint16LE();
+		spell_table[i]->um = stream.readUint16LE();
+		spell_table[i]->mge = stream.readUint16LE();
+		spell_table[i]->pc = stream.readUint16LE();
+		spell_table[i]->owner = stream.readSint16LE();
+		spell_table[i]->accnum = stream.readSint16LE();
+		spell_table[i]->start = stream.readSint32LE();
+		spell_table[i]->cil = stream.readSint16LE();
+		spell_table[i]->povaha = stream.readSint8();
+		spell_table[i]->backfire = stream.readUint16LE();
+		spell_table[i]->wait = stream.readUint16LE();
+		spell_table[i]->delay = stream.readUint16LE();
+		spell_table[i]->traceon = stream.readSint8();
+		stream.read(spell_table[i]->spellname, 28);
+		spell_table[i]->teleport_target = stream.readUint16LE();
+
+		for (j = 0; j < 24; j++) {
+			vls_table[i][j] = stream.readSint16LE();
+		}
+
+		_flag_map[i] = stream.readSint32LE();
+	}
+
+	true_seeing = 1;
+	hlubina_level = 2;
+	show_lives = 1;
+	set_halucination = 1;
+	spell_end_global();
+	return stream.eos();
+}
 
 void unaffect()
   {
