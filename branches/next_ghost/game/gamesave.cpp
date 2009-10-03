@@ -234,32 +234,23 @@ inline char rotate(char c)
       2 internal error
       3 checksum error
  */
-int pack_status_file(FILE *f, char *status_name) {
-	FILE *stt;
+int pack_status_file(WriteStream &stream, const char *status_name) {
 	char rcheck = 0;
-	long fsz;
-	char *fullnam;
-	uint8_t *buffer, *c;
+	unsigned fsz;
+	unsigned char *buffer;
 	uint16_t crc;
-	size_t stfu;
+	File file;
 
 	SEND_LOG("(SAVELOAD) Packing status file '%s'", status_name, 0);
-	stt = fopen(Sys_FullPath(SR_TEMP, status_name), "rb");
-	fseek(stt, 0, SEEK_END);
-	fsz = ftell(stt);
-	fseek(stt, 0, SEEK_SET);
-	c = buffer = (uint8_t*)getmem(fsz + 12 + 4 + 2);
-	strcpy((char*)c, status_name);
-	c += 12;
-	*(long *)c = fsz + 2;
-	c += sizeof(long);
-	stfu = fread(c, fsz, 1, stt);
-	fclose(stt);
-	crc = vypocet_crc(c, fsz);
-	c += fsz;
-	memcpy(c, &crc, sizeof(crc));
-	fsz += 12 + 4 + 2;
-	rcheck = (fwrite(buffer, 1, fsz, f) != (unsigned)fsz);
+	file.open(Sys_FullPath(SR_TEMP, status_name));
+	fsz = file.size();
+	stream.write(status_name, 12);
+	stream.writeSint32LE(fsz + 2);
+	buffer = new unsigned char[fsz];
+	file.read(buffer, fsz);
+	crc = vypocet_crc(buffer, fsz);
+	rcheck = stream.write(buffer, fsz) != fsz;
+	stream.writeUint16LE(crc);
 	free(buffer);
 	return rcheck;
 }
@@ -648,9 +639,8 @@ static int load_global_events() {
 
 int save_game(int slotnum, const char *gamename) {
 	char *sn, *ssn, *gn;
-	FILE *svf;
 	int r;
-	size_t stfu;
+	WriteFile file;
 
 	SEND_LOG("(SAVELOAD) Saving game slot %d", slotnum, 0);
 	save_map_state();
@@ -671,18 +661,17 @@ int save_game(int slotnum, const char *gamename) {
 	save_leaving_places();
 	save_book();
 	save_global_events();
-	svf = fopen(ssn, "wb");
+	file.open(ssn);
 
-	if (svf == NULL) {
+	if (!file.isOpen()) {
 		char buff[256];
 		sprintf(buff, "Nelze ulozit pozici na cestu: %s", ssn);
 		Sys_ErrorBox(buff);
 	} else {
-		stfu = fwrite(gn, 1, SAVE_NAME_SIZE, svf);
+		file.write(gn, SAVE_NAME_SIZE);
 		close_story_file();
-		r=Sys_PackStatus(svf);
+		r = Sys_PackStatus(file);
 		open_story_file();
-		fclose(svf);
 	}
 
 	SEND_LOG("(SAVELOAD) Game saved.... Result %d", r, 0);

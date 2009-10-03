@@ -28,6 +28,7 @@
 #include <cstdarg>
 #include <inttypes.h>
 #include "libs/devices.h"
+#include "libs/memman.h"
 
 #ifdef WIN32
 #include "windows/system.h"
@@ -58,7 +59,7 @@ void Sys_Init(void);
 void Sys_Mkdir(const char *path);
 int Sys_LatestFile(const char *mask, int offset);
 void Sys_PurgeTemps(char z);
-int Sys_PackStatus(FILE *f);
+int Sys_PackStatus(WriteStream &stream);
 void Sys_SetPath(unsigned idx, const char *path);
 char *Sys_FullPath(unsigned idx, const char *file);
 int Sys_FileExists(const char *file);

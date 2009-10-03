@@ -2912,7 +2912,7 @@ void postavy_teleport_group(int sector, int dir, int postava, char ef_mode) {
 }
 
 void postavy_teleport_effect(int sector, int dir, int postava, char effect) {
-	char kolo = global_anim_counter;
+	unsigned char kolo = global_anim_counter;
 	int counter = 0;
 	static int zavora = 0;
 

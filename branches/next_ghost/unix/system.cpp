@@ -112,9 +112,9 @@ void Sys_PurgeTemps(char all) {
 	closedir(dir);
 }
 
-int pack_status_file(FILE*, char*);
+int pack_status_file(WriteStream&, const char*);
 
-int Sys_PackStatus(FILE *f) {
+int Sys_PackStatus(WriteStream &stream) {
 	DIR *dir;
 	struct dirent *ent;
 	char *ptr, buf[PATH_MAX], *cat;
@@ -131,7 +131,7 @@ int Sys_PackStatus(FILE *f) {
 			continue;
 		}
 
-		ret = pack_status_file(f, ent->d_name);
+		ret = pack_status_file(stream, ent->d_name);
 
 		if (ret) {
 			return ret;
@@ -141,7 +141,7 @@ int Sys_PackStatus(FILE *f) {
 	closedir(dir);
 
 	memset(buf, 0, 12);
-	fwrite(buf, 1, 12, f);
+	stream.write(buf, 12);
 
 	return 0;
 }
