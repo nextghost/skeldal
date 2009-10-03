@@ -245,74 +245,73 @@ int pack_status_file(WriteStream &stream, const char *status_name) {
 	file.open(Sys_FullPath(SR_TEMP, status_name));
 	fsz = file.size();
 	stream.write(status_name, 12);
-	stream.writeSint32LE(fsz + 2);
+	stream.writeUint32LE(fsz + 2);
 	buffer = new unsigned char[fsz];
 	file.read(buffer, fsz);
 	crc = vypocet_crc(buffer, fsz);
 	rcheck = stream.write(buffer, fsz) != fsz;
 	stream.writeUint16LE(crc);
-	free(buffer);
+	delete[] buffer;
 	return rcheck;
 }
 
-int unpack_status_file(FILE *f) {
-	FILE *stt;
+int unpack_status_file(ReadStream &stream) {
 	char rcheck = 0;
-	long fsz;
-	char *fullnam;
-	uint8_t *buffer, *c;
+	unsigned fsz;
+	unsigned char *buffer;
 	char name[13];
 	uint16_t crc, crccheck;
-	size_t stfu;
+	WriteFile file;
 
 	name[12] = 0;
 	name[11] = 0;
-	stfu = fread(name, 1, 12, f);
+	stream.read(name, 12);
 	SEND_LOG("(SAVELOAD) Unpacking status file '%s'", name, 0);
 
-	if (name[0] == 0) {
+	if (!name[0]) {
 		return -1;
 	}
 
-	stfu = fread(&fsz, 1, 4, f);
-	c = buffer = (uint8_t*)getmem(fsz);
+	fsz = stream.readUint32LE() - 2;
+	buffer = new unsigned char[fsz];
 
-	if (fread(buffer, 1, fsz, f) != (unsigned)fsz) {
+	if (stream.read(buffer, fsz) != fsz) {
 		return 1;
 	}
 
-	fsz -= 2;
-	crc = vypocet_crc(c, fsz);
-	c += fsz;
-	memcpy(&crccheck, c, sizeof(crccheck));
+	crc = vypocet_crc(buffer, fsz);
 
-	if (crc != crccheck) {
+	if (stream.readUint16LE() != crc) {
 		free(buffer);
 		return 3;
 	}
 
-	stt = fopen(Sys_FullPath(SR_TEMP, name), "wb+");
+	file.open(Sys_FullPath(SR_TEMP, name));
 
-	if (!stt) {
+	if (!file.isOpen()) {
 		free(buffer);
 		return 1;
 	}
 
-	rcheck = fwrite(buffer, 1, fsz, stt) != fsz;
-	free(buffer);
-	fclose(stt);
+	rcheck = file.write(buffer, fsz) != fsz;
+	delete[] buffer;
 	return rcheck;
 }
 
-int unpack_all_status(FILE *f)
-  {
-  int i;
+int unpack_all_status(ReadStream &stream) {
+	int i;
 
-  i=0;
-  while (!i) i=unpack_status_file(f);
-  if (i==-1) i=0;
-  return i;
-  }
+	i = 0;
+	while (!i) {
+		i = unpack_status_file(stream);
+	}
+
+	if (i == -1) {
+		i = 0;
+	}
+
+	return i;
+}
 
 int save_basic_info() {
 	FILE *f;
@@ -681,51 +680,73 @@ int save_game(int slotnum, const char *gamename) {
 
 extern char running_battle;
 
-int load_game(int slotnum)
-  {
-  char *sn,*ssn;
-  FILE *svf;
-  int r,t;
+int load_game(int slotnum) {
+	char *sn, *ssn;
+	int r, t;
+	File file;
 
-  SEND_LOG("(SAVELOAD) Loading game slot %d",slotnum,0);
-  if (battle) konec_kola();
-  battle=0;
-  close_story_file();
-  Sys_PurgeTemps(0);
-//  concat(sn,pathtable[SR_SAVES],_SLOT_SAV);
+	SEND_LOG("(SAVELOAD) Loading game slot %d", slotnum, 0);
+
+	if (battle) {
+		konec_kola();
+	}
+
+	battle = 0;
+	close_story_file();
+	Sys_PurgeTemps(0);
 	sn = Sys_FullPath(SR_SAVES, _SLOT_SAV);
-  ssn = (char*)alloca(strlen(sn)+3);
-  sprintf(ssn,sn,slotnum);
-  svf=fopen(ssn,"rb");
-  if (svf==NULL) return 1;
-  fseek(svf,SAVE_NAME_SIZE,SEEK_CUR);
-  r=unpack_all_status(svf);
-  load_leaving_places();
-  fclose(svf);
-  open_story_file();
-  if (r>0)
-     {
-     SEND_LOG("(ERROR) Error detected during unpacking game... Loading stopped (result:%d)",r,0);
-     return r;
-     }
-  load_book();
-  load_global_events();
-  if ((t=load_saved_shops())!=0) return t;
-  if ((t=load_basic_info())!=0) return t;
-  running_battle=0;
-  norefresh=0;
-  if (!load_another) restore_current_map();
-        else
-           {
-           save_map=0;
-           norefresh=1;
-           }
-  for(t=0;t<POCET_POSTAV;t++) postavy[t].zvolene_akce=NULL;
-  SEND_LOG("(SAVELOAD) Game loaded.... Result %d",r,0);
-//  if (GetKeyState(VK_CONTROL) & 0x80) correct_level();
-  if (get_control_state()) correct_level();
-  return r;
-  }
+	ssn = (char*)alloca(strlen(sn) + 3);
+	sprintf(ssn, sn, slotnum);
+	file.open(ssn);
+
+	if (!file.isOpen()) {
+		return 1;
+	}
+
+	file.seek(SAVE_NAME_SIZE, SEEK_CUR);
+	r = unpack_all_status(file);
+	load_leaving_places();
+	file.close();
+	open_story_file();
+
+	if (r > 0) {
+		SEND_LOG("(ERROR) Error detected during unpacking game... Loading stopped (result:%d)", r, 0);
+		return r;
+	}
+
+	load_book();
+	load_global_events();
+
+	if ((t = load_saved_shops()) != 0) {
+		return t;
+	}
+
+	if ((t = load_basic_info()) != 0) {
+		return t;
+	}
+
+	running_battle = 0;
+	norefresh = 0;
+
+	if (!load_another) {
+		restore_current_map();
+	} else {
+		save_map = 0;
+		norefresh = 1;
+	}
+
+	for (t = 0; t < POCET_POSTAV; t++) {
+		postavy[t].zvolene_akce = NULL;
+	}
+
+	SEND_LOG("(SAVELOAD) Game loaded.... Result %d", r, 0);
+
+	if (get_control_state()) {
+		correct_level();
+	}
+
+	return r;
+}
 
 //call it in task!
 static void load_specific_file(int slot_num, const char *filename, void **out, long *size) {
