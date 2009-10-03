@@ -749,49 +749,47 @@ int load_game(int slotnum) {
 }
 
 //call it in task!
+// FIXME: rewrite to return ReadStream
 static void load_specific_file(int slot_num, const char *filename, void **out, long *size) {
-	FILE *slot;
 	char *c, *d;
-	long siz;
+	unsigned siz;
 	char fname[12];
 	char succes = 0;
-	size_t stfu;
+	File file;
 
 	c = Sys_FullPath(SR_SAVES, _SLOT_SAV);
 	d = (char*)alloca(strlen(c) + 2);
 	sprintf(d, c, slot_num);
-	slot = fopen(d, "rb");
+	file.open(d);
 
-	if (slot == NULL) {
+	if (!file.isOpen()) {
 		*out = NULL;
 		return;
 	}
 
-	fseek(slot, SAVE_NAME_SIZE, SEEK_CUR);
-	stfu = fread(fname, 1, 12, slot);
+	file.seek(SAVE_NAME_SIZE, SEEK_CUR);
+	file.read(fname, 12);
 
 	while(fname[0] && !succes) {
 //		Task_Sleep(NULL);
 //		if (Task_QuitMsg()) break;
-		stfu = fread(&siz, 1, 4, slot);
+		siz = file.readUint32LE();
 
 		if (!strncmp(fname, filename, 12)) {
 			succes = 1;
 		} else {
-			fseek(slot, siz, SEEK_CUR);
-			stfu = fread(fname, 1, 12, slot);
+			file.seek(siz, SEEK_CUR);
+			file.read(fname, 12);
 		}
 	}
 
 	if (succes) {
 		*out = getmem(siz);
-		stfu = fread(*out, 1, siz, slot);
-		*size = siz;
+		file.read(*out, siz - 2);
+		*size = siz - 2;
 	} else {
 		*out = NULL;
 	}
-
-	fclose(slot);
 }
 
 //------------------------ SAVE LOAD DIALOG ----------------------------
@@ -911,44 +909,69 @@ static void redraw_story_bar(int pos)
 //  {
 //  int slot=va_arg(args,int);
 static void read_story_task(int slot) {
+	void *text_data;
+	char *c, *d;
+	long size;
 
-  void *text_data;
-  char *c,*d;
-  long size;
+	load_specific_file(slot, STORY_BOOK, &text_data, &size);
+	story_text.clear();
 
-  load_specific_file(slot,STORY_BOOK,&text_data,&size);
-  story_text.clear();
-  if (text_data!=NULL)
-     {
-     c = (char*)text_data;
-     set_font(H_FONT6,0);
-     while (size>0)
-       {
-       int xs,ys;
-       d=c;
-       while (size && *d!='\r' && *d!='\n') {d++;size--;};
-       if (!size) break;
-       *d=0;
-       {
-       char *e,*orig;
-       orig = e = (char*)getmem(strlen(c)+2);
-       zalamovani(c,e,STORY_XS,&xs,&ys);
-       while (*e)
-          {
-	  story_text.insert(e);
-          if (text_width(e)>STORY_XS) abort();
-          e=strchr(e,0)+1;
-          }
-        c=d+1;size--;
-       if (*c=='\n' || *c=='\r') {c++;size--;};
-       free(orig);
-       }
-       }
-     free(text_data);
-     }
-  cur_story_pos=get_list_count();if (cur_story_pos<0) cur_story_pos=0;
-  redraw_story_bar(cur_story_pos);
-  }
+	if (text_data != NULL) {
+		c = (char*)text_data;
+		set_font(H_FONT6, 0);
+
+		while (size > 0) {
+			int xs, ys;
+			d = c;
+
+			while (size && *d != '\r' && *d != '\n') {
+				d++;
+				size--;
+			}
+
+			if (!size) {
+				break;
+			}
+
+			*d = 0;
+
+			char *e, *orig;
+
+			orig = e = (char*)getmem(strlen(c) + 2);
+			zalamovani(c, e, STORY_XS, &xs, &ys);
+
+			while (*e) {
+				story_text.insert(e);
+
+				if (text_width(e) > STORY_XS) {
+					abort();
+				}
+
+				e = strchr(e, 0) + 1;
+			}
+
+			c = d + 1;
+			size--;
+
+			if (*c == '\n' || *c == '\r') {
+				c++;
+				size--;
+			}
+
+			free(orig);
+		}
+
+		free(text_data);
+	}
+
+	cur_story_pos = get_list_count();
+
+	if (cur_story_pos < 0) {
+		cur_story_pos = 0;
+	}
+
+	redraw_story_bar(cur_story_pos);
+}
 
 static void read_story(int slot)
   {
