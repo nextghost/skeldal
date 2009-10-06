@@ -1780,13 +1780,12 @@ char set_select_mode(char mode);
 
 void PodporaStitu(THUMAN *h, short *vlastnosti);
 
-typedef struct _tag_globalEventDef
-{
-  uint16_t sector;	  //sektor of action target, when event occured
-  uint8_t side;		  //side of action target, when event occured
-  uint8_t cancel;		  //
-  int32_t param;		  //event depend param - zero is default
-}SGlobalEventDef;
+typedef struct _tag_globalEventDef {
+	uint16_t sector;	  //sektor of action target, when event occured
+	uint8_t side;		  //side of action target, when event occured
+	uint8_t cancel;		  //
+	int32_t param;		  //event depend param - zero is default
+} SGlobalEventDef;
 
 extern SGlobalEventDef GlobEventList[MAGLOB_NEXTID];
 

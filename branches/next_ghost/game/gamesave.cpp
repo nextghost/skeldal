@@ -819,20 +819,18 @@ void read_slot_list() {
 	int i;
 	char *mask, *name;
 	char slotname[SAVE_NAME_SIZE];
-	size_t stfu;
+	File file;
 
 	mask = Sys_FullPath(SR_SAVES, _SLOT_SAV);
 	name = (char*)alloca(strlen(mask) + 1);
 
 	for (i = 0; i < SLOTS_MAX; i++) {
-		FILE *f;
-
 		sprintf(name, mask, i);
-		f = fopen(name, "rb");
+		file.open(name);
 
-		if (f != NULL) {
-			stfu = fread(slotname, 1, SAVE_NAME_SIZE, f);
-			fclose(f);
+		if (file.isOpen()) {
+			file.read(slotname, SAVE_NAME_SIZE);
+			file.close();
 			used_pos[i] = 1;
 		} else {
 			strcpy(slotname, texty[75]);
