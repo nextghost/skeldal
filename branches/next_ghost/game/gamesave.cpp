@@ -604,35 +604,40 @@ static void MakeSaveGameDir(const char *name)
 */
 
 static int save_global_events() {
-	FILE *f;
-	char *c;
-	size_t stfu;
+	int i;
+	WriteFile file(Sys_FullPath(SR_TEMP, _GLOBAL_ST));
 
-	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "wb");
-
-	if (f == NULL) {
+	if (!file.isOpen()) {
 		return 1;
 	}
 
-	stfu = fwrite(GlobEventList, 1, sizeof(GlobEventList), f);
-	fclose(f);
+	for (i = 0; i < MAGLOB_NEXTID; i++) {
+		file.writeUint16LE(GlobEventList[i].sector);
+		file.writeUint8(GlobEventList[i].side);
+		file.writeUint8(GlobEventList[i].cancel);
+		file.writeSint32LE(GlobEventList[i].param);
+	}
+
 	return 0;
 }
 
 static int load_global_events() {
-	FILE *f;
-	char *c;
-	size_t stfu;
+	int i;
+	File file(Sys_FullPath(SR_TEMP, _GLOBAL_ST));
 
 	memset(GlobEventList, 0, sizeof(GlobEventList));
-	f = fopen(Sys_FullPath(SR_TEMP, _GLOBAL_ST), "rb");
 
-	if (f == NULL) {
+	if (!file.isOpen()) {
 		return 1;
 	}
 
-	stfu = fread(GlobEventList, 1, sizeof(GlobEventList), f);
-	fclose(f);
+	for (i = 0; i < MAGLOB_NEXTID; i++) {
+		GlobEventList[i].sector = file.readUint16LE();
+		GlobEventList[i].side = file.readUint8();
+		GlobEventList[i].cancel = file.readUint8();
+		GlobEventList[i].param = file.readSint32LE();
+	}
+
 	return 0;
 }
 
