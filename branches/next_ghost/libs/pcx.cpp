@@ -200,24 +200,29 @@ int load_pcx(char *pcx,long fsize,int conv_type,uint8_t **buffer, ... )
 
 }
 
-int open_pcx(char *filename,int type,uint8_t **buffer,...)
-  {
-  FILE *pcx;
-  char *src;
-  long fsize;
+int open_pcx(char *filename, int type, uint8_t **buffer, ...) {
+	unsigned char *src;
+	long fsize;
+	int r, g, b;
+	va_list args;
+	File file(filename);
 
-  pcx=fopen(filename,"rb");
-  if (pcx==NULL) return -1;
-  fseek(pcx,0,SEEK_END);
-  fsize=ftell(pcx);
-  fseek(pcx,0,SEEK_SET);
-  src=(char*)getmem(fsize);
-  fread(src,1,fsize,pcx);
-  fsize=load_pcx(src,fsize,type,buffer,*((int *)&buffer+1),*((int *)&buffer+2),*((int *)&buffer+3));
-  fclose(pcx);
-  free(src);
-  return fsize;
-  }
+	if (!file.isOpen()) {
+		return -1;
+	}
+
+	fsize = file.size();
+	src = new unsigned char[fsize];
+	file.read(src, fsize);
+	va_start(args, buffer);
+	r = va_arg(args, int);
+	g = va_arg(args, int);
+	b = va_arg(args, int);
+	va_end(args);
+	fsize = load_pcx((char*)src, fsize, type, buffer, r, g, b);
+	delete[] src;
+	return fsize;
+}
 
 /*void initmode32b();
 
