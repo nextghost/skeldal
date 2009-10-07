@@ -1425,16 +1425,3 @@ long get_handle_size(int handle) {
   return c;
   }
  */
-
-FILE *afiletemp(char *filename, int group)
-  {
-  long size;  
-  void *p=afile(filename,group,&size);
-  FILE *f;
-  if (p==NULL) return NULL;
-  f=tmpfile();
-  if (f==NULL) {free(p);return NULL;}
-  fwrite(p,size,1,f);
-  fseek(f,0,SEEK_SET);
-  return f;
-  }
