@@ -150,25 +150,6 @@ int Sys_FileExists(const char *file) {
 	return !access(file, F_OK);
 }
 
-void *Sys_ReadFile(const char *file) {
-	FILE *fr = fopen(file, "r");
-	int len;
-	void *ret;
-
-	if (!fr) {
-		fprintf(stderr, "Could not open file %s\n", file);
-		exit(1);
-	}
-
-	len = fseek(fr, 0, SEEK_END);
-	len = ftell(fr);
-	fseek(fr, 0, SEEK_SET);
-
-	ret = malloc(len);
-	fread(ret, 1, len, fr);
-	return ret;
-}
-
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
 	assert(0);
 

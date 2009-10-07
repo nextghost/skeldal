@@ -63,7 +63,6 @@ int Sys_PackStatus(WriteStream &stream);
 void Sys_SetPath(unsigned idx, const char *path);
 char *Sys_FullPath(unsigned idx, const char *file);
 int Sys_FileExists(const char *file);
-void *Sys_ReadFile(const char *file);
 void Sys_PreparePaths(void);
 void Sys_ProcessEvents(void);
 
