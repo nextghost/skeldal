@@ -136,30 +136,32 @@ void *getmem(long size)
 	return ret;
   }
 
+// FIXME: get rid of this function
+void *load_file(char *filename) {
+	long size, *p;
+	File file;
 
-void *load_file(char *filename)
-  {
-  FILE *f;
-  long size,*p;
+	if (mman_action != NULL) {
+		mman_action(MMA_READ);
+	}
 
-  if (mman_action!=NULL) mman_action(MMA_READ);
-  SEND_LOG("(LOAD) Loading file '%s'",filename,0);
-// O_BINARY is Windows-specific
-//  f=open(filename,O_BINARY | O_RDONLY);
-  f=fopen(filename, "rb");
-  if (!f) load_error(filename);
-//  size=filelength(f);
-  fseek(f, 0, SEEK_END);
-  size = ftell(f);
-  fseek(f, 0, SEEK_SET);
-  p = (long*)getmem(size);
-//  if (read(f,p,size)!=size) load_error(filename);
-  if (fread(p,1,size,f)!=size) load_error(filename);
-//  close(f);
-  fclose(f);
-  last_load_size=size;
-  return p;
-  }
+	SEND_LOG("(LOAD) Loading file '%s'", filename, 0);
+	file.open(filename);
+
+	if (!file.isOpen()) {
+		load_error(filename);
+	}
+
+	size = file.size();
+	p = (long*)getmem(size);
+
+	if (file.read(p, size) != size) {
+		load_error(filename);
+	}
+
+	last_load_size = size;
+	return p;
+}
 
 //--------------- BLOCK MASTER OPERATION SYSTEM --------------------------
 //--------------- part: MEMORY MANAGER -----------------------------------
