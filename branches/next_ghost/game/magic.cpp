@@ -2137,26 +2137,48 @@ void remove_all_mob_spells()
   while(a);
   }
 
+int save_spells(WriteStream &stream) {
+	char res = 0;
+	int i, j, s;
 
-int save_spells(FILE *f)
-  {
-  char res=0;
+	SEND_LOG("(SPELLS) Saving spell table...", 0, 0);
 
-  int i,s;
+	for (i = 0, s = 0; i < MAX_SPELLS; i++) {
+		if (spell_table[i] != NULL) {
+			s++;
+		}
+	}
 
-  SEND_LOG("(SPELLS) Saving spell table...",0,0);
-  for(i=0,s=0;i<MAX_SPELLS;i++)
-     if (spell_table[i]!=NULL) s++;
-  res|=(fwrite(&s,1,sizeof(s),f)!=sizeof(s));
-  for(i=0;i<MAX_SPELLS && !res;i++)
-     if (spell_table[i]!=NULL)
-        {
-        res|=(fwrite(spell_table[i],1,sizeof(TKOUZLO),f)!=sizeof(TKOUZLO));
-        res|=(fwrite(vls_table[i],1,2*24,f)!=2*24);
-        res|=(fwrite(_flag_map+i,1,4,f)!=4);
-        }
-  return res;
-  }
+	stream.writeSint32LE(s);
+
+	for (i = 0; i < MAX_SPELLS && !res; i++) {
+		if (spell_table[i] != NULL) {
+			stream.writeUint16LE(spell_table[i]->num);
+			stream.writeUint16LE(spell_table[i]->um);
+			stream.writeUint16LE(spell_table[i]->mge);
+			stream.writeUint16LE(spell_table[i]->pc);
+			stream.writeSint16LE(spell_table[i]->owner);
+			stream.writeSint16LE(spell_table[i]->accnum);
+			stream.writeSint32LE(spell_table[i]->start);
+			stream.writeSint16LE(spell_table[i]->cil);
+			stream.writeSint8(spell_table[i]->povaha);
+			stream.writeUint16LE(spell_table[i]->backfire);
+			stream.writeUint16LE(spell_table[i]->wait);
+			stream.writeUint16LE(spell_table[i]->delay);
+			stream.writeSint8(spell_table[i]->traceon);
+			stream.write(spell_table[i]->spellname, 28);
+			stream.writeUint16LE(spell_table[i]->teleport_target);
+
+			for (j = 0; j < 24; j++) {
+				stream.writeSint16LE(vls_table[i][j]);
+			}
+
+			stream.writeSint32LE(_flag_map[i]);
+		}
+	}
+
+	return res;
+}
 
 int load_spells(ReadStream &stream) {
 	char res = 0;

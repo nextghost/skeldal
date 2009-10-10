@@ -56,40 +56,6 @@ static FILE *story=NULL;
 static char load_another;
 char reset_mobiles=0;
 
-#pragma pack(1)
-typedef struct s_save {
-	int32_t viewsector;
-	int8_t viewdir;
-	int16_t version;
-	int8_t not_used;
-	int32_t gold;
-	int16_t cur_group;
-	int8_t autosave;
-	int8_t enable_sort;
-	int8_t shownames;
-	int8_t showlives;
-	int8_t zoom_speed;
-	int8_t turn_speed;
-	int8_t autoattack;
-	uint8_t music_vol;
-	uint8_t sample_vol;
-	int8_t xbass;
-	int8_t bass;
-	int8_t treble;
-	int8_t stereing;
-	int8_t swapchans;
-	int8_t out_filter;
-	int32_t glob_flags;
-	int32_t game_time;
-	int8_t runes[5];
-	char level_name[12];
-	int16_t picks;  //pocet_sebranych predmetu v mysi
-	int16_t items_added; //pocet_pridanych predmetu
-	int32_t sleep_long;
-	int32_t game_flags;
-} S_SAVE;
-#pragma option align=reset
-
 #define ZAKLAD_CRC 0xC005
 
 static int get_list_count();
@@ -313,86 +279,194 @@ int unpack_all_status(ReadStream &stream) {
 	return i;
 }
 
-int save_basic_info() {
-	FILE *f;
-	char *c;
-	S_SAVE s;
-	short *p;
+static void saveHuman(const THUMAN &human, WriteStream &stream) {
 	int i;
+
+	stream.writeSint8(human.used);
+	stream.writeSint8(human.spell);
+	stream.writeSint8(human.groupnum);
+	stream.writeSint8(human.xicht);
+	stream.writeSint8(human.direction);
+	stream.writeSint16LE(human.sektor);
+
+	for (i = 0; i < VLS_MAX; i++) {
+		stream.writeSint16LE(human.vlastnosti[i]);
+	}
+
+	for (i = 0; i < TPW_MAX; i++) {
+		stream.writeSint16LE(human.bonus_zbrani[i]);
+	}
+
+	stream.writeSint16LE(human.lives);
+	stream.writeSint16LE(human.mana);
+	stream.writeSint16LE(human.kondice);
+	stream.writeSint16LE(human.actions);
+	stream.writeSint16LE(human.mana_battery);
+
+	for (i = 0; i < VLS_MAX; i++) {
+		stream.writeSint16LE(human.stare_vls[i]);
+	}
+
+	for (i = 0; i < HUMAN_PLACES; i++) {
+		stream.writeSint16LE(human.wearing[i]);
+	}
+
+	for (i = 0; i < HUMAN_RINGS; i++) {
+		stream.writeSint16LE(human.prsteny[i]);
+	}
+
+	stream.writeSint16LE(human.sipy);
+	stream.writeSint16LE(human.inv_size);
+
+	for (i = 0; i < MAX_INV; i++) {
+		stream.writeSint16LE(human.inv[i]);
+	}
+
+	stream.writeSint16LE(human.level);
+
+	for (i = 0; i < TPW_MAX; i++) {
+		stream.writeSint16LE(human.weapon_expy[i]);
+	}
+
+	stream.writeSint32LE(human.exp);
+	stream.writeSint8(human.female);
+	stream.writeSint8(human.utek);
+	stream.writeUint32LE(human.zvolene_akce != NULL);
+	stream.writeUint32LE(human.provadena_akce != NULL);
+	stream.writeSint8(human.programovano);
+	stream.write(human.jmeno, 15);
+	stream.writeSint16LE(human.zasah);
+	stream.writeSint16LE(human.dostal);
+	stream.writeSint16LE(human.bonus);
+	stream.writeSint32LE(human.jidlo);
+	stream.writeSint32LE(human.voda);
+	stream.writeUint32LE(human.demon_save != NULL);
+}
+
+int save_basic_info() {
+	char *c, level_name[12] = "";
+	short *p;
+	int i, j;
 	char res = 0;
 	THUMAN *h;
-	size_t stfu;
+	unsigned size;
+	WriteFile file;
 
 	c = Sys_FullPath(SR_TEMP, _GAME_ST);
 	SEND_LOG("(SAVELOAD) Saving basic info for game (file:%s)", c, 0);
-	f = fopen(c, "wb");
+	file.open(c);
 
-	if (f == NULL) {
+	if (!file.isOpen()) {
 		return 1;
 	}
 
-	s.viewsector = viewsector;
-	s.viewdir = viewdir;
-	s.version = SSAVE_VERSION;
-	s.not_used = 0;
-	s.gold = money;
-	s.cur_group = cur_group;
-	s.shownames = show_names;
-	s.showlives = show_lives;
-	s.autoattack = autoattack;
-	s.turn_speed = turn_speed(-1);
-	s.zoom_speed = zoom_speed(-1);
-	s.game_time = game_time;
-	s.enable_sort = enable_sort;
-	s.sleep_long = sleep_ticks;
-	s.sample_vol = Sound_GetEffect(SND_GFX);
-	s.music_vol = Sound_GetEffect(SND_MUSIC);
-	s.xbass = Sound_GetEffect(SND_XBASS);
-	s.bass = Sound_GetEffect(SND_BASS);
-	s.treble = Sound_GetEffect(SND_TREBL);
-	s.stereing = Sound_GetEffect(SND_LSWAP);
-	s.swapchans = Sound_GetEffect(SND_SWAP);
-	s.out_filter = Sound_GetEffect(SND_OUTFILTER);
-	s.autosave = autosave_enabled;
-	s.game_flags = (enable_glmap != 0);
-	strncpy(s.level_name, gameMap.fname(), 12);
+	file.writeSint32LE(viewsector);
+	file.writeSint8(viewdir);
+	file.writeSint16LE(SSAVE_VERSION);
+	file.writeSint8(0);
+	file.writeSint32LE(money);
+	file.writeSint16LE(cur_group);
+	file.writeSint8(autosave_enabled);
+	file.writeSint8(enable_sort);
+	file.writeSint8(show_names);
+	file.writeSint8(show_lives);
+	file.writeSint8(zoom_speed(-1));
+	file.writeSint8(turn_speed(-1));
+	file.writeSint8(autoattack);
+	file.writeUint8(Sound_GetEffect(SND_MUSIC));
+	file.writeUint8(Sound_GetEffect(SND_GFX));
+	file.writeSint8(Sound_GetEffect(SND_XBASS));
+	file.writeSint8(Sound_GetEffect(SND_BASS));
+	file.writeSint8(Sound_GetEffect(SND_TREBL));
+	file.writeSint8(Sound_GetEffect(SND_LSWAP));
+	file.writeSint8(Sound_GetEffect(SND_SWAP));
+	file.writeSint8(Sound_GetEffect(SND_OUTFILTER));
+	file.writeSint32LE(0);	// global flags, not used
+	file.writeSint32LE(game_time);
 
 	for (i = 0; i < 5; i++) {
-		s.runes[i] = runes[i];
+		file.writeSint8(runes[i]);
 	}
 
-	if (picked_item != NULL) {
-		for (i = 1, p = picked_item; *p; i++, p++);
+	strncpy(level_name, gameMap.fname(), 12);
+	file.write(level_name, 12);
+
+	if (picked_item) {
+		for (size = 1; picked_item[size-1]; size++);
 	} else {
-		i = 0;
+		size = 0;
 	}
 
-	s.picks = i;
-	s.items_added = item_count - it_count_orgn;
-	res |= (fwrite(&s, 1, sizeof(s), f) != sizeof(s));
+	file.writeSint16LE(size);
+	file.writeSint16LE(item_count - it_count_orgn);
+	file.writeSint32LE(sleep_ticks);
+	file.writeSint32LE(enable_glmap != 0);
 
-	if (i) {
-		res |= (fwrite(picked_item, 2, i, f) != (unsigned)i);
+	for (i = 0; i < size; i++) {
+		file.writeSint16LE(picked_item[i]);
 	}
 
-	if (s.items_added) {
-		res |= (fwrite(glob_items + it_count_orgn, sizeof(TITEM), s.items_added, f) != (unsigned)s.items_added);
+	for (i = it_count_orgn; i < item_count; i++) {
+		file.write(glob_items[i].jmeno, 32);
+		file.write(glob_items[i].popis, 32);
+
+		for (j = 0; j < 24; j++) {
+			file.writeSint16LE(glob_items[i].zmeny[j]);
+		}
+
+		file.writeSint16LE(glob_items[i].podminky[0]);
+		file.writeSint16LE(glob_items[i].podminky[1]);
+		file.writeSint16LE(glob_items[i].podminky[2]);
+		file.writeSint16LE(glob_items[i].podminky[3]);
+		file.writeSint16LE(glob_items[i].hmotnost);
+		file.writeSint16LE(glob_items[i].nosnost);
+		file.writeSint16LE(glob_items[i].druh);
+		file.writeSint16LE(glob_items[i].umisteni);
+		file.writeUint16LE(glob_items[i].flags);
+		file.writeSint16LE(glob_items[i].spell);
+		file.writeSint16LE(glob_items[i].magie);
+		file.writeSint16LE(glob_items[i].sound_handle);
+		file.writeSint16LE(glob_items[i].use_event);
+		file.writeUint16LE(glob_items[i].ikona);
+		file.writeUint16LE(glob_items[i].vzhled);
+		file.writeSint16LE(glob_items[i].user_value);
+		file.writeSint16LE(glob_items[i].keynum);
+		file.writeSint16LE(glob_items[i].polohy[0][0]);
+		file.writeSint16LE(glob_items[i].polohy[0][1]);
+		file.writeSint16LE(glob_items[i].polohy[1][0]);
+		file.writeSint16LE(glob_items[i].polohy[1][1]);
+		file.writeSint8(glob_items[i].typ_zbrane);
+		file.writeSint8(glob_items[i].unused);
+		file.writeSint16LE(glob_items[i].sound);
+
+		for (j = 0; j < 16; j++) {
+			file.writeSint16LE(glob_items[i].v_letu[j]);
+		}
+
+		file.writeSint32LE(glob_items[i].cena);
+		file.writeSint8(glob_items[i].weapon_attack);
+		file.writeSint8(glob_items[i].hitpos);
+		file.writeUint8(glob_items[i].shiftup);
+		file.writeSint8(glob_items[i].byteres);
+
+		for (j = 0; j < 12; j++) {
+			file.writeSint16LE(glob_items[i].rezerva[j]);
+		}
 	}
 
-	res |= save_spells(f);
+	res |= save_spells(file);
 
-	if (!res) {
-		res |= (fwrite(postavy, 1, sizeof(postavy), f) != sizeof(postavy));
+	for (i = 0; i < POCET_POSTAV; i++) {
+		saveHuman(postavy[i], file);
 	}
 
 	for (i = 0, h = postavy; i < POCET_POSTAV; h++, i++) {
 		if (h->demon_save != NULL) {
-			stfu = fwrite(h->demon_save, sizeof(THUMAN), 1, f);       //ulozeni polozek s demony
+			saveHuman(*h->demon_save, file);       //ulozeni polozek s demony
 		}
 	}
 
-	res |= save_dialog_info(f);
-	fclose(f);
+	res |= save_dialog_info(file);
 	SEND_LOG("(SAVELOAD) Done... Result: %d", res, 0);
 	return res;
 }

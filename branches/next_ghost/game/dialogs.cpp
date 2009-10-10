@@ -1399,43 +1399,51 @@ void call_dialog(int entr,int mob)
   do_dialog();  
   }
 
-char save_dialog_info(FILE *f)
-  {
-  int pgf_pocet;
-  int *p,i;
-  size_t siz;
-  char *c,res=0;
-  T_PARAGRAPH *q;
+char save_dialog_info(WriteStream &stream) {
+	int pgf_pocet;
+	int *p, i;
+	size_t siz;
+	T_PARAGRAPH *q;
 
-  SEND_LOG("(DIALOGS)(SAVELOAD) Saving dialogs info...",0,0);
-  p = (int*)ablock(H_DIALOGY_DAT);
-  pgf_pocet=*p;
-  fwrite(&pgf_pocet,1,4,f);
-  siz=(pgf_pocet+3)/4;
-  if (siz)
-     {
-     c = (char*)getmem(siz);
-     memset(c,0,siz);
-     p = (int*)ablock(H_DIALOGY_DAT);
-     q=(T_PARAGRAPH *)(p+2);
-     for(i=0;i<pgf_pocet;i++)
-       {
-       int j=(i & 3)<<1;
-       c[i>>2]|=(q[i].visited<<j) | (q[i].first<<(j+1));
-       }
-     res|=fwrite(c,1,siz,f)!=siz;
-     free(c);
-     }
-  res|=(fwrite(_flag_map,1,sizeof(_flag_map),f)!=sizeof(_flag_map));
-  SEND_LOG("(DIALOGS)(SAVELOAD) Done...",0,0);
-  return res;
-  }
+	SEND_LOG("(DIALOGS)(SAVELOAD) Saving dialogs info...", 0, 0);
+	// FIXME: rewrite properly
+	p = (int*)ablock(H_DIALOGY_DAT);
+	pgf_pocet = *p;
+	stream.writeSint32LE(pgf_pocet);
+	siz = (pgf_pocet + 3) / 4;
+
+	if (siz) {
+		p = (int*)ablock(H_DIALOGY_DAT);
+		q = (T_PARAGRAPH *)(p + 2);
+		unsigned char c = 0;
+
+		for (i = 0; i < pgf_pocet; i++) {
+			int j = (i & 3) << 1;
+			c |= (q[i].visited << j) | (q[i].first << (j + 1));
+
+			if ((i & 0x3) == 0x3) {
+				stream.writeUint8(c);
+			}
+		}
+
+		// finish partial byte
+		if (i & 0x3) {
+			stream.writeUint8(c);
+		}
+	}
+
+	for (i = 0; i < 32; i++) {
+		stream.writeSint8(_flag_map[i]);
+	}
+
+	SEND_LOG("(DIALOGS)(SAVELOAD) Done...", 0, 0);
+	return 0;
+}
 
 char load_dialog_info(SeekableReadStream &stream) {
 	int pgf_pocet;
 	int *p, i;
 	size_t siz;
-	char *c, res = 0;
 	T_PARAGRAPH *q;
 
 	SEND_LOG("(DIALOGS)(SAVELOAD) Loading dialogs info...",0,0);

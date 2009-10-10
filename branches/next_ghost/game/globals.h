@@ -1678,7 +1678,7 @@ void display_spell_in_icone(int handle,int xicht);
 void reinit_kouzla_full();
 char get_rune_enable(THUMAN *p,int strnum);
 void remove_all_mob_spells();
-int save_spells(FILE *f);
+int save_spells(WriteStream &stream);
 int load_spells(ReadStream &stream);
 char get_spell_track(int num);
 void mob_cast(int num,TMOB *m,int mob_num);
@@ -1743,7 +1743,7 @@ void show_jrc_logo(const char *filename);
 
 //dialogy
 void call_dialog(int entr,int mob);
-char save_dialog_info(FILE *f);
+char save_dialog_info(WriteStream &stream);
 char load_dialog_info(SeekableReadStream &stream);
 short *q_item_one(int i,int itnum); //test zda postava i ma vec itnum
 short *q_item(int itnum,int sector); //test zda-li aspon jeden na sectoru ma vec itnum
