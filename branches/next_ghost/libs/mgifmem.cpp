@@ -98,28 +98,29 @@ void mgif_install_proc(MGIF_PROC proc)
   show_proc=proc;
   }
 
-void *open_mgif(void *mgif) //vraci ukazatel na prvni frame
-  {
-  char *c;
-  struct mgif_header *mgh;
+//vraci ukazatel na prvni frame
+int open_mgif(const mgif_header &mgh) {
+	if (strncmp(mgh.sign, MGIF, 4)) {
+		return 0;
+	}
 
-  c = (char*)mgif;
-  if (strncmp(c,MGIF,4)) return NULL;
-  mgh = (mgif_header*)mgif;
-  mgif_frames=mgh->frames;
-  cur_frame=0;
-  c+=sizeof(*mgh);
-  init_lzw_compressor(8);
-  if (lzw_buffer==NULL) lzw_buffer=getmem(LZW_BUFFER);
-  return c;
-  }
+	mgif_frames = mgh.frames;
+	cur_frame = 0;
+	init_lzw_compressor(8);
 
-void close_mgif()           //dealokuje buffery pro prehravani
-  {
-  done_lzw_compressor();
-  free(lzw_buffer);
-  lzw_buffer=NULL;
-  }
+	if (!lzw_buffer) {
+		lzw_buffer = new unsigned char[LZW_BUFFER];
+	}
+
+	return 1;
+}
+
+//dealokuje buffery pro prehravani
+void close_mgif() {
+	done_lzw_compressor();
+	delete[] (unsigned char *)lzw_buffer;
+	lzw_buffer = NULL;
+}
 
 
 unsigned input_code(uint8_t *source,long *bitepos,int bitsize,int mask) {
@@ -224,23 +225,26 @@ void lzw_decode(void *source,uint8_t *target)
     }
 
 //dekoduje a zobrazi frame
-void *mgif_play(void *mgif) {
-	uint8_t *pf, *pc, *ff;
+int mgif_play(ReadStream &stream) {
+	uint8_t *pc, *ff;
+	unsigned tmp;
 	int acts, size, act, csize;
 	void *scr_sav;
 	int scr_act = -1;
 	
-	pf = (uint8_t*)mgif;
-	acts = *pf++;
-	size = (*(unsigned*)pf) & 0xffffff;
-	pf += 3;
-	pc = pf;
-	pf += size;
-	for (; acts; acts--) {
-		act = *pc++;
-		csize = (*(unsigned*)pc) & 0xffffff;
-		pc += 3;
+	tmp = stream.readUint32LE();
+	acts = tmp & 0xff;
+	size = tmp >> 8;
+
+	for (pc = NULL; acts; acts--) {
+		tmp = stream.readUint32LE();
+		act = tmp & 0xff;
+		csize = tmp >> 8;
+
 		if ((act == MGIF_LZW) || (act == MGIF_DELTA)) {
+			delete[] pc;
+			pc = new uint8_t[csize];
+			stream.read(pc, csize);
 			ff = (uint8_t*)lzw_buffer;
 			lzw_decode(pc, ff);
 			scr_sav = ff;
@@ -249,24 +253,26 @@ void *mgif_play(void *mgif) {
 			scr_sav = ff;
 			scr_act = act;
 		} else {
+			delete[] pc;
+			pc = new uint8_t[csize];
+			stream.read(pc, csize);
 			ff = pc;
 			show_proc(act, ff, csize);
 		}
-
-		pc += csize;
 	}
 
 	if (scr_act != -1) {
 		show_proc(scr_act, scr_sav, csize);
 	}
 
+	delete[] pc;
 	cur_frame += 1;
 
 	if (cur_frame == mgif_frames) {
-		return NULL;
+		return 0;
 	}
 
-	return pf;
+	return 1;
 }
 
 

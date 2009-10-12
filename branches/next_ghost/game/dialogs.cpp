@@ -164,55 +164,64 @@ static void animace_kouzla(int act,void *data,int csize)
   }
 
 
-static void dialog_anim(va_list args)
+static void dialog_anim(va_list args) {
 //#pragma aux dialog_anim parm []
-  {
-  char *block=va_arg(args,char *);
-  int speed=va_arg(args,int);
-  int rep=va_arg(args,int);
+	char *block = va_arg(args, char *);
+	int speed = va_arg(args, int);
+	int rep = va_arg(args, int);
 
-  void *anm;
-  void *aptr;
-  char *ch;
-  char hid;
-  int spdc=0,cntr=rep,tm,tm2;
+	void *anm;
+	char *ch;
+	char hid;
+	int spdc = 0, cntr = rep, tm, tm2, ret = 1;
+	MGIF_HEADER_T header;
+	File file;
 
-  loc_anim_render_buffer=PIC_Y*Screen_GetXSize()+PIC_X;
-  mgif_install_proc(animace_kouzla);
-//  concat(ch,pathtable[SR_DIALOGS],block);
-  free(block);
-//  aptr=load_file(ch);
-  aptr=load_file(Sys_FullPath(SR_DIALOGS, block));
-  do
-     {
-     anm=open_mgif(aptr);
-     while (anm!=NULL && Task_QuitMsg())
-       {
-       Task_Sleep(NULL);
-       if (!spdc)
-          {
-          if (ms_last_event.x<=PIC_X+320 && ms_last_event.y<=PIC_Y+180)
-             {
-             hid=1;schovej_mysku();
-             }
-          else hid=0;
-          anm=mgif_play(anm);
-          spdc=speed;
-          if (hid) ukaz_mysku();
-          showview(PIC_X,PIC_Y,320,180);
-          }
-       tm2=Timer_GetValue();
-       if (tm!=tm2)
-        {
-        spdc--;tm=tm2;
-        }
-       }
-     rep--;
-     close_mgif();
-     }
-  while (!cntr && rep && !Task_QuitMsg());
-  free(aptr);
-  }
+	loc_anim_render_buffer = PIC_Y * Screen_GetXSize() + PIC_X;
+	mgif_install_proc(animace_kouzla);
+	file.open(Sys_FullPath(SR_DIALOGS, block));
+	free(block);
+
+	do {
+		loadMgifHeader(header, file);
+
+		if (!open_mgif(header)) {
+			return;
+		}
+
+		while (ret && Task_QuitMsg()) {
+			Task_Sleep(NULL);
+
+			if (!spdc) {
+				if (ms_last_event.x <= PIC_X + 320 && ms_last_event.y <= PIC_Y + 180) {
+					hid = 1;
+					schovej_mysku();
+				} else {
+					hid = 0;
+				}
+
+				ret = mgif_play(file);
+				spdc = speed;
+
+				if (hid) {
+					ukaz_mysku();
+				}
+
+				showview(PIC_X, PIC_Y, 320, 180);
+			}
+
+			tm2 = Timer_GetValue();
+
+			if (tm != tm2) {
+				spdc--;
+				tm = tm2;
+			}
+		}
+
+		rep--;
+		close_mgif();
+	} while (!cntr && rep && !Task_QuitMsg());
+}
 
 static void stop_anim()
   {

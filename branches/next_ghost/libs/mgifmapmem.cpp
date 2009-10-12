@@ -31,26 +31,10 @@
 #include "libs/system.h"
 #include "libs/strlite.h"
 
-//static HANDLE mapped_mgif;
-//static HANDLE mgif_file;
-static MGIF_HEADER_T *mgif_header;
+static MGIF_HEADER_T mgif_header;
 
 static short mgif_accnums[2];
 static long mgif_writepos;
-
-void *OpenMGFFile(const char *filename);
-void CloseMGFFile(void *file);
-
-/* Moved to windows backend directory
-static void *OpenMGFFile(const char *filename)
-  {
-  mgif_file=CreateFile(filename,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN,NULL);
-  if (mgif_file==INVALID_HANDLE_VALUE) return NULL;
-  mapped_mgif=CreateFileMapping(mgif_file,NULL,PAGE_READONLY,0,0,NULL);
-  if (mapped_mgif==INVALID_HANDLE_VALUE) return NULL;
-  return MapViewOfFile(mapped_mgif,FILE_MAP_READ,0,0,0);
-  }
-*/
 
 static uint16_t paleta[256];
 
@@ -89,49 +73,59 @@ static void StretchImageHQ(uint16_t *src, uint16_t *trg, unsigned long linelen, 
 	}
 }
 
-static void PlayMGFFile(void *file, MGIF_PROC proc,int ypos,char full)
-  {
-  mgif_install_proc(proc);
-  sound=PrepareVideoSound(22050,256*1024);
-  mgif_accnums[0]=mgif_accnums[1]=0;
-  mgif_writepos=65536;
-  picture = (uint16_t*)getmem((3+320*180) * sizeof(uint16_t));
-  picture[0]=320;
-  picture[1]=180;
-  picture[2]=15;
-  memset(picture+3,0,320*180*2);
-  anim_render_buffer=picture+3;
-  mgif_header=(MGIF_HEADER_T *)file;
-  file=open_mgif(file);
-  if (file==NULL) return;
-  while (file) 
-	{
-//    __try
-	  {
-	  file=mgif_play(file);
-	  }
-//  __except(1)
-/*
-  	  {
-	  SEND_LOG("(PLAYANIM) Exception raised",0,0);
-	  file=NULL;
-	  }
-*/
-	StretchImageHQ(picture, Screen_GetAddr()+ypos*Screen_GetXSize(), Screen_GetXSize(),full);
-	showview(0,ypos,0,360);
-//	if (_bios_keybrd(_KEYBRD_READY)==0) Sound_MixBack(0);
-	if (!Input_Kbhit()) Sound_MixBack(0);
-	else 
-	  {
-//	  _bios_keybrd(_KEYBRD_READ);
-	  Input_ReadKey();
-	  break;
-	  }
+void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream) {
+	int i;
+
+	stream.read(header.sign, 4);
+	stream.read(header.year, 2);
+	header.eof = stream.readSint8();
+	header.ver = stream.readUint16LE();
+	header.frames = stream.readSint32LE();
+	header.snd_chans = stream.readUint16LE();
+	header.snd_freq = stream.readSint32LE();
+
+	for (i = 0; i < 256; i++) {
+		header.ampl_table[i] = stream.readSint16LE();
 	}
-  close_mgif();  
-  DoneVideoSound(sound);
-  free(picture);
-  }
+
+	for (i = 0; i < 32; i++) {
+		header.reserved[i] = stream.readSint16LE();
+	}
+}
+
+static void PlayMGFFile(ReadStream &stream, MGIF_PROC proc, int ypos, char full) {
+	mgif_install_proc(proc);
+	sound = PrepareVideoSound(22050, 256 * 1024);
+	mgif_accnums[0] = mgif_accnums[1] = 0;
+	mgif_writepos = 65536;
+	picture = new uint16_t[3 + 320 * 180];
+	picture[0] = 320;
+	picture[1] = 180;
+	picture[2] = 15;
+	memset(picture + 3, 0, 320 * 180 * 2);
+	anim_render_buffer = picture + 3;
+	loadMgifHeader(mgif_header, stream);
+
+	if (!open_mgif(mgif_header)) {
+		return;
+	}
+
+	while (mgif_play(stream)) {
+		StretchImageHQ(picture, Screen_GetAddr() + ypos * Screen_GetXSize(), Screen_GetXSize(), full);
+		showview(0, ypos, 0, 360);
+
+		if (!Input_Kbhit()) {
+			Sound_MixBack(0);
+		} else {
+			Input_ReadKey();
+			break;
+		}
+	}
+
+	close_mgif();  
+	DoneVideoSound(sound);
+	delete[] picture;
+}
 
 void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
 void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
@@ -139,40 +133,39 @@ void show_delta_lfb12e_dx(void *target,void *buff,void *paleta);
 void show_full_lfb12e_dx(void *target,void *buff,void *paleta);
 
 
-void BigPlayProc(int act, void *data, int csize)
-  {
-  switch (act)
-     {
-     case MGIF_LZW:
-     case MGIF_COPY:
-     	show_full_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
-	break;
+void BigPlayProc(int act, void *data, int csize) {
+	switch (act) {
+	case MGIF_LZW:
+	case MGIF_COPY:
+		show_full_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		break;
 
-     case MGIF_DELTA:
-     	show_delta_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
-	break;
+	case MGIF_DELTA:
+		show_delta_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		break;
 
-     case MGIF_PAL:
-//     	paleta = data;
-	memcpy(paleta, data, csize);
-	Screen_FixMGIFPalette(paleta, csize / sizeof(uint16_t));
-	break;
+	case MGIF_PAL:
+		memcpy(paleta, data, csize);
+		Screen_FixMGIFPalette(paleta, csize / sizeof(uint16_t));
+		break;
 
-     case MGIF_SOUND: 
-		while (LoadNextVideoFrame(sound, (uint8_t*)data, csize, mgif_header->ampl_table, mgif_accnums, &mgif_writepos)==0) {
+	case MGIF_SOUND: 
+		while (LoadNextVideoFrame(sound, (uint8_t*)data, csize, mgif_header.ampl_table, mgif_accnums, &mgif_writepos) == 0) {
 			Timer_Sleep(5);
 		}
-     }
-  }
+	}
+}
 
 void play_animation(char *filename, char mode, int posy, char sound) {
-	void *mgf = OpenMGFFile(filename);
+	File mgf(filename);
+
 	Sound_ChangeMusic(NULL);
-	if (!mgf) {
+
+	if (!mgf.isOpen()) {
 		return;
 	}
+
 	PlayMGFFile(mgf, BigPlayProc, posy, mode & 0x80);
-	CloseMGFFile(mgf);
 }
 
 void set_title_list(const StringList *titles)

@@ -44,24 +44,24 @@ typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data 
 #define SMD_256 1
 #define SMD_HICOLOR 2
 
-typedef struct mgif_header
-    {
-    char sign[4];
-    char year[2];
-    int8_t eof;
-    uint16_t ver;
-    int32_t frames;
-    uint16_t snd_chans;
-    int32_t snd_freq;
-    int16_t ampl_table[256];
-    int16_t reserved[32];
-    }MGIF_HEADER_T;
+typedef struct mgif_header {
+	char sign[4];
+	char year[2];
+	int8_t eof;
+	uint16_t ver;
+	int32_t frames;
+	uint16_t snd_chans;
+	int32_t snd_freq;
+	int16_t ampl_table[256];
+	int16_t reserved[32];
+} MGIF_HEADER_T;
 
 
 void mgif_install_proc(MGIF_PROC proc);
-void *open_mgif(void *mgif); //vraci ukazatel na prvni frame
-void *mgif_play(void *mgif); //dekoduje a zobrazi frame
+int open_mgif(const mgif_header &mgh);
+int mgif_play(ReadStream &stream);
 void close_mgif();           //dealokuje buffery pro prehravani
+void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream);
 
 void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
 void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);

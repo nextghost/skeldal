@@ -218,33 +218,6 @@ void Task_Shutdown(int id) {
 
 }
 
-// FIXME: rewrite properly
-static int mgf = -1, mgf_len;
-void *OpenMGFFile(const char *filename) {
-	struct stat st;
-	void *ret;
-
-	assert(mgf == -1);
-	mgf = open(filename, O_RDONLY);
-
-	if (mgf < 0) {
-		fprintf(stderr, "Could not open file %s\n", filename);
-		exit(1);
-	}
-
-	fstat(mgf, &st);
-	mgf_len = st.st_size;
-	ret = mmap(NULL, mgf_len, PROT_READ, MAP_SHARED, mgf, 0);
-
-	return ret;
-}
-
-void CloseMGFFile(void *file) {
-	munmap(file, mgf_len);
-	close(mgf);
-	mgf = -1;
-}
-
 // FIXME: implement game launcher
 char OtevriUvodniOkno() {
 	return 1;

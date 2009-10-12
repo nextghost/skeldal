@@ -1542,9 +1542,9 @@ int get_item_top(int celx,int cely,int posx,int posy,uint16_t *txtr,int index)
 
 #define ANIM_SIZE (320*180)
 
-static uint16_t *paleta;
-static void *anm = NULL;
-static int blk = 0;
+static uint16_t paleta[256];
+static int blk = 0, frameState = 1;
+static MemoryReadStream *mgifStream = NULL;
 
 static void animace_kouzla(int act,void *data, int ssize) {
 	switch (act) {
@@ -1558,14 +1558,16 @@ static void animace_kouzla(int act,void *data, int ssize) {
 		break;
 
 	case MGIF_PAL:
-		paleta = (uint16_t*)data;
-		*paleta |= 0x8000;
+		memcpy(paleta, data, ssize);
+		paleta[0] |= 0x8000;
 		break;
 	}
 }
 
 void play_big_mgif_animation(int block) {
 	int i;
+	void *ptr;
+	MGIF_HEADER_T header;
 
 	assert(anim_render_buffer == NULL && "Another animation is being played");
 
@@ -1579,8 +1581,10 @@ void play_big_mgif_animation(int block) {
 	}
 
 	blk = block;
-	alock(blk);
-	anm = open_mgif(ablock(blk));
+	ptr = ablock(blk);
+	mgifStream = new MemoryReadStream(ptr, get_handle_size(blk));
+	loadMgifHeader(header, *mgifStream);
+	frameState = open_mgif(header);
 	SEND_LOG("(ANIM) Buffer is now ready...",0,0);
 }
 
@@ -1589,15 +1593,15 @@ void play_big_mgif_frame(void) {
 		return;
 	}
 
-	if (!anm) {
+	if (!frameState) {
 		close_mgif();
 		free(anim_render_buffer);
 		anim_render_buffer = NULL;
 		running_anm = 0;
-		aunlock(blk);
+		delete mgifStream;
 		return;
 	}
 
-	anm = mgif_play(anm);
+	frameState = mgif_play(*mgifStream);
 	neco_v_pohybu = 1;
 }
