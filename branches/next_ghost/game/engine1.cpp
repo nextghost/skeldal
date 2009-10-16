@@ -1546,19 +1546,24 @@ static uint16_t paleta[256];
 static int blk = 0, frameState = 1;
 static MemoryReadStream *mgifStream = NULL;
 
-static void animace_kouzla(int act,void *data, int ssize) {
+static void animace_kouzla(int act, SeekableReadStream &stream) {
+	int i;
+
 	switch (act) {
 	case MGIF_LZW:
 	case MGIF_COPY:
-		show_full_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		show_full_lfb12e(anim_render_buffer, stream, paleta);
 		break;
 
 	case MGIF_DELTA:
-		show_delta_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		show_delta_lfb12e(anim_render_buffer, stream, paleta);
 		break;
 
 	case MGIF_PAL:
-		memcpy(paleta, data, ssize);
+		for (i = 0; i < stream.size() / 2; i++) {
+			paleta[i] = stream.readUint16LE();
+		}
+
 		paleta[0] |= 0x8000;
 		break;
 	}

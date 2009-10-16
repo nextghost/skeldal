@@ -27,7 +27,7 @@
 #include <inttypes.h>
 
 #pragma pack(1)
-typedef void (*MGIF_PROC)(int,void *,int csize); //prvni cislo akce, druhy data akce
+typedef void (*MGIF_PROC)(int, SeekableReadStream &); //prvni cislo akce, druhy data akce
 
 #define MGIF "MGIF"
 #define MGIF_Y "97"
@@ -63,8 +63,8 @@ int mgif_play(ReadStream &stream);
 void close_mgif();           //dealokuje buffery pro prehravani
 void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream);
 
-void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
-void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
+void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
+void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
 
 #pragma option align=reset
 #endif

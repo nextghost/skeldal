@@ -93,10 +93,9 @@ void done_lzw_compressor()
   compress_dic=NULL;
   }
 
-void mgif_install_proc(MGIF_PROC proc)
-  {
-  show_proc=proc;
-  }
+void mgif_install_proc(MGIF_PROC proc) {
+	show_proc = proc;
+}
 
 //vraci ukazatel na prvni frame
 int open_mgif(const mgif_header &mgh) {
@@ -131,19 +130,19 @@ unsigned input_code(uint8_t *source,long *bitepos,int bitsize,int mask) {
 }
 
 
-int de_add_code(int group,int chr,int mask)
-  {
-  DOUBLE_S *q;
+void de_add_code(int group, int chr) {
+	DOUBLE_S *q;
 
-  q=&compress_dic[nextgroup];q->group=group;q->chr=chr;q->first=compress_dic[group].first+1;
-  nextgroup++;
-  if (nextgroup==mask)
-     {
-     mask=(mask<<1)+1;
-     bitsize++;
-     }
-  return mask;
-  }
+	q = &compress_dic[nextgroup];
+	q->group = group;
+	q->chr = chr;
+	q->first = compress_dic[group].first + 1;
+	nextgroup++;
+
+	if (nextgroup >= (1 << bitsize) - 1) {
+		bitsize++;
+	}
+}
 
 
 char fast_expand_code(int code, uint8_t **target) {
@@ -177,59 +176,53 @@ char fast_expand_code(int code, uint8_t **target) {
 	return ret;
 }
 
-void lzw_decode(void *source,uint8_t *target)
-  {
-  long bitpos=0;
-  register int code;
-  int old,i;
-  //int group,chr;
-  int old_first;
-  register int mask=0xff;
+void lzw_decode(ReadStream &source, uint8_t *target) {
+	register int code;
+	int old, i;
+	//int group,chr;
+	int old_first;
+	BitStream bstream(source);
 
+	for (i = 0; i < LZW_MAX_CODES; i++) {
+		compress_dic[i].first = 0;
+	}
 
-  for(i=0;i<LZW_MAX_CODES;i++) compress_dic[i].first=0;
-  clear:
-  old_value=0;
-  nextgroup=free_code;
-  bitsize=init_bitsize;
-  mask=(1<<bitsize)-1;
-  code = input_code((uint8_t*)source,&bitpos,bitsize,mask);
-  old_first=fast_expand_code(code,&target);
+clear:
+	old_value = 0;
+	nextgroup = free_code;
+	bitsize = init_bitsize;
+	code = bstream.readBitsLE(bitsize);
+	old_first = fast_expand_code(code, &target);
 //  old_first=expand_code(code,&target);
-  old=code;
-  while ((code=input_code((uint8_t*)source,&bitpos,bitsize,mask))!=end_code)
-     {
-     if (code==clear_code)
-        {
-        goto clear;
-        }
-     else if (code<nextgroup)
-        {
-        old_first=fast_expand_code(code,&target);
+	old = code;
+
+	while ((code = bstream.readBitsLE(bitsize)) != end_code) {
+		if (code == clear_code) {
+			goto clear;
+		} else if (code < nextgroup) {
+			old_first = fast_expand_code(code, &target);
 //        old_first=expand_code(code,&target);
-        //group=old;
-        //chr=old_first;
-        mask=de_add_code(old,old_first,mask);
-        old=code;
-        }
-     else
-        {
-        //p.group=old;
-        //p.chr=old_first;
-        mask=de_add_code(old,old_first,mask);
-        old_first=fast_expand_code(code,&target);
+			//group=old;
+			//chr=old_first;
+			de_add_code(old, old_first);
+			old = code;
+		} else {
+			//p.group=old;
+			//p.chr=old_first;
+			de_add_code(old, old_first);
+			old_first = fast_expand_code(code, &target);
 //        old_first=expand_code(code,&target);
-        old=code;
-        }
-     }
-    }
+			old = code;
+		}
+	}
+}
 
 //dekoduje a zobrazi frame
 int mgif_play(ReadStream &stream) {
 	uint8_t *pc, *ff;
 	unsigned tmp;
 	int acts, size, act, csize;
-	void *scr_sav;
+	MemoryReadStream *scr_sav = NULL;
 	int scr_act = -1;
 	
 	tmp = stream.readUint32LE();
@@ -242,29 +235,32 @@ int mgif_play(ReadStream &stream) {
 		csize = tmp >> 8;
 
 		if ((act == MGIF_LZW) || (act == MGIF_DELTA)) {
-			delete[] pc;
-			pc = new uint8_t[csize];
-			stream.read(pc, csize);
+			MemoryReadStream *tmp = stream.readStream(csize);
 			ff = (uint8_t*)lzw_buffer;
-			lzw_decode(pc, ff);
-			scr_sav = ff;
+			lzw_decode(*tmp, ff);
+			delete[] scr_sav;
+			scr_sav = new MemoryReadStream(ff, LZW_BUFFER);
 			scr_act = act;
+			delete tmp;
 		} else if (act == MGIF_COPY) {
-			scr_sav = ff;
+			delete[] scr_sav;
+			scr_sav = new MemoryReadStream(ff, csize);
 			scr_act = act;
 		} else {
 			delete[] pc;
 			pc = new uint8_t[csize];
 			stream.read(pc, csize);
 			ff = pc;
-			show_proc(act, ff, csize);
+			MemoryReadStream tmpstream(ff, csize);
+			show_proc(act, tmpstream);
 		}
 	}
 
 	if (scr_act != -1) {
-		show_proc(scr_act, scr_sav, csize);
+		show_proc(scr_act, *scr_sav);
 	}
 
+	delete scr_sav;
 	delete[] pc;
 	cur_frame += 1;
 
@@ -274,10 +270,3 @@ int mgif_play(ReadStream &stream) {
 
 	return 1;
 }
-
-
-
-
-
-
-

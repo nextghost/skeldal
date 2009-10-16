@@ -87,7 +87,7 @@ void Screen_StripBlt(uint16_t *data, unsigned int startline, unsigned long width
 void Screen_Shift(int x, int y);
 
 void Screen_FixPalette(uint16_t *pal, int size);
-void Screen_FixMGIFPalette(uint16_t *pal, int size);
+uint16_t Screen_FixMGIFPalette(uint16_t color);
 uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b);
 uint16_t Screen_ColorMin(uint16_t c1, uint16_t c2);
 uint16_t Screen_ColorSub(uint16_t color, int sub);
@@ -139,7 +139,7 @@ int get_shift_state(void);
 void *LoadDefaultFont(void);
 void *PrepareVideoSound(int mixfreq, int buffsize);
 void DoneVideoSound(void *buffer);
-char LoadNextVideoFrame(void *buffer, uint8_t *data, int size, short *xlat, short *accnums, long *writepos);
+char LoadNextVideoFrame(void *buffer, SeekableReadStream &stream, short *xlat, short *accnums, long *writepos);
 
 char OtevriUvodniOkno();
 char SelectAdventure();

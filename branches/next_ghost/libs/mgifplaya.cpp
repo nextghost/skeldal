@@ -25,230 +25,35 @@
 #include "libs/mgfplay.h"
 #include "libs/bgraph.h"
 
-
-
-void show_full_interl_lfb(uint8_t *source,uint16_t *target,uint16_t *palette, long linelen)
-  {  
-  int sslinelen=2*linelen-1280;
-/*
-  __asm
-    {
-        mov     edi,target
-        mov     esi,source
-        mov     ebx,palette
-                        ;edi - target
-                        ;esi - source
-                        ;ebx - palette
-        push    ebp
-        push    sslinelen;
-        mov     dl,180
-shfif2: mov     ecx,320
-shfif1: lodsb
-        movzx   eax,al
-        movzx   eax,short ptr [eax*2+ebx]
-        mov     ebp,eax
-        shl     eax,16
-        or      eax,ebp
-        stosd
-        dec     ecx
-        jnz     shfif1
-        add     edi,[esp]
-        dec     dl
-        jnz     shfif2
-        pop     eax
-        pop     ebp
-    }
-*/
-
-	// TODO: needs testing
-	int x, y;
-
-	for (y = 0; y < 180; y++) {
-		for (x = 0; x < 320; x++) {
-			target[2*x+y*linelen] = palette[source[x+y*320]];
-			target[2*x+1+y*linelen] = palette[source[x+y*320]];
-		}
-	}
-  }
-//#pragma aux show_full_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
-/*
-void show_delta_interl_lfb(uint8_t *source,uint16_t *target,uint16_t *palette, long linelen)
-  {  
-  int sslinelen=2*linelen;
-  __asm
-    {
-        mov     edi,target
-        mov     esi,source
-        mov     ebx,palette
-                        ;edi - target
-                        ;esi - source
-                        ;ebx - palette
-        push    ebp             ;uchovej ebp
-        push    sslinelen
-        mov     cl,180          ;cl pocet zbyvajicich radek
-        add     esi,4           ;preskoc ukazatel
-        mov     edx,esi         ;edx - zacatek delta mapy
-        add     esi,[esi-4]     ;esi - zacatek dat
-shdif6: push    edi             ;uloz adresu radku
-shdif2: mov     ch,[edx]        ;cti _skip_ hodnotu
-        mov     al,ch
-        inc     edx
-        or      al,03fh         ;test zda jsou 2 nejvyssi bity nastaveny
-        inc     al
-        jz      shdif3          ;ano - preskakovani radku
-        movzx   eax,ch          ;expanduj _skip_ hodnotu do eax
-        lea     edi,[eax*8+edi] ;vypocti novou pozici na obrazovce
-        mov     ch,[edx]        ;cti _copy_ hodnotu
-        inc     edx
-shdif1: lodsb                   ;vem bajt z datove oblasti
-        movzx   eax,al          ;expanduj do eax
-        movzx   eax,short ptr[eax*2+ebx] ;expanduj hicolor barvu
-        mov     ebp,eax         ;rozdvoj barvy
-        shl     ebp,16
-        or      eax,ebp
-        stosd                   ;zapis dva body
-        lodsb                   ;opakuj pro dalsi bod jeste jednou
-        movzx   eax,al
-        movzx   eax,short ptr[eax*2+ebx]
-        mov     ebp,eax
-        shl     ebp,16
-        or      eax,ebp
-        stosd
-        dec     ch              ;odecti _copy_ hodnotu
-        jnz     shdif1          ;dokud neni 0
-        jmp     shdif2          ;pokracuj _skip_ hodnotou
-shdif3: and     ch,3fh          ;odmaskuj hodni 2 bity
-        pop     edi             ;obnov edi
-        jnz     shdif4          ;pokud je ch=0 preskoc jen jeden radek;
-        add     edi,[esp]       ;preskoc radek
-        dec     cl              ;odecti citac radku
-        jnz     shdif6          ;skok pokud neni konec
-        pop     ebp
-        jmp     konec          ;navrat
-shdif4: inc     ch              ;pocet radek je ch+1
-        sub     cl,ch           ;odecti ch od zbyvajicich radek
-        jz      shdif5          ;je-li nula tak konec
-shdif7: add     edi,[esp]       ;preskoc radek
-        dec     ch              ;odecti ch
-        jnz     shdif7          ;preskakuj dokud neni 0
-        jmp     shdif6          ;cti dalsi _skip_
-shdif5: pop     ebp
-konec:
-    }
-  }
-*/
-//#pragma aux show_delta_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
-
-void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta)
-  {
-/*
-  __asm
-    {
-        mov     edi,target
-        mov     esi,buff
-        mov     ebx,paleta
-                        ;edi - target
-                        ;esi - source
-                        ;ebx - palette
-        push    ebp
-        mov     dl,180
-shfl2:  mov     ecx,160
-shfl1:  lodsw
-        movzx   ebp,al
-        movzx   ebp,short ptr ds:[ebp*2+ebx]
-        movzx   eax,ah
-        movzx   eax,short ptr ds:[eax*2+ebx]
-        shl     eax,16
-        or      eax,ebp
-        stosd
-        dec     ecx
-        jnz     shfl1
-        dec     dl
-        jnz     shfl2
-        pop     ebp
-    }
-*/
-
-	// TODO: needs testing
+void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
 	int i;
 
-	for (i = 0; i < 180*320; i++) {
-		*target++ = paleta[*buff++];
+	for (i = 0; i < 180 * 320; i++) {
+		*target++ = paleta[stream.readUint8()];
 	}
-  }   
-// show_delta_lfb12e() is similar to small_anm_delta in game/engine2.c - merge?
-//#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
-void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta)
-  {
-/*
-  __asm
-    {
-        mov     edi,target
-        mov     esi,buff
-        mov     ebx,paleta
-                        ;edi - target
-                        ;esi - buff
-                        ;ebx - paleta
-        push    ebp             ;uchovej ebp
-        mov     cl,180          ;cl pocet zbyvajicich radek
-        add     esi,4           ;preskoc ukazatel
-        mov     edx,esi         ;edx - zacatek delta mapy
-        add     esi,[esi-4]     ;esi - zacatek dat
-shdl6: push    edi             ;uloz adresu radku
-shdl2: mov     ch,[edx]        ;cti _skip_ hodnotu
-        mov     al,ch
-        inc     edx
-        or      al,03fh         ;test zda jsou 2 nejvyssi bity nastaveny
-        inc     al
-        jz      shdl3          ;ano - preskakovani radku
-        movzx   eax,ch          ;expanduj _skip_ hodnotu do eax
-        lea     edi,[eax*4+edi] ;vypocti novou pozici na obrazovce
-        mov     ch,[edx]        ;cti _copy_ hodnotu
-        inc     edx
-shdl1: lodsw
-        movzx   ebp,al
-        movzx   ebp,short ptr ds:[ebp*2+ebx]
-        movzx   eax,ah
-        movzx   eax,short ptr ds:[eax*2+ebx]
-        shl     eax,16
-        or      eax,ebp
-        stosd
-        dec     ch              ;odecti _copy_ hodnotu
-        jnz     shdl1          ;dokud neni 0
-        jmp     shdl2          ;pokracuj _skip_ hodnotou
-shdl3: and     ch,3fh          ;odmaskuj hodni 2 bity
-        pop     edi             ;obnov edi
-        jnz     shdl4          ;pokud je ch=0 preskoc jen jeden radek;
-        add     edi,640        ;preskoc radek
-        dec     cl              ;odecti citac radku
-        jnz     shdl6          ;skok pokud neni konec
-        pop     ebp
-        jmp    konec
-shdl4: inc     ch              ;pocet radek je ch+1
-        sub     cl,ch           ;odecti ch od zbyvajicich radek
-        jz      shdl5          ;je-li nula tak konec
-shdl7: add     edi,640        ;preskoc radek
-        dec     ch              ;odecti ch
-        jnz     shdl7          ;preskakuj dokud neni 0
-        jmp     shdl6          ;cti dalsi _skip_
-shdl5: pop     ebp
-konec:
-    }
-*/
+}
 
-	// TODO: needs testing
-	unsigned int i, j, k;
-	uint8_t *map = buff + 4;
+// show_delta_lfb12e() is similar to small_anm_delta in game/engine2.c - merge?
+void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
+	unsigned int i, j, k, size;
 	uint16_t *tmp;
-	buff += 4 + *(unsigned int*)buff;
+	uint8_t *map, *oldmap;
+
+	size = stream.readUint32LE();
+	oldmap = map = new uint8_t[size+1];
+
+	for (i = 0; i < size; i++) {
+		map[i] = stream.readUint8();
+	}
 
 	for (i = 0; i < 180; i += j) {
 		tmp = target;
+
 		for (j = *map++; (j & 0xc0) != 0xc0; j = *map++) {
 			target += 2 * j;
 			for (k = 0; k < *map; k++) {
-				*target++ = paleta[*buff++];
-				*target++ = paleta[*buff++];
+				*target++ = paleta[stream.readUint8()];
+				*target++ = paleta[stream.readUint8()];
 			}
 			map++;
 		}
@@ -256,111 +61,9 @@ konec:
 		j = (j & 0x3f) + 1;
 		target = tmp + j * 320;
 	}
-  }
-//#pragma aux show_delta_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 
-/*
-void show_full_lfb12e_dx(void *target,void *buff,void *paleta)
-  {  
-  __asm
-    {
-        mov     edi,target
-        mov     esi,buff
-        mov     ebx,paleta
-                        ;edi - target
-                        ;esi - source
-                        ;ebx - palette
-        push    ebp
-		mov		eax,scr_linelen
-		sub		eax,640
-		push	eax
-        mov     dl,180
-shfl2:  mov     ecx,160
-shfl1:  lodsw
-        movzx   ebp,al
-        movzx   ebp,short ptr ds:[ebp*2+ebx]
-        movzx   eax,ah
-        movzx   eax,short ptr ds:[eax*2+ebx]
-        shl     eax,16
-        or      eax,ebp
-		mov		ebp,eax
-		and		ebp,0x7fe07fe0
-		add		eax,ebp
-        stosd
-        dec     ecx
-        jnz     shfl1
-		add		edi,[esp]
-        dec     dl
-        jnz     shfl2
-		pop		eax
-        pop     ebp
-    }
-  }   
-*/
-//#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
-/*
-void show_delta_lfb12e_dx(void *target,void *buff,void *paleta,unsigned long Pitch)
-  {
-  __asm
-    {
-        mov     edi,target
-        mov     esi,buff
-        mov     ebx,paleta
-                        ;edi - target
-                        ;esi - buff
-                        ;ebx - paleta
-        push    ebp             ;uchovej ebp		
-		mov		eax,scr_linelen
-		sub		eax,640
-		push	eax
-        mov     cl,180          ;cl pocet zbyvajicich radek
-        add     esi,4           ;preskoc ukazatel
-        mov     edx,esi         ;edx - zacatek delta mapy
-        add     esi,[esi-4]     ;esi - zacatek dat
-shdl6: push    edi             ;uloz adresu radku
-shdl2: mov     ch,[edx]        ;cti _skip_ hodnotu
-        mov     al,ch
-        inc     edx
-        or      al,03fh         ;test zda jsou 2 nejvyssi bity nastaveny
-        inc     al
-        jz      shdl3          ;ano - preskakovani radku
-        movzx   eax,ch          ;expanduj _skip_ hodnotu do eax
-        lea     edi,[eax*4+edi] ;vypocti novou pozici na obrazovce
-        mov     ch,[edx]        ;cti _copy_ hodnotu
-        inc     edx
-shdl1: lodsw
-        movzx   ebp,al
-        movzx   ebp,short ptr ds:[ebp*2+ebx]
-        movzx   eax,ah
-        movzx   eax,short ptr ds:[eax*2+ebx]
-        shl     eax,16
-        or      eax,ebp
-		mov		ebp,eax
-		and		ebp,0x7fe07fe0
-		add		eax,ebp
-        stosd
-        dec     ch              ;odecti _copy_ hodnotu
-        jnz     shdl1          ;dokud neni 0
-        jmp     shdl2          ;pokracuj _skip_ hodnotou
-shdl3: and     ch,3fh          ;odmaskuj hodni 2 bity
-        pop     edi             ;obnov edi
-        jnz     shdl4          ;pokud je ch=0 preskoc jen jeden radek;
-        add     edi,scr_linelen ;preskoc radek
-        dec     cl              ;odecti citac radku
-        jnz     shdl6          ;skok pokud neni konec
-        jmp    shdl5
-shdl4: inc     ch              ;pocet radek je ch+1
-        sub     cl,ch           ;odecti ch od zbyvajicich radek
-        jz      shdl5          ;je-li nula tak konec
-shdl7: add     edi,scr_linelen  ;preskoc radek
-        dec     ch              ;odecti ch
-        jnz     shdl7          ;preskakuj dokud neni 0
-        jmp     shdl6          ;cti dalsi _skip_
-shdl5:	pop		eax		
-		pop     ebp
-    }
-  }
-*/
+	delete[] oldmap;
+}
 
 char test_next_frame(void *bufpos,int size)
   {

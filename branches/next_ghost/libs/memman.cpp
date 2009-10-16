@@ -536,6 +536,47 @@ size_t WriteFile::write(const void *buf, size_t size) {
 	return fwrite(buf, 1, size, _file);
 }
 
+BitStream::BitStream(ReadStream &stream) : _stream(stream), _lastByte(0),
+	_bitsLeft(0) {
+
+}
+
+BitStream::~BitStream(void) {
+
+}
+
+unsigned BitStream::readBitsLE(unsigned bits) {
+	unsigned ret = 0, shift = 0;
+	static const unsigned mask[] = {0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff};
+	assert(bits <= 8 * sizeof(unsigned));
+
+	if (_bitsLeft >= bits) {
+		ret = _lastByte & mask[bits];
+		_lastByte >>= bits;
+		_bitsLeft -= bits;
+		return ret;
+	}
+
+	ret = _lastByte;
+	shift = _bitsLeft;
+	bits -= shift;
+	_lastByte = 0;
+	_bitsLeft = 0;
+
+	for (; bits >= 8; bits -= 8, shift += 8) {
+		ret |= _stream.readUint8() << shift;
+	}
+
+	if (bits) {
+		_lastByte = _stream.readUint8();
+		_bitsLeft = 8 - bits;
+		ret |= (_lastByte & mask[bits]) << shift;
+		_lastByte >>= bits;
+	}
+
+	return ret;
+}
+
 DDLFile::DDLFile(void) : _grptable(NULL), _grpsize(0), _namesize(0),
 	_nametable(NULL) {
 }

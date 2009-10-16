@@ -156,6 +156,20 @@ public:
 	size_t write(const void *buf, size_t size);
 };
 
+class BitStream {
+private:
+	ReadStream &_stream;
+	uint8_t _lastByte;
+	int _bitsLeft;
+
+public:
+	BitStream(ReadStream &stream);
+	~BitStream(void);
+
+	unsigned readBitsLE(unsigned bits);
+	bool eos(void) const { return _stream.eos(); }
+};
+
 class DDLFile {
 private:
 	static const int DDLEntrySize = 16;

@@ -127,30 +127,30 @@ static void PlayMGFFile(ReadStream &stream, MGIF_PROC proc, int ypos, char full)
 	delete[] picture;
 }
 
-void show_full_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
-void show_delta_lfb12e(uint16_t *target,uint8_t *buff,uint16_t *paleta);
-void show_delta_lfb12e_dx(void *target,void *buff,void *paleta);
-void show_full_lfb12e_dx(void *target,void *buff,void *paleta);
+void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
+void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
 
+void BigPlayProc(int act, SeekableReadStream &stream) {
+	int i;
 
-void BigPlayProc(int act, void *data, int csize) {
 	switch (act) {
 	case MGIF_LZW:
 	case MGIF_COPY:
-		show_full_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		show_full_lfb12e(anim_render_buffer, stream, paleta);
 		break;
 
 	case MGIF_DELTA:
-		show_delta_lfb12e(anim_render_buffer, (uint8_t*)data, paleta);
+		show_delta_lfb12e(anim_render_buffer, stream, paleta);
 		break;
 
 	case MGIF_PAL:
-		memcpy(paleta, data, csize);
-		Screen_FixMGIFPalette(paleta, csize / sizeof(uint16_t));
+		for (i = 0; i < stream.size() / 2; i++) {
+			paleta[i] = Screen_FixMGIFPalette(stream.readUint16LE());
+		}
 		break;
 
 	case MGIF_SOUND: 
-		while (LoadNextVideoFrame(sound, (uint8_t*)data, csize, mgif_header.ampl_table, mgif_accnums, &mgif_writepos) == 0) {
+		while (LoadNextVideoFrame(sound, stream, mgif_header.ampl_table, mgif_accnums, &mgif_writepos) == 0) {
 			Timer_Sleep(5);
 		}
 	}

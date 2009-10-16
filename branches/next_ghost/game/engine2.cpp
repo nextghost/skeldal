@@ -447,9 +447,7 @@ kba_skip:dec     ebx
 
 
 
-void small_anm_buff(uint16_t *target,uint8_t *buff,uint16_t *paleta)
-//#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
-  {
+void small_anm_buff(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
 /*  __asm
     {
     mov   edi,target;
@@ -471,15 +469,13 @@ shmab3: zobraz_1
 	int x, y;
 	for (y = 0; y < 180; y++) {
 		for (x = 0; x < 320; x++) {
-			target[x+640*y] = paleta[buff[x+320*y]];
+			target[x+640*y] = paleta[stream.readUint8()];
 		}
 	}
-  }
+}
 
 // small_anm_delta() is similar to show_delta_lfb12e in libs/mgifplaya.c - merge?
-void small_anm_delta(uint16_t *target,uint8_t *buff,uint16_t *paleta)
-//#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
-  {
+void small_anm_delta(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
 /*  __asm
     {
     mov   edi,target;
@@ -522,18 +518,24 @@ shmad4: add     edi,scr_linelen
 */
 
 	// TODO: needs testing
-	int i, j, k;
-	uint8_t *map = buff + 4;
+	int i, j, k, size;
 	uint16_t *tmp;
-	buff += 4 + *(int*)buff;
+	uint8_t *map, *oldmap;
+
+	size = stream.readUint32LE();
+	oldmap = map = new uint8_t[size];
+
+	for (i = 0; i < size ; i++) {
+		map[i] = stream.readUint8();
+	}
 
 	for (i = 0; i < 180; i += j) {
 		tmp = target;
 		for (j = *map++; j < 0xc0; j = *map++) {
 			target += 2 * j;
 			for (k = 0; k < *map; k++) {
-				*target++ = paleta[*buff++];
-				*target++ = paleta[*buff++];
+				*target++ = paleta[stream.readUint8()];
+				*target++ = paleta[stream.readUint8()];
 			}
 			map++;
 		}
@@ -541,7 +543,9 @@ shmad4: add     edi,scr_linelen
 		j -= 0xbf;
 		target = tmp + j * Screen_GetXSize();
 	}
-  }
+
+	delete[] oldmap;
+}
 
 
 void scroll_and_copy(uint16_t *pic, uint16_t *slide, uint16_t *scr, int _size, int shift, int lineinfo[][2])

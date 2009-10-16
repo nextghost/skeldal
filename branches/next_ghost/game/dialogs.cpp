@@ -142,26 +142,34 @@ static int glob_y;
 
 static int last_pgf;
 
-static uint16_t *paleta;
+static uint16_t paleta[256];
 static long loc_anim_render_buffer;
 static short task_num=-1;
 
-void small_anm_buff(uint16_t *target,uint8_t *buff,uint16_t *paleta);
-//#pragma aux small_anm_buff parm[edi][esi][ebx] modify [eax ecx]
-void small_anm_delta(uint16_t *target,uint8_t *buff,uint16_t *paleta);
-//#pragma aux small_anm_delta parm[edi][esi][ebx] modify [eax ecx]
+void small_anm_buff(uint16_t *target, ReadStream &stream, uint16_t *paleta);
+void small_anm_delta(uint16_t *target, ReadStream &stream, uint16_t *paleta);
 
-static void animace_kouzla(int act,void *data,int csize)
-  {
-  uint16_t *p=Screen_GetAddr()+loc_anim_render_buffer;
-  switch (act)
-     {
-     case MGIF_LZW:
-     case MGIF_COPY:small_anm_buff(p,(uint8_t*)data,paleta);break;
-     case MGIF_DELTA:small_anm_delta(p,(uint8_t*)data,paleta);break;
-     case MGIF_PAL:paleta = (uint16_t*)data;break;
-     }
-  }
+static void animace_kouzla(int act, SeekableReadStream &stream) {
+	uint16_t *p = Screen_GetAddr() + loc_anim_render_buffer;
+	int i;
+
+	switch (act) {
+		case MGIF_LZW:
+		case MGIF_COPY:
+			small_anm_buff(p, stream, paleta);
+			break;
+
+		case MGIF_DELTA:
+			small_anm_delta(p, stream, paleta);
+			break;
+
+		case MGIF_PAL:
+			for (i = 0; i < stream.size() / 2; i++) {
+				paleta[i] = stream.readUint16LE();
+			}
+			break;
+	}
+}
 
 
 static void dialog_anim(va_list args) {

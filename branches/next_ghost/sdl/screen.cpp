@@ -164,16 +164,13 @@ void Screen_FixPalette(uint16_t *pal, int size) {
 }
 
 
-void Screen_FixMGIFPalette(uint16_t *pal, int size) {
-	unsigned i, r, g, b;
+uint16_t Screen_FixMGIFPalette(uint16_t color) {
+	unsigned r, g, b;
 
-	for (i = 0; i < size; i++) {
-		r = (pal[i] >> 10) & 0x1f;
-		g = (pal[i] >> 5) & 0x1f;
-		b = pal[i] & 0x1f;
-	
-		pal[i] = Screen_RGB(r, g, b);
-	}
+	r = (color >> 10) & 0x1f;
+	g = (color >> 5) & 0x1f;
+	b = color & 0x1f;
+	return Screen_RGB(r, g, b);
 }
 
 uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b) {
