@@ -302,7 +302,7 @@ void load_items() {
 
 		case SV_ITLIST:
 			size /= 222;
-			it_count_orgn = size;
+			it_count_orgn = item_count = size;
 			// FIXME: rewrite to new/delete
 			glob_items = (TITEM*)malloc(size * sizeof(TITEM));
 
