@@ -25,8 +25,9 @@
 #include <cassert>
 #include "libs/strlite.h"
 
-StringList::StringList(unsigned prealloc) : _data(new char*[prealloc]),
-	_size(prealloc), _count(0) {
+StringList::StringList(unsigned prealloc) : _data(NULL),
+	_size(prealloc ? prealloc : 1), _count(0) {
+	_data = new char*[_size];
 	memset(_data, 0, _size * sizeof(char*));
 }
 
@@ -79,9 +80,9 @@ void StringList::remove(unsigned idx) {
 
 void StringList::pack(void) {
 	char **dst, **ptr;
-	unsigned i;
+	unsigned i, size = _count ? _count : 1;
 
-	ptr = dst = new char*[_count];
+	ptr = dst = new char*[size];
 
 	for (i = 0; i < _size; i++) {
 		if (_data[i]) {
@@ -90,9 +91,11 @@ void StringList::pack(void) {
 		}
 	}
 
+	memset(dst, 0, (size - _count) * sizeof(char*));
+
 	delete[] _data;
 	_data = ptr;
-	_size = _count;
+	_size = size;
 }
 
 void StringList::clear(void) {
