@@ -36,6 +36,21 @@
 #include "unix/system.h"
 #endif
 
+// FIXME: get rid of alloca
+#ifdef HAVE_ALLOCA_H
+	# include <alloca.h>
+#elif defined __GNUC__
+	#undef alloca
+	# define alloca __builtin_alloca
+#elif defined _AIX
+	#undef alloca
+	# define alloca __alloca
+#elif defined _MSC_VER
+	#undef alloca
+	# include <malloc.h>
+	# define alloca _alloca
+#endif
+
 #define E_RELOADMAP 40
 #define TIMERSPEED 20
 #define SKELDALINI "skeldal.ini"

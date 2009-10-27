@@ -216,6 +216,7 @@ public:
 #define New(typ) (typ *)getmem(sizeof(typ))
 #define NewArr(typ,count) (typ *)getmem(sizeof(typ)*(count))
 
+/*
 typedef struct meminfo {
     unsigned LargestBlockAvail;
     unsigned MaxUnlockedPage;
@@ -228,6 +229,7 @@ typedef struct meminfo {
     unsigned SizeOfPageFile;
     unsigned Reserved[3];
 } MEMINFO;
+*/
 
 
 typedef struct thandle_data
