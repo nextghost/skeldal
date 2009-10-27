@@ -35,6 +35,7 @@
 #include "libs/pcx.h"
 #include "game/globals.h"
 #include "game/version.h"
+#include "libs/system.h"
 
 #define ZIVOTY_S 60
 #define ZIVOTY_E 62

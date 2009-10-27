@@ -26,6 +26,7 @@
 #include <cctype>
 #include "libs/strlite.h"
 #include "libs/inicfg.h"
+#include "libs/system.h"
 
 int read_config(StringList &ls, const char *filename)
   {

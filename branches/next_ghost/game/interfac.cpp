@@ -44,6 +44,7 @@
 #include "game/globals.h"
 #include "game/engine1.h"
 #include "game/interfac.h"
+#include "libs/system.h"
 
 #define MES_MAXSIZE 500
 #define CHECK_BOX_ANIM 6

@@ -32,6 +32,7 @@
 #include "libs/bmouse.h"
 #include "game/engine1.h"
 #include "game/globals.h"
+#include "libs/system.h"
 
 
 #define S_jmeno 128

@@ -31,6 +31,7 @@
 #include "libs/mgifmem.h"
 #include "game/globals.h"
 #include "game/engine1.h"
+#include "libs/system.h"
 
 #define CTVR 128
 
