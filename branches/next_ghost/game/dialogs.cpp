@@ -1440,6 +1440,7 @@ char save_dialog_info(WriteStream &stream) {
 
 			if ((i & 0x3) == 0x3) {
 				stream.writeUint8(c);
+				c = 0;
 			}
 		}
 
