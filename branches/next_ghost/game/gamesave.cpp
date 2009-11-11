@@ -1484,7 +1484,7 @@ void close_story_file()
   }
 
 int load_map_automap(const char *mapfile) {
-	SEND_LOG("(SAVEGAME) CRITICAL SECTION - Swapping maps: %s <-> %s", level_fname, mapfile);
+	SEND_LOG("(SAVEGAME) CRITICAL SECTION - Swapping maps: %s <-> %s", gameMap.fname(), mapfile);
 	kill_all_sounds();
 	return gameMap.automapRestore(mapfile);
 }

@@ -1454,7 +1454,7 @@ int Map::automapRestore(const char *filename) {
 
 	i = file.readSint32LE();
 
-	SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)", level_fname, "START");
+	SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)", gameMap.fname(), "START");
 
 	if (!i) {
 		i = file.readSint32LE();	// game version

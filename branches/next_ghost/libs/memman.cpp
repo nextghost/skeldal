@@ -686,6 +686,7 @@ int DDLFile::getOffset(unsigned id) const {
 }
 
 #ifdef LOGFILE
+/*
 static void bonz_table()
   {
   int i;
@@ -696,6 +697,7 @@ static void bonz_table()
     fprintf(stderr,"%-12.12s %12d\n",nametable[i].name,nametable[i].seek);
     }
   }
+*/
 #endif
 
 static int test_file_exist_DOS(int group, const char *filename)
@@ -761,7 +763,7 @@ int swap_block(THANDLE_DATA *h)
 //  wsize=tell(swap);
 //  if (wsize<pos) write(swap,NULL,pos-wsize);
   fseek(swap,pos,SEEK_SET);
-  SEND_LOG("(SWAP) Swaping block '%-.12hs'",h->src_file,0);
+  SEND_LOG("(SWAP) Swaping block '%-.12s'",h->src_file,0);
 //  wsize=write(swap,h->blockdata,h->size);
   wsize=fwrite(h->blockdata,h->size,1,swap);
   swap_status=1;
@@ -882,10 +884,10 @@ THANDLE_DATA *kill_block(int handle)
   h=get_handle(handle);if (h->status==BK_NOT_USED) return h;
   if (h->flags & BK_LOCKED)
      {
-     SEND_LOG("(ERROR) Unable to kill block! It is LOCKED! '%-.12hs' (%04X)",h->src_file,handle);
+     SEND_LOG("(ERROR) Unable to kill block! It is LOCKED! '%-.12s' (%04X)",h->src_file,handle);
      return NULL;
      }
-  SEND_LOG("(KILL) Killing block '%-.12hs' (%04X)",h->src_file,handle);
+  SEND_LOG("(KILL) Killing block '%-.12s' (%04X)",h->src_file,handle);
   if (h->status==BK_SAME_AS) return h;
   if (h->status==BK_PRESENT) free(h->blockdata);
   if (h->flags & BK_HSWAP) swap_free_block(h->seekpos,h->size);
@@ -932,7 +934,7 @@ void *load_swaped_block(THANDLE_DATA *h)
 
   if (mman_action!=NULL) mman_action(MMA_SWAP_READ);
   i=getmem(h->size);
-  SEND_LOG("(LOAD)(SWAP) Loading block from swap named '%-.12hs'",h->src_file,0);
+  SEND_LOG("(LOAD)(SWAP) Loading block from swap named '%-.12s'",h->src_file,0);
   fseek(swap,h->seekpos,SEEK_SET);
 //  read(swap,i,h->size);
   fread(i,1,h->size,swap);
@@ -979,7 +981,7 @@ THANDLE_DATA *def_handle(int handle,const char *filename,void (*decompress)(void
   if (i==handle) return h;
   if (kill_block(handle)==NULL)
      {
-     SEND_LOG("(ERROR) File/Block can't be registred, handle is already in use '%-.12hs' handle %04X",filename,handle);
+     SEND_LOG("(ERROR) File/Block can't be registred, handle is already in use '%-.12s' handle %04X",filename,handle);
      return NULL;
      }
   if (i!=-1 && i!=handle)
@@ -995,7 +997,7 @@ THANDLE_DATA *def_handle(int handle,const char *filename,void (*decompress)(void
   h->loadproc=decompress;
   if (filename[0])
       h->seekpos=get_file_entry(path,h->src_file);
-  SEND_LOG("(REGISTER) File/Block registred '%-.12hs' handle %04X",h->src_file,handle);
+  SEND_LOG("(REGISTER) File/Block registred '%-.12s' handle %04X",h->src_file,handle);
   SEND_LOG("(REGISTER) Seekpos=%d",h->seekpos,0);
   h->flags=0;
   h->path=path;
@@ -1069,7 +1071,7 @@ void *ablock(int handle)
 //        char c[200];
 	char *c;
 
-        SEND_LOG("(LOAD) Loading file as block '%-.12hs' %04X",h->src_file,handle);
+        SEND_LOG("(LOAD) Loading file as block '%-.12s' %04X",h->src_file,handle);
         if (h->seekpos==0)
            {
            if (h->src_file[0]!=0)
@@ -1245,7 +1247,7 @@ void undef_handle(int handle)
   if (h->status!=BK_NOT_USED)
      {
      if (kill_block(handle)==NULL) return;
-     SEND_LOG("(REGISTER) File/Block unregistred %04X (%-.12hs)",handle,h->src_file);
+     SEND_LOG("(REGISTER) File/Block unregistred %04X (%-.12s)",handle,h->src_file);
      }
   h->src_file[0]=0;
   h->seekpos=0;
@@ -1398,7 +1400,7 @@ char add_patch_file(char *filename) {
 void free(void *c)
   {
   if (c==NULL) return;
-  SEND_LOG("(ALLOC)תתת Dealloc: %p size %d",c,*((long *)c-1));
+  SEND_LOG("(ALLOC) Dealloc: %p size %d",c,*((long *)c-1));
   free(c);
   }
 */

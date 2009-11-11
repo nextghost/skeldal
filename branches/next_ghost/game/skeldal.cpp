@@ -578,8 +578,8 @@ void music_init()
      SEND_LOG("(SOUND) SOUND_DETECT Detecting sound card",0,0);
      if (sound_detect(&snd_devnum,&snd_parm1,&snd_parm2,&snd_parm3)) snd_devnum=DEV_NOSOUND;
      }*/
-  SEND_LOG("(SOUND) SOUND_SET Setting Sound: Device '%s' Port: %3X",device_name(snd_devnum),snd_parm1);
-  SEND_LOG("(SOUND) SOUND_SET Setting Sound: IRQ: %X DMA: %X",snd_parm2,snd_parm3);
+//  SEND_LOG("(SOUND) SOUND_SET Setting Sound: Device '%s' Port: %3X",device_name(snd_devnum),snd_parm1);
+//  SEND_LOG("(SOUND) SOUND_SET Setting Sound: IRQ: %X DMA: %X",snd_parm2,snd_parm3);
   Sound_SetMixer(snd_devnum,snd_mixing,snd_parm1,snd_parm2,snd_parm3);
   SEND_LOG("(SOUND) SOUND_INIT Starting mixing",0,0);
   Sound_StartMixing();
@@ -936,7 +936,7 @@ void error_exception(EVENT_MSG *msg,void **unused)
      unused;
      SEND_LOG("(ERROR) Runtime error detected ... Game terminator lunched.",0,0);
      SEND_LOG("(ERROR) Log: Now dump of useful informations:",0,0);
-     SEND_LOG("(ERROR) Log: Map name '%s'",level_fname==NULL?"<NULL>":level_fname,0);
+     SEND_LOG("(ERROR) Log: Map name '%s'",gameMap.fname()==NULL?"<NULL>":gameMap.fname(),0);
      SEND_LOG("(ERROR) Log: Sector %d Direction %d",viewsector,viewdir);
      SEND_LOG("(ERROR) Log: Last 'memman' handle: %x",memman_handle,0);
      SEND_LOG("(ERROR) Log: Battle: %d Select_player %d",battle,select_player);

@@ -319,9 +319,12 @@ void display_status();    //zobrazi na display status memmanageru
 #ifdef LOGFILE
 char *get_time_str();
 int q_current_task();
-#define OPEN_LOG(log) memcpy(stderr,fopen(log,"w"),sizeof(FILE));
-#define SEND_LOG(format,parm1,parm2) fprintf(stderr,"%-2d %s "format"\n",q_current_task(),get_time_str(),parm1,parm2),fflush(stderr)
-#define CLOSE_LOG() fclose(logfile);
+//#define OPEN_LOG(log) memcpy(stderr,fopen(log,"w"),sizeof(FILE));
+//#define SEND_LOG(format,parm1,parm2) fprintf(stderr,"%-2d %s "format"\n",q_current_task(),get_time_str(),parm1,parm2),fflush(stderr)
+//#define CLOSE_LOG() fclose(logfile);
+#define OPEN_LOG(log)
+#define SEND_LOG(format,parm1,parm2) fprintf(stderr,"%s "format"\n",get_time_str(),parm1,parm2),fflush(stderr)
+#define CLOSE_LOG()
 #else
 #define OPEN_LOG(log)
 #define SEND_LOG(format,parm1,parm2)
