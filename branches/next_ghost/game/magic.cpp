@@ -1759,7 +1759,7 @@ char add_group_spell(int num, int sector, int owner, int mode, char noanim) {
 		} else {
 			for (i = 0; i < POCET_POSTAV; i++) {
 				if (postavy[i].used && postavy[i].sektor == sector) {
-					add_spell(num, i + 1, owner, noanim || i);
+					add_spell(num, i + 1, owner, noanim || !c);
 					c = 0;
 				}
 			}
