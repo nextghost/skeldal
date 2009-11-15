@@ -1730,7 +1730,7 @@ char add_group_spell(int num, int sector, int owner, int mode, char noanim) {
 		c = 0;
 
 		if (mobs[m-1].next) {
-			add_spell(num, -mobs[m - 1].next, owner, noanim);
+			add_spell(num, -mobs[m - 1].next, owner, 1);
 		}
 	}
 
@@ -1759,7 +1759,7 @@ char add_group_spell(int num, int sector, int owner, int mode, char noanim) {
 		} else {
 			for (i = 0; i < POCET_POSTAV; i++) {
 				if (postavy[i].used && postavy[i].sektor == sector) {
-					add_spell(num, i + 1, owner, noanim);
+					add_spell(num, i + 1, owner, noanim || i);
 					c = 0;
 				}
 			}
