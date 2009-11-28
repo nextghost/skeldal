@@ -184,8 +184,8 @@ static void loadSide(TSTENA &side, ReadStream &stream) {
 	side.xsec = stream.readSint8();
 	side.ysec = stream.readSint8();
 	side.flags = stream.readUint32LE();
-	side.prim_anim = stream.readSint8();
-	side.sec_anim = stream.readSint8();
+	side.prim_anim = stream.readUint8();
+	side.sec_anim = stream.readUint8();
 	side.lclip = stream.readSint8();
 	side.action = stream.readSint8();
 }
@@ -993,8 +993,8 @@ int Map::save(void) const {
 			file.writeSint8(_sides[i].xsec);
 			file.writeSint8(_sides[i].ysec);
 			file.writeUint32LE(_sides[i].flags);
-			file.writeSint8(_sides[i].prim_anim);
-			file.writeSint8(_sides[i].sec_anim);
+			file.writeUint8(_sides[i].prim_anim);
+			file.writeUint8(_sides[i].sec_anim);
 			file.writeSint8(_sides[i].lclip);
 			file.writeSint8(_sides[i].action);
 		}

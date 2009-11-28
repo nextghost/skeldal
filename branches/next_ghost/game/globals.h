@@ -487,7 +487,8 @@ typedef struct tstena {
 	uint16_t sector_tag;
 	int8_t xsec, ysec;
 	uint32_t flags;
-	int8_t prim_anim, sec_anim, lclip, action;
+	uint8_t prim_anim, sec_anim;
+	int8_t lclip, action;
 } TSTENA;
 
 typedef struct tsector {
