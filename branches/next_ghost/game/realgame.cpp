@@ -1159,11 +1159,13 @@ int Map::save(void) const {
 		file.writeSint16LE(f->damage);
 		file.writeSint16LE(f->lives);
 
-		for (j = 0; f->items[j]; j++) {
-			file.writeSint16LE(f->items[j]);
-		}
+		if (f->items) {
+			for (j = 0; f->items[j]; j++) {
+				file.writeSint16LE(f->items[j]);
+			}
 
-		file.writeSint16LE(0);
+			file.writeSint16LE(0);
+		}
 	}
 
 	save_enemy_paths(file);
@@ -1387,6 +1389,8 @@ int Map::restore(void) {
 			for (ptr = items; *ptr++ = file.readSint16LE(););
 			n->items = (short*)malloc((ptr - items) * sizeof(short));
 			memcpy(n->items, items, (ptr - items) * sizeof(short));
+		} else {
+			n->items = NULL;
 		}
 
 		if (!p) {
@@ -2184,7 +2188,7 @@ TFLY *duplic_fly(TFLY *p)
      {
 //     int s=_msize(q->items);
      int s = 0;
-     for (; q->items[s]; s++);
+     while (q->items[s++]);
      q->items = (int16_t*)getmem(s*sizeof(int16_t));
      memcpy(q->items,p->items,s*sizeof(int16_t));
      }
