@@ -990,8 +990,8 @@ int Map::save(void) const {
 			file.writeSint8(_sides[i].oblouk);
 			file.writeSint8(_sides[i].side_tag);
 			file.writeUint16LE(_sides[i].sector_tag);
-			file.writeSint8(_sides[i].xsec);
-			file.writeSint8(_sides[i].ysec);
+			file.writeUint8(_sides[i].xsec);
+			file.writeUint8(_sides[i].ysec);
 			file.writeUint32LE(_sides[i].flags);
 			file.writeUint8(_sides[i].prim_anim);
 			file.writeUint8(_sides[i].sec_anim);
