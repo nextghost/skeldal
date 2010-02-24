@@ -485,7 +485,7 @@ typedef struct tdregisters
 typedef struct tstena {
 	int8_t prim, sec, oblouk, side_tag;
 	uint16_t sector_tag;
-	int8_t xsec, ysec;
+	uint8_t xsec, ysec;
 	uint32_t flags;
 	uint8_t prim_anim, sec_anim;
 	int8_t lclip, action;

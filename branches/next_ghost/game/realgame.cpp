@@ -181,8 +181,8 @@ static void loadSide(TSTENA &side, ReadStream &stream) {
 	side.oblouk = stream.readSint8();
 	side.side_tag = stream.readSint8();
 	side.sector_tag = stream.readUint16LE();
-	side.xsec = stream.readSint8();
-	side.ysec = stream.readSint8();
+	side.xsec = stream.readUint8();
+	side.ysec = stream.readUint8();
 	side.flags = stream.readUint32LE();
 	side.prim_anim = stream.readUint8();
 	side.sec_anim = stream.readUint8();
