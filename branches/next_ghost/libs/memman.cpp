@@ -231,9 +231,12 @@ int32_t ReadStream::readSint32BE(void) {
 
 MemoryReadStream *ReadStream::readStream(unsigned size) {
 	unsigned char *ptr = new unsigned char[size];
+	MemoryReadStream *ret;
 
 	size = read(ptr, size);
-	return new MemoryReadStream(ptr, size);
+	ret = new MemoryReadStream(ptr, size);
+	delete[] ptr;
+	return ret;
 }
 
 MemoryReadStream::MemoryReadStream(const void *ptr, unsigned len) : _data(NULL),
