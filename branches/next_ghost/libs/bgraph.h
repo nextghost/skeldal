@@ -20,37 +20,147 @@
  *  
  *  Last commit made by: $Id$
  */
+
+#ifndef _BGRAPH_H_
+#define _BGRAPH_H_
+
 #include <inttypes.h>
+#include "libs/pcx.h"
 #include "libs/system.h"
-#define line line32
-#define hor_line hor_line32
-#define ver_line ver_line32
+#define hor_line(x, y, xs) bar32(x, y, xs, y)
+#define ver_line(x, y, ys) bar32(x, y, x, ys)
 #define bar bar32
 #define point point32
 
 #define RGB888(r, g, b) Screen_RGB((r) >> 3, (g) >> 3, (b) >> 3)
 #define RGB555(r, g, b) Screen_RGB((r), (g), (b))
+#define R(r,g,b) (r)
+#define G(r,g,b) (g)
+#define B(r,g,b) (b)
 
-extern uint16_t curcolor,charcolors[7];
+#define HALIGN_LEFT 0
+#define HALIGN_CENTER 1
+#define HALIGN_RIGHT 2
+
+#define VALIGN_TOP 0
+#define VALIGN_CENTER 1
+#define VALIGN_BOTTOM 2
+
+#define GLYPH_COUNT 256
+#define FONT_COLORS 7
+
+typedef struct t_floor_map {
+	int x, srcy, dsty, linewidth, counter;
+} T_FLOOR_MAP;
+
+class Font : public DataBlock {
+public:
+	struct Glyph {
+		unsigned width, height;
+		uint8_t *data;
+	};
+
+private:
+	Glyph _glyphs[GLYPH_COUNT];
+
+	// Do not implement
+	Font(const Font &src);
+	const Font &operator=(const Font &src);
+
+public:
+	explicit Font(SeekableReadStream &stream);
+	~Font(void);
+
+	const Glyph &glyph(unsigned idx) const;
+	unsigned textWidth(const char *text) const;
+	unsigned textHeight(const char *text) const;
+};
+
+class SoftRenderer : public Texture {
+private:
+	const Font *_font;
+	int _shadow;
+	uint8_t _fontPal[FONT_COLORS][3];
+
+public:
+	SoftRenderer(unsigned xs, unsigned ys);
+	~SoftRenderer(void);
+
+	// texture blit with simple index transparency (0 = invisible)
+	// scale: 320 means 1:1 scale, >320 to expand, <320 to shrink
+	void blit(const Texture &tex, int x, int y, const uint8_t *pal = NULL, unsigned scale = 320, int mirror = 0);
+	void rotBlit(const Texture &tex, int x, int y, float angle, const uint8_t *pal = NULL);
+	// texture blit with index transparency (0 = invisible, 1 = blend)
+	void enemyBlit(const Texture &tex, int x, int y, const uint8_t *pal = NULL, unsigned scale = 320, int mirror = 0);
+	// texture blit with index transparency (0 = invisible, >=128 = blend)
+	void transparentBlit(const Texture &tex, int x, int y, const uint8_t *pal = NULL, unsigned scale = 320, int mirror = 0);
+	// texture blit with index transparency (0 = invisible, 1 = skip
+	// to next line)
+	void wallBlit(const Texture &tex, int x, int y, int32_t *xtable, unsigned xlen, int16_t *ytable, unsigned ylen, const uint8_t *pal = NULL, int mirror = 0);
+	// fullscreen video frame blit (cutscene only)
+	void videoBlit(unsigned ypos, const Texture &tex, const uint8_t *pal = NULL);
+	// blit only a part of the texture, no scaling or transparency
+	void rectBlit(const Texture &tex, int x, int y, unsigned tx, unsigned ty, unsigned w, unsigned h, const uint8_t *pal = NULL);
+	// Fill a shape with selected color (actions: 0 = copy, 1 = blend,
+	// 2 = subtract fraction)
+	void maskFill(const Texture &tex, int x, int y, uint8_t mask, int action, uint8_t r, uint8_t g, uint8_t b);
+	// Blit a texture using mask
+	void maskBlit(const Texture &tex, const Texture &mask, int x, int y, uint8_t shape, const uint8_t *pal);
+	// Draw a rectangle using selected color (actions: 0 = copy,
+	// 1 = blend, 2 = subtract fraction, 3 = xor)
+	void bar(unsigned x, unsigned y, unsigned w, unsigned h, uint8_t r, uint8_t g, uint8_t b, int action = 0);
+	void fcBlit(const Texture &tex, unsigned y, const T_FLOOR_MAP *celmask, const uint8_t *fog, const uint8_t *pal = NULL);
+
+	void drawText(int x, int y, const char *text);
+	void drawAlignedText(int x, int y, int halign, int valign, const char *text);
+	void drawChar(int x, int y, unsigned char c);
+
+	void setFont(const Font *font, int shadow, uint8_t r, uint8_t g, uint8_t b);
+	void setFont(const Font *font, int shadow, uint8_t pal[][3]);
+	void setFontColor(unsigned idx, uint8_t r, uint8_t g, uint8_t b);
+	unsigned textWidth(const char *text) const;
+	unsigned textHeight(const char *text) const;
+	unsigned charWidth(char text) const;
+	unsigned charHeight(char text) const;
+
+	virtual void drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) { }
+};
+
+class FadeRenderer : public TextureFade {
+public:
+	FadeRenderer(const uint8_t *pal, unsigned width, unsigned height, uint8_t r, uint8_t g, uint8_t b);
+	~FadeRenderer(void) { }
+
+	void blit(const Texture &tex, int x, int y);
+};
+
+class IconLib : public DataBlock {
+private:
+	TexturePal **_icons;
+	unsigned _count;
+
+public:
+	IconLib(ReadStream &stream, unsigned count);
+	~IconLib(void);
+
+	const TexturePal &operator[](unsigned idx) const;
+	unsigned size(void) const { return _count; }
+};
+
+// TODO: write a complete video backend instead
+extern SoftRenderer *renderer, *backbuffer;
+
+extern uint8_t curcolor[3];
 extern uint16_t *curfont,*writepos,writeposx;
-extern uint8_t fontdsize;
 extern uint8_t *palmem,*xlatmem;
 extern void (*showview)(uint16_t,uint16_t,uint16_t,uint16_t);
 extern char line480;
-extern long screen_buffer_size;
 extern char banking;
 extern char __skip_change_line_test;
 extern char no_restore_mode;
 
-static __inline uint16_t *getadr32(int32_t x,int32_t y)
-  {
-  return Screen_GetAddr()+Screen_GetXSize()*y+x;
-  }
+DataBlock *loadFont(SeekableReadStream &stream);
 
-static __inline void point32(int32_t x,int32_t y, uint16_t color)
-  {
-  *getadr32(x,y)=color;
-  }
 void bar32(int x1,int y1, int x2, int y2);
 //#pragma aux bar32 parm [eAX] [eBX] [eCX] [eDX] modify [ESI EDI];
 void hor_line32(int x1,int y1,int x2);
@@ -67,12 +177,6 @@ void char_32(uint16_t *posit,uint16_t *font,uint8_t znak);
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
 void char2_32(uint16_t *posit,uint16_t *font,uint8_t znak);
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
-uint16_t charsize(uint16_t *font,uint8_t znak);
-//#pragma aux charsize parm [esi] [eax]
-void put_picture(uint16_t x,uint16_t y,uint16_t *p);
-//#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]
-void get_picture(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys,uint16_t *p);
-//#pragma aux get_picture parm [esi] [eax] [ebx] [ecx] [edi] modify [edx]
 void setpal(void *paleta);
 //#pragma aux setpal parm [esi] modify [eax edx]
 void redraw_lo(void *screen,void *lbuffer,uint8_t *xlat);
@@ -125,46 +229,35 @@ int initmode64(void *paletefile);
 int initmode64b(void *paletefile);
 void *create_hixlat();
 void closemode();
-void line32(uint16_t x1,uint16_t y1, uint16_t x2, uint16_t y2);
-void position(uint16_t x,uint16_t y);
-void outtext(const char *text);
-void show_ms_cursor(int16_t x,int16_t y);
-void *register_ms_cursor(uint16_t *cursor);
+void show_ms_cursor(int x, int y);
+void register_ms_cursor(const Texture *cursor);
 void move_ms_cursor(int16_t newx,int16_t newy,char nodraw);
 void hide_ms_cursor();
-int text_height(const char *text);
-int text_width(const char *text);
-void set_aligned_position(int x,int y,char alignx, char aligny,const char *text);
 void wait_retrace();
 void pal_optimize();
-void rectangle(int x1,int y1,int x2,int y2,int color);
+void rectangle(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, uint8_t b);
 uint16_t *mapvesaadr1(uint16_t *a);
 void *create_special_palette();
 void *create_special_palette2();
 void *create_blw_palette16();
-void rel_position_x(uint16_t x);
 int init_empty_mode();
 
 void put_8bit_clipped(uint16_t *src,uint16_t *trg,int startline,int velx,int vely);
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
-void put_textured_bar_(uint16_t *src,uint16_t *trg,int xsiz,int ysiz,int xofs,int yofs);
-//#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
-void put_textured_bar(uint16_t *src,int x,int y,int xs,int ys,int xofs,int yofs);
-void trans_bar(int x,int y,int xs,int ys,int barva);
+void put_textured_bar(const Texture &tex, int x, int y, int xs, int ys, int xofs, int yofs);
+void trans_bar(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b);
 //#pragma aux trans_bar parm [EDI][ESI][EDX][ECX][EBX] modify [EAX];
 void trans_bar25(int x,int y,int xs,int ys);
 //#pragma aux trans_bar25 parm [EDI][ESI][EDX][ECX] modify [EAX EBX];
-void trans_line_x(int x,int y,int xs,int barva);
+void trans_line_x(int x, int y, int xs, uint8_t r, uint8_t g, uint8_t b);
 //#pragma aux trans_line_x parm [EDI][ESI][ECX][EDX] modify [EAX];
-void trans_line_y(int x,int y,int ys,int barva);
+void trans_line_y(int x, int y, int ys, uint8_t r, uint8_t g, uint8_t b);
 //#pragma aux trans_line_y parm [EDI][ESI][ECX][EDX] modify [EAX];
-void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int posz,char turn);
+void draw_placed_texture(const Texture *tex, int celx, int cely, int posx, int posy, int posz, char turn);
 
 void put_image(uint16_t *image,uint16_t *target,int start_line,int sizex,int sizey);
 //#pragma aux put_image parm [ESI][EDI][EAX][EBX][EDX] modify [ECX]
-void put_picture2picture(uint16_t *source,uint16_t *target,int xp,int yp);
-//#pragma aux put_picture2picture parm [ESI][EDI][EAX][EDX] modify [ECX]
-
-
 
 #define swap_int(a,b) do  {int c=a;a=b;b=c;} while (0);
+
+#endif

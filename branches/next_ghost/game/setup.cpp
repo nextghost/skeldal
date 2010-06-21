@@ -52,10 +52,11 @@ char q_runsetup(char *parm)
   }
 
 
-static void show_setup_desktop(WINDOW *w)
-  {
-  put_picture(w->x, w->y, (uint16_t*)ablock(H_SETUPBAR));
-  }
+static void show_setup_desktop(WINDOW *w) {
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_SETUPBAR));
+
+	renderer->blit(*tex, w->x, w->y, tex->palette());
+}
 
 static void checkbox_animator(THE_TIMER *t)
   {
@@ -191,67 +192,70 @@ T_CLK_MAP setup[]=
   };
 
 
-void new_setup()
-  {
-  WINDOW *w;
-  CTL3D ctl;
-  int i;
-  static int textxp[]={ 75, 75,435,435,434,535,535,535,434,434,434,434,434, 35,410,510};
-  static int textyp[]={275,305, 65, 95,125, 65, 95,125,185,215,245,275,305,235, 40, 40};
-  static int  textc[]={ 53, 54, 56, 57, 58, 56, 57, 58,140,141,142,143,144 ,51, 55, 59};
+void new_setup() {
+	WINDOW *w;
+	CTL3D ctl;
+	int i;
+	static int textxp[] = {75, 75, 435, 435, 434, 535, 535, 535, 434, 434, 434, 434, 434, 35, 410, 510};
+	static int textyp[] = {275, 305, 65, 95, 125, 65, 95, 125, 185, 215, 245, 275, 305, 235, 40, 40};
+	static int  textc[] = {53, 54, 56, 57, 58, 56, 57, 58, 140, 141, 142, 143, 144, 51, 55, 59};
+	const Font* font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	uint8_t black[3] = {0};
 
-  Sound_MixBack(256000-16384);
-  memset(&ctl,0,sizeof(ctl));
-  change_click_map(setup,4);
-  set_font(H_FBOLD,SETUP_COL2);
-  default_font=curfont;
-  memcpy(f_default,charcolors,sizeof(f_default));
-  w=create_window(0,SCREEN_OFFLINE,639,359,0,&ctl);
-  w->draw_event=show_setup_desktop;
-  desktop_add_window(w);
-  define(new SkeldalCheckBox(10, 50, 270, 190, 20, 0, Sound_GetEffect(SND_SWAP)));
-  on_change(do_setup_change);
-  if (Sound_CheckEffect(SND_OUTFILTER))
-     {
-     define(new SkeldalCheckBox(20, 50, 300, 190, 20, 0, Sound_GetEffect(SND_OUTFILTER)));
-        on_change(do_setup_change);
-     }
+	Sound_MixBack(256000 - 16384);
+	memset(&ctl, 0, sizeof(ctl));
+	change_click_map(setup, 4);
+	renderer->setFont(font, SETUP_COL2);
+	GUIObject::setDefaultFont(font, SETUP_COL2);
+	w = create_window(0, SCREEN_OFFLINE, 639, 359, 0, 0, 0, &ctl);
+	w->draw_event = show_setup_desktop;
+	desktop_add_window(w);
+	define(new SkeldalCheckBox(10, 50, 270, 190, 20, 0, Sound_GetEffect(SND_SWAP)));
+	on_change(do_setup_change);
 
-  define(new SkeldalCheckBox(30, 410, 60, 90, 20, 0, zoom_speed(-1) == 0));
-  on_change(change_zoom);
-  define(new SkeldalCheckBox(40, 410, 90, 90, 20, 0, zoom_speed(-1) == 1));
-  on_change(change_zoom);
-  define(new SkeldalCheckBox(50, 410, 120, 90, 20, 0, zoom_speed(-1) == 2));
-  on_change(change_zoom);
+	if (Sound_CheckEffect(SND_OUTFILTER)) {
+		define(new SkeldalCheckBox(20, 50, 300, 190, 20, 0, Sound_GetEffect(SND_OUTFILTER)));
+		on_change(do_setup_change);
+	}
 
-  define(new SkeldalCheckBox(60, 510, 60, 90, 20, 0, turn_speed(-1) == 0));
-  on_change(change_turn);
-  define(new SkeldalCheckBox(70, 510, 90, 90, 20, 0, turn_speed(-1) == 1));
-  on_change(change_turn);
-  define(new SkeldalCheckBox(80, 510, 120, 90, 20, 0, turn_speed(-1) == 2));
-  on_change(change_turn);
+	define(new SkeldalCheckBox(30, 410, 60, 90, 20, 0, zoom_speed(-1) == 0));
+	on_change(change_zoom);
+	define(new SkeldalCheckBox(40, 410, 90, 90, 20, 0, zoom_speed(-1) == 1));
+	on_change(change_zoom);
+	define(new SkeldalCheckBox(50, 410, 120, 90, 20, 0, zoom_speed(-1) == 2));
+	on_change(change_zoom);
+	
+	define(new SkeldalCheckBox(60, 510, 60, 90, 20, 0, turn_speed(-1) == 0));
+	on_change(change_turn);
+	define(new SkeldalCheckBox(70, 510, 90, 90, 20, 0, turn_speed(-1) == 1));
+	on_change(change_turn);
+	define(new SkeldalCheckBox(80, 510, 120, 90, 20, 0, turn_speed(-1) == 2));
+	on_change(change_turn);
 
-     define(new SkeldalCheckBox(90, 410, 180, 190, 20, 0, show_names));
-     define(new SkeldalCheckBox(100, 410, 210, 190, 20, 0, enable_sort));
-     define(new SkeldalCheckBox(110, 410, 240, 190, 20, 0, autoattack));
-     define(new SkeldalCheckBox(120, 410, 270, 190, 20, 0, autosave_enabled));
-     define(new SkeldalCheckBox(130, 410, 300, 190, 20, 0, level_preload));
+	define(new SkeldalCheckBox(90, 410, 180, 190, 20, 0, show_names));
+	define(new SkeldalCheckBox(100, 410, 210, 190, 20, 0, enable_sort));
+	define(new SkeldalCheckBox(110, 410, 240, 190, 20, 0, autoattack));
+	define(new SkeldalCheckBox(120, 410, 270, 190, 20, 0, autosave_enabled));
+	define(new SkeldalCheckBox(130, 410, 300, 190, 20, 0, level_preload));
 
-  for(i=0;i<sizeof(textc)/sizeof(int);i++)
-     define(new Label(-1,textxp[i],textyp[i]-1,1,1,0,texty[textc[i]]));
+	for (i = 0; i < sizeof(textc) / sizeof(int); i++) {
+		define(new Label(-1, textxp[i], textyp[i] - 1, 1, 1, 0, texty[textc[i]]));
+	}
 
-  for(i=0;i<sizeof(effects)/sizeof(int);i++)
-     if (Sound_CheckEffect(effects[i]))
-       {
-       define(new SkeldalSlider(200+i*10, 50+i*60, 30, 30, 200, 0, effects[i]==SND_MUSIC?127:255, Sound_GetEffect(effects[i])));
-       on_change(do_setup_change);
-       }
-  define(new SetupOkButton(300,559,336,81,21,0,texty[174]));
-  on_change(unwire_setup);
-  property(NULL,(uint16_t*)ablock(H_FTINY),&color_topbar,0);
-  redraw_window();
-  add_to_timer(TM_CHECKBOX,4,-1,checkbox_animator);
-  }
+	for (i = 0; i < sizeof(effects) / sizeof(int); i++) {
+		if (Sound_CheckEffect(effects[i])) {
+			define(new SkeldalSlider(200 + i * 10, 50 + i * 60, 30, 30, 200, 0, effects[i] == SND_MUSIC ? 127 : 255, Sound_GetEffect(effects[i])));
+			on_change(do_setup_change);
+		}
+	}
+
+	define(new SetupOkButton(300, 559, 336, 81, 21, 0, texty[174]));
+	on_change(unwire_setup);
+	font = dynamic_cast<const Font*>(ablock(H_FTINY));
+	property(NULL, font, 1, color_topbar, black);
+	redraw_window();
+	add_to_timer(TM_CHECKBOX, 4, -1, checkbox_animator);
+}
 
 void game_setup_()
   {
@@ -284,24 +288,24 @@ void GameResume(EVENT_MSG *msg,void **data)
      }
   }
 
-void GamePause()
-  {
-  int i;
-  unwire_proc();
-  send_message(E_ADD,E_KEYBOARD,GameResume);
-  update_mysky();
-  schovej_mysku();
-  trans_bar(0,0,640,480,0);
-  set_font(H_FBOLD,RGB555(0,23,0));
-  i=text_width(texty[5]);
-  add_window(320-(i/2)-10,100,i+40,40,H_IDESKA,4,20,20);
-    redraw_window();
-  set_aligned_position(320,115,1,1,texty[5]);
-  outtext(texty[5]);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  cancel_render=1;
-  }
+void GamePause() {
+	int i;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+
+	unwire_proc();
+	send_message(E_ADD, E_KEYBOARD, GameResume);
+	update_mysky();
+	schovej_mysku();
+	trans_bar(0, 0, 640, 480, 0, 0, 0);
+	renderer->setFont(font, 1, 0, 189, 0);
+	i = renderer->textWidth(texty[5]);
+	add_window(320 - (i / 2) - 10, 100, i + 40, 40, H_IDESKA, 4, 20, 20);
+	redraw_window();
+	renderer->drawAlignedText(320, 115, HALIGN_CENTER, VALIGN_CENTER, texty[5]);
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	cancel_render = 1;
+}
 
 /*void user_setup()
   {

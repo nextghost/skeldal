@@ -21,6 +21,7 @@
  *  Last commit made by: $Id$
  */
 #include <cstdio>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <inttypes.h>
@@ -269,4 +270,178 @@ int mgif_play(ReadStream &stream) {
 	}
 
 	return 1;
+}
+
+void apply_delta(uint8_t *target, ReadStream &stream, const uint8_t *palette) {
+	unsigned int i, j, k, size, idx;
+	uint8_t *tmp, *map, *oldmap;
+
+	size = stream.readUint32LE();
+	oldmap = map = new uint8_t[size+1];
+
+	for (i = 0; i < size; i++) {
+		map[i] = stream.readUint8();
+	}
+
+	for (i = 0; i < 180; i += j) {
+		tmp = target;
+
+		for (j = *map++; (j & 0xc0) != 0xc0; j = *map++) {
+			target += 8 * j;
+
+			for (k = 0; k < *map; k++) {
+				idx = stream.readUint8();
+				*target++ = palette[4 * idx];
+				*target++ = palette[4 * idx + 1];
+				*target++ = palette[4 * idx + 2];
+				*target++ = palette[4 * idx + 3];
+				idx = stream.readUint8();
+				*target++ = palette[4 * idx];
+				*target++ = palette[4 * idx + 1];
+				*target++ = palette[4 * idx + 2];
+				*target++ = palette[4 * idx + 3];
+			}
+			map++;
+		}
+
+		j = (j & 0x3f) + 1;
+		target = tmp + j * 1280;
+	}
+
+	delete[] oldmap;
+}
+
+MGIFReader::MGIFReader(ReadStream &stream, unsigned width, unsigned height, unsigned forceAlpha) :
+	Texture(new uint8_t[4 * width * height], width, height, 4),
+	_stream(stream), _text(NULL), _audio(NULL), _textSize(0), _audioSize(0),
+	_audioLength(0), _frame(0), _forceAlpha(forceAlpha) {
+	int i;
+
+	accnums[0] = accnums[1] = 0;
+	memset(_pal, 0, 4 * 256 * sizeof(uint8_t));
+	memset(_pixels, 0, 4 * width * height * sizeof(uint8_t));
+
+	_stream.read(_header.sign, 4);
+	_stream.read(_header.year, 2);
+	_header.eof = _stream.readSint8();
+	_header.ver = _stream.readUint16LE();
+	_header.frames = _stream.readSint32LE();
+	_header.snd_chans = _stream.readUint16LE();
+	_header.snd_freq = _stream.readSint32LE();
+
+	for (i = 0; i < 256; i++) {
+		_header.ampl_table[i] = _stream.readSint16LE();
+	}
+
+	for (i = 0; i < 32; i++) {
+		_header.reserved[i] = _stream.readSint16LE();
+	}
+
+	// FIXME: rewrite to use decompressor class
+	init_lzw_compressor(8);
+}
+
+MGIFReader::~MGIFReader(void) {
+	delete[] _pixels;
+	delete[] _text;
+	delete[] _audio;
+}
+
+unsigned MGIFReader::decodeFrame(void) {
+	int acts, action, size, i, j, val;
+	unsigned tmp, ret = FLAG_PLAYING;
+	uint8_t *buf = NULL;
+	MemoryReadStream *tmpstream, *delta = NULL;
+
+	if (_frame++ >= _header.frames) {
+		return 0;
+	}
+
+	// frame header: 1st byte = actions count, remaining 3 bytes = total
+	// frame size
+	acts = _stream.readUint32LE() & 0xff;
+
+	for (i = 0; i < acts; i++) {
+		tmp = _stream.readUint32LE();
+		action = tmp & 0xff;
+		size = tmp >> 8;
+		tmpstream = _stream.readStream(size);
+
+		switch (action) {
+		case MGIF_LZW:
+			assert(!(ret & FLAG_VIDEO) && "Multiple video actions");
+			buf = new uint8_t[LZW_BUFFER];
+			lzw_decode(*tmpstream, buf);
+
+			for (j = 0; j < width() * height(); j++) {
+				_pixels[4 * j] = _pal[4 * buf[j]];
+				_pixels[4 * j + 1] = _pal[4 * buf[j] + 1];
+				_pixels[4 * j + 2] = _pal[4 * buf[j] + 2];
+				_pixels[4 * j + 3] = _pal[4 * buf[j] + 3];
+			}
+
+			delete[] buf;
+			ret |= FLAG_VIDEO;
+			break;
+
+		case MGIF_DELTA:
+			assert(!(ret & FLAG_VIDEO) && "Multiple video actions");
+			buf = new uint8_t[LZW_BUFFER];
+			lzw_decode(*tmpstream, buf);
+			delta = new MemoryReadStream(buf, LZW_BUFFER);
+			delete[] buf;
+			ret |= FLAG_VIDEO;
+			break;
+
+		case MGIF_PAL:
+			for (j = 0, tmp = tmpstream->readUint16LE(); j < 4 * 256 && !tmpstream->eos(); j += 4, tmp = tmpstream->readUint16LE()) {
+				_pal[j] = (tmp >> 15) & 1;
+				_pal[j + 1] = ((tmp >> 7) & 0xf1) | ((tmp >> 12) & 0x7);
+				_pal[j + 2] = ((tmp >> 2) & 0xf1) | ((tmp >> 7) & 0x7);
+				_pal[j + 3] = ((tmp << 3) & 0xf1) | ((tmp >> 2) & 0x7);
+			}
+
+			if (_forceAlpha) {
+				_pal[0] = 1;
+			}
+
+			break;
+
+		case MGIF_SOUND:
+			if (_audioSize < size) {
+				delete[] _audio;
+				_audio = new int16_t[size];
+				_audioSize = size;
+			}
+
+			_audioLength = size;
+
+			for (j = 0; j < size; j++) {
+				val = accnums[j % 2] + _header.ampl_table[tmpstream->readUint8()];
+				val = val > 32767 ? 32767 : val;
+				val = val < -32767 ? -32767 : val;
+				_audio[j] = accnums[j % 2] = val;
+			}
+
+			ret |= FLAG_AUDIO;
+			break;
+
+		case MGIF_COPY:
+			assert(!(ret & FLAG_VIDEO) && "Multiple video actions");
+			ret |= FLAG_VIDEO;
+			break;
+
+		default:
+			assert(0 && "Unsupported frame action");
+		}
+
+		delete tmpstream;
+	}
+
+	if (delta) {
+		apply_delta(_pixels, *delta, _pal);
+		delete delta;
+	}
+
+	return ret;
 }

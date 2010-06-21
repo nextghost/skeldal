@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
@@ -79,19 +80,20 @@ static char vymacknout(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-static char promacknuti(int id,int xa,int ya,int xr,int yr)
-  {
-  char *z;
-  uint16_t *w;
+static char promacknuti(int id, int xa, int ya, int xr, int yr) {
+	uint8_t pix;
+	const Texture *mask = dynamic_cast<const Texture*>(ablock(H_MENU_MASK));
 
-  z = (char*)ablock(H_MENU_MASK);
-  w=(uint16_t *)z;
-  z+=6+512;
-  z+=xr+yr*w[0];
-  vymacknout(id,xa,ya,xr,yr);
-  if (*z!=0) cur_dir[*z-1]=SELECT;
-  return 1;
-  }
+	assert(xr < mask->width() && yr < mask->height() && mask->depth() == 1);
+	pix = mask->pixels()[xr + yr * mask->width()];
+	vymacknout(id, xa, ya, xr, yr);
+
+	if (pix) {
+		cur_dir[pix - 1] = SELECT;
+	}
+
+	return 1;
+}
 
 static char click(int id,int xa,int ya,int xr,int yr)
   {
@@ -115,181 +117,107 @@ T_CLK_MAP clk_main_menu[]=
   {-1,0,0,639,479,empty_clk,0xff,H_MS_DEFAULT},
   };
 
-void rozdily(uint8_t *orign,uint8_t *obr,uint16_t *hicolor,uint16_t *xtab,int pocet)
-//#pragma aux rozdily parm[EDX][ESI][EDI][EBX][ECX]=
-{
-/*
-__asm
-  {
-  mov edx,orign
-  mov esi,obr
-  mov edi,hicolor
-  mov ebx,xtab
-  mov ecx,pocet
-
-jp1:lodsb 
-  xor  al,[edx]
-  movzx eax,al
-  inc   edx
-  movzx eax,short ptr[ebx+eax*2]
-  stosw
-  dec  ecx
-  jnz  jp1
-  }
-*/
-
-	// TODO: needs testing
+static DataBlock *nahraj_rozdilovy_pcx(SeekableReadStream &stream) {
+	uint8_t *data;
 	int i;
-	for (i = 0; i < pocet; i++) {
-		hicolor[i] = xtab[obr[i] ^ orign[i]];
+	Texture *ret, *diff = load_pcx(stream, A_8BIT);
+	const Texture *orig = dynamic_cast<const Texture*>(ablock(H_ANIM_ORIGN));
+
+	assert(orig->width() == diff->width() && orig->height() == diff->height() && orig->depth() == 1);
+
+	data = new uint8_t[orig->width() * orig->height()];
+
+	for (i = 0; i < orig->width() * orig->height(); i++) {
+		data[i] = orig->pixels()[i] ^ diff->pixels()[i];
+	}
+
+	ret = new TextureHi(data, diff->palette(), orig->width(), orig->height());
+	delete diff;
+	delete[] data;
+	return ret;
+}
+
+static void init_menu_entries(void) {
+	int i;
+	char *a;
+
+	def_handle(H_ANIM_ORIGN, "LOGO00.PCX", pcx_8bit_decomp, SR_BGRAFIKA);
+	def_handle(H_ANIM, "LOGO00.PCX", pcx_15bit_decomp, SR_BGRAFIKA);
+	a = (char*)alloca(15);
+
+	for (i = 1; i < 30; i++) {
+		sprintf(a, "LOGO%02d.PCX", i);
+		def_handle(H_ANIM + i, a, nahraj_rozdilovy_pcx, SR_BGRAFIKA);
+	}
+
+	def_handle(H_MENU_BAR, "MAINMENU.PCX", pcx_8bit_decomp, SR_BGRAFIKA);
+	def_handle(H_MENU_MASK, "MENUVOL5.PCX", pcx_8bit_decomp, SR_BGRAFIKA);
+
+	for (i = 0; i < 5; i++) {
+		sprintf(a, "MENUVOL%d.PCX", i);
+		def_handle(H_MENU_ANIM + i, a, pcx_15bit_decomp, SR_BGRAFIKA);
 	}
 }
 
-static void nahraj_rozdilovy_pcx(void **pp,long *s)
-  {
-  uint8_t *org,*pos;
-  uint8_t *vysl;
-  uint16_t *size,*paltab;
-  uint16_t *hicolor,*p;
-  void *origin;
-  int siz;
+static void zobraz_podle_masky(char barva, char anim) {
+	unsigned xs, ys;
+	const Texture *mask, *data;
 
-  load_pcx((char *)*pp,*s,A_8BIT,&vysl);
-  size=(uint16_t *)vysl;
-  free(*pp);
-  siz=size[0]*size[1];
-  *s = siz * 2 + 12;
-//  p=hicolor=getmem(siz*2+12);
-  p = hicolor = (uint16_t*)getmem(*s);
-  *p++=size[0];
-  *p++=size[1];
-  *p++=16;
-  origin=ablock(H_ANIM_ORIGN);
-  org=(uint8_t*)origin+6+512;
-  pos=(uint8_t*)vysl+6+512;
-  paltab=(uint16_t *)vysl+3;
-  rozdily(org,pos,hicolor+3,paltab,siz);
-  free(vysl);
-  *pp=hicolor;
-//  *s=_msize(*pp);
-  }
+	alock(H_MENU_MASK);
+	mask = dynamic_cast<const Texture*>(ablock(H_MENU_MASK));
+	data = dynamic_cast<const Texture*>(ablock(H_MENU_ANIM + anim));
+	renderer->maskBlit(*data, *mask, 220, 300, barva, data->palette());
+	aunlock(H_MENU_MASK);
+}
 
+static void prehraj_animaci_v_menu(EVENT_MSG *msg, char **unused) {
+	static int counter = 0;
+	const Texture *tex;
 
-static void init_menu_entries(void)
-  {
-  int i;
-  char *a;
-  def_handle(H_ANIM_ORIGN,"LOGO00.PCX",pcx_8bit_decomp,SR_BGRAFIKA);
-  def_handle(H_ANIM,"LOGO00.PCX",pcx_15bit_decomp,SR_BGRAFIKA);
-  a = (char*)alloca(15);
-  for(i=1;i<30;i++)
-     {
-     sprintf(a,"LOGO%02d.PCX",i);
-     def_handle(H_ANIM+i,a,nahraj_rozdilovy_pcx,SR_BGRAFIKA);
-     }
-  def_handle(H_MENU_BAR,"MAINMENU.PCX",pcx_8bit_decomp,SR_BGRAFIKA);
-  def_handle(H_MENU_MASK,"MENUVOL5.PCX",pcx_8bit_decomp,SR_BGRAFIKA);
-  for(i=0;i<5;i++)
-     {
-     sprintf(a,"MENUVOL%d.PCX",i);
-     def_handle(H_MENU_ANIM+i,a,pcx_15bit_decomp,SR_BGRAFIKA);
-     }
-  }
+	if (msg->msg == E_TIMER) {
+		if (counter % SPEED == 0) {
+			int i = counter / SPEED;
+			char show = 0;
 
-void zobraz_podle_masky_asm(uint8_t barva,uint16_t *scr,uint16_t *data, uint8_t *maska,int xs,int ys)
-//#pragma aux zobraz_podle_masky_asm parm[al][edi][esi][ebx][edx][ecx]=
-  {
-/*
-  __asm
-    {
-    mov  al,barva
-    mov  edi,scr
-    mov  esi,data
-    mov  ebx,maska
-    mov  edx,xs
-    mov  ecx,ys
-    push ebp
-    mov  ebp,edx
-    jp3: cmp  al,[ebx]
-    jnz  jp1
-    movsw   
-    jmp  jp2
-jp1: add  edi,2
-    add  esi,2
-jp2: inc  ebx
-    dec  edx
-    jnz  jp3
-    mov  edx,ebp
-    add  edi,scr_linelen
-    sub  edi,edx
-    sub  edi,edx
-    dec  ecx
-    jnz  jp3
-    pop  ebp
-    }
-*/
+			schovej_mysku();
 
-	// TODO: needs testing
-	int x, y;
-	for (y = 0; y < ys; y++) {
-		for (x = 0; x < xs; x++) {
-			if (barva == maska[x+y*xs]) {
-				scr[x+y*Screen_GetXSize()] = data[x+y*xs];
+			if (!low_mem || ~i & 1) {
+				tex = dynamic_cast<const Texture*>(ablock(H_ANIM + i));
+				renderer->blit(*tex, 0, 56, tex->palette());
+			}
+
+			do_events();
+
+			for (i = 0; i < 5; i++) {
+				cur_pos[i] += cur_dir[i];
+
+				if (cur_pos[i] < 0) {
+					cur_pos[i] = 0;
+				} else if (cur_pos[i] > 4) {
+					cur_pos[i] = 4;
+				} else {
+					zobraz_podle_masky(i + 1, cur_pos[i]);
+					do_events();
+					show = 1;
+				}
+			}
+
+			ukaz_mysku();
+			update_mysky();
+			showview(0, 56, 640, 250);
+
+			if (show) {
+				showview(220, 300, 206, 178);
 			}
 		}
+
+		counter++;
+
+		if (counter >= (SPEED * 30)) {
+			counter = 0;
+		}
 	}
-  }
-
-static void zobraz_podle_masky(char barva,char anim)
-  {
-  uint8_t *maska;
-  uint16_t *data;
-  uint16_t *obr=Screen_GetAddr()+300*Screen_GetXSize()+220;
-  uint16_t xs,ys;
-
-  alock(H_MENU_MASK);
-  maska = (uint8_t*)ablock(H_MENU_MASK);
-  data = (uint16_t*)ablock(H_MENU_ANIM+anim);
-  xs=data[0];
-  ys=data[1];
-  zobraz_podle_masky_asm(barva,obr,data+3,maska+6+512,xs,ys);
-  aunlock(H_MENU_MASK);
-  }
-
-static void prehraj_animaci_v_menu(EVENT_MSG *msg,char **unused)
-  {
-  static int counter = 0;
-  unused;
-  if (msg->msg==E_TIMER)
-     {
-     if (counter % SPEED==0)
-        {
-        int i=counter/SPEED;char show=0;
-
-        schovej_mysku();
-        if (!low_mem || ~i & 1)put_picture(0, 56, (uint16_t*)ablock(H_ANIM+i));
-        do_events();
-        for(i=0;i<5;i++)
-           {
-           cur_pos[i]+=cur_dir[i];
-           if (cur_pos[i]<0) cur_pos[i]=0;
-           else if (cur_pos[i]>4) cur_pos[i]=4;
-           else
-              {
-              zobraz_podle_masky(i+1,cur_pos[i]);
-              do_events();
-              show=1;
-              }
-           }
-        ukaz_mysku();
-        update_mysky();
-        showview(0,56,640,250);
-        if (show) showview(220,300,206,178);
-        }
-     counter++;
-     if (counter>=(SPEED*30)) counter=0;
-     }
-  }
+}
 
 
 //static void preload_anim(va_list args)
@@ -378,292 +306,254 @@ static void klavesnice(EVENT_MSG *msg, void **unused) {
 	}
 }
 
-int enter_menu(char open)
-  {
-  int c;
-  char *d;
-  init_menu_entries();
+int enter_menu(char open) {
+	int c;
+	char *d;
+	const Texture *tex;
+
+	init_menu_entries();
 //  Task_Add(2048,preload_anim);
 //  load_ok=0;
 //  while(!load_ok) Task_Sleep(NULL);
-  preload_anim();
-  if (!open)
-    {
-    play_next_music(&d);
-    Sound_ChangeMusic(d);
-    }
-  update_mysky();
-  schovej_mysku();
-  curcolor=0;bar(0,0,639,479);
-  put_picture(0, 0, (uint16_t*)ablock(H_MENU_BAR));
-  put_picture(0, 56, (uint16_t*)ablock(H_ANIM));
-  ukaz_mysku();
-  if (open) effect_show(NULL);else showview(0,0,0,0);
-  change_click_map(clk_main_menu,CLK_MAIN_MENU);
-  send_message(E_ADD,E_TIMER,prehraj_animaci_v_menu);
-  send_message(E_ADD,E_KEYBOARD,klavesnice);
-  ms_last_event.event_type=0x1;
-  send_message(E_MOUSE,&ms_last_event);
-  Task_WaitEvent(E_MENU_SELECT);
+	preload_anim();
+
+	if (!open) {
+		play_next_music(&d);
+		Sound_ChangeMusic(d);
+	}
+
+	update_mysky();
+	schovej_mysku();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	tex = dynamic_cast<const Texture*>(ablock(H_MENU_BAR));
+	renderer->blit(*tex, 0, 0, tex->palette());
+	tex = dynamic_cast<const Texture*>(ablock(H_ANIM));
+	renderer->blit(*tex, 0, 56, tex->palette());
+	ukaz_mysku();
+
+	if (open) {
+		effect_show(NULL);
+	} else {
+		showview(0, 0, 0, 0);
+	}
+
+	change_click_map(clk_main_menu, CLK_MAIN_MENU);
+	send_message(E_ADD, E_TIMER, prehraj_animaci_v_menu);
+	send_message(E_ADD, E_KEYBOARD, klavesnice);
+	ms_last_event.event_type = 0x1;
+	send_message(E_MOUSE, &ms_last_event);
+	Task_WaitEvent(E_MENU_SELECT);
 	c = cur_click;
-  disable_click_map();
-  send_message(E_DONE,E_KEYBOARD,klavesnice);
-  cur_dir[c]=UNSELECT;
-  while (cur_pos[c]) Task_WaitEvent(E_TIMER);
-  Task_WaitEvent(E_TIMER);
-  send_message(E_DONE,E_TIMER,prehraj_animaci_v_menu);
-  return c;
-  }
+	disable_click_map();
+	send_message(E_DONE, E_KEYBOARD, klavesnice);
+	cur_dir[c] = UNSELECT;
 
-char *get_next_title(char control, const char *filename)
-  {
-  static SeekableReadStream *titles=NULL;
-  static char buffer[81];
-	char *path, *c, *p1, *p2;
-
-  switch(control)
-     {
-     case 1:
-		p2 = Sys_FullPath(SR_MAP, filename);
-		p1 = (char*)alloca((strlen(p2) + 1) * sizeof(char));
-		strcpy(p1, p2);
-		titles = enc_open(p1);
-		if (!titles) {
-			p2 = Sys_FullPath(SR_DATA, filename);
-			titles = enc_open(p2);
-		}
-
-		if (!titles) {
-			char popis[300];
-			closemode();
-			sprintf(popis, "Soubor nenalezen: %s ani %s\n", p1, p2);
-			Sys_ErrorBox(popis);
-			exit(1);
-		}
-
-		// FIXME: this is disgusting
-		return (char *)titles;
-     case 0:
-     	if (titles != NULL) {
-		titles->readLine(buffer, 80);
+	while (cur_pos[c]) {
+		Task_WaitEvent(E_TIMER);
 	}
 
-        c = strchr(buffer, '\n');
-	if (c != NULL) {
-		if (c != buffer && c[-1] == '\r') {
-			c[-1] = 0;
-		} else {
-			*c = 0;
-		}
+	Task_WaitEvent(E_TIMER);
+	send_message(E_DONE, E_TIMER, prehraj_animaci_v_menu);
+	return c;
+}
+
+typedef struct line_s {
+	int x, y, height, mode, font;
+	uint8_t color[4], color2[4];
+	char *text;
+	struct line_s *next;
+} line_t;
+
+line_t *load_titles(const char *filename) {
+	SeekableReadStream *titles = NULL;
+	line_t head = {0}, tpl = {0}, *ptr;
+	char buf[81], *c;
+	unsigned minheight = 0;
+	const Font *font;
+
+	titles = enc_open(Sys_FullPath(SR_MAP, filename));
+
+	if (!titles) {
+		titles = enc_open(Sys_FullPath(SR_DATA, filename));
 	}
 
-	// fix some garbage at the end of credits ENC file
-        c = strchr(buffer, 0x1a);
-	if (c != NULL) {
-		*c = 0;
+	if (!titles) {
+		fprintf(stderr, "Could not open file %s\n", filename);
+		fprintf(stderr, "Search path: %s; ", Sys_FullPath(SR_MAP, ""));
+		fprintf(stderr, "%s\n", Sys_FullPath(SR_DATA, ""));
+		exit(1);
 	}
 
-        return buffer;
-     case -1:if (titles!=NULL) delete titles;
-            break;
-     }
-  return NULL;
-  }
-
-static int title_lines[640][2];
-
-static int insert_next_line(int ztrata) {
-	char *c;
-	int ll = -1;
-	Screen_SetBackAddr();
+	speedscroll = 4;
+	ptr = &head;
+	tpl.x = 320;
+	tpl.mode = TITLE_CENTER;
+	tpl.font = H_FBIG;
+	tpl.color[0] = 1;
+	tpl.color[1] = 158;
+	tpl.color[2] = 210;
+	tpl.color[3] = 25;
+	tpl.color2[0] = 1;
+	tpl.color2[1] = 0;
+	tpl.color2[2] = 0;
+	tpl.color2[3] = 0;
 
 	do {
-		if (title_mode != TITLE_KONEC) {
-			c = get_next_title(0, NULL);
-		} else {
-			c[0] = 0;
+		titles->readLine(buf, 80);
+		c = strchr(buf, '\n');
+
+		if (c) {
+			*c = '\0';
 		}
 
-		if (c[0] == '*') {
-			strupr(c);
-			if (!strcmp(c+1, "HEAD")) {
-				title_mode = TITLE_HEAD;
-				set_font(titlefont, RGB(146, 187, 142));
-			} else if (!strcmp(c+1, "NAME")) {
-				title_mode = TITLE_NAME;
-				set_font(titlefont, RGB(186, 227, 182));
-			} else if (!strcmp(c+1, "CENTER")) {
-				title_mode = TITLE_CENTER;
-				set_font(titlefont, RGB(255, 248, 240));
-			} else if (!strcmp(c+1, "TEXT")) {
-				title_mode = TITLE_TEXT;
-				set_font(titlefont, RGB(255, 248, 240));
-			} else if (!strcmp(c+1, "KONEC")) {
-				title_mode = TITLE_KONEC;
-			} else if (!strncmp(c+1, "LINE", 4)) {
-				sscanf(c+5, "%d", &title_line);
-			} else if (!strncmp(c+1, "SMALL", 5)) {
-				titlefont = H_FBOLD;
-			} else if (!strncmp(c+1, "BIG", 3)) {
-				titlefont = H_FBIG;
-			} else if (!strncmp(c+1, "SPEED", 5)) {
-				sscanf(c+6,"%d",&speedscroll);
+		c = strchr(buf, 0x1a);
+
+		if (c) {
+			*c = '\0';
+		}
+
+		if (buf[0] == '*') {
+			strupr(buf);
+
+			if (!strcmp(buf + 1, "HEAD")) {
+				tpl.x = 50;
+				tpl.mode = TITLE_HEAD;
+				tpl.color[0] = 1;
+				tpl.color[1] = 146;
+				tpl.color[2] = 187;
+				tpl.color[3] = 142;
+				tpl.color2[0] = 0;
+				tpl.color2[1] = 0;
+				tpl.color2[2] = 0;
+				tpl.color2[3] = 8;
+			} else if (!strcmp(buf + 1, "NAME")) {
+				tpl.x = 100;
+				tpl.mode = TITLE_NAME;
+				tpl.color[0] = 1;
+				tpl.color[1] = 186;
+				tpl.color[2] = 227;
+				tpl.color[3] = 182;
+				tpl.color2[0] = 0;
+				tpl.color2[1] = 0;
+				tpl.color2[2] = 0;
+				tpl.color2[3] = 8;
+			} else if (!strcmp(buf + 1, "CENTER")) {
+				tpl.x = 320;
+				tpl.mode = TITLE_CENTER;
+				tpl.color[0] = 1;
+				tpl.color[1] = 255;
+				tpl.color[2] = 248;
+				tpl.color[3] = 240;
+				tpl.color2[0] = 0;
+				tpl.color2[1] = 0;
+				tpl.color2[2] = 0;
+				tpl.color2[3] = 8;
+			} else if (!strcmp(buf + 1, "TEXT")) {
+				tpl.x = 50;
+				tpl.mode = TITLE_TEXT;
+				tpl.color[0] = 1;
+				tpl.color[1] = 255;
+				tpl.color[2] = 248;
+				tpl.color[3] = 240;
+				tpl.color2[0] = 0;
+				tpl.color2[1] = 0;
+				tpl.color2[2] = 0;
+				tpl.color2[3] = 8;
+			} else if (!strcmp(buf + 1, "KONEC")) {
+				break;
+			} else if (!strncmp(buf + 1, "LINE", 4)) {
+				sscanf(buf + 5, "%d", &minheight);
+			} else if (!strncmp(buf + 1, "SMALL", 5)) {
+				tpl.font = H_FBOLD;
+			} else if (!strncmp(buf + 1, "BIG", 3)) {
+				tpl.font = H_FBIG;
+			} else if (!strncmp(buf + 1, "SPEED", 5)) {
+				// FIXME: Does speed change during slide?
+				sscanf(buf + 6, "%d", &speedscroll);
 			}
 		} else {
-			ll = text_height(c);
-			if (ll == 0) ll = text_height("W");
-			if (ll < title_line) ll = title_line;
-			curcolor = BGSWITCHBIT;
-			charcolors[0] = RGB555(0, 0, 1);
-			bar(0, 360 + ztrata, 639, 360 + ztrata + ll);
-			switch (title_mode) {
+			ptr->next = new line_t(tpl);
+			ptr->next->y = ptr->y + (ptr->height < minheight ? minheight : ptr->height);
+			ptr = ptr->next;
+			ptr->text = new char[strlen(buf) + 1];
+			strcpy(ptr->text, buf);
+			font = dynamic_cast<const Font*>(ablock(ptr->font));
+			assert(font && "Invalid font");
+			ptr->height = font->textHeight(ptr->text);
+
+			if (!ptr->height) {
+				ptr->height = font->textHeight("W");
+			}
+		}
+	} while (!titles->eos());
+
+	return head.next;
+}
+
+void titles(int send_back, const char *filename) {
+	int counter, newc, y, skip;
+	line_t *lines, *ptr;
+	const Font *font;
+	const Texture *tex;
+
+	lines = load_titles(filename);
+	def_handle(H_PICTURE, "titulky.pcx", pcx_15bit_decomp, SR_BGRAFIKA);
+	tex = dynamic_cast<const Texture*>(ablock(H_PICTURE));
+	SubTexture top(*tex, 0, 0, tex->width(), 60);
+	SubTexture mid(*tex, 0, 60, tex->width(), 360);
+	SubTexture bott(*tex, 0, 420, tex->width(), 60);
+	schovej_mysku();
+	effect_show(NULL);
+	newc = counter = Timer_GetValue();
+	y = 420;
+
+	do {
+		counter = Timer_GetValue();
+		skip = (counter - newc) / speedscroll;
+
+		if (skip > 10) {
+			skip = 10;
+		}
+
+		y -= skip;
+		newc += skip * speedscroll;
+
+		while (lines && (lines->y + lines->height + y < 0)) {
+			ptr = lines->next;
+			delete lines;
+			lines = ptr;
+		}
+
+		renderer->blit(mid, 0, 60, mid.palette());
+
+		for (ptr = lines; ptr && (ptr->y + y < 480); ptr = ptr->next) {
+			font = dynamic_cast<const Font*>(ablock(ptr->font));
+			renderer->setFont(font, ptr->color[0], ptr->color[1], ptr->color[2], ptr->color[3]);
+			renderer->setFontColor(ptr->color2[0], ptr->color2[1], ptr->color2[2], ptr->color2[3]);
+
+			switch (ptr->mode) {
 			case TITLE_TEXT:
 			case TITLE_HEAD:
-				position(50, 360 + ztrata);
+				renderer->drawText(ptr->x, y + ptr->y, ptr->text);
 				break;
 
 			case TITLE_NAME:
-				set_aligned_position(100, 360 + ztrata, 0, 0, c);
+				renderer->drawAlignedText(ptr->x, y + ptr->y, HALIGN_LEFT, VALIGN_TOP, ptr->text);
 				break;
 
 			case TITLE_CENTER:
-				set_aligned_position(320, 360 + ztrata, 1, 0, c);
+				renderer->drawAlignedText(ptr->x, y + ptr->y, HALIGN_CENTER, VALIGN_TOP, ptr->text);
 				break;
-			}
 
-			outtext(c);
-		}
-	} while (c[0] == '*');
-
-	Screen_Restore();
-	if (title_mode == TITLE_KONEC) ll = -1;
-	return ll;
-}
-
-static void scan_lines(uint16_t *buffer,int start,int poc) {
-	int first, last, i, pocet = poc;
-	uint16_t *buf;
-	while (pocet--) {
-		buf = buffer + start * Screen_GetXSize();
-		first = 0;
-		last = 0;
-		for (i = 0; i < 640; i++) {
-			if (!(buf[i] & BGSWITCHBIT)) {
-				break;
+			default:
+				assert(0 && "case not implemented");
 			}
 		}
 
-		if (i != 640) {
-			first = i;
-			last = i;
-			for(; i < 640; i++) {
-				if (!(buf[i] & BGSWITCHBIT)) {
-					last = i;
-				}
-			}
-		}
-
-		first &= ~1;
-
-		if (last) {
-			last += 2;
-			last &= ~1;
-		}
-
-		title_lines[start][0] = first;
-		title_lines[start][1] = last;
-		start++;
-	}
-}
-
-static void get_max_extend(int *l,int *r) {
-	int left = 640;
-	int right = 0;
-	int i;
-
-	for(i = 0; i < 360; i++) {
-		left = min(title_lines[i][0], left);
-		right = max(title_lines[i][1], right);
-	}
-
-	*l = left;
-	*r = right;
-}
-
-/*
-void titles(va_list args)
-//#pragma aux titles parm[]
-  {
-  int send_back=va_arg(args,int);
-  char *textname=va_arg(args,char *);
-*/
-
-void titles(int send_back, const char *textname) {
-	uint16_t *picture;
-	uint16_t *scr, *buff;
-	int counter, newc;
-	int lcounter = 1;
-	char end = 0;
-	int l, r;
-	
-	title_mode = TITLE_CENTER;
-	if (get_next_title(1, textname) == NULL) return;
-	schovej_mysku();
-	speedscroll = 4;
-	curcolor = BGSWITCHBIT;
-	bar(0,0,639,479);
-	Screen_SetBackAddr();
-	bar(0,0,639,479);
-	Screen_Restore();
-	memset(title_lines, 0, sizeof(title_lines));
-	def_handle(H_PICTURE, "titulky.pcx", pcx_15bit_decomp, SR_BGRAFIKA);
-	alock(H_PICTURE);
-	picture = (uint16_t*)ablock(H_PICTURE);
-	put_picture(0, 0, picture);
-	effect_show(NULL);
-	titlefont = H_FBIG;
-	set_font(titlefont, RGB(158, 210, 25));
-	charcolors[1] = 0;
-	counter = Timer_GetValue();
-	newc = counter;
-	do {
-		int skip;
-		scr = Screen_GetXSize() * 60 + Screen_GetAddr();
-		buff = Screen_GetBackAddr();
-		counter = Timer_GetValue();
-		skip = (counter - newc) / speedscroll;
-		if (skip > 0) {
-			if (skip > 10) skip = 10;
-
-			newc += skip * speedscroll;
-			scan_lines(buff, 360, skip);
-			scroll_and_copy((uint16_t *)picture + 640 * 60 + 3, buff, scr, 360, skip, title_lines);
-			//memcpy(Screen_GetAddr(),buff,480*Screen_GetScan());
-			get_max_extend(&l, &r);
-			memmove(title_lines, &title_lines[skip], sizeof(title_lines) - skip * sizeof(int) * 2);
-			//showview(l,60,r-l+1,360);
-			showview(0, 60, 639, 360);
-			buff += Screen_GetXSize() * 359;
-			memcpy(buff, buff + Screen_GetXSize() * skip, 40 * Screen_GetScan());
-			showview(0, 0, 640, 40);
-			Task_WaitEvent(E_TIMER);
-			counter += skip;
-			lcounter -= skip;
-		} else if (skip < 0) {
-			counter = skip;
-		}
-
-		while (lcounter <= 0 && !end) {
-			int c;
-			c = insert_next_line(lcounter);
-			scan_lines(Screen_GetBackAddr(), 360 + lcounter, -lcounter);
-			if (c == -1) {
-				end = 1;
-				lcounter = 360;
-			} else {
-				lcounter += c;
-			}
-		}
+		renderer->blit(top, 0, 0, top.palette());
+		renderer->blit(bott, 0, 420, bott.palette());
+		showview(0, 0, renderer->width(), renderer->height());
 
 		// quit on keypress
 		if (Input_Kbhit()) {
@@ -671,16 +561,15 @@ void titles(int send_back, const char *textname) {
 			send_back = 1;
 			break;
 		}
-	} while (!(end && lcounter<=0));
-//  while (!(Task_QuitMsg() || (end && lcounter<=0)));
+
+		ShareCPU();
+	} while (lines);
+
 	ukaz_mysku();
-	get_next_title(-1, NULL);
-	aunlock(H_PICTURE);
 
 	if (!send_back) {
 		Task_WaitEvent(E_KEYBOARD);
 	}
-//  if (send_back)send_message(E_KEYBOARD,27);
 }
 
 void run_titles(void)
@@ -694,41 +583,46 @@ void run_titles(void)
 	titles(1, "TITULKY.TXT");
   }
 
-void konec_hry()
-  {
-  int task_id;
-  int timer;
-  char *d;
+void konec_hry() {
+	int task_id;
+	int timer;
+	char *d;
 
-  schovej_mysku();
-  curcolor=0;
-  bar(0,0,639,479);
-  effect_show(NULL);
-  create_playlist(texty[205]);
-  play_next_music(&d);
-  Sound_ChangeMusic(d);
-  timer=Timer_GetValue();
-  while (Timer_GetValue()-timer<150) Task_Sleep(NULL);
+	schovej_mysku();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	effect_show(NULL);
+	create_playlist(texty[205]);
+	play_next_music(&d);
+	Sound_ChangeMusic(d);
+	timer = Timer_GetValue();
+
+	while (Timer_GetValue() - timer < 150) {
+		Task_Sleep(NULL);
+	}
 /*
   task_id=Task_Add(8196,titles,1,"ENDTEXT.TXT");
   Task_WaitEvent(E_KEYBOARD);
   if (Task_IsRunning(task_id)) Task_Term(task_id);
 */
 	titles(1, "ENDTEXT.TXT");
-  Task_WaitEvent(E_TIMER);
-  Task_WaitEvent(E_TIMER);
+	Task_WaitEvent(E_TIMER);
+	Task_WaitEvent(E_TIMER);
 /*
   task_id=Task_Add(8196,titles,0,"TITULKY.TXT");
   Task_WaitEvent(E_KEYBOARD);
   if (Task_IsRunning(task_id)) Task_Term(task_id);
 */
 	titles(0, "TITULKY.TXT");
-  Sound_ChangeMusic("?");
-  curcolor=0;
-  bar(0,0,639,479);
-  ukaz_mysku();
-  effect_show(NULL);
-  timer=Timer_GetValue();
-  while (Timer_GetValue()-timer<150) Task_Sleep(NULL);
-  }
+	Sound_ChangeMusic("?");
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	ukaz_mysku();
+	effect_show(NULL);
+	timer = Timer_GetValue();
+
+	while (Timer_GetValue() - timer < 150) {
+		Task_Sleep(NULL);
+	}
+}
 

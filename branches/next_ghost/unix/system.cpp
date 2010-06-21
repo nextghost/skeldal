@@ -156,18 +156,6 @@ void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs,
 
 }
 
-// FIXME: move this to generic renderer
-void Screen_StripBlt(uint16_t *data, unsigned int startline, unsigned long width) {
-	int i;
-	uint16_t *dst = Screen_GetAddr() + startline * Screen_GetXSize();
-
-	for (i = 0; i < width; i++) {
-		memcpy(dst, data, 640 * sizeof(uint16_t));
-		data += 640;
-		dst += Screen_GetXSize();
-	}
-}
-
 void Screen_Shift(int x, int y) {
 	assert(0);
 
@@ -176,7 +164,7 @@ void Screen_Shift(int x, int y) {
 // FIXME: rewrite
 void ShareCPU(void) {
 //	assert(0);
-
+	Timer_Sleep(5);
 }
 
 int Task_Add(int stack, TaskerFunctionName func, ...) {

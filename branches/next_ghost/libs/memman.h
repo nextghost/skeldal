@@ -30,6 +30,12 @@
 
 class MemoryReadStream;
 
+class DataBlock {
+public:
+	DataBlock(void) {}
+	virtual ~DataBlock(void) = 0;
+};
+
 class ReadStream {
 public:
 	virtual int8_t readSint8(void);
@@ -64,7 +70,7 @@ public:
 	~SeekableReadStream() { }
 };
 
-class MemoryReadStream : public SeekableReadStream {
+class MemoryReadStream : public SeekableReadStream, public DataBlock {
 private:
 	unsigned char *_data;	// always add extra null byte at the end
 	unsigned _length, _pos;
@@ -200,14 +206,24 @@ public:
 	void open(const char *filename);
 	void close(void);
 
-	// FIXME: rewrite to return MemoryReadStream later
-	void *readFile(int group, const char *name, long &size);
+	MemoryReadStream *readFile(int group, const char *name);
 
 	int findEntry(int group, const char *name) const;
 	int getOffset(unsigned id) const;
 
 	bool isOpen(void) const { return _nametable; }
 };
+
+// FIXME: replace this with real classes for sound and stuff
+struct RawData : public DataBlock {
+	void *data;
+	unsigned size;
+
+	RawData(void) : DataBlock(), data(NULL), size(0) {}
+	~RawData(void);
+};
+
+DataBlock *preloadStream(SeekableReadStream &stream);
 
 #pragma pack(1)
 
@@ -232,19 +248,18 @@ typedef struct meminfo {
 */
 
 
-typedef struct thandle_data
-  {
-  char src_file[13];  //12
-  int32_t seekpos;       //16
-  void *blockdata;    //20
-  int8_t flags;        //21
-  int8_t path;        //22
-  int16_t status;
-  void (*loadproc)(void **data,long *size);//28
-  uint16_t lockcount;               //32
-  uint32_t counter;
-  uint32_t size;
-  }THANDLE_DATA;
+typedef struct thandle_data {
+	char src_file[13];  //12
+	int32_t seekpos;       //16
+	DataBlock *blockdata;	//20
+	int8_t flags;        //21
+	int8_t path;        //22
+	int16_t status;
+	DataBlock *(*loadproc)(SeekableReadStream &stream);	// 28
+	uint16_t lockcount;               //32
+	uint32_t counter;
+	uint32_t size;
+} THANDLE_DATA;
 
 #define BK_MAJOR_HANDLES 256 // maximalni pocet skupin rukojeti
 #define BK_MINOR_HANDLES 256 // pocet rukojeti v jedne skupine
@@ -276,8 +291,8 @@ void *getmem(long size);        //alokace pameti pres memman. alokovat pomoci ma
 void *grealloc(void *m,long size); //realokace pameti pres memman
 void *load_file(char *filename); //obycejne natahne soubor do pameti a vrati ukazatel.
 void init_manager(char *filename,char *swp); //inicializuje manager. Jmeno filename i swapname nejsou povinne (musi byt NULL kdyz nejsou pouzity)
-THANDLE_DATA *def_handle(int handle,const char *filename,void (*decompress)(void**, long*),char path); //deklaruje rukojet. promenna decompress je ukazatel na funkci ktera upravi data pred vracenim ukazatele
-void *ablock(int handle);             //vraci ukazatel bloku spojeneho s handlem
+THANDLE_DATA *def_handle(int handle, const char *filename, DataBlock *(*decompress)(SeekableReadStream&), char path); //deklaruje rukojet. promenna decompress je ukazatel na funkci ktera upravi data pred vracenim ukazatele
+DataBlock *ablock(int handle);             //vraci ukazatel bloku spojeneho s handlem
 void alock(int handle);               //zamyka blok
 void aunlock(int handle);             //odmyka blok
 void aswap(int handle);               //zapina swapovani pro blok
@@ -289,9 +304,9 @@ void close_manager();                 //uzavre manager a uvolni veskerou pamet
 void undef_handle(int handle);        //uvolni hadle k dalsimu pouziti
 THANDLE_DATA *zneplatnit_block(int handle); //zneplatni data bloku
 THANDLE_DATA *get_handle(int handle); //vraci informace o rukojeti
-int find_handle(const char *name,void (*decomp)(void**, long*));   //hleda mezi rukojeti stejnou definici
+int find_handle(const char *name,DataBlock *(*decomp)(SeekableReadStream&));   //hleda mezi rukojeti stejnou definici
 int test_file_exist(int group,const char *filename); //testuje zda soubor existuje v ramci mmanageru
-void *afile(const char *filename,int group,long *blocksize); //nahraje do pameti soubor registrovany v ramci mmanageru
+SeekableReadStream *afile(const char *filename, int group); //nahraje do pameti soubor registrovany v ramci mmanageru
 long get_handle_size(int handle);
 //void get_mem_info(MEMORYSTATUS *mem); 
 

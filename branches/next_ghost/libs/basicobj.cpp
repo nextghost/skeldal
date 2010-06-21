@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <cassert>
 #include <cstring>
 #include "libs/memman.h"
 #include "libs/event.h"
@@ -41,36 +42,65 @@
 
 //FC_TABLE f_bila={0xffff,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 
-void highlight(CTL3D *c,uint16_t color)
-  {
-  c->light=color<<1;
-  if (c->light & 0x0020) {c->light&=~RGB555(0,0,31);c->light|=RGB555(0,0,31);}
-  if (c->light & 0x0400) {c->light&=~RGB555(0,31,0);c->light|=RGB555(0,31,0);}
-  if (c->light & 0x8000) {c->light&=~RGB555(31,0,0);c->light|=RGB555(31,0,0);}
-  c->shadow=color;
-  c->shadow&=RGB555(30,30,31);
-  c->shadow>>=1;
-  }
+void highlight(CTL3D *c, uint8_t r, uint8_t g, uint8_t b) {
+	c->light[0] = r > 128 ? 255 : 2 * r;
+	c->light[1] = g > 128 ? 255 : 2 * g;
+	c->light[2] = b > 128 ? 255 : 2 * b;
+	c->shadow[0] = r / 2;
+	c->shadow[1] = g / 2;
+	c->shadow[2] = b / 2;
+}
 
+CTL3D *def_border(int btype, uint8_t r, uint8_t g, uint8_t b) {
+	static CTL3D ctl;
 
-CTL3D *def_border(int btype,int color)
-  {
-  static CTL3D ctl;
+	highlight(&ctl, r, g, b);
 
-  highlight(&ctl,color);
-  switch (btype)
-     {
-     case 0:ctl.bsize=0;
-     case 1:ctl.light=color;ctl.shadow=color;ctl.bsize=1;break;
-     case 2:ctl.bsize=2;ctl.ctldef=0;break;
-     case 3:ctl.bsize=2;ctl.ctldef=3;break;
-     case 4:ctl.bsize=1;ctl.ctldef=0;break;
-     case 5:ctl.bsize=1;ctl.ctldef=1;break;
-     case 6:ctl.bsize=2;ctl.ctldef=1;break;
-     case 7:ctl.bsize=2;ctl.ctldef=2;break;
-     }
-  return &ctl;
-  }
+	switch (btype) {
+	case 0:
+		ctl.bsize = 0;
+		// FIXME: really fall through?
+
+	case 1:
+		ctl.light[0] = ctl.shadow[0] = r;
+		ctl.light[1] = ctl.shadow[1] = g;
+		ctl.light[2] = ctl.shadow[2] = b;
+		ctl.bsize = 1;
+		break;
+
+	case 2:
+		ctl.bsize = 2;
+		ctl.ctldef = 0;
+		break;
+
+	case 3:
+		ctl.bsize = 2;
+		ctl.ctldef = 3;
+		break;
+
+	case 4:
+		ctl.bsize = 1;
+		ctl.ctldef = 0;
+		break;
+
+	case 5:
+		ctl.bsize = 1;
+		ctl.ctldef = 1;
+		break;
+
+	case 6:
+		ctl.bsize = 2;
+		ctl.ctldef = 1;
+		break;
+
+	case 7:
+		ctl.bsize = 2;
+		ctl.ctldef = 2;
+		break;
+	}
+
+	return &ctl;
+}
 
 //------------------------------------------
 
@@ -90,12 +120,11 @@ void Button::draw(int x, int y, int width, int height) {
 	CTL3D ctl;
 
 	bar(x, y, x + width, y + height);
-	highlight(&ctl, _color);
+	highlight(&ctl, _color[0], _color[1], _color[2]);
 	ctl.bsize = 2 - _data;
 	ctl.ctldef = 3 * _data;
 	draw_border(x + 2, y + 2, width - 4, height - 4, &ctl);
-	set_aligned_position(x + width / 2 + _data * 2, y + height / 2 + _data * 2, 1, 1, _text);
-	outtext(_text);
+	renderer->drawAlignedText(x + width / 2 + _data * 2, y + height / 2 + _data * 2, HALIGN_CENTER, VALIGN_CENTER, _text);
 }
 
 void Button::event(EVENT_MSG *msg) {
@@ -126,51 +155,6 @@ void Button::event(EVENT_MSG *msg) {
 }
 
 //------------------------------------------
-
-void draw_status_line(char *c)
-  {
-  static uint16_t *font;
-  static FC_TABLE color;
-  static uint16_t backgr;
-  static uint16_t ysmax=0,y;
-  uint16_t ysize;
-  CTL3D ctl;
-
-  if (c==NULL)
-     {
-     backgr=curcolor;
-     memcpy(&color,&charcolors,sizeof(charcolors));
-     font=curfont;
-     return;
-     }
-
-  schovej_mysku();
-  curfont=font;
-  ysize=text_height(c);
-  if (ysmax>ysize) ysize=ysmax;else
-     ysmax=ysize;
-
-  highlight(&ctl,backgr);
-  ctl.bsize=2;
-  ctl.ctldef=0;
-  curcolor=backgr;
-  memcpy(&charcolors,&color,sizeof(charcolors));
-  y=Screen_GetYSize()-ysize-3;
-  desktop_y_size=y-3;
-  bar(0,y,Screen_GetXSize()-1,Screen_GetYSize()-1);
-  draw_border(2,y,Screen_GetXSize()-5,ysize,&ctl);
-  while (text_width(c)>Screen_GetXSize())
-     {
-     char *p;
-
-     p=strchr(c,'\0');
-     *(--p)='\0';
-     if (p=c) break;
-     }
-  position(5,y);outtext(c);
-  ukaz_mysku();
-  showview(0,y-2,Screen_GetXSize()-1,ysize+5);
-  }
 
 /*
 void *status_mem_info(EVENT_MSG *msg)
@@ -289,30 +273,45 @@ void *show_time(EVENT_MSG *msg) {
 */
 //------------------------------------------
 
-void xor_rectangle(int x,int y,int xs,int ys)
-  {
-  curcolor=RGB555(31,31,31);
-  if (x<0) x=0;
-  if (y<0) y=0;
-  if (x+xs>=Screen_GetXSize()) xs=Screen_GetXSize()-x-1;
-  if (y+ys>=Screen_GetYSize()) ys=Screen_GetYSize()-y-1;
-  schovej_mysku();
-  hor_line_xor(x,y,x+xs);
-  ver_line_xor(x,y,y+ys);
-  if (xs && ys)
-     {
-  hor_line_xor(x,y+ys,x+xs);
-  ver_line_xor(x+xs,y,y+ys);
-     }
-  ukaz_mysku();
-  showview(x,y,x+xs,4);
-  showview(x,y,4,ys+4);
-  if (xs && ys)
-     {
-  showview(x,y+ys,x+xs,4);
-  showview(x+xs,y,4,ys+4);
-     }
-  }
+void xor_rectangle(int x, int y, int xs, int ys) {
+	curcolor[0] = 255;
+	curcolor[1] = 255;
+	curcolor[2] = 255;
+
+	if (x < 0) {
+		x = 0;
+	}
+
+	if (y < 0) {
+		y = 0;
+	}
+
+	if (x + xs >= renderer->width()) {
+		xs = renderer->width() - x - 1;
+	}
+
+	if (y + ys >= renderer->height()) {
+		ys = renderer->height() - y - 1;
+	}
+
+	schovej_mysku();
+	hor_line_xor(x, y, x + xs);
+	ver_line_xor(x, y, y + ys);
+
+	if (xs && ys) {
+		hor_line_xor(x, y + ys, x + xs);
+		ver_line_xor(x + xs, y, y + ys);
+	}
+
+	ukaz_mysku();
+	showview(x, y, x + xs, 4);
+	showview(x, y, 4, ys + 4);
+
+	if (xs && ys) {
+		showview(x,y+ys,x+xs,4);
+		showview(x+xs,y,4,ys+4);
+	}
+}
 
 void win_label_move(EVENT_MSG *msg) {
 	MS_EVENT *ms;
@@ -401,8 +400,7 @@ WindowLabel::~WindowLabel(void) {
 
 void WindowLabel::draw(int x, int y, int width, int height) {
 	bar(x, y, x + width, y + height);
-	set_aligned_position(x + 5, y + height / 2, 0, 1, _text);
-	outtext(_text);
+	renderer->drawAlignedText(x + 5, y + height / 2, HALIGN_LEFT, VALIGN_CENTER, _text);
 }
 
 void WindowLabel::event(EVENT_MSG *msg) {
@@ -428,12 +426,11 @@ InputLine::~InputLine(void) {
 
 void InputLine::draw(int x, int y, int width, int height) {
 	char d[2] = " ", *str = _str;
-	int tw;
+	int tw, writepos;
 	int len;
 	int shift;
 
 	bar(x, y, x + width, y + height);
-	position(x, y);
 
 	if (!*str) {
 		return;
@@ -448,17 +445,19 @@ void InputLine::draw(int x, int y, int width, int height) {
 
 	str += shift;
 	d[0] = *str++;
-	tw = x + text_width(d);
+	tw = x + renderer->textWidth(d);
+	writepos = x;
 
 	while (tw < x + width) {
-		outtext(d);
+		renderer->drawText(writepos, y, d);
+		writepos = tw;
 
 		if (!*str) {
 			break;
 		}
 
 		d[0] = *str++;
-		tw = writeposx + text_width(d);
+		tw = writepos + renderer->textWidth(d);
 	}
 }
 
@@ -496,7 +495,7 @@ void InputLine::event(EVENT_MSG *msg) {
 				j++;
 
 				for (i = _shift; i < cursor; i++) {
-					if ((d = charsize(curfont, _str[i]) & 0xff) == 0) {
+					if ((d = renderer->charWidth(_str[i])) == 0) {
 						xpos += 1;
 					} else {
 						xpos += d;
@@ -540,7 +539,7 @@ void InputLine::event(EVENT_MSG *msg) {
 				xpos = 0;
 
 				for (cursor = _shift; cursor < slen; cursor++) {
-					xpos += charsize(curfont, _str[cursor]) & 0xff;
+					xpos += renderer->charWidth(_str[cursor]);
 					if (xpos > msx) {
 						break;
 					}
@@ -662,92 +661,5 @@ Label::~Label(void) {
 }
 
 void Label::draw(int x, int y, int width, int height) {
-	position(x, y);
-	outtext(_text);
+	renderer->drawText(x, y, _text);
 }
-
-//-------------------------------------------------------------
-
-#define MSG_SIZE (Screen_GetXSize()*3/4)
-#define MSG_L_MARGIN 10
-#define MSG_R_MARGIN 50
-#define MSG_A_MARGIN (MSG_L_MARGIN+MSG_R_MARGIN)
-#define MSG_COLOR RGB555(15,0,0)
-#define MSG_F_COLOR RGB555(31,31,0)
-
-uint16_t *msg_box_font;
-uint16_t *msg_icn_font;
-
-
-int msg_box(char *title, char icone, char *text, ... )
-  {
-  int winx,winy,xp,yp,txt_h;
-  int txt_max,temp1,temp2,i;
-  char buf[256];
-  char *p;
-  CTL3D *ctl;
-  char **c;
-  FC_TABLE cl;
-
-  curfont=msg_box_font;
-  ctl=def_border(2,MSG_COLOR);
-  winx=text_width(text)+MSG_A_MARGIN;
-  winy=30;
-  desktop_add_window(create_window(0,0,winx,300,MSG_COLOR,ctl));
-  buf[1]='\0';buf[0]=icone;
-  xp=text_width(buf);
-  define(new Label(-1, (MSG_R_MARGIN >> 1) - (xp >> 1), 20, xp, text_height(buf), 1, buf));
-  cl[1]=ctl->light;
-  cl[0]=ctl->shadow;
-  property(NULL,msg_icn_font,&cl,MSG_COLOR);
-  curfont=msg_box_font;
-  default_font=curfont;
-  if (winx>MSG_SIZE) winx=MSG_SIZE;
-  c=&text;c++;
-  temp1=0;temp2=0;
-   while (*c)
-     {temp1+=text_width(*c++)+10;temp2++;}
-  if (temp1>winx-2*MSG_L_MARGIN) winx=temp1+2*MSG_L_MARGIN;
-  txt_max=winx-MSG_A_MARGIN;
-  txt_h=0;
-  while (*text)
-     {
-     memset(buf,0,sizeof(buf));
-     p=buf;
-     while (text_width(buf)<txt_max && *text && *text!='\n') *p++=*text++;
-     if (text_width(buf)>txt_max) while (*(--p)!=' ') text--;
-     if (*text=='\n') text++;
-     *p='\0';
-     txt_h=text_height(buf);
-     define(new Label(-1, MSG_L_MARGIN, winy, txt_max, txt_h, 0, buf));
-     property(NULL,NULL,flat_color(MSG_F_COLOR),MSG_COLOR);
-     o_end->setFColor(0, 0);
-     winy+=txt_h;
-     }
-  winy+=40;
-  xp=(Screen_GetXSize()>>1)-(winx>>1);
-  yp=(Screen_GetYSize()>>1)-(winy>>1);
-  waktual->x=xp;waktual->y=yp;waktual->xs=winx;waktual->ys=winy;
-  define(new WindowLabel(0, 1, 1, winx - 2, text_height(title) + 2, 0, title));
-  ctl=def_border(5,MSG_COLOR);
-  property(ctl,NULL,flat_color(MSG_F_COLOR),0x10);
-  ctl=def_border(1,0);
-  c=&text;c++;
-  for (i=1;i<=temp2;i++)
-     {
-     int sz;
-
-     sz=(winx/(temp2+1))>>1;
-     if (sz<text_width(*c)) sz=text_width(*c);
-   define(new Button(i, i * winx / (temp2 + 1) - (sz >> 1), 10, sz + 5, 20, 3, *c));
-   property(ctl,NULL,flat_color(0),RGB555(24,24,24));on_change(terminate);
-     c++;
-     }
-  set_window_modal();
-  redraw_window();
-  escape();
-  temp2 = o_aktual->id();
-  close_window(waktual);
-  return temp2;
-  }
-

@@ -28,7 +28,7 @@
 
 class SkeldalCheckBox : public GUIObject {
 	int _phase;
-	uint16_t *_background;
+	Texture *_background;
 
 public:
 	SkeldalCheckBox(int id, int x, int y, int width, int height, int align, int value = 0);
@@ -44,7 +44,7 @@ public:
 
 class SetupOkButton : public GUIObject {
 	char *_text;
-	uint16_t *_background;
+	Texture *_background;
 	int _toggle;
 
 public:
@@ -58,7 +58,7 @@ public:
 class SkeldalSlider : public GUIObject {
 	const int _range;
 	int _value;
-	uint16_t *_background;
+	Texture *_background;
 
 public:
 	SkeldalSlider(int id, int x, int y, int width, int height, int align, int range, int value = 0);

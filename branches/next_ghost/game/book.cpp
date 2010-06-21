@@ -204,83 +204,107 @@ static int insert_left_skip(int p,int skip)
   return p;
   }
 
-static void save_line_oboustrane()
-  {
-  char space[]=" ";
-  int xs,ys,ss,mez,mm=0,mc=0;
-  int i,p;
+static void save_line_oboustrane() {
+	char space[] = " ";
+	int xs, ys, ss, mez, mm = 0, mc = 0;
+	int i, p;
 
-  for(i=0,xs=0,mez=0,ys=0;i<buff_pos;i++)
-     {
-     space[0]=read_buff[i];
-     if (space[0]==32) mez++;else
-        {
-        xs+=text_width(space);
-        p=text_height(space);
-        if (p>ys) ys=p;
-        }
-     }
-  ss=total_width-xs;
-  p=0;
-  if (!ys) ys=last_skip;
-  next_line(ys);
-  p=insert_left_skip(p,0);
-  for(i=0,mc=0;i<buff_pos;i++)
-     {
-     if (read_buff[i]==32)
-        {
-        int sp;
-        write_buff[p++]=27;
-        write_buff[p++]=SPACE;
-        mc++;
-        sp=ss*(mc)/mez;
-        p=insert_num(write_buff,p,sp-mm);
-        mm=sp;
-        }
-     else write_buff[p++]=read_buff[i];
-     }
-  insert_end_line_and_save(p,ys);
-  }
+	for (i = 0, xs = 0, mez = 0, ys = 0; i < buff_pos; i++) {
+		space[0] = read_buff[i];
 
-static void save_line_center()
-  {
-  char space[]=" ";
-  int xs,ys,ss;
-  int i,p;
+		if (space[0] == 32) {
+			mez++;
+		} else {
+			xs += renderer->textWidth(space);
+			p = renderer->textHeight(space);
 
-  for(i=0,xs=0,ys=0;i<buff_pos;i++)
-     {
-     space[0]=read_buff[i];
-        xs+=text_width(space);
-        p=text_height(space);
-        if (p>ys) ys=p;
-     }
-  p=0;
-  if (!ys) ys=last_skip;
-  next_line(ys);
-  ss=total_width-xs;
-  p=insert_left_skip(p,ss/2);
-  memcpy(write_buff+p,read_buff,buff_pos*sizeof(char));
-  p+=buff_pos;
-  write_buff[p]=0;
-  insert_end_line_and_save(p,ys);
-  }
+			if (p > ys) {
+				ys = p;
+			}
+		}
+	}
 
-static void save_line_left()
-  {
-  int p,z;
-  int ys;
+	ss = total_width - xs;
+	p = 0;
 
-  p=0;
-  p=insert_left_skip(p,0);z=p;
-  if (buff_pos) memcpy(write_buff+p,read_buff,buff_pos*sizeof(char));
-  p+=buff_pos;
-  write_buff[p]=0;
-  ys=text_height(write_buff+z);
-  if (!ys) ys=last_skip;
-  next_line(ys);
-  insert_end_line_and_save(p,ys);
-  }
+	if (!ys) {
+		ys = last_skip;
+	}
+
+	next_line(ys);
+	p = insert_left_skip(p, 0);
+
+	for (i = 0, mc = 0; i < buff_pos; i++) {
+		if (read_buff[i] == 32) {
+			int sp;
+
+			write_buff[p++] = 27;
+			write_buff[p++] = SPACE;
+			mc++;
+			sp = ss * (mc) / mez;
+			p = insert_num(write_buff, p, sp - mm);
+			mm = sp;
+		} else {
+			write_buff[p++] = read_buff[i];
+		}
+	}
+
+	insert_end_line_and_save(p, ys);
+}
+
+static void save_line_center() {
+	char space[] = " ";
+	int xs, ys, ss;
+	int i, p;
+
+	for (i = 0, xs = 0, ys = 0; i < buff_pos; i++) {
+		space[0] = read_buff[i];
+		xs += renderer->textWidth(space);
+		p = renderer->textHeight(space);
+
+		if (p > ys) {
+			ys = p;
+		}
+	}
+
+	p = 0;
+
+	if (!ys) {
+		ys = last_skip;
+	}
+
+	next_line(ys);
+	ss = total_width - xs;
+	p = insert_left_skip(p, ss / 2);
+	memcpy(write_buff + p, read_buff, buff_pos * sizeof(char));
+	p += buff_pos;
+	write_buff[p] = 0;
+	insert_end_line_and_save(p, ys);
+}
+
+static void save_line_left() {
+	int p, z;
+	int ys;
+
+	p = 0;
+	p = insert_left_skip(p, 0);
+	z = p;
+
+	if (buff_pos) {
+		memcpy(write_buff + p, read_buff, buff_pos * sizeof(char));
+	}
+
+	p += buff_pos;
+	write_buff[p] = 0;
+	ys = renderer->textHeight(write_buff + z);
+
+	if (!ys) {
+		ys = last_skip;
+	}
+
+	next_line(ys);
+	insert_end_line_and_save(p, ys);
+}
 
 
 static void save_buffer()
@@ -359,59 +383,69 @@ static char read_set(SeekableReadStream *txt, char *var, char *set) {
 	return c;
 }
 
-static int get_data_handle(const char *filename,void (*dec)(void**, long*))
-  {
-  int i;
+static int get_data_handle(const char *filename, DataBlock *(*dec)(SeekableReadStream&)) {
+	int i;
 
-  i=find_handle(filename,dec);
-  if (i==-1)
-     {
-     i=end_ptr++;
-     def_handle(i,filename,dec,SR_DIALOGS);
-     }
-  return i;
-  }
+	i = find_handle(filename, dec);
 
-static void insert_picture(const char *filename,int align,int line,int lsize)
-  {
-  int x, y;
-  uint16_t *psiz;
-  char *c=write_buff;
+	if (i == -1) {
+		i = end_ptr++;
+		def_handle(i, filename, dec, SR_DIALOGS);
+	}
 
-  psiz = (uint16_t*)ablock(get_data_handle(filename,pcx_8bit_decomp));
-  switch (align)
-     {
-     case ANUM_CENTER:
-                       x=(XMAX-psiz[0])/2;
-                       y=linepos;
-                       linepos+=psiz[1];
-                       *c++=27;
-                       *c++=END_LINE;
-                       c+=insert_num(c,0,psiz[1]+last_skip);
-                       break;
-     case ANUM_LEFT:   x=0;
-                       y=linepos;
-                       left_skip=psiz[0]+5;
-                       total_width=XMAX-left_skip;
-                       break;
-     case ANUM_RIGHT:  total_width=(x=XMAX-psiz[0])-5;
-                       left_skip=0;
-                       y=linepos;
-                       break;
-     }
-  if (!lsize) lsize=psiz[1]-line;
-  picture_len=lsize;
-  *c++=27;
-  *c++=PICTURE;
-  while (*filename) *c++=*filename++;
-  *c++=':';
-  c+=insert_num(c,0,x);
-  c+=insert_num(c,0,y);
-  c+=insert_num(c,0,line);
-  c+=insert_num(c,0,lsize);
-  *c++=0;
-  all_text.insert(write_buff);
-  }
+	return i;
+}
+
+static void insert_picture(const char *filename, int align, int line, int lsize) {
+	int x, y;
+	char *c = write_buff;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(get_data_handle(filename, pcx_8bit_decomp)));
+
+
+	switch (align) {
+	case ANUM_CENTER:
+		x = (XMAX - tex->width()) / 2;
+		y = linepos;
+		linepos += tex->height();
+		*c++ = 27;
+		*c++ = END_LINE;
+		c += insert_num(c, 0, tex->height() + last_skip);
+		break;
+
+	case ANUM_LEFT:
+		x = 0;
+		y = linepos;
+		left_skip = tex->width() + 5;
+		total_width = XMAX - left_skip;
+		break;
+
+	case ANUM_RIGHT:
+		total_width = (x = XMAX - tex->width()) - 5;
+		left_skip = 0;
+		y = linepos;
+		break;
+	}
+
+	if (!lsize) {
+		lsize = tex->height() - line;
+	}
+
+	picture_len = lsize;
+	*c++ = 27;
+	*c++ = PICTURE;
+
+	while (*filename) {
+		*c++ = *filename++;
+	}
+
+	*c++ = ':';
+	c += insert_num(c, 0, x);
+	c += insert_num(c, 0, y);
+	c += insert_num(c, 0, line);
+	c += insert_num(c, 0, lsize);
+	*c++ = 0;
+	all_text.insert(write_buff);
+}
 
 static char read_tag(SeekableReadStream *txt) {
 	char c, var[256], set[256];
@@ -577,19 +611,20 @@ static void read_text(SeekableReadStream *txt) {
 		}
 
 		ss[0] = i;
-		xs += text_width(ss);
+		xs += renderer->textWidth(ss);
 		read_buff[buff_end++] = i;
+
 		if (xs > total_width && !wsp) {
 			save_buffer();
 			read_buff[buff_end] = 0;
-			xs = text_width(read_buff);
+			xs = renderer->textWidth(read_buff);
 		}
 	} while (1);
 }
 
 void seek_section(SeekableReadStream *txt,int sect_number) {
-	int c = 0, i = EOF;
-	char buf[256];
+	int i = EOF;
+	char c = 0, buf[256];
 
 	winconv = 0;
 
@@ -631,116 +666,151 @@ void seek_section(SeekableReadStream *txt,int sect_number) {
 	exit(1);
 }
 
-void add_text_to_book(char *filename,int odst)
-  {
-  SeekableReadStream *txt;
+void add_text_to_book(const char *filename, int odst) {
+	SeekableReadStream *txt;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FKNIHA));
 
-  set_font(H_FKNIHA,NOSHADOW(0));
-  txt = enc_open(filename);
-  if (txt==NULL) return;
-  seek_section(txt,odst);
-  read_text(txt);
-  next_line(1000);
-  delete txt;
-  }
+	renderer->setFont(font, 0, 0, 0, 0);
+	txt = enc_open(filename);
 
-static const char *displ_picture(const char *c)
-  {
-  char *d;
-  int x,y,hn,z,ln,sl;
-  uint16_t *sh;
+	if (txt == NULL) {
+		return;
+	}
 
-  d=write_buff;
-  while (*c!=':') *d++=*c++;
-  *d++=0;c++;
-  hn=get_data_handle(write_buff,pcx_8bit_decomp);
-  x=read_num(c,(z=0,&z));c+=z;
-  y=read_num(c,(z=0,&z));c+=z;
-  ln=read_num(c,(z=0,&z));c+=z;
-  sl=read_num(c,(z=0,&z));c+=z;
-  sh = (uint16_t*)ablock(hn);
-  if (sh[1]+y>YMAX) return c;
-  y+=YLEFT;
-  x+=relpos;
-  put_8bit_clipped(sh,Screen_GetAddr()+x+Screen_GetXSize()*y,ln,sh[0],sl);
-  return c;
-  }
+	seek_section(txt, odst);
+	read_text(txt);
+	next_line(1000);
+	delete txt;
+}
 
-void write_book(int page)
-  {
-  int i=0,y=0,z,zz,ps,pg;
-  const char *c;
-  char space[]=" ";
+static const char *displ_picture(const char *c) {
+	char *d;
+	int x, y, hn, z, ln, sl;
+	const Texture *tex;
 
-  pg=page;
-  set_font(H_FKNIHA,NOSHADOW(0));
-  relpos=XLEFT;
-  zz = all_text.size();
-  if (--page)
-  for(i=0;i<zz && page;i++)
-     {
-     c=all_text[i];
-     if (c!=NULL && c[0]==27 && c[1]==END_PAGE) page--;
-     }
-  if (page) return;
-  for(ps=0;ps<2;ps++)
-     {
-  position(relpos,YLEFT+y);
-  do
-     {
-     if (i>zz) break;
-     c=all_text[i];
-     if (c==NULL) break;
-     if (c[0]==27 && c[1]==END_PAGE) break;
-     while (*c)
-        {
-        z=0;
-        if (*c==27)
-           {
-           c++;
-           switch (*c++)
-              {
-              case SPACE:
-                          rel_position_x(read_num(c,&z));
-                          c+=z;
-                          break;
-              case END_LINE:
-                          y+=read_num(c,&z);
-                          position(relpos,YLEFT+y);
-                          c+=z;
-                          break;
-              case PICTURE:
-                          c=displ_picture(c);
-                          break;
-              }
-           }
-        else
-           {
-           space[0]=*c++;
-           outtext(space);
-           }
-        }
-     i++;
-     }
-  while (1);
-  i++;y=0;
-  relpos=XRIGHT;
-  if (ps==0)
-     {
-     char s[20];
-     sprintf(s,texty[135],pg);
-     set_aligned_position(XLEFT,YLEFT+YMAX,0,0,s);
-     outtext(s);
-     }
-  if (ps==1)
-     {
-     char s[20];
-     sprintf(s,texty[136],pg+1);
-     set_aligned_position(XRIGHT+XMAX,YLEFT+YMAX,2,0,s);
-     outtext(s);
-     }
-     }
-  }
+	d = write_buff;
+
+	while (*c != ':') {
+		*d++ = *c++;
+	}
+
+	*d++ = 0;
+	c++;
+	hn = get_data_handle(write_buff, pcx_8bit_decomp);
+	x = read_num(c, (z = 0, &z));
+	c += z;
+	y = read_num(c, (z = 0, &z));
+	c += z;
+	ln = read_num(c, (z = 0, &z));
+	c += z;
+	sl = read_num(c, (z = 0, &z));
+	c += z;
+	tex = dynamic_cast<const Texture*>(ablock(hn));
+
+	if (tex->height() + y > YMAX) {
+		return c;
+	}
+
+	y += YLEFT;
+	x += relpos;
+	renderer->rectBlit(*tex, x, y, 0, ln, tex->width(), sl);
+	return c;
+}
+
+void write_book(int page) {
+	int i = 0, y = 0, z, zz, ps, pg, posx = 0, posy = 0;
+	const char *c;
+	char space[] = " ";
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FKNIHA));
+
+	pg = page;
+	renderer->setFont(font, 0, 0, 0, 0);
+	relpos = XLEFT;
+	zz = all_text.size();
+
+	if (--page) {
+		for (i = 0; i < zz && page; i++) {
+			c = all_text[i];
+
+			if (c != NULL && c[0] == 27 && c[1] == END_PAGE) {
+				page--;
+			}
+		}
+	}
+
+	if (page) {
+		return;
+	}
+
+	for (ps = 0; ps < 2; ps++) {
+		posx = relpos;
+		posy = YLEFT + y;
+
+		do {
+			if (i > zz) {
+				break;
+			}
+
+			c = all_text[i];
+
+			if (c == NULL) {
+				break;
+			}
+
+			if (c[0] == 27 && c[1] == END_PAGE) {
+				break;
+			}
+
+			while (*c) {
+				z = 0;
+
+				if (*c == 27) {
+					c++;
+
+					switch (*c++) {
+					case SPACE:
+						posx += read_num(c, &z);
+						c += z;
+						break;
+
+					case END_LINE:
+						y += read_num(c, &z);
+						posx = relpos;
+						posy = YLEFT + y;
+						c += z;
+						break;
+
+					case PICTURE:
+						c = displ_picture(c);
+						break;
+					}
+				} else {
+					space[0] = *c++;
+					renderer->drawText(posx, posy, space);
+					posx += renderer->textWidth(space);
+				}
+			}
+
+			i++;
+		} while (1);
+
+		i++;
+		y = 0;
+		relpos = XRIGHT;
+
+		if (ps == 0) {
+			char s[20];
+			sprintf(s, texty[135], pg);
+			renderer->drawAlignedText(XLEFT, YLEFT + YMAX, HALIGN_LEFT, VALIGN_TOP, s);
+		}
+
+		if (ps == 1) {
+			char s[20];
+			sprintf(s, texty[136], pg + 1);
+			renderer->drawAlignedText(XRIGHT + XMAX, YLEFT + YMAX, HALIGN_RIGHT, VALIGN_TOP, s);
+		}
+	}
+}
 
 int count_pages()
   {

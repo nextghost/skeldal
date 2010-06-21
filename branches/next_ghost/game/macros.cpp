@@ -607,25 +607,25 @@ static void build_trig_group(char mode,int side)
 
 void unwire_main_functs();
 
-static void ma_play_anim(char *filename,char cls)
-  {
-  char *a;
+static void ma_play_anim(char *filename, char cls) {
+	char *a;
 
-  unwire_main_functs();
+	unwire_main_functs();
 //  concat(a,pathtable[SR_VIDEO],filename);
-  curcolor=0;
-  if (cls)
-     {
-     bar(0,0,639,479);
-     showview(0,0,0,0);
-     }
-  mute_all_tracks(1);
-  cancel_render=0;
-  cancel_pass=0;
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+
+	if (cls) {
+		bar(0, 0, 639, 479);
+		showview(0, 0, 0, 0);
+	}
+
+	mute_all_tracks(1);
+	cancel_render = 0;
+	cancel_pass = 0;
 //  play_movie_seq(a,cls?60:SCREEN_OFFLINE);
 	play_movie_seq(Sys_FullPath(SR_VIDEO, filename), cls ? 60 : SCREEN_OFFLINE);
-  wire_main_functs();
-  }
+	wire_main_functs();
+}
 
 static char ma_control_mob_control(uint16_t sector)
   {

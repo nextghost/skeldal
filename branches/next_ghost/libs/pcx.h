@@ -24,10 +24,88 @@
 #define _PCX_H_
 
 #include <inttypes.h>
+#include "libs/memman.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define SHADE_STEPS 5
+#define PAL_SIZE 768
+
+typedef uint8_t pal_t[PAL_SIZE];
+typedef pal_t fadepal_t[2 * SHADE_STEPS];
+
+// simple base class and pixel array wrapper
+class Texture : public DataBlock {
+private:
+	unsigned _width, _height, _depth;
+
+protected:
+	uint8_t *_pixels;
+
+	Texture(void) {}
+	void setData(uint8_t *data, unsigned xs, unsigned ys, unsigned bpp);
+
+	// do not implement
+	Texture(const Texture &src);
+	const Texture &operator=(const Texture &src);
+
+public:
+	Texture(uint8_t *data, unsigned xs, unsigned ys, unsigned bpp);
+	virtual ~Texture(void) {}
+
+	const uint8_t *pixels(void) const { return _pixels; }
+	virtual const uint8_t *palette(unsigned fade = 0) const { return NULL; }
+	unsigned width(void) const { return _width; }
+	unsigned height(void) const { return _height; }
+	unsigned depth(void) const { return _depth; }
+};
+
+class TextureHi : public Texture {
+public:
+	// turn raw pixeldata to TextureHi
+	TextureHi(const uint8_t *data, unsigned xs, unsigned ys);
+	// expand 256 color image from palette
+	TextureHi(const uint8_t *data, const uint8_t *pal, unsigned xs, unsigned ys);
+	// load raw RGB555 from file
+	explicit TextureHi(ReadStream &stream);
+	~TextureHi(void);
+};
+
+class TexturePal : public Texture {
+private:
+	uint8_t *_pal;
+
+public:
+	TexturePal(const uint8_t *data, const uint8_t *pal, unsigned xs, unsigned ys);
+	explicit TexturePal(ReadStream &stream);
+	~TexturePal(void);
+
+	const uint8_t *palette(unsigned fade = 0) const { return _pal; }
+};
+
+class TextureFade : public Texture {
+protected:
+	fadepal_t _pal;
+
+	TextureFade(const uint8_t *pal, unsigned xs, unsigned ys, uint8_t r, uint8_t g, uint8_t b);
+
+public:
+	TextureFade(const uint8_t *data, const uint8_t *pal, unsigned xs, unsigned ys, int tr, int tg, int tb);
+	~TextureFade(void);
+
+	const uint8_t *palette(unsigned fade = 0) const;
+	const pal_t *fadePal(void) const { return _pal; }
+};
+
+// Subimage of another texture, does NOT support fade palette
+class SubTexture : public Texture {
+private:
+	uint8_t *_pal;
+
+public:
+	SubTexture(const Texture &src, unsigned x, unsigned y, unsigned xs, unsigned ys);
+	~SubTexture(void);
+
+	const uint8_t *palette(unsigned fade = 0) const { return _pal; }
+};
 
 #pragma pack(1)
 
@@ -37,31 +115,27 @@ extern "C" {
 #define A_8BIT_NOPAL (512+8)
 #define A_NORMAL_PAL (768+8)
 
-  typedef struct pcxrecord
-     {
-     uint16_t id;
-     int8_t encoding;
-     int8_t bitperpixel;
-     uint16_t xmin,ymin,xmax,ymax;
-     uint16_t hdpi,vdpi;
-     int8_t colormap[48];
-     int8_t reserved;
-     int8_t mplanes;
-     uint16_t bytesperline;
-     uint16_t paleteinfo;
-     uint16_t hscreen,vscreen;
-     int8_t filler[54];
-     }PCXHEADER;
+typedef struct pcxrecord {
+	uint16_t id;
+	int8_t encoding;
+	int8_t bitperpixel;
+	uint16_t xmin, ymin, xmax, ymax;
+	uint16_t hdpi, vdpi;
+	int8_t colormap[48];
+	int8_t reserved;
+	int8_t mplanes;
+	uint16_t bytesperline;
+	uint16_t paleteinfo;
+	uint16_t hscreen, vscreen;
+	int8_t filler[54];
+} PCXHEADER;
 
 
-int load_pcx(char *pcx,long fsize,int conv_type,uint8_t **buffer, ... );
-int open_pcx(char *filename,int type,uint8_t **buffer,...);
-void palette_shadow(uint8_t *pal1,uint16_t pal2[][256],int tr,int tg,int tb);
+Texture *load_pcx(SeekableReadStream &stream, int conv_type, uint8_t tr = 0, uint8_t tg = 0, uint8_t tb = 0);
+Texture *open_pcx(const char *filename, int type, uint8_t tr = 0, uint8_t tg = 0, uint8_t tb = 0);
+void palette_shadow(pal_t *pal, int tr, int tg, int tb);
 //extern void *get_palette_ptr;
 
 #pragma option align=reset
 
-#ifdef __cplusplus
-}
-#endif
 #endif

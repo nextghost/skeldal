@@ -24,6 +24,8 @@
 #define __ENGINE1_H
 
 #include <inttypes.h>
+#include "libs/bgraph.h"
+#include "libs/pcx.h"
 
 #define VIEW_SIZE_X 640
 #define VIEW_SIZE_Y 360
@@ -43,7 +45,7 @@
 #define FACTOR_3D 3.33
 #define ZOOM_PHASES 9
 #define SCREEN_OFFLINE (17)
-#define SCREEN_OFFSET (Screen_GetXSize()*SCREEN_OFFLINE)
+#define SCREEN_OFFSET (renderer->width()*SCREEN_OFFLINE)
 #define C_YMAP_SIZE 90
 #define F_YMAP_SIZE 199
 #define CF_XMAP_SIZE 7
@@ -54,24 +56,22 @@
 #pragma pack(1)
 
 void general_engine_init(void);
-void draw_floor_ceil(int celx,int cely,char f_c,uint16_t *txtr);
-void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev);
+void draw_floor_ceil(int celx, int cely, char f_c, int dark, const Texture *txtr);
+void show_cel2(int celx, int cely, const Texture &tex, int xofs, int yofs, char rev);
   //zobrazi primou stenu ktera lezi pred nebo napravo od pozorovatele
-void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev);
-  void turn_left();
-void turn_right();
-void zooming_backward(uint16_t *background);
-void zooming_forward(uint16_t *background);
+void show_cel(int celx, int cely, const Texture &tex, int xofs, int yofs, char rev);
+void turn_left_right(const Texture &ltex, const Texture &rtex, int right);
+void zooming_forward_backward(const Texture &tex, int back);
 void OutBuffer2nd(void);
 void CopyBuffer2nd(void);
 void report_mode(int);
-void draw_item(int celx,int cely,int posx,int posy,uint16_t *pic,int index);
-void draw_item2(int celx,int cely,int xpos,int ypos,void *texture,int index);
+void draw_item(int celx, int cely, int posx, int posy, const Texture *tex, int index);
+void draw_item2(int celx, int cely, int xpos, int ypos, const Texture *tex, int index);
 //void textmode_effekt();
 //#pragma aux textmode_effekt modify[eax ebx ecx edx edi];
 
 
-void clear_buff(uint16_t *background,uint16_t backcolor,int lines);
+void clear_buff(const Texture *tex, uint8_t r, uint8_t g, uint8_t b, int lines);
 
 typedef struct zoominfo
   {
@@ -113,11 +113,6 @@ typedef struct t_info_x
   int32_t zoom_table[VIEW_SIZE_X]; //zoomovaci tabulka pro osu x pro kolme steny
   }T_INFO_X;
 
-typedef struct t_floor_map
-  {
-  int32_t lineofs,linesize,counter,txtrofs;
-  }T_FLOOR_MAP;
-
 typedef struct all_view
   {
   T_INFO_Y y_table[VIEW3D_Z+1];
@@ -146,14 +141,13 @@ extern char secnd_shade;
 
 typedef uint16_t palette_t[256];
 
-typedef struct drw_enemy_struct
-  {
-  void *txtr;
-  int32_t celx,cely,posx,posy,adjust,shiftup,num;
-  int8_t mirror;
-  int8_t stoned;
-  palette_t *palette;
-  }DRW_ENEMY;
+typedef struct drw_enemy_struct {
+	const Texture *tex;
+	int32_t celx, cely, posx, posy, adjust, shiftup, num;
+	int8_t mirror;
+	int8_t stoned;
+	const pal_t *palette;
+} DRW_ENEMY;
 
 
 
@@ -169,11 +163,11 @@ void enemy_draw_mirror(uint8_t *src,uint16_t *trg,int shade,int scale,int maxspa
 //clip je v poradi vpravo - vlevo (HiLo)
 
 void draw_enemy(DRW_ENEMY *drw);
-void draw_player(uint16_t *txtr,int celx,int cely,int posx,int posy,int adjust,char *name);
+void draw_player(const Texture &tex, int celx, int cely, int posx, int posy, int adjust, char *name);
 void double_zoom_xicht(uint16_t x,uint16_t y,uint16_t *source);
 
 void set_lclip_rclip(int celx,int cely,int lc,int rc);
-void draw_spectxtr(short *txtr,int celx,int cely,int xpos);
+void draw_spectxtr(const Texture &tex, int celx, int cely, int xpos);
 
 int turn_speed(int turnspeed); //oba je nutne volat na zacatku
 int zoom_speed(int zoomspeed);
@@ -183,7 +177,7 @@ void scroll_and_copy(uint16_t *pic,uint16_t *slide, uint16_t *scr, int size,int 
 
 void set_backgrnd_mode(int mode);
 
-int get_item_top(int celx,int cely,int posx,int posy,uint16_t *txtr,int index);
+int get_item_top(int celx, int cely, int posx, int posy, const Texture *tex, int index);
  //vraci nejnizsi souradnici y predmetu leziciho na zemi v celx, cely na pozici posx,posy;
 
 void play_big_mgif_animation(int block);

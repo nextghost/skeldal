@@ -21,62 +21,50 @@
  *  Last commit made by: $Id$
  */
 #include <cstdio>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/bgraph.h"
 #include "libs/memman.h"
 #include "libs/system.h"
 
-void save_dump()
-  {
-  static int dump_counter=-1;
-  FILE *f;
-  int i,r,g,b,x,y;
-  uint16_t *a;
-  char c[20];
+void save_dump() {
+	static int dump_counter = -1;
+	int i, r, g, b, x, y;
+	char c[20];
+	WriteFile f;
 
-  if (dump_counter==-1)
-     {
-     dump_counter=Sys_LatestFile("DUMP*.BMP",4);
-     SEND_LOG("(DUMP) Dump counter sets to %d",dump_counter,0);
-     }
-  sprintf(c,"DUMP%04d.BMP",++dump_counter);
-  SEND_LOG("(DUMP) Saving screen shot named '%s'",c,0);
-  f=fopen(c,"wb");
-  fputc('B',f);fputc('M',f);
-  i=Screen_GetXSize()*Screen_GetYSize()*3+0x36;
-  fwrite(&i,1,4,f);i=0;
-  fwrite(&i,1,4,f);
-  i=0x36;
-  fwrite(&i,1,4,f);
-  i=0x28;
-  fwrite(&i,1,4,f);
-  i=Screen_GetXSize();
-  fwrite(&i,1,4,f);
-  i=Screen_GetYSize();
-  fwrite(&i,1,4,f);
-  i=1;
-  fwrite(&i,1,2,f);
-  i=24;
-  fwrite(&i,1,2,f);
-  i=0;
-  fwrite(&i,1,4,f);
-  i=Screen_GetXSize()*Screen_GetYSize()*3;
-  fwrite(&i,1,4,f);
-  for(i=4,r=0;i>0;i--) fwrite(&r,1,4,f);
-  for(y=Screen_GetYSize();y>0;y--)
-     {
-     uint16_t *scr=Screen_GetAddr();
-     a=scr+(y-1)*Screen_GetXSize();
-     for(x=0;x<Screen_GetXSize();x++)
-        {
-        i=a[x];
-        b=(i & 0x1f)<<3;
-        g=(i & 0x7ff)>>3;
-        r=i>>8;
-        i=((r*256)+g)*256+b;
-        fwrite(&i,1,3,f);
-        }
-     }
-  fclose(f);
-  }
+	if (dump_counter == -1) {
+		dump_counter = Sys_LatestFile("DUMP*.BMP", 4);
+		SEND_LOG("(DUMP) Dump counter sets to %d", dump_counter, 0);
+	}
 
+	sprintf(c, "DUMP%04d.BMP", ++dump_counter);
+	SEND_LOG("(DUMP) Saving screen shot named '%s'", c, 0);
+	f.open(c);
+	f.writeUint8('B');
+	f.writeUint8('M');
+	f.writeUint32LE(renderer->width() * renderer->height() * 3 + 0x36);
+	f.writeUint32LE(0);
+	f.writeUint32LE(0x36);
+	f.writeUint32LE(0x28);
+	f.writeUint32LE(renderer->width());
+	f.writeUint32LE(renderer->height());
+	f.writeUint16LE(1);
+	f.writeUint16LE(24);
+	f.writeUint32LE(0);
+	f.writeUint32LE(renderer->width() * renderer->height() * 3);
+
+	for (i = 4, r = 0; i > 0; i--) {
+		f.writeUint32LE(0);
+	}
+
+	for (y = renderer->height(); y > 0; y--) {
+		const uint8_t *scr = renderer->pixels() + (y - 1) * renderer->width() * 3;
+
+		for (x = 0; x < renderer->width(); x++) {
+			f.writeUint8(scr[3 * x + 2]);
+			f.writeUint8(scr[3 * x + 1]);
+			f.writeUint8(scr[3 * x]);
+		}
+	}
+}

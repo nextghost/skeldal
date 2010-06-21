@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <SDL/SDL.h>
+#include "sdl/screen.h"
 #include "libs/system.h"
 
 SDL_Surface *screen;
@@ -32,33 +33,53 @@ uint16_t *backBuffer, *frontBuffer, *curFront;
 
 extern uint16_t scancodes[];
 
+int SDLRenderer::_active = 0;
+
+SDLRenderer::SDLRenderer(unsigned xs, unsigned ys) : SoftRenderer(xs, ys) {
+	assert(!_active && "Video already initialized");
+	_active = 1;
+	_screen = SDL_SetVideoMode(xs, ys, 24, SDL_SWSURFACE);
+	SDL_ShowCursor(SDL_DISABLE);
+	assert(_screen);
+	SDL_WM_SetCaption("Gates of Skeldal", "Gates of Skeldal");
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	_remap = SDL_CreateRGBSurface(SDL_SWSURFACE, xs, ys, 24, 0xff0000, 0xff00, 0xff, 0);
+#else
+	_remap = SDL_CreateRGBSurface(SDL_SWSURFACE, xs, ys, 24, 0xff, 0xff00, 0xff0000, 0);
+#endif
+	drawRect(0, 0, xs, ys);
+}
+
+SDLRenderer::~SDLRenderer(void) {
+	SDL_FreeSurface(_remap);
+	SDL_ShowCursor(SDL_ENABLE);
+	SDL_Quit();
+	_active = 0;
+}
+
+void SDLRenderer::drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) {
+	SDL_Rect rect = {x, y, xs, ys};
+	SDL_LockSurface(_remap);
+	memcpy(_remap->pixels, pixels(), width() * height() * 3 * sizeof(uint8_t));
+	SDL_UnlockSurface(_remap);
+	SDL_BlitSurface(_remap, &rect, _screen, &rect);
+	SDL_UpdateRect(_screen, x, y, xs, ys);
+}
+
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
 		return 0;
 	}
 
-	screen = SDL_SetVideoMode(640, 480, 15, SDL_SWSURFACE);
-	SDL_ShowCursor(SDL_DISABLE);
+	assert(!renderer && "Video already initialized");
+	renderer = new SDLRenderer(640, 480);
+	backbuffer = new SoftRenderer(640, 480);
 	SDL_EnableUNICODE(1);
-
-	if (!screen) {
-		return 0;
-	}
-
-	SDL_WM_SetCaption("Gates of Skeldal", "Gates of Skeldal");
 
 /*
 	fprintf(stderr, "Masks: %02x %02x %02x\n", screen->format->Rmask, screen->format->Gmask, screen->format->Bmask);
 	fprintf(stderr, "Shifts: %d %d %d\n", screen->format->Rshift, screen->format->Gshift, screen->format->Bshift);
-
-	if (SDL_MUSTLOCK(screen)) {
-		fprintf(stderr, "Screen needs locking :-(\n");
-		return 0;
-	}
 */
-
-	curFront = frontBuffer = (uint16_t*)malloc(screen->h * screen->pitch);
-	backBuffer = (uint16_t*)malloc(screen->h * screen->pitch);
 
 	// FIXME: mapped to mimic original DOS version behavior in DOSBox
 	// on a notebook keyboard, should be double checked
@@ -102,142 +123,7 @@ char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 
 void Screen_Shutdown(void) {
 	SDL_EnableUNICODE(0);
-	SDL_ShowCursor(SDL_ENABLE);
-	free(frontBuffer);
-	free(backBuffer);
-	SDL_Quit();
-}
-
-int Screen_GetXSize(void) {
-	return screen->w;
-}
-
-int Screen_GetYSize(void) {
-	return screen->h;
-}
-
-uint16_t *Screen_GetAddr(void) {
-	return curFront;
-}
-
-long Screen_GetSize(void) {
-	return screen->h * screen->pitch;
-}
-
-int Screen_GetScan(void) {
-	return screen->pitch;
-}
-
-uint16_t *Screen_GetBackAddr(void) {
-	return backBuffer;
-}
-
-void Screen_SetAddr(unsigned short *addr) {
-	curFront = addr;
-}
-
-void Screen_SetBackAddr() {
-	curFront = backBuffer;
-}
-
-void Screen_Restore(void) {
-	curFront = frontBuffer;
-}
-
-void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
-	SDL_LockSurface(screen);
-	memcpy(screen->pixels, frontBuffer, Screen_GetSize());
-	SDL_UpdateRect(screen, x, y, xs, ys);
-	SDL_UnlockSurface(screen);
-}
-
-void Screen_FixPalette(uint16_t *pal, int size) {
-	int i, r, g, b;
-
-	for (i = 0; i < size; i++) {
-		r = (pal[i] >> 11) & 0x1f;
-		g = (pal[i] >> 6) & 0x1f;
-		b = pal[i] & 0x1f;
-	
-		pal[i] = Screen_RGB(r, g, b);
-	}
-}
-
-
-uint16_t Screen_FixMGIFPalette(uint16_t color) {
-	unsigned r, g, b;
-
-	r = (color >> 10) & 0x1f;
-	g = (color >> 5) & 0x1f;
-	b = color & 0x1f;
-	return Screen_RGB(r, g, b);
-}
-
-uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b) {
-	return (r << screen->format->Rshift) | (g << screen->format->Gshift) | 
-		(b << screen->format->Bshift);
-}
-
-uint16_t Screen_ColorMin(uint16_t c1, uint16_t c2) {
-	unsigned r, g, b;
-
-	r = min(c1 & screen->format->Rmask, c2 & screen->format->Rmask);
-	g = min(c1 & screen->format->Gmask, c2 & screen->format->Gmask);
-	b = min(c1 & screen->format->Bmask, c2 & screen->format->Bmask);
-
-	return r | g | b;
-}
-
-uint16_t Screen_ColorSub(uint16_t color, int sub) {
-	int r, g, b;
-
-	r = ((color & screen->format->Rmask) >> screen->format->Rshift) - sub;
-	g = ((color & screen->format->Gmask) >> screen->format->Gshift) - sub;
-	b = ((color & screen->format->Bmask) >> screen->format->Bshift) - sub;
-
-	return Screen_RGB(r < 0 ? 0 : r, g < 0 ? 0 : g, b < 0 ? 0 : b);
-}
-
-uint16_t Screen_ColorAvg(uint16_t c1, uint16_t c2) {
-	unsigned r, g, b;
-
-	r = (c1 & screen->format->Rmask) + (c2 & screen->format->Rmask);
-	g = (c1 & screen->format->Gmask) + (c2 & screen->format->Gmask);
-	b = (c1 & screen->format->Bmask) + (c2 & screen->format->Bmask);
-
-	r = (r / 2) & screen->format->Rmask;
-	g = (g / 2) & screen->format->Gmask;
-	b = (b / 2) & screen->format->Bmask;
-
-	return r | g | b;
-}
-
-uint16_t Screen_ColorBlend(uint16_t c1, uint16_t c2, float factor) {
-	unsigned r1, g1, b1, r2, g2, b2;
-	
-	r1 = ((c1 & screen->format->Rmask) >> screen->format->Rshift);
-	g1 = ((c1 & screen->format->Gmask) >> screen->format->Gshift);
-	b1 = ((c1 & screen->format->Bmask) >> screen->format->Bshift);
-
-	r2 = ((c2 & screen->format->Rmask) >> screen->format->Rshift);
-	g2 = ((c2 & screen->format->Gmask) >> screen->format->Gshift);
-	b2 = ((c2 & screen->format->Bmask) >> screen->format->Bshift);
-
-	r1 = r1 + factor * (r2 - r1);
-	g1 = g1 + factor * (g2 - g1);
-	b1 = b1 + factor * (b2 - b1);
-
-	return Screen_RGB(r1, g1, b1);
-}
-
-unsigned Screen_ColorR(uint16_t c) {
-	return (c & screen->format->Rmask) >> screen->format->Rshift;
-}
-
-unsigned Screen_ColorG(uint16_t c) {
-	return (c & screen->format->Gmask) >> screen->format->Gshift;
-}
-
-unsigned Screen_ColorB(uint16_t c) {
-	return (c & screen->format->Bmask) >> screen->format->Bshift;
+	delete renderer;
+	delete backbuffer;
+	renderer = NULL;
 }

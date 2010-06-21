@@ -96,6 +96,28 @@ void *PrepareVideoSound(int mixfreq, int buffsize) {
 	return ret;
 }
 
+int LoadNextAudioFrame(void *ptr, const int16_t *data, unsigned length) {
+	ringbuffer_t *buff = (ringbuffer_t*)ptr;
+	int len, i;
+
+	SDL_LockAudio();
+	len = buff->readoff <= buff->writeoff ? buff->size - buff->writeoff + buff->readoff - 1 : buff->readoff - buff->writeoff - 1;
+
+	if (len < length) {
+		SDL_UnlockAudio();
+		return 0;
+	}
+
+	len = buff->size - buff->writeoff < length ? buff->size - buff->writeoff : length;
+
+	memcpy(buff->buff + buff->writeoff, data, len * sizeof(int16_t));
+	memcpy(buff->buff, data + len, (length - len) * sizeof(int16_t));
+	buff->writeoff = (buff->writeoff + length) % buff->size;
+
+	SDL_UnlockAudio();
+	return 1;
+}
+
 char LoadNextVideoFrame(void *ptr, SeekableReadStream &stream, int16_t *samples, int16_t *accnums, long *writepos) {
 	ringbuffer_t *buff = (ringbuffer_t*)ptr;
 	int len, i, val;

@@ -33,7 +33,6 @@ void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
 	}
 }
 
-// show_delta_lfb12e() is similar to small_anm_delta in game/engine2.c - merge?
 void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta) {
 	unsigned int i, j, k, size;
 	uint16_t *tmp;

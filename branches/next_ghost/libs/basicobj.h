@@ -31,18 +31,11 @@
 
 #define E_STATUS_LINE 60
 
-extern uint16_t *msg_box_font;
-extern uint16_t *msg_icn_font;
-
-int msg_box(char *title, char icone, char *text, ... );
-
-
-void highlight(CTL3D *c,uint16_t color);
-CTL3D *def_border(int btype,int color);
+void highlight(CTL3D *c, uint8_t r, uint8_t g, uint8_t b);
+CTL3D *def_border(int btype, uint8_t r, uint8_t g, uint8_t b);
 void xor_rectangle(int x,int y,int xs,int ys);
 
 // status lines
-void status_line(EVENT_MSG *msg,T_EVENT_ROOT **user_data);
 //void *status_mem_info(EVENT_MSG *msg);
 void *mouse_xy(EVENT_MSG *msg);
 void *show_time(EVENT_MSG *msg);

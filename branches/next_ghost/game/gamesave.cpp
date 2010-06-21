@@ -877,13 +877,13 @@ static StringList slot_list;
 static int last_select=-1;
 static char used_pos[SLOTS_MAX];
 static StringList story_text;
-static void *back_texture=NULL;
+static Texture *back_texture = NULL;
 static int cur_story_pos=0;
 static char load_mode;
 
 #define SLOT_SPACE 33
-#define SELECT_COLOR RGB555(31,31,31)
-#define NORMAL_COLOR RGB555(10,31,10)
+#define SELECT_COLOR 0,255,255,255
+#define NORMAL_COLOR 0,82,255,82
 #define STORY_X 57
 #define STORY_Y 50
 #define STORY_XS (298-57)
@@ -915,71 +915,110 @@ void read_slot_list() {
 	}
 }
 
-static void place_name(int c,int i,char show)
-  {
-  int z,x;
-  if (c) x=SAVE_SLOT_S;else x=LOAD_SLOT_S;
-  if (show) schovej_mysku();
-  position(x,z=i*SLOT_SPACE+21+SCREEN_OFFLINE);outtext(slot_list[i]);
-  if (show)
-     {
-     ukaz_mysku();
-     showview(x,z,204,18);
-     }
-  }
+static void place_name(int c, int i, char show) {
+	int z, x;
 
-static void redraw_save()
-  {
-  int i;
-  schovej_mysku();
-  put_picture(0, SCREEN_OFFLINE, (uint16_t*)ablock(H_SAVELOAD));
-  put_picture(274, SCREEN_OFFLINE, (uint16_t*)ablock(H_SVITEK));
-  set_font(H_FBOLD,NORMAL_COLOR);
-  for(i=0;i<SLOTS_MAX;i++) place_name(1,i,0);
-  ukaz_mysku();
-  }
+	if (c) {
+		x = SAVE_SLOT_S;
+	} else {
+		x = LOAD_SLOT_S;
+	}
 
-static void redraw_load()
-  {
-  int i;
-  schovej_mysku();
-  put_picture(0, SCREEN_OFFLINE, (uint16_t*)ablock(H_SVITEK));
-  put_picture(372, SCREEN_OFFLINE, (uint16_t*)ablock(H_SAVELOAD));
-  set_font(H_FBOLD,NORMAL_COLOR);
-  for(i=0;i<SLOTS_MAX;i++) place_name(0,i,0);
-  ukaz_mysku();
-  }
+	if (show) {
+		schovej_mysku();
+	}
 
-static void redraw_story_bar(int pos)
-  {
-  int i,y,ys,x,count;
-  schovej_mysku();
-  if (force_save) x=STORY_X+274;else x=STORY_X;
-  if (back_texture==NULL)
-     {
-     back_texture=getmem(STORY_XS*STORY_YS*2+6);
-     get_picture(x, STORY_Y+SCREEN_OFFLINE, STORY_XS, STORY_YS, (uint16_t*)back_texture);
-     }
-  else
-     put_picture(x, STORY_Y+SCREEN_OFFLINE, (uint16_t*)back_texture);
+	renderer->drawText(x, z = i * SLOT_SPACE + 21 + SCREEN_OFFLINE, slot_list[i]);
 
-  y=SCREEN_OFFLINE+STORY_Y;
-  ys=STORY_YS;
-  count = story_text.size();
-  set_font(H_FONT6,NOSHADOW(0));
-  for(i=pos;i<count;i++) if (story_text[i]!=NULL)
-    {
-    int h;
+	if (show) {
+		ukaz_mysku();
+		showview(x, z, 204, 18);
+	}
+}
 
-    h=text_height(story_text[i]);
-    if (ys<2*h) break;
-    position(x,y);outtext(story_text[i]);
-    ys-=h;
-    y+=h;
-    }
-  ukaz_mysku();
-  showview(x,STORY_Y+SCREEN_OFFLINE,STORY_XS,STORY_YS);
-  }
+static void redraw_save() {
+	int i;
+	const Texture *tex;
+	const Font *font;
+
+	schovej_mysku();
+	tex = dynamic_cast<const Texture*>(ablock(H_SAVELOAD));
+	renderer->blit(*tex, 0, SCREEN_OFFLINE, tex->palette());
+	tex = dynamic_cast<const Texture*>(ablock(H_SVITEK));
+	renderer->blit(*tex, 274, SCREEN_OFFLINE, tex->palette());
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, NORMAL_COLOR);
+
+	for (i = 0; i < SLOTS_MAX; i++) {
+		place_name(1, i, 0);
+	}
+
+	ukaz_mysku();
+}
+
+static void redraw_load() {
+	int i;
+	const Texture *tex;
+	const Font *font;
+
+	schovej_mysku();
+	tex = dynamic_cast<const Texture*>(ablock(H_SVITEK));
+	renderer->blit(*tex, 0, SCREEN_OFFLINE, tex->palette());
+	tex = dynamic_cast<const Texture*>(ablock(H_SAVELOAD));
+	renderer->blit(*tex, 372, SCREEN_OFFLINE, tex->palette());
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, NORMAL_COLOR);
+
+	for (i = 0; i < SLOTS_MAX; i++) {
+		place_name(0, i, 0);
+	}
+
+	ukaz_mysku();
+}
+
+static void redraw_story_bar(int pos) {
+	int i, y, ys, x, count;
+	const Font *font;
+
+	schovej_mysku();
+
+	if (force_save) {
+		x = STORY_X + 274;
+	} else {
+		x = STORY_X;
+	}
+
+	if (back_texture == NULL) {
+		back_texture = new SubTexture(*renderer, x, STORY_Y + SCREEN_OFFLINE, STORY_XS, STORY_YS);
+	} else {
+		renderer->blit(*back_texture, x, STORY_Y + SCREEN_OFFLINE, back_texture->palette());
+	}
+
+	y = SCREEN_OFFLINE + STORY_Y;
+	ys = STORY_YS;
+	count = story_text.size();
+	font = dynamic_cast<const Font*>(ablock(H_FONT6));
+	renderer->setFont(font, 0, 0, 0, 0);
+
+	for (i = pos; i < count; i++) {
+		if (story_text[i] != NULL) {
+			int h;
+
+			h = renderer->textHeight(story_text[i]);
+
+			if (ys < 2 * h) {
+				break;
+			}
+
+			renderer->drawText(x, y, story_text[i]);
+			ys -= h;
+			y += h;
+		}
+	}
+
+	ukaz_mysku();
+	showview(x, STORY_Y + SCREEN_OFFLINE, STORY_XS, STORY_YS);
+}
 
 //#pragma aux read_story_task parm []
 //static void read_story_task(va_list args)
@@ -989,13 +1028,15 @@ static void read_story_task(int slot) {
 	void *text_data;
 	char *c, *d;
 	long size;
+	const Font *font;
 
 	load_specific_file(slot, STORY_BOOK, &text_data, &size);
 	story_text.clear();
 
 	if (text_data != NULL) {
 		c = (char*)text_data;
-		set_font(H_FONT6, 0);
+		font = dynamic_cast<const Font*>(ablock(H_FONT6));
+		renderer->setFont(font, 1, 0, 0, 0);
 
 		while (size > 0) {
 			int xs, ys;
@@ -1020,7 +1061,7 @@ static void read_story_task(int slot) {
 			while (*e) {
 				story_text.insert(e);
 
-				if (text_width(e) > STORY_XS) {
+				if (renderer->textWidth(e) > STORY_XS) {
 					abort();
 				}
 
@@ -1070,27 +1111,32 @@ static int get_list_count()
   return max-20;
   }
 
-static int bright_slot(int yr)
-  {
-  int id;
+static int bright_slot(int yr) {
+	int id;
+	const Font *font;
 
-  id=yr/SLOT_SPACE;
-  if ((yr % SLOT_SPACE)<18 && yr>0)
-     {
-     if (id!=last_select)
-     {
-     set_font(H_FBOLD,NORMAL_COLOR);
-     if (last_select!=-1) place_name(force_save,last_select,1);
-     set_font(H_FBOLD,SELECT_COLOR);
-     place_name(force_save,id,1);
-     last_select=id;
-     read_story(id);
-     }
-     }
-  else
-     id=-1;
-  return id;
-  }
+	id = yr / SLOT_SPACE;
+
+	if ((yr % SLOT_SPACE) < 18 && yr > 0) {
+		if (id != last_select) {
+			font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+			renderer->setFont(font, NORMAL_COLOR);
+
+			if (last_select != -1) {
+				place_name(force_save, last_select, 1);
+			}
+
+			renderer->setFont(font, SELECT_COLOR);
+			place_name(force_save, id, 1);
+			last_select = id;
+			read_story(id);
+		}
+	} else {
+		id = -1;
+	}
+
+	return id;
+}
 
 static char updown_scroll(int id,int xa,int ya,int xr,int yr);
 
@@ -1309,21 +1355,22 @@ T_CLK_MAP clk_ask_name[]=
 
 
 
-void wire_ask_gamename(int id)
-  {
-  int x,y;
+void wire_ask_gamename(int id) {
+	int x, y;
+	const Texture *tex;
 
-  x=SAVE_SLOT_S;
-  y=id*SLOT_SPACE+21+SCREEN_OFFLINE;
-  slot_pos=id;
-  schovej_mysku();
-  put_picture(x, y, (uint16_t*)ablock(H_LOADTXTR));
-  strcpy(global_gamename,slot_list[id]);
+	x = SAVE_SLOT_S;
+	y = id * SLOT_SPACE + 21 + SCREEN_OFFLINE;
+	slot_pos = id;
+	schovej_mysku();
+	tex = dynamic_cast<const Texture*>(ablock(H_LOADTXTR));
+	renderer->blit(*tex, x, y, tex->palette());
+	strcpy(global_gamename, slot_list[id]);
 //  clk_ask_name[0].id=Task_Add(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
-  send_message(E_ADD, E_KEYBOARD, type_text,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
-  change_click_map(clk_ask_name,CLK_ASK_NAME);
-  ukaz_mysku();
-  }
+	send_message(E_ADD, E_KEYBOARD, type_text, global_gamename, x, y, SAVE_SLOT_E - SAVE_SLOT_S, SAVE_NAME_SIZE, H_FBOLD, 255, 255, 0, save_it);
+	change_click_map(clk_ask_name, CLK_ASK_NAME);
+	ukaz_mysku();
+}
 
 
 #define CLK_SAVELOAD 11
@@ -1413,43 +1460,67 @@ static EVENT_PROC(saveload_keyboard) {
 	}
 }
 
-void unwire_save_load()
-  {
-  if (back_texture!=NULL) free(back_texture);
-  back_texture=NULL;
-  story_text.clear();
-  cancel_pass=0;
-  send_message(E_DONE,E_KEYBOARD,saveload_keyboard);
-  }
+void unwire_save_load() {
+	if (back_texture != NULL) {
+		delete back_texture;
+	}
 
-void wire_save_load(char save)
-  {
-  schovej_mysku();
-  mute_all_tracks(0);
-  force_save=save & 1;
-  load_mode=save;
-  if (!slot_list.count()) read_slot_list();
-  curcolor=0;
-  bar(0,17,639,17+360);
-  if (force_save) redraw_save();else redraw_load();
-  if (save==4) effect_show(NULL);else showview(0,0,0,0);
-  redraw_story_bar(cur_story_pos);
-  unwire_proc=unwire_save_load;
-  send_message(E_ADD,E_KEYBOARD,saveload_keyboard);
-  if (save==1)change_click_map(clk_save,CLK_SAVELOAD);
-  else if (save==2) change_click_map(clk_load_error,CLK_LOAD_ERROR);
-  else if (save==4) change_click_map(clk_load_menu,CLK_LOAD_MENU);
-  else change_click_map(clk_load,CLK_SAVELOAD);
-  cancel_pass=1;
-  if (last_select!=-1)
-     {
-     int x=last_select*SLOT_SPACE+1;
-     last_select=-1;
-     bright_slot(x);
-     }
-  ukaz_mysku();
-  update_mysky();
-  }
+	back_texture = NULL;
+	story_text.clear();
+	cancel_pass = 0;
+	send_message(E_DONE, E_KEYBOARD, saveload_keyboard);
+}
+
+void wire_save_load(char save) {
+	schovej_mysku();
+	mute_all_tracks(0);
+	force_save = save & 1;
+	load_mode = save;
+
+	if (!slot_list.count()) {
+		read_slot_list();
+	}
+
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 17, 639, 17 + 360);
+
+	if (force_save) {
+		redraw_save();
+	} else {
+		redraw_load();
+	}
+
+	if (save == 4) {
+		effect_show(NULL);
+	} else {
+		showview(0, 0, 0, 0);
+	}
+
+	redraw_story_bar(cur_story_pos);
+	unwire_proc = unwire_save_load;
+	send_message(E_ADD, E_KEYBOARD, saveload_keyboard);
+
+	if (save == 1) {
+		change_click_map(clk_save, CLK_SAVELOAD);
+	} else if (save == 2) {
+		change_click_map(clk_load_error, CLK_LOAD_ERROR);
+	} else if (save == 4) {
+		change_click_map(clk_load_menu, CLK_LOAD_MENU);
+	} else {
+		change_click_map(clk_load, CLK_SAVELOAD);
+	}
+
+	cancel_pass = 1;
+
+	if (last_select != -1) {
+		int x = last_select * SLOT_SPACE + 1;
+		last_select = -1;
+		bright_slot(x);
+	}
+
+	ukaz_mysku();
+	update_mysky();
+}
 
 
 void open_story_file()

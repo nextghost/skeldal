@@ -22,6 +22,7 @@
  */
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <cstring>
 #include <inttypes.h>
 #include "libs/event.h"
@@ -33,8 +34,8 @@
 #include "game/globals.h"
 #include "libs/system.h"
 
-#define PRG_COLOR RGB555(0,31,31)
-#define PRG_HELP_COLOR RGB555(31,31,0)
+#define PRG_COLOR 1,0,255,255
+#define PRG_HELP_COLOR 1,255,255,0
 
 TMOB *attack_mob;
 short init_distance;
@@ -1099,29 +1100,35 @@ static void pouzij_svitek(THUMAN *p,int ruka)
      }
   }
 
-static void play_weapon_anim(int anim_num,int hitpos)
-  {
-  char count_save=global_anim_counter;
-  int battlespeed=gamespeed-gamespeed*gamespeedbattle/5;
+static void play_weapon_anim(int anim_num, int hitpos) {
+	char count_save = global_anim_counter;
+	int battlespeed = gamespeed - gamespeed * gamespeedbattle / 5;
 
-  if (anim_num==0) return;
-  hold_timer(TM_SCENE,1);
-  if (battlespeed<1) battlespeed=1;
-  add_to_timer(TM_SCENE2,battlespeed,-1,hrat_souboj);
-  play_big_mgif_animation(anim_num+face_arr[4]);
-  do
-     {
-     while (global_anim_counter==count_save)
-        {
-        do_events();
-        }
-     count_save=global_anim_counter;
-     }
-  while (hitpos-- && running_anm);
-  delete_from_timer(TM_SCENE2);
-  hold_timer(TM_SCENE,0);
-  cancel_render=1;
-  }
+	if (anim_num == 0) {
+		return;
+	}
+
+	hold_timer(TM_SCENE, 1);
+
+	if (battlespeed < 1) {
+		battlespeed = 1;
+	}
+
+	add_to_timer(TM_SCENE2, battlespeed, -1, hrat_souboj);
+	play_big_mgif_animation(anim_num + face_arr[4]);
+
+	do {
+		while (global_anim_counter == count_save) {
+			do_events();
+		}
+
+		count_save = global_anim_counter;
+	} while (hitpos-- && anim_reader);
+
+	delete_from_timer(TM_SCENE2);
+	hold_timer(TM_SCENE, 0);
+	cancel_render = 1;
+}
 
 void pouzij_zbran(THUMAN *p,int ruka)
   {
@@ -1436,47 +1443,51 @@ void unwire_jadro_souboje()
   pgm_help=0;
   }
 
-void fill_rune(char *d,int i)
-  {
-  int x,y;char *dd;
+static Texture *runebar = NULL;
+static const char *rune_name=NULL;
 
-  dd=((char *)d)+6+512;
-        for(y=378;y<480;y++)
-           {
-           uint16_t *z;
-           z=Screen_GetAddr()+y*Screen_GetXSize();
-           for(x=520;x<640;x++)
-              if (*dd++==i) z[x]=z[x]-((z[x] & RGB555(28,28,28))>>2);
-           }
+void display_rune_bar(the_timer *arg) {
+	short coords[][2] = {{3, 26}, {32, 26}, {61, 26}, {90, 26}, {18, 64}, {47, 64}, {76, 64}};
+	char c;
+	int i;
+	const Texture *tex;
 
-  }
+	schovej_mysku();
 
-static uint16_t *runebar;
-static char *rune_name=NULL;
+	if (runebar != NULL) {
+		renderer->blit(*runebar, 520, 378, runebar->palette());
+	} else {
+		tex = dynamic_cast<const Texture*>(ablock(H_RUNEBAR1 + sel_zivel));
+		renderer->blit(*tex, 520, 378, tex->palette());
+		c = runes[sel_zivel];
 
-void display_rune_bar(the_timer *arg)
-  {
-  short coords[][2]={{3,26},{32,26},{61,26},{90,26},{18,64},{47,64},{76,64}};
-  char c;
-  int i;
+		for (i = 0; i < 7; i++, c >>= 1) {
+			if (!(c & 1)) {
+				tex = dynamic_cast<const Texture*>(ablock(H_RUNEHOLE));
+				renderer->blit(*tex, 520 + coords[i][0], 378 + coords[i][1], tex->palette());
+			} else if (!get_rune_enable(&postavy[select_player], (sel_zivel * 7 + i) * 3)) {
+				tex = dynamic_cast<const Texture*>(ablock(H_RUNEMASK));
+				renderer->maskFill(*tex, 520, 378, i + 6, 2, 4, 4, 4);
+			}
+		}
 
-  schovej_mysku();
-  if (runebar!=NULL) put_picture(520,378,runebar);
-  else
-     {
-     put_picture(520, 378, (uint16_t*)ablock(H_RUNEBAR1+sel_zivel));
-     c=runes[sel_zivel];
-     for(i=0;i<7;i++,c>>=1)
-       if (!(c & 1)) put_picture(520+coords[i][0], 378+coords[i][1], (uint16_t*)ablock(H_RUNEHOLE));
-       else if (!get_rune_enable(&postavy[select_player],(sel_zivel*7+i)*3)) fill_rune((char *)ablock(H_RUNEMASK),i+6);
-     if (sel_zivel) trans_bar(520,378,sel_zivel*24,22,0);
-     if (sel_zivel!=4)trans_bar(544+sel_zivel*24,378,96-sel_zivel*24,22,0);
-     runebar = (uint16_t*)getmem((120*102+3) * sizeof(uint16_t));
-     get_picture(520,378,120,102,runebar);
-     }
-  ukaz_mysku();
-  if (je_myska_zobrazena())showview(520,378,120,102);
-  }
+		if (sel_zivel) {
+			trans_bar(520, 378, sel_zivel * 24, 22, 0, 0, 0);
+		}
+
+		if (sel_zivel != 4) {
+			trans_bar(544 + sel_zivel * 24, 378, 96 - sel_zivel * 24, 22, 0, 0, 0);
+		}
+
+		runebar = new SubTexture(*renderer, 520, 378, 120, 102);
+	}
+
+	ukaz_mysku();
+
+	if (je_myska_zobrazena()) {
+		showview(520, 378, 120, 102);
+	}
+}
 
 
 
@@ -1494,18 +1505,26 @@ void rune_bar_redrawing(the_timer *arg)
   }
 
 
-void display_power_bar(char drw)
-  {
-  int coords[][2]={{20,11},{20,41},{20,71}};
-  int i;
+void display_power_bar(char drw) {
+	int coords[][2] = {{20, 11}, {20, 41}, {20, 71}};
+	int i;
+	const Texture *tex;
 
-  schovej_mysku();
-  put_picture(520, 378, (uint16_t*)ablock(H_POWERBAR));
-  for(i=0;i<3;i++)
-     put_8bit_clipped((uint16_t*)ablock(H_POWERLED),520+coords[i][0]+(378+coords[i][1])*Screen_GetXSize()+Screen_GetAddr(),24*powers[i],21,24);
-  ukaz_mysku();
-  if (drw) showview(520,378,120,102);
-  }
+	schovej_mysku();
+	tex = dynamic_cast<const Texture*>(ablock(H_POWERBAR));
+	renderer->blit(*tex, 520, 378, tex->palette());
+
+	for (i = 0; i < 3; i++) {
+		tex = dynamic_cast<const Texture*>(ablock(H_POWERLED));
+		renderer->rectBlit(*tex, 520 + coords[i][0], 378 + coords[i][1], 0, 24 * powers[i], 21, 24, tex->palette());
+	}
+
+	ukaz_mysku();
+
+	if (drw) {
+		showview(520, 378, 120, 102);
+	}
+}
 
 void display_power_bar_tm(THE_TIMER *tm)
   {
@@ -1529,40 +1548,46 @@ char cancel_power(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-char ask_who_proc(int id,int xa,int ya,int xr,int yr)
-  {
-  THUMAN *p;
-  int i;
-  uint16_t *xs;
+char ask_who_proc(int id, int xa, int ya, int xr, int yr) {
+	THUMAN *p;
+	int i;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_OKNO));
 
-  xs = (uint16_t*)ablock(H_OKNO);
-  i=xr/xs[0];yr;xa;ya;id;
-  if (i<POCET_POSTAV)
-     {
-     char c;
-     i=group_sort[i];
-     p=&postavy[i];
-     c=p->sektor!=viewsector;
-     if (p->used)
-        if ((!far_play && !c || !death_play && c) && death_play==(p->lives==0))
-           {
-           if (get_spell_teleport(magic_data->data1))
-              if ((magic_data->data2=select_teleport_target())==0)
-                 {
-                 cancel_power(id,xa,ya,xr,yr);
-                 return 1;
-                 }
-           magic_data->data1+=(i+1)<<9;
-           magic_data->action=AC_MAGIC;
-           if (battle) souboje_vybrano(AC_MAGIC);
-           unwire_proc();
-           after_spell_wire();
-           mouse_set_default(H_MS_DEFAULT);
-           return 1;
-           }
-     }
-  return 0;
-  }
+	i = xr / tex->width();
+
+	if (i < POCET_POSTAV) {
+		char c;
+
+		i = group_sort[i];
+		p = &postavy[i];
+		c = p->sektor != viewsector;
+
+		if (p->used) {
+			if ((!far_play && !c || !death_play && c) && death_play == (p->lives == 0)) {
+				if (get_spell_teleport(magic_data->data1)) {
+					if ((magic_data->data2 = select_teleport_target()) == 0) {
+						cancel_power(id, xa, ya, xr, yr);
+						return 1;
+					}
+				}
+
+				magic_data->data1 += (i + 1) << 9;
+				magic_data->action = AC_MAGIC;
+
+				if (battle) {
+					souboje_vybrano(AC_MAGIC);
+				}
+
+				unwire_proc();
+				after_spell_wire();
+				mouse_set_default(H_MS_DEFAULT);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 void vyber_cil(int typ)
   {
@@ -1578,7 +1603,7 @@ char power(int id,int xa,int ya,int xr,int yr)
   if (powers[id]==1) return 1;
   schovej_mysku();
   display_power_bar(0);
-  trans_bar(520+44,378+11+30*id,76,24,RGB555(31,31,31));
+  trans_bar(520+44,378+11+30*id,76,24,255,255,255);
   mouse_set_default(H_MS_DEFAULT);
   ukaz_mysku();
   showview(520,378,120,102);
@@ -1606,42 +1631,43 @@ char power(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-char runes_mask(int id,int xa,int ya,int xr,int yr)
-  {
-  char *c;
-  int cc;
-  short *d;
+char runes_mask(int id, int xa, int ya, int xr, int yr) {
+	int c, cc;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_RUNEMASK));
 
-  id;ya;xa;
-  d = (short*)ablock(H_RUNEMASK);
-  c=((char *)d)+6+512+xr+yr*d[0];
-  cc=*c-6;
-  if (*c)
-     if (*c<6 && ms_last_event.event_type & 0x2) sel_zivel=*c-1;
-     else if (runes[sel_zivel] & (1<<cc))
-        {
-        int x=(sel_zivel*7+(cc))*3;
-        if (ms_last_event.event_type & 0x2)
-           {
-           magic_data->data1=x;
-           unwire_select_rune();
-           wire_select_power();
-           schovej_mysku();
-           fill_rune((char *)d,*c);
-           ukaz_mysku();
-           showview(520,378,120,102);
-           return 1;
-           }
-        else
-           {
-           rune_name=get_rune_name(x);
-           }
-        }
-  if (cc<0) rune_name=NULL;
-  free(runebar);runebar=NULL;
-  display_rune_bar(NULL);
-  return 1;
-  }
+	c = tex->pixels()[xr + yr * tex->width()];
+	cc = c - 6;
+
+	if (c) {
+		if (c < 6 && ms_last_event.event_type & 0x2) {
+			sel_zivel = c - 1;
+		} else if (runes[sel_zivel] & (1 << cc)) {
+			int x = (sel_zivel * 7 + (cc)) * 3;
+
+			if (ms_last_event.event_type & 0x2) {
+				magic_data->data1 = x;
+				unwire_select_rune();
+				wire_select_power();
+				schovej_mysku();
+				renderer->maskFill(*tex, 520, 378, c, 2, 4, 4, 4);
+				ukaz_mysku();
+				showview(520, 378, 120, 102);
+				return 1;
+			} else {
+				rune_name = get_rune_name(x);
+			}
+		}
+	}
+
+	if (cc < 0) {
+		rune_name = NULL;
+	}
+
+	delete runebar;
+	runebar = NULL;
+	display_rune_bar(NULL);
+	return 1;
+}
 
 char cancel_runes(int id,int xa,int ya,int xr,int yr)
   {
@@ -1655,14 +1681,14 @@ char cancel_runes(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-void unwire_select_rune()
-  {
-  wire_proc=wire_select_rune;
-  delete_from_timer(TM_DELAIER);
-  delete_from_timer(TM_SCENE);
-  cancel_render=1;
-  free(runebar);runebar=NULL;
-  }
+void unwire_select_rune() {
+	wire_proc = wire_select_rune;
+	delete_from_timer(TM_DELAIER);
+	delete_from_timer(TM_SCENE);
+	cancel_render = 1;
+	delete runebar;
+	runebar = NULL;
+}
 
 void wire_select_rune()
   {
@@ -1716,56 +1742,73 @@ void wire_select_power()
 
 
 
-void program_draw()
-  {
-  int x=54+74/2;
-  int i,j,maxy=0;
+void program_draw() {
+	int x = 54 + 74 / 2;
+	int i, j, maxy = 0;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
-  maxy;
-  schovej_mysku();
-  for(j=0;j<POCET_POSTAV;j++)
-     if (postavy[i=group_sort[j]].used)
-     {
-     int y;
+	schovej_mysku();
 
-     y=postavy[i].programovano*10;
-     if (y>maxy) maxy=y;
-     }
-  if (!maxy && (pgm_help || rune_name!=NULL)) maxy+=10;
-  if (maxy)
-     {
-     maxy+=5;
-     trans_bar(0,377-maxy,640,maxy,0);
-     }
-  for(j=0;j<POCET_POSTAV;j++)
-     if (postavy[i=group_sort[j]].used)
-     {
-     HUM_ACTION *c;
-     int y,j;
-     c=postavy[i].provadena_akce;
-     if (c==NULL) continue;
-     y=386-10*postavy[i].programovano;
-     set_font(H_FLITT5,PRG_COLOR);
-     for(j=0;j<postavy[i].programovano;j++)
-        {
-        set_aligned_position(x,y,1,2,texty[c->action+40]);
-        outtext(texty[c->action+40]);
-        c++;
-        y+=+10;
-        }
-     x+=74;
-     }
- if(pgm_help || rune_name!=NULL)
-     {
-     const char *c;
+	for (j = 0; j < POCET_POSTAV; j++) {
+		if (postavy[i = group_sort[j]].used) {
+			int y;
 
-     if (rune_name!=NULL) c=rune_name;else c=texty[40+pgm_help];
-     set_font(H_FLITT5,PRG_HELP_COLOR);
-     set_aligned_position(580,376,1,2,c);
-     outtext(c);
-     }
- ukaz_mysku();
-  }
+			y = postavy[i].programovano * 10;
+
+			if (y > maxy) {
+				maxy = y;
+			}
+		}
+	}
+
+	if (!maxy && (pgm_help || rune_name != NULL)) {
+		maxy += 10;
+	}
+
+	if (maxy) {
+		maxy += 5;
+		trans_bar(0, 377 - maxy, 640, maxy, 0, 0, 0);
+	}
+
+	for (j = 0; j < POCET_POSTAV; j++) {
+		if (postavy[i = group_sort[j]].used) {
+			HUM_ACTION *c;
+			int y, j;
+
+			c = postavy[i].provadena_akce;
+
+			if (c == NULL) {
+				continue;
+			}
+
+			y = 386 - 10 * postavy[i].programovano;
+			renderer->setFont(font, PRG_COLOR);
+
+			for (j = 0; j < postavy[i].programovano; j++) {
+				renderer->drawAlignedText(x, y, HALIGN_CENTER, VALIGN_BOTTOM, texty[c->action+40]);
+				c++;
+				y += +10;
+			}
+
+			x += 74;
+		}
+	}
+
+	if (pgm_help || rune_name != NULL) {
+		const char *c;
+
+		if (rune_name != NULL) {
+			c = rune_name;
+		} else {
+			c = texty[40 + pgm_help];
+		}
+
+		renderer->setFont(font, PRG_HELP_COLOR);
+		renderer->drawAlignedText(580, 376, HALIGN_CENTER, VALIGN_BOTTOM, c);
+	}
+
+	ukaz_mysku();
+}
 
 
 void souboje_redrawing(the_timer *arg)
@@ -1783,17 +1826,18 @@ void souboje_redrawing(the_timer *arg)
   }
 
 
-void souboje_stisknout(int d)
-  {
-  update_mysky();
-  schovej_mysku();
-  d--;
-  d*=105;
-  put_8bit_clipped((uint16_t*)ablock(H_BATTLE_CLICK),378*Screen_GetXSize()+520+Screen_GetAddr(),d,120,102);
-  ukaz_mysku();
-  showview(520,378,120,102);
-  cancel_render=1;
-  }
+void souboje_stisknout(int d) {
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_BATTLE_CLICK));
+
+	update_mysky();
+	schovej_mysku();
+	d--;
+	d *= 105;
+	renderer->rectBlit(*tex, 520, 378, 0, d, 120, 102, tex->palette());
+	ukaz_mysku();
+	showview(520, 378, 120, 102);
+	cancel_render = 1;
+}
 
 static void souboje_dalsi()
   {
@@ -1862,20 +1906,19 @@ char souboje_clk_throw(int id,int xa,int ya,int xr,int yr)
   }
 
 
-char mask_click_help(int id,int xa,int ya,int xr,int yr)
-  {
-  char *c;
-  int d;
-  uint16_t *mask;
+char mask_click_help(int id, int xa, int ya, int xr, int yr) {
+	int d;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_BATTLE_MASK));
 
-  id;xa;ya;
-  mask=(uint16_t *)ablock(H_BATTLE_MASK);
-  c=(char *)mask+6+512;
-  c+=yr*mask[0]+xr;
-  d=*c;
-  if (d) pgm_help=d;
-  return 1;
-  }
+	assert(tex->depth() == 1 && "Invalid click map texture depth");
+	d = tex->pixels()[yr * tex->width() + xr];
+
+	if (d) {
+		pgm_help = d;
+	}
+
+	return 1;
+}
 
 char mask_click_help_clear(int id,int xa,int ya,int xr,int yr)
   {
@@ -1986,55 +2029,69 @@ static void zahajit_kolo(char prekvapeni) {
 	send_message(E_KOUZLO_KOLO);
 }
 
-char mask_click(int id,int xa,int ya,int xr,int yr)
-  {
-  char *c;
-  int d;
-  uint16_t *mask;
+char mask_click(int id, int xa, int ya, int xr, int yr) {
+	int d;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_BATTLE_MASK));
 
-  id;xa;ya;
-  mask=(uint16_t *)ablock(H_BATTLE_MASK);
-  c=(char *)mask+6+512;
-  c+=yr*mask[0]+xr;
-  d=*c;
-  if (d)
-     {
-     souboje_stisknout(d);
-     switch(d)
-        {
-        case AC_RUN: postavy[select_player].utek=5+postavy[select_player].actions;
-        case AC_ATTACK:
-        case AC_STAND:
-        case AC_ARMOR:
-        case AC_MOVE:
-        case AC_MAGIC:if (postavy[select_player].actions)
-                       {
-                       HUM_ACTION *c;
-                       postavy[select_player].direction=viewdir;
-                       c=postavy[select_player].zvolene_akce;while (c->action) c++;
-                       if (d==AC_MAGIC)
-                          {
-                          wire_select_rune();
-                          return 1;
-                          }
-                       c->action=d;
-                       if (d==AC_ATTACK) c->data1=select_weapon(&postavy[select_player],1);
-                       c++;
-                       c->action=0;
-                       souboje_vybrano(d);
-                       }
-                     break;
-        case AC_CANCEL:zrusit_akce();break;
-        case AC_START:zahajit_kolo(0);
-                      souboje_stisknout(d);
-                      return 0;
-                      break;
-        }
-     return 0;
-     }
-  bott_draw(1);
-  return 1;
-  }
+	assert(tex->depth() == 1 && "Invalid click mask texture depth");
+	d = tex->pixels()[yr * tex->width() + xr];
+
+	if (d) {
+		souboje_stisknout(d);
+
+		switch(d) {
+		case AC_RUN:
+			postavy[select_player].utek = 5 + postavy[select_player].actions;
+
+		case AC_ATTACK:
+		case AC_STAND:
+		case AC_ARMOR:
+		case AC_MOVE:
+		case AC_MAGIC:
+			if (postavy[select_player].actions) {
+				HUM_ACTION *c;
+				postavy[select_player].direction = viewdir;
+				c = postavy[select_player].zvolene_akce;
+
+				while (c->action) {
+					c++;
+				}
+
+				if (d == AC_MAGIC) {
+					wire_select_rune();
+					return 1;
+				}
+
+				c->action = d;
+
+				if (d == AC_ATTACK) {
+					c->data1 = select_weapon(&postavy[select_player], 1);
+				}
+
+				c++;
+				c->action = 0;
+				souboje_vybrano(d);
+			}
+			break;
+
+		case AC_CANCEL:
+			zrusit_akce();
+			break;
+
+		case AC_START:
+			zahajit_kolo(0);
+			souboje_stisknout(d);
+			return 0;
+			break;
+		}
+
+		return 0;
+	}
+
+	bott_draw(1);
+	return 1;
+}
+
 void fix_group_direction()
   {
   int i,g;
@@ -2044,35 +2101,50 @@ void fix_group_direction()
      if (postavy[i].used && postavy[i].groupnum==g && !postavy[i].programovano) postavy[i].direction=viewdir;
   }
 
-void souboje_turn(char smer)
-  {
-    if (pass_zavora) return;
-  norefresh=1;
-  hold_timer(TM_BACK_MUSIC,1);
-                 viewdir=(viewdir+smer)&3;
+void souboje_turn(char smer) {
+	if (pass_zavora) {
+		return;
+	}
+
+	SoftRenderer backrend(renderer->width(), renderer->height()), *tmp = renderer;
+	SubTexture front(*renderer, 0, 0, renderer->width(), renderer->height());
+
+	norefresh = 1;
+	hold_timer(TM_BACK_MUSIC, 1);
+	viewdir = (viewdir + smer) & 3;
+
 //                 if (GetKeyState(VK_SHIFT) & 0x80) fix_group_direction();
-                 if (get_shift_state()) fix_group_direction();
-                 else postavy[select_player].direction=viewdir;
-                 render_scene(viewsector,viewdir);
-                 hide_ms_at(387);
-                 if (smer==1) turn_left();
-                 else turn_right();
-  OutBuffer2nd();
-  bott_draw(0);
-  other_draw();
-  program_draw();
-  draw_medium_map();
-  ukaz_mysku();
-  showview(0,0,0,0);
-  schovej_mysku();
-  CopyBuffer2nd();
-  ukaz_mysku();
-  norefresh=0;
-  cancel_render=1;
-  hold_timer(TM_BACK_MUSIC,0);
-  recalc_volumes(viewsector,viewdir);
-  Sound_MixBack(0);
-  }
+	if (get_shift_state()) {
+		fix_group_direction();
+	} else {
+		postavy[select_player].direction = viewdir;
+	}
+
+	renderer = &backrend;
+	render_scene(viewsector, viewdir);
+	renderer = tmp;
+	hide_ms_at(387);
+
+	if (smer == 1) {
+		turn_left_right(front, backrend, 0);
+	} else {
+		turn_left_right(backrend, front, 1);
+	}
+
+	bott_draw(0);
+	other_draw();
+	program_draw();
+	draw_medium_map();
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	schovej_mysku();
+	ukaz_mysku();
+	norefresh = 0;
+	cancel_render = 1;
+	hold_timer(TM_BACK_MUSIC, 0);
+	recalc_volumes(viewsector, viewdir);
+	Sound_MixBack(0);
+}
 
 
 

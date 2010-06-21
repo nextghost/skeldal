@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/memman.h"
 #include "libs/mgifmem.h"
@@ -31,47 +32,7 @@
 #include "libs/system.h"
 #include "libs/strlite.h"
 
-static MGIF_HEADER_T mgif_header;
-
-static short mgif_accnums[2];
-static long mgif_writepos;
-
-static uint16_t paleta[256];
-
-static uint16_t *picture;
-static uint16_t *anim_render_buffer;
 static void *sound;
-
-static void StretchImageHQ(uint16_t *src, uint16_t *trg, unsigned long linelen, char full) {
-	uint16_t xs = src[0], ys = src[1];
-	uint16_t *s, *t;
-	int x, y;
-	src += 3;  
-	for (y = 0, s = src, t = trg; y < ys; y++, t += linelen * 2, s += xs) {
-		for (x = 0; x < xs; x++) {
-			uint16_t val;
-//			t[x*2] = s[x] + (s[x] & 0x7fe0);
-			t[x*2] = s[x];
-			if (x) {
-//				val = ((s[x-1] & 0x7bde) + (s[x] & 0x7bde)) >> 1;
-//				t[x*2-1] = val + (val & 0x7fe0);
-				t[x*2-1] = Screen_ColorAvg(s[x-1], s[x]);
-			}
-			if (full) {
-				if (y) {
-//					val = ((s[x-xs] & 0x7bde) + (s[x] & 0x7bde)) >> 1;
-//					t[x*2-linelen] = val + (val & 0x7fe0);
-					t[x*2-linelen] = Screen_ColorAvg(s[x-xs], s[x]);
-				}
-				if (x && y) {
-//					val=((s[x-xs-1] & 0x7bde) + (s[x] & 0x7bde))>>1;
-//					t[x*2-linelen-1] = val + (val & 0x7fe0);
-					t[x*2-linelen-1] = Screen_ColorAvg(s[x-xs-1], s[x]);
-				}
-			}
-		}
-	}
-}
 
 void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream) {
 	int i;
@@ -93,26 +54,23 @@ void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream) {
 	}
 }
 
-static void PlayMGFFile(ReadStream &stream, MGIF_PROC proc, int ypos, char full) {
-	mgif_install_proc(proc);
+static void PlayMGFFile(ReadStream &stream, int ypos, char full) {
+	unsigned state;
+	MGIFReader video(stream, 320, 180);
+
 	sound = PrepareVideoSound(22050, 256 * 1024);
-	mgif_accnums[0] = mgif_accnums[1] = 0;
-	mgif_writepos = 65536;
-	picture = new uint16_t[3 + 320 * 180];
-	picture[0] = 320;
-	picture[1] = 180;
-	picture[2] = 15;
-	memset(picture + 3, 0, 320 * 180 * 2);
-	anim_render_buffer = picture + 3;
-	loadMgifHeader(mgif_header, stream);
 
-	if (!open_mgif(mgif_header)) {
-		return;
-	}
+	while (state = video.decodeFrame()) {
+		if (state & FLAG_AUDIO) {
+			while (!LoadNextAudioFrame(sound, video.getAudio(), video.getAudioSize())) {
+				Timer_Sleep(5);
+			}
+		}
 
-	while (mgif_play(stream)) {
-		StretchImageHQ(picture, Screen_GetAddr() + ypos * Screen_GetXSize(), Screen_GetXSize(), full);
-		showview(0, ypos, 0, 360);
+		if (state & FLAG_VIDEO) {
+			renderer->videoBlit(ypos, video, video.palette());
+			showview(0, ypos, 0, 360);
+		}
 
 		if (!Input_Kbhit()) {
 			Sound_MixBack(0);
@@ -122,38 +80,7 @@ static void PlayMGFFile(ReadStream &stream, MGIF_PROC proc, int ypos, char full)
 		}
 	}
 
-	close_mgif();  
 	DoneVideoSound(sound);
-	delete[] picture;
-}
-
-void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
-void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
-
-void BigPlayProc(int act, SeekableReadStream &stream) {
-	int i;
-
-	switch (act) {
-	case MGIF_LZW:
-	case MGIF_COPY:
-		show_full_lfb12e(anim_render_buffer, stream, paleta);
-		break;
-
-	case MGIF_DELTA:
-		show_delta_lfb12e(anim_render_buffer, stream, paleta);
-		break;
-
-	case MGIF_PAL:
-		for (i = 0; i < stream.size() / 2; i++) {
-			paleta[i] = Screen_FixMGIFPalette(stream.readUint16LE());
-		}
-		break;
-
-	case MGIF_SOUND: 
-		while (LoadNextVideoFrame(sound, stream, mgif_header.ampl_table, mgif_accnums, &mgif_writepos) == 0) {
-			Timer_Sleep(5);
-		}
-	}
 }
 
 void play_animation(char *filename, char mode, int posy, char sound) {
@@ -162,17 +89,14 @@ void play_animation(char *filename, char mode, int posy, char sound) {
 	Sound_ChangeMusic(NULL);
 
 	if (!mgf.isOpen()) {
+		fprintf(stderr, "Could not open file %s\n", filename);
 		return;
 	}
 
-	PlayMGFFile(mgf, BigPlayProc, posy, mode & 0x80);
+	PlayMGFFile(mgf, posy, mode & 0x80);
 }
 
 void set_title_list(const StringList *titles)
-  {
-
-  }
-void set_play_attribs(void *screen,char rdraw,char bm,char colr64)
   {
 
   }

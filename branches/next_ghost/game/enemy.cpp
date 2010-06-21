@@ -228,56 +228,50 @@ void init_mobs() {
 	send_message(E_ADD, E_KOUZLO_KOLO, mob_reload);
 }
 
-static void register_mob_graphics(int num,char *name_part,int8_t *anims,char *seq)
-  {
-  char fulname[14];
-  char znaky[]=MOB_ZNAKY;
-  int i,j,a;
+static void register_mob_graphics(int num, char *name_part, int8_t *anims, const char *seq) {
+	char fulname[14];
+	char znaky[] = MOB_ZNAKY;
+	int i, j, a;
 
-  strcpy(fulname,name_part);
-  strcat(fulname,"??.PCX");
-  a=num;
-  for(i=0;i<6;i++)
-     {
-     for(j=0;j<16;j++)
-        {
-        if (anims[i])
-           {
-           fulname[6]=znaky[i];
-           if (j<=anims[i])
-              {
-              fulname[7]=*seq++;
-              def_handle(a,fulname,pcx_8bit_nopal,SR_ENEMIES);
-              }
-           a++;
-           }
-        else
-           {
-           fulname[6]=znaky[0];
-           if (j<=anims[0])
-              {
-              fulname[7]=*seq++;
-              def_handle(a,fulname,pcx_8bit_nopal,SR_ENEMIES);
-              }
-           a++;
-           }
-        if (*seq=='\r')
-           {
-		   char buff[256];
-           closemode();
-           sprintf(buff,"Soubor sekvence %s obsahuje chybne udaje nebo je sekvence je moc kratka\n", fulname);
-//		   MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
-	   Sys_ErrorBox(buff);
+	strcpy(fulname, name_part);
+	strcat(fulname, "??.PCX");
+	a = num;
 
-           exit(0);
-           }
-        }
-     seq=strchr(seq,'\n')+1;
-     }
-  }
+	for (i = 0; i < 6; i++) {
+		for (j = 0; j < 16; j++) {
+			if (anims[i]) {
+				fulname[6] = znaky[i];
 
+				if (j <= anims[i]) {
+					fulname[7] = *seq++;
+					def_handle(a, fulname, pcx_8bit_nopal, SR_ENEMIES);
+				}
 
+				a++;
+			} else {
+				fulname[6] = znaky[0];
 
+				if (j <= anims[0]) {
+					fulname[7] = *seq++;
+					def_handle(a, fulname, pcx_8bit_nopal, SR_ENEMIES);
+				}
+
+				a++;
+			}
+
+			if (*seq == '\r') {
+				char buff[256];
+				closemode();
+				sprintf(buff, "Soubor sekvence %s obsahuje chybne udaje nebo je sekvence je moc kratka\n", fulname);
+//				MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);
+				Sys_ErrorBox(buff);
+				exit(0);
+			}
+		}
+
+		seq = strchr(seq, '\n') + 1;
+	}
+}
 
 static void register_mob_sounds(int hlptr,uint16_t *sounds)
   {
@@ -392,14 +386,24 @@ static char seber_predmet(TMOB *m)
   return 0;
   }
 
-static void mob_sound_event(TMOB *m,int event)
-  {
-    if (m->sounds[event] && m->vlajky & MOB_LIVE && ~m->vlastnosti[VLS_KOUZLA] & SPL_STONED)
-     if (event==MBS_WALK)
-     play_sample_at_sector(m->cislo_vzoru+16*6+event+monster_block,viewsector,m->sector,m-mobs+256,(m->vlajky & MOB_SAMPLE_LOOP)!=0);
-     else
-     play_sample_at_sector(m->cislo_vzoru+16*6+event+monster_block,viewsector,m->sector,0,0);
-  }
+static void mob_sound_event(TMOB *m, int event) {
+	if (m->sounds[event] && m->vlajky & MOB_LIVE && ~m->vlastnosti[VLS_KOUZLA] & SPL_STONED) {
+		if (event == MBS_WALK) {
+			play_sample_at_sector(m->cislo_vzoru + 16 * 6 + event + monster_block, viewsector, m->sector, m - mobs + 256, (m->vlajky & MOB_SAMPLE_LOOP) != 0);
+		} else {
+			play_sample_at_sector(m->cislo_vzoru + 16 * 6 + event + monster_block, viewsector, m->sector, 0, 0);
+		}
+	}
+}
+
+DataBlock *seq_load(SeekableReadStream &stream) {
+	RawData *ret = new RawData;
+
+	ret->size = stream.size();
+	ret->data = malloc(ret->size);
+	stream.read(ret->data, ret->size);
+	return ret;
+}
 
 void load_enemies(SeekableReadStream *stream, int *grptr, TMOB *templ, long tsize) {
 	int i, size;
@@ -471,9 +475,9 @@ void load_enemies(SeekableReadStream *stream, int *grptr, TMOB *templ, long tsiz
 				char s[20];
 
 				sprintf(s, "%s.SEQ", mobs[i].mobs_name);
-				def_handle(grptr[0]++, s, NULL, SR_ENEMIES);
+				def_handle(grptr[0]++, s, seq_load, SR_ENEMIES);
 				mobs[i].cislo_vzoru = *grptr - monster_block;
-				register_mob_graphics(*grptr, mobs[i].mobs_name, mobs[i].anim_counts, (char*)ablock(grptr[0] - 1));
+				register_mob_graphics(*grptr, mobs[i].mobs_name, mobs[i].anim_counts, (const char*)dynamic_cast<const RawData*>(ablock(grptr[0] - 1))->data);
 				grptr[0] += 6 * 16;
 				register_mob_sounds(*grptr, mobs[i].sounds);
 				grptr[0] += 4;
@@ -1167,13 +1171,10 @@ void draw_blood(int zasah,int celx,int cely,int posx,int posy)
   draw_placed_texture(ablock(H_MZASAH1+zasah-1),celx,cely,posx+64,posy+64,75,0);
   }
 */
-static pal_t *mob_select_palette(TMOB *p)
-  {
-  unsigned char *palet;
-
-  palet = (unsigned char*)ablock(p->cislo_vzoru+6*16+4+monster_block);
-  return (pal_t*)(palet+(p->palette)*PIC_FADE_PAL_SIZE);
-  }
+static const pal_t *mob_select_palette(TMOB *p) {
+	const PalBlock *block = dynamic_cast<const PalBlock*>(ablock(p->cislo_vzoru + 6 * 16 + 4 + monster_block));
+	return block ? block->getPal(p->palette) : NULL;
+}
 
 static void CheckMobStoned(int num)
 {
@@ -1215,74 +1216,85 @@ static void CheckMobStoned(int num)
 
 }
 
-void draw_mob_call(int num,int curdir,int celx,int cely,char shiftup)
-  {
-  TMOB *p,*q;
-  int view,vw;
-  int view2,vw2;
-  DRW_ENEMY drw1,drw2;
+void draw_mob_call(int num, int curdir, int celx, int cely, char shiftup) {
+	TMOB *p, *q;
+	int view, vw;
+	int view2, vw2;
+	DRW_ENEMY drw1, drw2;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
-  set_font(H_FLITT5,RGB555(31,31,0));
-  CheckMobStoned(num-MOB_START);
-  p=&mobs[num-MOB_START];
-  shiftup|=(p->stay_strategy & MOB_BIG);
+	renderer->setFont(font, 1, 255, 255, 0);
+	CheckMobStoned(num - MOB_START);
+	p = &mobs[num - MOB_START];
+	shiftup |= (p->stay_strategy & MOB_BIG);
 
-  get_pos(p->locx-128,p->locy-128,&drw1.posx,&drw1.posy,curdir);
-  view=get_view(p,p->dir,p->anim_phase,curdir);
-  vw=p->cislo_vzoru+view+monster_block;
-  if (p->vlastnosti[VLS_KOUZLA] & SPL_INVIS) {drw1.txtr=NULL;vw=0;}else drw1.txtr=ablock(vw);
-  drw1.celx=celx;
-  drw1.cely=cely;
-  drw1.mirror=get_view_mirror;
-  drw1.adjust=p->adjusting[view];
-  drw1.shiftup=shiftup;
-  drw1.num=p->lives;
-  drw1.palette=mob_select_palette(p);
-  drw1.stoned= (p->vlastnosti[VLS_KOUZLA] & SPL_STONED)!=0;
-  see_monster|=(~p->vlajky & MOB_PASSABLE);
-  if (p->next)
-     {
-     CheckMobStoned(p->next-MOB_START);
-     q=&mobs[p->next-MOB_START];
-     get_pos(q->locx-128,q->locy-128,&drw2.posx,&drw2.posy,curdir);
-     view2=get_view(q,q->dir,q->anim_phase,curdir);
-     vw2=view2+q->cislo_vzoru+monster_block;
-     drw2.shiftup=shiftup;
-     drw2.celx=celx;
-     drw2.cely=cely;
-     alock(vw);
-     alock(vw+6*16+5);
-     if (q->vlastnosti[VLS_KOUZLA] & SPL_INVIS) {drw2.txtr=NULL;vw2=0;}else drw2.txtr=ablock(vw2);
-     drw2.mirror=get_view_mirror;
-     alock(vw2);
-     alock(vw2+6*16+5);
-     drw2.adjust=q->adjusting[view2];
-     drw2.num=q->lives;
-     drw2.palette=mob_select_palette(q);
-     drw2.stoned=(q->vlastnosti[VLS_KOUZLA] & SPL_STONED)!=0;
-     see_monster|=(~q->vlajky & MOB_PASSABLE);
-     }
-  else
-     {
-     view2=-1;
-     draw_enemy(&drw1);
-     return;
-     }
-  if (drw1.posy>drw2.posy)
-     {
-     draw_enemy(&drw1);
-     draw_enemy(&drw2);
-     }
-  else
-     {
-     draw_enemy(&drw2);
-     draw_enemy(&drw1);
-     }
-  aunlock(vw);
-  aunlock(vw2);
-  aunlock(vw+6*16+5);
-  aunlock(vw2+6*16+5);
-  }
+	get_pos(p->locx-128, p->locy-128, &drw1.posx, &drw1.posy, curdir);
+	view = get_view(p, p->dir, p->anim_phase, curdir);
+	vw = p->cislo_vzoru + view + monster_block;
+
+	if (p->vlastnosti[VLS_KOUZLA] & SPL_INVIS) {
+		drw1.tex = NULL;
+		vw = 0;
+	} else {
+		drw1.tex = dynamic_cast<const Texture*>(ablock(vw));
+	}
+
+	drw1.celx = celx;
+	drw1.cely = cely;
+	drw1.mirror = get_view_mirror;
+	drw1.adjust = p->adjusting[view];
+	drw1.shiftup = shiftup;
+	drw1.num = p->lives;
+	drw1.palette = mob_select_palette(p);
+	drw1.stoned = (p->vlastnosti[VLS_KOUZLA] & SPL_STONED) != 0;
+	see_monster |= (~p->vlajky & MOB_PASSABLE);
+
+	if (p->next) {
+		CheckMobStoned(p->next - MOB_START);
+		q = &mobs[p->next - MOB_START];
+		get_pos(q->locx - 128, q->locy - 128, &drw2.posx, &drw2.posy, curdir);
+		view2 = get_view(q, q->dir, q->anim_phase, curdir);
+		vw2 = view2 + q->cislo_vzoru + monster_block;
+		drw2.shiftup = shiftup;
+		drw2.celx = celx;
+		drw2.cely = cely;
+		alock(vw);
+		alock(vw + 6 * 16 + 5);
+
+		if (q->vlastnosti[VLS_KOUZLA] & SPL_INVIS) {
+			drw2.tex = NULL;
+			vw2 = 0;
+		} else {
+			drw2.tex = dynamic_cast<const Texture*>(ablock(vw2));
+		}
+
+		drw2.mirror = get_view_mirror;
+		alock(vw2);
+		alock(vw2 + 6 * 16 + 5);
+		drw2.adjust = q->adjusting[view2];
+		drw2.num = q->lives;
+		drw2.palette = mob_select_palette(q);
+		drw2.stoned = (q->vlastnosti[VLS_KOUZLA] & SPL_STONED) != 0;
+		see_monster |= (~q->vlajky & MOB_PASSABLE);
+	} else {
+		view2 = -1;
+		draw_enemy(&drw1);
+		return;
+	}
+
+	if (drw1.posy > drw2.posy) {
+		draw_enemy(&drw1);
+		draw_enemy(&drw2);
+	} else {
+		draw_enemy(&drw2);
+		draw_enemy(&drw1);
+	}
+
+	aunlock(vw);
+	aunlock(vw2);
+	aunlock(vw + 6 * 16 + 5);
+	aunlock(vw2 + 6 * 16 + 5);
+}
 
 void draw_mob(int num, int curdir, int celx, int cely, char shiftup) {
 	int ss = (num << 2);
@@ -1661,15 +1673,20 @@ static void knock_player_back(THUMAN *p, int dir) {
 		call_macro(sid, MC_PASSSUC);
 	}
 
+	SoftRenderer *tmp, backrend(renderer->width(), renderer->height());
+
 	p->sektor = nsect;
 	viewsector = nsect;
 	check_postavy_teleport();
 	build_player_map();
 	recheck_button(nsect, 1);
 	recheck_button(sect, 1);
+	tmp = renderer;
+	renderer = &backrend;
 	redraw_scene();
+	renderer = tmp;
 	hold_timer(TM_BACK_MUSIC, 1);
-	zooming_backward((uint16_t*)ablock(H_BGR_BUFF));
+	zooming_forward_backward(backrend, 1);
 	hold_timer(TM_BACK_MUSIC, 0);
 	showview(0, 0, 0, 0);
 }

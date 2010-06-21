@@ -36,7 +36,7 @@
 #define E_REDRAW_DESKTOP 2010
 #define E_REDRAW_WINDOW 2000
 
-uint16_t *gui_background=NULL;
+const Texture *gui_background = NULL;
 
 extern T_EVENT_ROOT *ev_tree;
 
@@ -49,6 +49,10 @@ char force_redraw_desktop=0;
 static char change_flag=0,f_cancel_event=0;
 uint16_t *default_font;
 
+const Font *GUIObject::_dFont = NULL;
+int GUIObject::_dShadow = 0;
+uint8_t GUIObject::_dColor[FONT_COLORS][3] = {{0}};
+
 void empty() {
 
 }
@@ -57,14 +61,30 @@ void empty2(EVENT_MSG *msg) {
 
 }
 
+void GUIObject::setDefaultFont(const Font *font, int shadow, uint8_t r, uint8_t g, uint8_t b) {
+	int i;
+
+	_dFont = font;
+	_dShadow = shadow;
+	_dColor[0][0] = 0;
+	_dColor[0][1] = 0;
+	_dColor[0][2] = 0;
+
+	for (i = 1; i < 5; i++) {
+		_dColor[i][0] = r;
+		_dColor[i][1] = g;
+		_dColor[i][2] = b;
+	}
+}
+
 GUIObject::GUIObject(int id, int x, int y, int width, int height, int align) :
 	_id(id), _x(x), _y(y), _width(width), _height(height), _align(align),
 	_autoResizeX(false), _autoResizeY(false), _enabled(true),
-	_drawError(false), _color(waktual->color), _font(default_font),
-	_onEvent(empty2), _gotFocus(empty), _lostFocus(empty),
-	_onActivate(empty){
+	_drawError(false), _font(_dFont), _onEvent(empty2), _gotFocus(empty),
+	_lostFocus(empty), _onActivate(empty), _shadow(_dShadow) {
 
-	memcpy(_fColor, f_default, sizeof(f_default));
+	memcpy(_color, waktual->color, sizeof(_color));
+	memcpy(_fColor, _dColor, sizeof(_dColor));
 	memcpy(&_border, &noneborder, sizeof(CTL3D));
 }
 
@@ -130,14 +150,14 @@ void GUIObject::render(window *w, int show) {
 
 	schovej_mysku();
 	draw_border(_locx, _locy, _width, _height, &_border);
-	curcolor = _color;
-	curfont = _font;
-	position(_locx, _locy);
-	memcpy(charcolors, _fColor, sizeof(charcolors));
+	memcpy(curcolor, _color, 3 * sizeof(uint8_t));
+
+	// FIXME: I think this is never used
+	renderer->setFont(_font, _shadow, _fColor);
 	draw(_locx, _locy, _width, _height);
 
 	if (!_enabled) {
-		disable_bar(_locx, _locy, _width, _height, _color);
+		disable_bar(_locx, _locy, _width, _height, _color[0], _color[1], _color[2]);
 	}
 
 	ukaz_mysku();
@@ -149,9 +169,11 @@ void GUIObject::render(window *w, int show) {
 	_drawError = false;
 }
 
-void GUIObject::setFColor(unsigned idx, uint16_t color) {
+void GUIObject::setFColor(unsigned idx, uint8_t r, uint8_t g, uint8_t b) {
 	assert(idx < 7);
-	_fColor[idx] = color;
+	_fColor[idx][0] = r;
+	_fColor[idx][1] = g;
+	_fColor[idx][2] = b;
 }
 
 void GUIObject::align(WINDOW *w, int &x, int &y) const {
@@ -180,7 +202,7 @@ void GUIObject::align(WINDOW *w, int &x, int &y) const {
 	}
 }
 
-void GUIObject::property(CTL3D *ctl, uint16_t *font, FC_TABLE *fcolor, uint16_t color) {
+void GUIObject::property(CTL3D *ctl, const Font *font, int shadow, uint8_t fcolor[][3], uint8_t *color) {
 	if (ctl) {
 		memcpy(&_border, ctl, sizeof(CTL3D));
 	}
@@ -189,12 +211,14 @@ void GUIObject::property(CTL3D *ctl, uint16_t *font, FC_TABLE *fcolor, uint16_t 
 		_font = font;
 	}
 
+	_shadow = shadow;
+
 	if (fcolor) {
-		memcpy(_fColor, *fcolor, sizeof(FC_TABLE));
+		memcpy(_fColor, fcolor, sizeof(_fColor));
 	}
 
-	if (color != 0xffff) {
-		_color = color;
+	if (color) {
+		memcpy(_color, color, 3 * sizeof(uint8_t));
 	}
 }
 
@@ -219,32 +243,59 @@ void GUIObject::setEnabled(bool value) {
 	_enabled = value;
 }
 
-void draw_border(int16_t x,int16_t y,int16_t xs,int16_t ys,CTL3D *btype)
-  {
-  uint16_t i,j,c;
+void draw_border(int16_t x, int16_t y, int16_t xs, int16_t ys, CTL3D *btype) {
+	uint16_t i, j;
+	uint8_t c[3];
 
-  c=curcolor;
-  j=btype->ctldef;
-  for (i=0;i<btype->bsize;i++)
-     {
-     x--;y--;xs+=2;ys+=2;
-     if (j & 1) curcolor=btype->shadow; else curcolor=btype->light;
-     hor_line(x,y,xs+x);
-     ver_line(x,y,ys+y);
-     if (j & 1) curcolor=btype->light; else curcolor=btype->shadow;
-     hor_line(x,y+ys,xs+x);
-     ver_line(x+xs,y,ys+y);
-     j>>=1;
-     }
-  curcolor=c;
-  }
-void check_window(WINDOW *w)
-  {
-  if (w->x<=w->border3d.bsize) w->x=w->border3d.bsize;
-  if (w->y<=w->border3d.bsize) w->y=w->border3d.bsize;
-  if (w->x>=Screen_GetXSize()-w->border3d.bsize-w->xs) w->x=Screen_GetXSize()-w->border3d.bsize-w->xs-1;
-  if (w->y>=desktop_y_size-w->border3d.bsize-w->ys) w->y=desktop_y_size-w->border3d.bsize-w->ys-1;
-  }
+	memcpy(c, curcolor, 3 * sizeof(uint8_t));
+	j = btype->ctldef;
+
+	for (i = 0; i < btype->bsize; i++) {
+		x--;
+		y--;
+		xs += 2;
+		ys += 2;
+
+		if (j & 1) {
+			memcpy(curcolor, btype->shadow, 3 * sizeof(uint8_t));
+		} else {
+			memcpy(curcolor, btype->light, 3 * sizeof(uint8_t));
+		}
+
+		hor_line(x, y, xs + x);
+		ver_line(x, y, ys + y);
+
+		if (j & 1) {
+			memcpy(curcolor, btype->light, 3 * sizeof(uint8_t));
+		} else {
+			memcpy(curcolor, btype->shadow, 3 * sizeof(uint8_t));
+		}
+
+		hor_line(x, y + ys, xs + x);
+		ver_line(x + xs, y, ys + y);
+		j >>= 1;
+	}
+
+	memcpy(curcolor, c, 3 * sizeof(uint8_t));
+}
+
+void check_window(WINDOW *w) {
+	if (w->x <= w->border3d.bsize) {
+		w->x = w->border3d.bsize;
+	}
+
+	if (w->y <= w->border3d.bsize) {
+		w->y=w->border3d.bsize;
+	}
+
+	if (w->x >= renderer->width() - w->border3d.bsize - w->xs) {
+		w->x = renderer->width() - w->border3d.bsize - w->xs - 1;
+	}
+
+	if (w->y >= desktop_y_size - w->border3d.bsize - w->ys) {
+		w->y = desktop_y_size - w->border3d.bsize - w->ys - 1;
+	}
+}
 
 void show_window(WINDOW *w)
   {
@@ -254,34 +305,41 @@ void show_window(WINDOW *w)
   showview(w->x-ok,w->y-ok,w->xs+(ok<<1),w->ys+(ok<<1));
   }
 
-void draw_cl_window(WINDOW *o)
-  {
-  curcolor=o->color;
-  bar32(o->x,o->y,o->x+o->xs,o->y+o->ys);
-  draw_border(o->x,o->y,o->xs,o->ys,&o->border3d);
-  }
+void draw_cl_window(WINDOW *o) {
+	memcpy(curcolor, o->color, 3 * sizeof(uint8_t));
+	bar32(o->x, o->y, o->x + o->xs, o->y + o->ys);
+	draw_border(o->x, o->y, o->xs, o->ys, &o->border3d);
+}
 
 
 
-WINDOW *create_window(int x,int y, int xs, int ys, uint16_t color, CTL3D *okraj)
-  {
-  WINDOW *p;
+WINDOW *create_window(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b, CTL3D *okraj) {
+	WINDOW *p;
 
-  p=(WINDOW *)getmem(sizeof(WINDOW));
-  p->x=x;p->y=y;p->xs=xs;p->ys=ys;
-  p->color=color;memcpy(&(p->border3d),okraj,sizeof(CTL3D));
-  p->objects=NULL;
-  p->modal=0;
-  p->popup=0;
-  p->minimized=0;
-  p->window_name=NULL;
-  p->minsizx=MINSIZX;
-  p->minsizy=MINSIZY;
-  p->idlist=NULL;
-  p->draw_event=draw_cl_window;
-  check_window(p);
-   return p;
-  }
+	p=(WINDOW *)getmem(sizeof(WINDOW));
+	p->x = x;
+	p->y = y;
+	p->xs = xs;
+	p->ys = ys;
+	p->color[0] = r;
+	p->color[1] = g;
+	p->color[2] = b;
+	memcpy(&(p->border3d), okraj, sizeof(CTL3D));
+	p->objects = NULL;
+	p->modal = 0;
+	p->popup = 0;
+	p->minimized = 0;
+	p->window_name = NULL;
+	p->minsizx = MINSIZX;
+	p->minsizy = MINSIZY;
+	p->idlist = NULL;
+	p->txtid = -1;
+	p->txtx = 0;
+	p->txty = 0;
+	p->draw_event = draw_cl_window;
+	check_window(p);
+	return p;
+}
 
 int send_lost()
   {
@@ -373,22 +431,10 @@ WINDOW *find_window(long id)
   }
 
 
-  void disable_bar(int x,int y,int xs,int ys,uint16_t color)
-     {
-     int i,j;
-     uint16_t *a;
-
-     for (i=y;i<=y+ys;i++)
-        {
-        a=Screen_GetAddr()+Screen_GetXSize()*i+x;
-        for(j=x;j<=x+xs;j++)
-           {
-           *a=((*a & RGB555(30,30,30))+(color & RGB555(30,30,30)))>>1;
-           *a=((*a & RGB555(30,30,30))+(color & RGB555(30,30,30)))>>1;
-           a++;
-           }
-        }
-     }
+void disable_bar(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b) {
+	renderer->bar(x, y, xs, ys, r, g, b, 1);
+	renderer->bar(x, y, xs, ys, r, g, b, 1);
+}
 
 void redraw_object(GUIObject *o) {
 	o->render(waktual, 1);
@@ -452,26 +498,31 @@ void define(GUIObject *o) {
 	add_to_idlist(o);
 }
 
-CTL3D *border(uint16_t light,uint16_t shadow, uint16_t bsize, uint16_t btype)
-  {
-  static CTL3D p;
-
-  p.light=light;p.shadow=shadow;p.bsize=bsize;p.ctldef=btype;
-  return &p;
-  }
-
-void property(CTL3D *ctl,uint16_t *font,FC_TABLE *fcolor,uint16_t color) {
-	o_end->property(ctl, font, fcolor, color);
+void property(CTL3D *ctl, const Font *font, int shadow, uint8_t fcolor[][3], uint8_t *color) {
+	o_end->property(ctl, font, shadow, fcolor, color);
 }
 
-FC_TABLE *flat_color(uint16_t color)
-  {
-  static FC_TABLE p;
+FC_PTR *flat_color(uint8_t r, uint8_t g, uint8_t b) {
+	static uint8_t table[FONT_COLORS][3] = {{0}};
+	int i;
 
-  p[0]=0xffff;
-  p[1]=color;p[2]=color;p[3]=color;p[4]=color;p[5]=color;p[6]=color;
-  return &p;
-  }
+	for (i = 1; i < FONT_COLORS; i++) {
+		table[i][0] = r;
+		table[i][1] = g;
+		table[i][2] = b;
+	}
+
+	return table;
+}
+
+uint8_t *single_color(uint8_t r, uint8_t g, uint8_t b) {
+	static uint8_t table[3] = {0};
+
+	table[0] = r;
+	table[1] = g;
+	table[2] = b;
+	return table;
+}
 
 
 void aktivate_window(MS_EVENT *ms)
@@ -496,47 +547,55 @@ void aktivate_window(MS_EVENT *ms)
   }
 
 
-void redraw_desktop_call(EVENT_MSG *msg,void **data)
-  {
-  WINDOW *w;
-  int8_t *oz;
+void redraw_desktop_call(EVENT_MSG *msg, void **data) {
+	WINDOW *w;
+	int8_t *oz;
 
-  data;
-  if (msg->msg==E_INIT || msg->msg==E_DONE) return;
-  if (!force_redraw_desktop) return;
-  force_redraw_desktop=0;
-  schovej_mysku();
-  if (gui_background==NULL)
-     {
-     curcolor=DESK_TOP_COLOR;
-     bar(0,0,Screen_GetXSize(),Screen_GetYSize()-1);
-     }
-  else
-     put_picture(0,0,gui_background);
-  oz=otevri_zavoru;
-  do_events();
-  *oz=1;
-  w=desktop;
-  while (w!=NULL)
-     {
-     GUIObject *p;
-           w->draw_event(w);
-           p=w->objects;
-           while (p!=NULL)
-           {
-	      p->render(w, 0);
-              p=p->_next;
-           }
-     w=w->next;
-     *oz=0;
-     do_events();
-     *oz=1;
-     }
-  send_message(E_REDRAW);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  move_ms_cursor(0,0,1);
-  }
+	if (msg->msg == E_INIT || msg->msg == E_DONE) {
+		return;
+	}
+
+	if (!force_redraw_desktop) {
+		return;
+	}
+
+	force_redraw_desktop = 0;
+	schovej_mysku();
+
+	if (gui_background == NULL) {
+		uint8_t tmp[3] = {DESK_TOP_COLOR};
+		memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
+		bar(0, 0, renderer->width(), renderer->height() - 1);
+	} else {
+		renderer->blit(*gui_background, 0, 0, gui_background->palette());
+	}
+
+	oz = otevri_zavoru;
+	do_events();
+	*oz = 1;
+	w = desktop;
+
+	while (w != NULL) {
+		GUIObject *p;
+		w->draw_event(w);
+		p = w->objects;
+
+		while (p != NULL) {
+			p->render(w, 0);
+			p = p->_next;
+		}
+
+		w = w->next;
+		*oz = 0;
+		do_events();
+		*oz = 1;
+	}
+
+	send_message(E_REDRAW);
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	move_ms_cursor(0, 0, 1);
+}
 
 void redraw_desktop()
   {
@@ -828,16 +887,15 @@ void do_it_events(EVENT_MSG *msg, void **user_data) {
 
 
 
-void install_gui(void)
-  {
-  desktop_y_size = Screen_GetYSize();
-  send_message(E_ADD,E_MOUSE,do_it_events);
-  send_message(E_ADD,E_KEYBOARD,do_it_events);
-  send_message(E_ADD,E_CHANGE,do_it_events);
-  send_message(E_ADD,E_TIMER,do_it_events);
-  send_message(E_ADD,E_GUI,do_it_events);
-  send_message(E_ADD,E_IDLE,redraw_desktop_call);
-  }
+void install_gui(void) {
+	desktop_y_size = renderer->width();
+	send_message(E_ADD, E_MOUSE, do_it_events);
+	send_message(E_ADD, E_KEYBOARD, do_it_events);
+	send_message(E_ADD, E_CHANGE, do_it_events);
+	send_message(E_ADD, E_TIMER, do_it_events);
+	send_message(E_ADD, E_GUI, do_it_events);
+	send_message(E_ADD, E_IDLE, redraw_desktop_call);
+}
 
 void uninstall_gui(void)
   {
@@ -971,28 +1029,39 @@ void run_background(void (*p)())
   send_message(E_ADD,E_IDLE,background_runner,p);
   }
 
-void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys)
-  {
-  int xsdif,ysdif;
-  GUIObject *p;
+void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys) {
+	int xsdif, ysdif;
+	GUIObject *p;
 
+	if (newxs < w->minsizx) {
+		newxs = w->minsizx;
+	}
 
-  if (newxs<w->minsizx) newxs=w->minsizx;
-  if (newys<w->minsizy) newys=w->minsizy;
-  if (newxs>=(Screen_GetXSize()-2*w->border3d.bsize)) newxs=(Screen_GetXSize()-2*w->border3d.bsize)-1;
-  if (newys+2>=(desktop_y_size-2*w->border3d.bsize)) newys=(desktop_y_size-2*w->border3d.bsize)-2;
-  xsdif=newxs-w->xs;
-  ysdif=newys-w->ys;
-  p=w->objects;
-  while (p!=NULL)
-     {
-     p->autoResize(xsdif, ysdif);
-     p=p->_next;
-     }
-  w->x=newx;
-  w->y=newy;
-  w->xs=newxs;
-  w->ys=newys;
-  check_window(w);
-  }
+	if (newys < w->minsizy) {
+		newys = w->minsizy;
+	}
+
+	if (newxs >= (renderer->width() - 2 * w->border3d.bsize)) {
+		newxs = (renderer->width() - 2 * w->border3d.bsize) - 1;
+	}
+
+	if (newys + 2 >= (desktop_y_size - 2 * w->border3d.bsize)) {
+		newys = (desktop_y_size - 2 * w->border3d.bsize) - 2;
+	}
+
+	xsdif = newxs - w->xs;
+	ysdif = newys - w->ys;
+	p = w->objects;
+
+	while (p != NULL) {
+		p->autoResize(xsdif, ysdif);
+		p = p->_next;
+	}
+
+	w->x = newx;
+	w->y = newy;
+	w->xs = newxs;
+	w->ys = newys;
+	check_window(w);
+}
 

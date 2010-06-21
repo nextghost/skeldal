@@ -32,6 +32,7 @@
 #include "game/engine1.h"
 #include "libs/strlite.h"
 #include "libs/memman.h"
+#include "libs/mgifmem.h"
 
 #define POCET_POSTAV 6
 #define HODINA 360
@@ -118,7 +119,6 @@
 
 static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 
-#define font_color(tabl) memcpy(charcolors,tabl,sizeof(charcolors));
 #define tick_tack(num) game_time+=num;
 #define TEXTY "POPISY.TXT"
 #define ITEM_FILE "ITEMS.DAT"
@@ -130,12 +130,12 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 
 #define TX_LOAD 0
 
-#define LODKA_POS (SCREEN_OFFLINE+301)*Screen_GetXSize()+Screen_GetBackAddr()
+#define LODKA_POS (SCREEN_OFFLINE+301)
 #define LODKA_SIZ 640*60
 
 
 #define VEL_RAMEC 12 //velikost zakladni jednotky ramecku (ctverec)
-#define COL_RAMEC RGB555(31,31,26) //((31*32+31)*32+26)
+#define COL_RAMEC 255,255,214 //((31*32+31)*32+26)
 
 #undef RGB
 //#define RGB(r,g,b) (((r)>>3)*2048+((g)>>3)*64+((b)>>3))
@@ -154,7 +154,6 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define TEMP_FILE "~SKELDAL.TMP"
 #define PICTURES "..\\OBRAZKY\\"
 #define PIC_FADE_PAL_SIZE (10*256*sizeof(uint16_t)+6)
-typedef uint16_t pal_t[256];
 
 #define E_REFRESH  256 //udalost refresh scene
 #define E_KOUZLO_KOLO 257 //funkce kouzel kazde jedno kolo
@@ -176,7 +175,7 @@ typedef uint16_t pal_t[256];
 #define H_IDESKA 12
 #define H_IMRIZ1 13
 #define H_RAMECEK 14
-#define H_ENEMY 15
+//#define H_ENEMY 15
 #define H_FBOLD 16
 #define H_FSYMB 17
 #define H_FLITT 18
@@ -218,7 +217,7 @@ typedef uint16_t pal_t[256];
 #define H_RUNEMASK   69
 #define H_CHARS      70
 #define H_CHARS_MAX  6
-#define H_POSTAVY_DAT 76
+//#define H_POSTAVY_DAT 76
 #define H_SOUND_DAT  77
 #define H_SND_SWHIT1   78
 #define H_SND_SWHIT2   79
@@ -286,7 +285,7 @@ typedef uint16_t pal_t[256];
 #define H_CHARGEN 179
 #define H_CHARGENB 180
 #define H_CHARGENM 181
-#define H_BGR_BUFF 182
+//#define H_BGR_BUFF 182
 #define H_KREVMIN 183
 #define H_KREVMID 184
 #define H_KREVMAX 185
@@ -474,13 +473,12 @@ typedef uint16_t pal_t[256];
                      case 6:\
                      case 7
 
-typedef struct tdregisters
-  {
-  int32_t h_num;
-  char name[13];
-  void (*proc)(void **,long *);
-  int8_t path;
-  }TDREGISTERS;
+typedef struct tdregisters {
+	int32_t h_num;
+	char name[13];
+	DataBlock *(*proc)(SeekableReadStream&);
+	int8_t path;
+} TDREGISTERS;
 
 typedef struct tstena {
 	int8_t prim, sec, oblouk, side_tag;
@@ -542,7 +540,7 @@ typedef struct d_action {
 	struct d_action *next;
 }D_ACTION;
 
-extern uint16_t color_topbar[7];
+extern uint8_t color_topbar[7][3];
 
 extern int viewsector;             //aktualni sektor vyhledu
 extern int viewdir;                //aktualni smer vyhledu
@@ -566,17 +564,16 @@ extern char reverse_draw ;         //kresba odpredu dozadu
 extern char gamespeed;             //rychlost hry
 extern char gamespeedbattle;	   //akcelerace rychlosti pro bitvy
 extern int num_ofsets[];           //tabulka offsetu pro steny
-extern int back_color;             //cislo barvy pozadi
+extern uint8_t back_color[3];             //cislo barvy pozadi
 extern char cur_group;             //cislo aktualni skupiny
 extern char group_select;               //1 = prave byla sestavena nova skupina
-extern unsigned short barvy_skupin[POCET_POSTAV+1]; //cisla barev skupin
+extern uint8_t barvy_skupin[POCET_POSTAV+1][3]; //cisla barev skupin
 extern char battle;          //jednicka znaci ze bezi bitva
 extern char battle_mode;          //rezim bitvy 0=programovani
 extern char neco_v_pohybu;          //jednicka znaci ze se nektere potvory jeste hejbou
 extern short select_player;         //vybrana postava nebo -1
 extern char group_sort[POCET_POSTAV]; //pretrideni skupin
 extern uint8_t global_anim_counter;
-extern char one_buffer;            //1 zapina pouziti pouze jednoho bufferu pro render
 extern char save_map;     //1 oznamuje ze pri opusteni levelu je nutne ulozit stav mapy
 extern long money;           //stav konta hracu
 extern long level_map[];        //tabulka urovni
@@ -636,15 +633,14 @@ void *game_keyboard(EVENT_MSG *msg,void **usr);
 int load_map(char *filename);
 void other_draw();
 void refresh_scene(the_timer *arg);
-void pcx_fade_decomp(void **p,long *s);
-void pcx_15bit_decomp(void **p,long *s);
-void pcx_15bit_autofade(void **p,long *s);
-void pcx_15bit_backgrnd(void **p,long *s);
-void pcx_8bit_decomp(void **p,long *s);
-void hi_8bit_correct(void **p,long *s);
-void pcx_8bit_nopal(void **p,long *s);
-void set_background(void **p,long *s);
-void wav_load(void **p,long *s);
+DataBlock *pcx_fade_decomp(SeekableReadStream &stream);
+DataBlock *pcx_15bit_decomp(SeekableReadStream &stream);
+DataBlock *pcx_15bit_autofade(SeekableReadStream &stream);
+DataBlock *pcx_8bit_decomp(SeekableReadStream &stream);
+DataBlock *hi_8bit_correct(SeekableReadStream &stream);
+DataBlock *pcx_8bit_nopal(SeekableReadStream &stream);
+DataBlock *set_background(SeekableReadStream &stream);
+DataBlock *wav_load(SeekableReadStream &stream);
 void wire_main_functs();
 void ukaz_kompas(unsigned char mode);
 void *timming(EVENT_MSG *msg,void **data);
@@ -655,9 +651,8 @@ void delete_from_timer(int id);
 THE_TIMER *find_timer(int id);
 void objekty_mimo(the_timer*);
 void mouse_set_cursor(int cursor);
-void set_font(int font,int c1,...);
 void bott_draw(char);
-void bott_draw_proc(void**, long*);
+DataBlock *bott_draw_proc(SeekableReadStream &stream);
 void mouse_set_default(int cursor);
 void create_frame(int x,int y,int xs,int ys,char clear);
 void save_dump();
@@ -820,7 +815,7 @@ void step_zoom(char smer);
 void turn_zoom(int smer);
 void a_touch(int sector,int dir);
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay);
-void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, long*), int cls);
+void prepare_graphics(int *ofs, MemoryReadStream *names, DataBlock *(*decomp)(SeekableReadStream&), int cls);
 void show_automap(char full);
 void draw_medium_map();
 void anim_sipky(int h,int mode);
@@ -1066,7 +1061,7 @@ void calc_fly(the_timer *);
 void zmen_skupinu(THUMAN *p);
 void add_to_group(int num);
 void group_all(void);
-void build_items_called(void **p,long *s);
+DataBlock *build_items_called(SeekableReadStream &stream);
 void real_regeneration(the_timer *); //regenerace postav behem hry v realu (pouze kondice a mana)
 char sleep_regenerace(THUMAN *p);  //regenerace postav behem spani
 char check_jidlo_voda(THUMAN *p);
@@ -1471,7 +1466,7 @@ void user_setup();
 void setup_dialoge();
 char game_setup(int id,int xa,int ya,int xr,int yr);
 void GamePause();
-void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d);
+void show_textured_button(int x, int y, int xs, int ys, int texture, CTL3D *border3d, int xofs, int yofs);
 
 //sounder & music
 
@@ -1656,21 +1651,20 @@ void correct_level();
 
 
 //kouzla
-extern char running_anm;
 extern short teleport_target;
 extern char hlubina_level;
-extern uint16_t *anim_render_buffer;
 extern char spell_cast; //0=neni rezim vyberu kouzla;
+
+extern MGIFReader *anim_reader;
 
 #define isdemon(p) ((p)->stare_vls[VLS_KOUZLA] & SPL_DEMON)
 
 
+DataBlock *loadSpells(SeekableReadStream &stream);
 void kouzla_init();
 void test_play(int handle);
 void cast(int num,THUMAN *p,int owner,char backfire);
 int add_spell(int num,int cil,int owner,char noanim);
-void klicovani_anm(uint16_t *target,uint16_t *source,char mirror);
-//#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
 int get_spell_color(THUMAN *p,int num);
 int get_spell_mana(int num);
 int get_spell_um(int num);
@@ -1689,26 +1683,35 @@ int select_teleport_target();
 char get_spell_teleport(int num);
 void spell_throw(int cil,int what); //to je procedura ktera umoznuje potvoram strilet
 void unaffect_demon(int cil); //ukonci demona pri jeho smrti
-char *get_rune_name(int strnum);
-void spell_sound(char *name);
+const char *get_rune_name(int strnum);
+void spell_sound(const char *name);
 
 
 //interface
-#define WINCOLOR RGB555(24,24,24) // 11000 11000 0 11000
-#define BAR_COLOR RGB555(15,13,11)
-#define SETUP_COL1 RGB555(20,31,20)
-#define SETUP_COL2 RGB555(31,31,12)
+#define BAR_COLOR 123,107,90
+#define SETUP_COL2 0,255,255,99
 #define S_WINPOS_X 100
 #define S_WINPOS_Y 100
 #define S_WINPOS_XS 320
 #define S_WINPOS_YS 300
 
+class PalBlock : public DataBlock {
+private:
+	fadepal_t *_pals;
+	unsigned _size;
+
+public:
+	PalBlock(SeekableReadStream &stream, uint8_t r, uint8_t g, uint8_t b);
+	~PalBlock(void);
+
+	const pal_t *getPal(unsigned pal) const;
+};
+
 void add_window(int x,int y,int xs,int ys,int texture,int border,int txtx,int txty);
 int message(int butts,char def,char canc,const char *keys,...);
 void type_text(EVENT_MSG *msg, void **data); //event procedura (parms: X,Y,TEXT,MAX_SPACE,MAX_CHARS);
-void type_text_v2(va_list args);//char *text_buffer,int x,int y,int max_size,int max_chars,int font,int color,void (*exit_proc)(char));
 void zalamovani(const char *source,char *target,int maxxs,int *xs,int *ys);
-void col_load(void **data,long *size);
+DataBlock *col_load(SeekableReadStream &stream);
 void open_story_file();
 void write_story_text(const char *text);
 void close_story_file();
@@ -1743,6 +1746,7 @@ void show_jrc_logo(const char *filename);
 
 
 //dialogy
+DataBlock *loadDialogs(SeekableReadStream &stream);
 void call_dialog(int entr,int mob);
 char save_dialog_info(WriteStream &stream);
 char load_dialog_info(SeekableReadStream &stream);
@@ -1758,7 +1762,7 @@ char enter_generator();
 
 //kniha
 #define add_to_book(odst) add_text_to_book(texty_knihy,odst)
-void add_text_to_book(char *filename,int odst);
+void add_text_to_book(const char *filename, int odst);
 void write_book(int page);
 int count_pages();
 void save_book();

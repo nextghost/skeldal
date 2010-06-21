@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include "game/engine1.h"
 #include <inttypes.h>
 #include "libs/event.h"
@@ -35,19 +36,18 @@
 #include "libs/pcx.h"
 #include "globals.h"
 
-#define AUTOMAP_BACK RGB555(8,4,0)
-#define AUTOMAP_VODA RGB555(0,15,31)
-#define AUTOMAP_LAVA RGB555(31,16,0)
-#define AUTOMAP_FORE RGB555(18,17,14)
-#define AUTOMAP_LINE1 RGB555(13,11,10)
-#define AUTOMAP_LINE2 RGB555(31,22,6)
-#define AUTOMAP_MOB RGB555(31,8,8)
+#define AUTOMAP_BACK 66,33,0
+#define AUTOMAP_VODA 0,123,255
+#define AUTOMAP_LAVA 255,132,0
+#define AUTOMAP_FORE 148,140,115
+#define AUTOMAP_LINE1 107,90,82
+#define AUTOMAP_LINE2 255,181,49
+#define AUTOMAP_MOB 1,255,68,68
 
 #define MEDIUM_MAP 9
 #define MEDIUM_MMAP 4
-#define MEDIUM_MAP_COLOR RGB555(21,20,19)
-#define MEDIUM_MAP_LINE1 RGB555(25,20,17)
-#define MEDIUM_MAP_LINE2 RGB555(31,22,6)
+#define MEDIUM_MAP_LINE1 206,165,140
+#define MEDIUM_MAP_LINE2 255,181,49
 
 /*
 uint16_t stairs_colors[]=
@@ -63,8 +63,18 @@ uint16_t arrow_colors[]=
   AUTOMAP_FORE
   };
 */
-uint16_t stairs_colors[5];
-uint16_t arrow_colors[2];
+uint8_t stairs_colors[FONT_COLORS][3] = {
+	{AUTOMAP_LINE1},
+	{115,99,90},
+	{123,115,99},
+	{132,123,99},
+	{140,132,107}
+};
+
+uint8_t arrow_colors[FONT_COLORS][3] = {
+	{AUTOMAP_LINE1},
+	{AUTOMAP_FORE}
+};
 
 char shift_map(int id,int xa,int ya,int xr,int yr);
 char psani_poznamek(int id,int xa,int ya,int xr,int yr);
@@ -111,17 +121,6 @@ T_CLK_MAP clk_teleport_view[]=
   {-1,0,0,639,479,map_target_cancel,8,-1},
   {-1,0,0,639,479,empty_clk,0xff,-1},
   };
-
-void Automap_Init(void) {
-	stairs_colors[0] = AUTOMAP_LINE1;
-	stairs_colors[1] = RGB555(14,12,11);
-	stairs_colors[2] = RGB555(15,14,12);
-	stairs_colors[3] = RGB555(16,15,12);
-	stairs_colors[4] = RGB555(17,16,13);
-
-	arrow_colors[0] = AUTOMAP_LINE1;
-	arrow_colors[1] = AUTOMAP_FORE;
-}
 
 char testclip(int x,int y)
   {
@@ -185,12 +184,13 @@ void ukaz_vsechny_texty_v_mape() {
 	int x, y;
 	int i, j, cn;
 	const MapText *ptr;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
 	if (!gameMap.notesCount()) {
 		return;
 	}
 
-	set_font(H_FLITT5, NOSHADOW(0));
+	renderer->setFont(font, 0, 0, 0, 0);
 	cn = gameMap.notesSize();
 	ptr = gameMap.notes();
 
@@ -211,7 +211,7 @@ void ukaz_vsechny_texty_v_mape() {
 					strcpy(d, ptr[i].text);
 					e = d + h;
 
-					while((h = text_width(d) + x) > 640) {
+					while((h = renderer->textWidth(d) + x) > 640) {
 						*e = '\0';
 
 						if (e == d) {
@@ -221,19 +221,17 @@ void ukaz_vsechny_texty_v_mape() {
 						e--;
 					}
 
-					position(x, y);
-					outtext(d);
+					renderer->drawText(x, y, d);
 					delete[] d;
-				} else if(x < 8 && x + text_width(ptr[i].text) > 10 && y > 16 && y < 376) {
+				} else if(x < 8 && x + renderer->textWidth(ptr[i].text) > 10 && y > 16 && y < 376) {
 					char cd[2] = " ";
 
 					for (j = 0; x < 10 && ptr[i].text[j]; j++) {
 						cd[0] = ptr[i].text[j];
-						x += text_width(cd);
+						x += renderer->textWidth(cd);
 					}
 
-					position(x, y);
-					outtext(ptr[i].text + j);
+					renderer->drawText(x, y, ptr[i].text + j);
 				}
 			}
 		}
@@ -241,16 +239,17 @@ void ukaz_vsechny_texty_v_mape() {
 }
 
 void psani_poznamek_event(EVENT_MSG *msg, void **data) {
-	static int x, y;
-	static char text[255], index;
+	static int x, y, index;
+	static char text[255];
 	static char *save;
-	static uint16_t *save_pic = NULL;
+	static Texture *save_pic = NULL;
 	va_list args;
 	
 	if (msg->msg == E_INIT) {
 		char *c;
+		const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
-		set_font(H_FLITT5, NOSHADOW(0));
+		renderer->setFont(font, 0, 0, 0, 0);
 
 		va_copy(args, msg->data);
 		x = va_arg(args, int);
@@ -262,13 +261,12 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 		save = (char *)getmem(strlen(text) + 1);
 		strcpy(save, text);
 		index = strchr(text, 0) - text;
+
 		if (save_pic == NULL) {
 			schovej_mysku();
-			save_pic = (uint16_t*)getmem(640 * 20 * 2 + 6);
-			get_picture(0, y, 640, 20, save_pic);
-			position(x, y);
-			outtext(text);
-			outtext("_");
+			save_pic = new SubTexture(*renderer, 0, y, 640, 20);
+			renderer->drawText(x, y, text);
+			renderer->drawText(x + renderer->textWidth(text), y, "_");
 			showview(0, 0, 640, 480);
 		}
 	} else if (msg->msg == E_MOUSE) {
@@ -283,12 +281,13 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 		msg->msg = -1;
 	} else if (msg->msg == E_KEYBOARD) {
 		char c;
+		const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
 		va_copy(args, msg->data);
 		c = va_arg(args, int) & 0xff;
 		va_end(args);
 
-		set_font(H_FLITT5, NOSHADOW(0));
+		renderer->setFont(font, 0, 0, 0, 0);
 
 		if (c) {
 			switch (c) {
@@ -297,7 +296,7 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 					index--;
 				}
 
-				text[index]=0;
+				text[index] = 0;
 				break;
 
 			case 27:
@@ -313,7 +312,7 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 					text[index] = c;
 					text[index + 1] = 0;
 
-					if (text_width(text) > (640 - x)) {
+					if (renderer->textWidth(text) > (640 - x)) {
 						text[index] = 0;
 					} else {
 						index++;
@@ -321,25 +320,24 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 				}
 			}
 
-			put_picture(0, y, save_pic);
-			position(x, y);
-			outtext(text);
-			outtext("_");
+			renderer->blit(*save_pic, 0, y, save_pic->palette());
+			renderer->drawText(x, y, text);
+			renderer->drawText(x + renderer->textWidth(text), y, "_");
 			showview(x, y, 640, 20);
 		}
 
 		msg->msg = -1;
 	} else if (msg->msg == E_DONE) {
 		if (save_pic != NULL) {
-			put_picture(0, y, save_pic);
+			renderer->blit(*save_pic, 0, y, save_pic->palette());
 			showview(x, y, 640, y + 20);
-			free(save_pic);
+			delete save_pic;
 			save_pic = NULL;
 			send_message(E_AUTOMAP_REDRAW);
 			ukaz_mysku();
 		} if (save != NULL) {
-		   free(save);
-		   save = NULL;
+			free(save);
+			save = NULL;
 		}
 	}
 }
@@ -347,6 +345,7 @@ void psani_poznamek_event(EVENT_MSG *msg, void **data) {
 int hledej_poznamku(int x, int y, int depth) {
 	int i, count;
 	const MapText *ptr;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
 	x = (x - 320) + map_xr;
 	y = (y - 197) + map_yr;
@@ -357,15 +356,15 @@ int hledej_poznamku(int x, int y, int depth) {
 
 	count = gameMap.notesSize();
 	ptr = gameMap.notes();
-	set_font(H_FLITT5, NOSHADOW(0));
+	renderer->setFont(font, 0, 0, 0, 0);
 
 	for (i = 0; i < count; i++) {
 		if (ptr[i].text) {
 			int xb, yb;
 			int xas, yas, xbs, ybs, xs, ys;
 
-			xs = text_width(ptr[i].text);
-			ys = text_height(ptr[i].text);
+			xs = renderer->textWidth(ptr[i].text);
+			ys = renderer->textHeight(ptr[i].text);
 			xb = ptr[i].x + xs;
 			yb = ptr[i].y + ys;
 
@@ -431,37 +430,35 @@ char shift_map(int id,int xa,int ya,int xr,int yr)
   return 0;
   }
 
-static void print_symbol(int x,int y,char znak)
-  {
-  char c[2]=" ";
-  position(x+1,y+1);c[0]=znak;outtext(c);
-  }
-
-
-static void draw_amap_sector(int x,int y,int sector,int mode,int turn,int line1,int line2) {
+static void draw_amap_sector(int x, int y, int sector, int mode, int turn, const uint8_t *line1, const uint8_t *line2) {
 	int j, i, k;
 	const TSTENA *q;
 	const TSECTOR *ss;
+	const Font *font;
 
 	q = gameMap.sides() + (sector << 2);
 	ss = gameMap.sectors() + sector;
 
 	if (ss->sector_type == S_VODA || ss->sector_type == S_LODKA) {
-		curcolor = AUTOMAP_VODA;
+		uint8_t tmp[3] = {AUTOMAP_VODA};
+		memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 	} else if (ss->sector_type == S_LAVA) {
-		curcolor = AUTOMAP_LAVA;
+		uint8_t tmp[3] = {AUTOMAP_LAVA};
+		memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 	} else {
-		curcolor = AUTOMAP_FORE;
+		uint8_t tmp[3] = {AUTOMAP_FORE};
+		memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 	}
 
 	if (!mode) {
-		trans_bar(x, y, 8, 8, curcolor);
+		trans_bar(x, y, 8, 8, curcolor[0], curcolor[1], curcolor[2]);
 
 		if ((k = gameMap.coord()[sector].flags & 0x600) != 0) {
 			int i;
 
 			i = gameMap.sectors()[sector].sector_type;
-			set_font(H_FSYMB, 0);
+			font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+			renderer->setFont(font, 1, 0, 0, 0);
 			k >>= 9;
 
 			switch (k) {
@@ -469,15 +466,13 @@ static void draw_amap_sector(int x,int y,int sector,int mode,int turn,int line1,
 				break;
 
 			case 2:
-				set_font(H_FSYMB, 0);
-				font_color(stairs_colors);
-				print_symbol(x, y, 's');
+				renderer->setFont(font, 1, stairs_colors);
+				renderer->drawChar(x + 1, y + 1, 's');
 				break;
 
 			case 1:
-				set_font(H_FSYMB, 0);
-				font_color(arrow_colors);
-				print_symbol(x, y, 4 + ((i - S_SMER + 4 - turn) & 0x3));
+				renderer->setFont(font, 1, arrow_colors);
+				renderer->drawChar(x + 1, y + 1, 4 + ((i - S_SMER + 4 - turn) & 0x3));
 				break;
 			}
 		} else switch(gameMap.sectors()[sector].sector_type) {
@@ -485,42 +480,45 @@ static void draw_amap_sector(int x,int y,int sector,int mode,int turn,int line1,
 			const TSTENA *sd;
 
 		case S_SCHODY:
-			set_font(H_FSYMB, 0x3e0);
-			memcpy(charcolors, stairs_colors, sizeof(stairs_colors));
-			print_symbol(x, y, 's');
+			font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+			renderer->setFont(font, 0, stairs_colors);
+			renderer->drawChar(x + 1, y + 1, 's');
 			break;
 
 		case S_TELEPORT:
 			for (i = 0, sd = gameMap.sides() + sector * 4; i < 4 && ~sd->flags & SD_SEC_VIS; i++, sd++);
 
 			if (i != 4) {
-				set_font(H_FSYMB, 0x3e0);
-				print_symbol(x, y, 'T');
+				font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+				renderer->setFont(font, 0, 0, 127, 0);
+				renderer->drawChar(x + 1, y + 1, 'T');
 			}
 			break;
 
 		case S_DIRA:
-			set_font(H_FSYMB, NOSHADOW(0));
-			print_symbol(x, y, 'N');
+			font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+			renderer->setFont(font, 0, 0, 0, 0);
+			renderer->drawChar(x + 1, y + 1, 'N');
 			break;
 		}
 	} else {
-		for(j=0;j<4;j++) {
+		for (j = 0; j < 4; j++) {
 			i = (j + turn) & 3;
+			uint8_t tmp[3] = {AUTOMAP_FORE};
 
-			if (!(q[i].flags & SD_TRANSPARENT) ||(q[i].flags & SD_SECRET)) {
-				curcolor = line1;
+			if (!(q[i].flags & SD_TRANSPARENT) || (q[i].flags & SD_SECRET)) {
+				memcpy(curcolor, line1, 3 * sizeof(uint8_t));
 			} else if (q[i].flags & SD_PLAY_IMPS) {
-				curcolor = line2;
+				memcpy(curcolor, line2, 3 * sizeof(uint8_t));
 			} else {
-				curcolor = AUTOMAP_FORE;
+				memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 			}
 
 			if (q[i].flags & SD_INVIS) {
-				curcolor = AUTOMAP_FORE;
+				memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 			}
 
-			if (curcolor != AUTOMAP_FORE) {
+			if (memcmp(curcolor, tmp, 3 * sizeof(uint8_t))) {
 				switch (j) {
 				case 0:
 					hor_line(x, y, x + 8);
@@ -569,55 +567,54 @@ void herni_cas(char *s)
   sprintf(s,texty[152],hod,min);
   }
 
-static void zobraz_herni_cas(void)
-  {
-  static char text[100];
-  static long old_time=-1;
-  char cas[100];
+static void zobraz_herni_cas(void) {
+	static char text[100];
+	static long old_time = -1;
+	char cas[100];
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FONT6));
 
-  if (old_time!=game_time)
-     {
-     herni_cas(cas);
-     strcpy(text,texty[145]);
-     strcat(text," ");
-     strcat(text,cas);
-     old_time=game_time;
-     }
-  set_font(H_FONT6,NOSHADOW(0));
-  set_aligned_position(635,372,2,2,text);
-  outtext(text);
-  }
+	if (old_time != game_time) {
+		herni_cas(cas);
+		strcpy(text, texty[145]);
+		strcat(text, " ");
+		strcat(text, cas);
+		old_time = game_time;
+	}
+
+	renderer->setFont(font, 0, 0, 0, 0);
+	renderer->drawAlignedText(635, 372, HALIGN_RIGHT, VALIGN_BOTTOM, text);
+}
 
 
-extern uint16_t color_butt_on[];
-extern uint16_t color_butt_off[];
+extern uint8_t color_butt_on[][3];
+extern uint8_t color_butt_off[][3];
 
-static void displ_button(char disable, const char **text)
-  {
-  int posy[]={0,18,37,55};
-  int sizy[]={18,20,20,21};
-  int i;
+static void displ_button(char disable, const char **text) {
+	int posy[] = {0, 18, 37, 55};
+	int sizy[] = {18, 20, 20, 21};
+	int i;
+	const Texture *tex;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FTINY));
 
-  cur_disables=disable;
-  set_font(H_FTINY,0);
-  put_picture(LEFT, BOTT, (uint16_t*)ablock(H_CHARGEN));
-  for(i=0;i<4;i++)
-     {
-     if (disable & 1)
-        {
-        put_8bit_clipped((uint16_t*)ablock(H_CHARGENB),(392+posy[i])*Screen_GetXSize()+524+Screen_GetAddr(),posy[i],96,sizy[i]);
-        font_color(color_butt_off);
-        }
-     else
-        {
-        font_color(color_butt_on);
-        }
-     disable>>=1;
-     set_aligned_position(LEFT+50,BOTT+14+13+i*19,1,2,*text);
-     outtext(*text);
-     text++;
-     }
-  }
+	cur_disables = disable;
+	renderer->setFont(font, 1, 0, 0, 0);
+	tex = dynamic_cast<const Texture*>(ablock(H_CHARGEN));
+	renderer->blit(*tex, LEFT, BOTT, tex->palette());
+
+	for (i = 0; i < 4; i++) {
+		if (disable & 1) {
+			tex = dynamic_cast<const Texture*>(ablock(H_CHARGENB));
+			renderer->rectBlit(*tex, 524, 392 + posy[i], 0, posy[i], 96, sizy[i], tex->palette());
+			renderer->setFont(font, 1, color_butt_off);
+		} else {
+			renderer->setFont(font, 1, color_butt_on);
+		}
+
+		disable >>= 1;
+		renderer->drawAlignedText(LEFT + 50, BOTT + 14 + 13 + i * 19, HALIGN_CENTER, VALIGN_BOTTOM, *text);
+		text++;
+	}
+}
 
 
 void draw_automap(int xr, int yr) {
@@ -625,11 +622,15 @@ void draw_automap(int xr, int yr) {
 	int depth;
 	const TSTENA *q;
 	const uint16_t *s;
+	uint8_t tmp[3] = {AUTOMAP_BACK};
+	const Font *font;
+	const Texture *tex;
 
 	update_mysky();
 	schovej_mysku();
-	put_textured_bar((uint16_t*)ablock(H_BACKMAP), 0, 17, 640, 360, -xr * 8, -yr * 8);
-	curcolor = AUTOMAP_BACK;
+	tex = dynamic_cast<const Texture*>(ablock(H_BACKMAP));
+	put_textured_bar(*tex, 0, 17, 640, 360, -xr * 8, -yr * 8);
+	memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
 	xp = gameMap.coord()[viewsector].x * 8;
 	yp = gameMap.coord()[viewsector].y * 8;
 	depth = cur_depth;
@@ -647,9 +648,10 @@ void draw_automap(int xr, int yr) {
 				x -= xp;
 				y -= yp;
 				if (y >= -178 && y < 170 && x >= -312 && x < 310) {
+					uint8_t tmp1[3] = {AUTOMAP_LINE1}, tmp2[3] = {AUTOMAP_LINE2};
 					x += 320;
 					y += 197;
-					draw_amap_sector(x, y, i, k, 0, AUTOMAP_LINE1, AUTOMAP_LINE2);
+					draw_amap_sector(x, y, i, k, 0, tmp1, tmp2);
 					if (gameMap.coord()[i].flags & MC_PLAYER && !noarrows) {
 						int j, l = -1;
 
@@ -670,11 +672,15 @@ void draw_automap(int xr, int yr) {
 						if (j != -1) {
 							char c[2];
 
-							position(x + 1, y + 1);
-							set_font(H_FSYMB, postavy[j].groupnum == cur_group ? RGB888(255, 255, 255) : barvy_skupin[postavy[j].groupnum]);
-							c[0] = postavy[j].direction + 4;
-							c[1] = 0;
-							outtext(c);
+							font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+
+							if (postavy[j].groupnum == cur_group) {
+								renderer->setFont(font, 1, 255, 255, 255);
+							} else {
+								renderer->setFont(font, 1, barvy_skupin[postavy[j].groupnum][0], barvy_skupin[postavy[j].groupnum][1], barvy_skupin[postavy[j].groupnum][2]);
+							}
+
+							renderer->drawChar(x + 1, y + 1, postavy[j].direction + 4);
 						}
 					}
 				}
@@ -687,8 +693,7 @@ void draw_automap(int xr, int yr) {
 
 	char str[50];
 	sprintf(str, texty[153], gameMap.global().mapname, depth);
-	set_aligned_position(5, 372, 0, 2, str);
-	outtext(str);
+	renderer->drawAlignedText(5, 372, HALIGN_LEFT, VALIGN_BOTTOM, str);
 
 	ukaz_mysku();
 	wait_retrace();
@@ -861,13 +866,14 @@ void draw_medium_map() {
 	int xp, yp;
 	int xc, yc, x, y;
 	int j, i, k, layer;
+	const Font *font;
 
 	xp = MEDIUM_MMAP * 8 + 5;
 	yp = MEDIUM_MMAP * 8 + 20;
 	layer = gameMap.coord()[viewsector].layer;
 	xr = gameMap.coord()[viewsector].x;
 	yr = gameMap.coord()[viewsector].y;
-	trans_bar(0, 17, MEDIUM_MAP * 8 + 6 * 2, MEDIUM_MAP * 8 + 4 * 2, 0);
+	trans_bar(0, 17, MEDIUM_MAP * 8 + 6 * 2, MEDIUM_MAP * 8 + 4 * 2, 0, 0, 0);
 
 	for (j = 0; j < 2; j++) {
 		for (i = 1; i < gameMap.coordCount(); i++) {
@@ -895,12 +901,13 @@ void draw_medium_map() {
 				}
 
 				if (xc >= -MEDIUM_MMAP && yc >= -MEDIUM_MMAP && yc <= MEDIUM_MMAP && xc <= MEDIUM_MMAP) {
-					draw_amap_sector(x = xc * 8 + xp, y = yc * 8 + yp, i, j, viewdir & 3, MEDIUM_MAP_LINE1, MEDIUM_MAP_LINE2);
+					uint8_t tmp1[3] = {MEDIUM_MAP_LINE1}, tmp2[3] = {MEDIUM_MAP_LINE2};
+					draw_amap_sector(x = xc * 8 + xp, y = yc * 8 + yp, i, j, viewdir & 3, tmp1, tmp2);
 
 					if (j && mob_map[i] && mob_not_invis(i) && battle) {
-						position(x + 1, y + 1);
-						set_font(H_FSYMB, AUTOMAP_MOB);
-						outtext("N");
+						font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+						renderer->setFont(font, AUTOMAP_MOB);
+						renderer->drawChar(x + 1, y + 1, 'N');
 					}
 
 					if (gameMap.coord()[i].flags & MC_PLAYER) {
@@ -921,11 +928,17 @@ void draw_medium_map() {
 						}
 
 						if (u != -1) {
-							set_font(H_FSYMB, postavy[u].groupnum == cur_group && !battle ? RGB888(255, 255, 255) : barvy_skupin[postavy[u].groupnum]);
-							position(x + 1, y + 1);
-							outtext("M");
+							font = dynamic_cast<const Font*>(ablock(H_FSYMB));
+
+							if (postavy[u].groupnum == cur_group && !battle) {
+								renderer->setFont(font, 1, 255, 255, 255);
+							} else {
+								const uint8_t *pal = barvy_skupin[postavy[u].groupnum];
+								renderer->setFont(font, 1, pal[0], pal[1], pal[2]);
+							}
+
+							renderer->drawChar(x + 1, y + 1, 'M');
 						}
-					
 					}
 				}
 			}
@@ -966,15 +979,12 @@ static void wire_glob_map_control() {
 
 
 char map_menu(int id,int xa,int ya,int xr,int yr) {
-	char *s;
-	uint16_t *c;
 	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_CHARGENM));
 
 	id = set_select_mode(0);
-	s = (char*)ablock(H_CHARGENM);
-	c = (uint16_t*)ablock(H_CHARGENM);
-	s += *c * yr + xr + 6;
-	id = *s;
+	assert(tex->depth() == 1 && "Invalid click mask texture depth");
+	id = tex->pixels()[tex->width() * yr + xr];
 
 	if (!id) {
 		return 1;
@@ -1080,29 +1090,40 @@ void unwire_kniha()
 }
 
 
-void wire_kniha()
-  {
-  int xa;
-  if (!GlobEvent(MAGLOB_BEFOREBOOK,viewsector,viewdir))
-  {
-    return;
-  }
-  xa=count_pages();
-  xa=((xa-1) & ~1)+1;
-  if (cur_page<1) cur_page=1;
-  if (cur_page>xa) cur_page=xa;
-  mute_all_tracks(0);
-  unwire_proc();
-  schovej_mysku();
-  put_picture(0, 0, (uint16_t*)ablock(H_KNIHA));
-  change_click_map(clk_kniha,CLK_KNIHA);
-  unwire_proc=unwire_kniha;
-  set_font(H_FONT6,NOSHADOW(0));
-  write_book(cur_page);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  hold_timer(TM_FAST_TIMER,1);
-  }
+void wire_kniha() {
+	int xa;
+	const Texture *tex;
+	const Font *font;
+
+	if (!GlobEvent(MAGLOB_BEFOREBOOK, viewsector, viewdir)) {
+		return;
+	}
+
+	xa = count_pages();
+	xa = ((xa - 1) & ~1) + 1;
+
+	if (cur_page < 1) {
+		cur_page = 1;
+	}
+
+	if (cur_page > xa) {
+		cur_page = xa;
+	}
+
+	mute_all_tracks(0);
+	unwire_proc();
+	schovej_mysku();
+	tex = dynamic_cast<const Texture*>(ablock(H_KNIHA));
+	renderer->blit(*tex, 0, 0, tex->palette());
+	change_click_map(clk_kniha, CLK_KNIHA);
+	unwire_proc = unwire_kniha;
+	font = dynamic_cast<const Font*>(ablock(H_FONT6));
+	renderer->setFont(font, 0, 0, 0, 0);
+	write_book(cur_page);
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	hold_timer(TM_FAST_TIMER, 1);
+}
 
 static int last_selected;
 

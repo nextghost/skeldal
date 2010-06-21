@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include <cctype>
@@ -46,6 +47,36 @@ typedef struct t_paragraph {
 	int32_t position;
 } T_PARAGRAPH;
 
+class DialogList : public DataBlock {
+public:
+	struct Dialog {
+		unsigned num, alt, visited, first;
+		int position;
+	};
+
+private:
+	unsigned _size;
+	Dialog *_info;
+	MemoryReadStream *_data;
+
+	// do not implement
+	DialogList(const DialogList &src);
+	const DialogList &operator=(const DialogList &src);
+
+public:
+	DialogList(SeekableReadStream &stream);
+	~DialogList(void);
+
+	void setVisited(unsigned idx, unsigned value);
+	void setFirst(unsigned idx, unsigned value);
+
+	const Dialog &operator[](unsigned idx) const;
+	unsigned size(void) const { return _size; }
+	unsigned find(unsigned num) const;
+	int findNum(unsigned pos) const;
+	MemoryReadStream *data(void) const { return _data; }
+};
+
 #define STR_BUFF_SIZ 4096
 #define SAVE_POSTS 20
 #define P_STRING 1
@@ -53,6 +84,7 @@ typedef struct t_paragraph {
 #define P_VAR 3
 
 #define MAX_VOLEB 10
+#define VAR_COUNT 20
 
 #define VOLBY_X 85
 #define VOLBY_Y 398
@@ -75,19 +107,19 @@ typedef struct t_paragraph {
 #define PIC_X 17
 #define PIC_Y (17+SCREEN_OFFLINE)
 
-#define DESC_COLOR1 (RGB555(28,28,21))
+#define DESC_COLOR1 1,231,231,173
 
-static short varibles[20];
+static short varibles[VAR_COUNT];
 
 static char sn_nums[SAVE_POSTS];
 static char sn_nams[SAVE_POSTS][32];
 static char sn_rods[SAVE_POSTS];
 
-static uint16_t *back_pic;
+static Texture *back_pic;
 static char back_pic_enable=0;
 
 static char showed=0;
-static char *pc;
+static MemoryReadStream *pstream = NULL;
 static char *descript=NULL;
 static char *string_buffer=NULL;
 static char iff;
@@ -142,35 +174,7 @@ static int glob_y;
 
 static int last_pgf;
 
-static uint16_t paleta[256];
-static long loc_anim_render_buffer;
 static short task_num=-1;
-
-void small_anm_buff(uint16_t *target, ReadStream &stream, uint16_t *paleta);
-void small_anm_delta(uint16_t *target, ReadStream &stream, uint16_t *paleta);
-
-static void animace_kouzla(int act, SeekableReadStream &stream) {
-	uint16_t *p = Screen_GetAddr() + loc_anim_render_buffer;
-	int i;
-
-	switch (act) {
-		case MGIF_LZW:
-		case MGIF_COPY:
-			small_anm_buff(p, stream, paleta);
-			break;
-
-		case MGIF_DELTA:
-			small_anm_delta(p, stream, paleta);
-			break;
-
-		case MGIF_PAL:
-			for (i = 0; i < stream.size() / 2; i++) {
-				paleta[i] = stream.readUint16LE();
-			}
-			break;
-	}
-}
-
 
 static void dialog_anim(va_list args) {
 //#pragma aux dialog_anim parm []
@@ -182,20 +186,14 @@ static void dialog_anim(va_list args) {
 	char *ch;
 	char hid;
 	int spdc = 0, cntr = rep, tm, tm2, ret = 1;
-	MGIF_HEADER_T header;
 	File file;
 
-	loc_anim_render_buffer = PIC_Y * Screen_GetXSize() + PIC_X;
-	mgif_install_proc(animace_kouzla);
 	file.open(Sys_FullPath(SR_DIALOGS, block));
 	free(block);
 
 	do {
-		loadMgifHeader(header, file);
-
-		if (!open_mgif(header)) {
-			return;
-		}
+		file.seek(0, SEEK_SET);
+		MGIFReader reader(file, 320, 180, 0);
 
 		while (ret && Task_QuitMsg()) {
 			Task_Sleep(NULL);
@@ -208,8 +206,12 @@ static void dialog_anim(va_list args) {
 					hid = 0;
 				}
 
-				ret = mgif_play(file);
+				ret = reader.decodeFrame();
 				spdc = speed;
+
+				if (ret & FLAG_VIDEO) {
+					renderer->blit(reader, PIC_X, PIC_Y, reader.palette());
+				}
 
 				if (hid) {
 					ukaz_mysku();
@@ -227,7 +229,6 @@ static void dialog_anim(va_list args) {
 		}
 
 		rep--;
-		close_mgif();
 	} while (!cntr && rep && !Task_QuitMsg());
 }
 
@@ -255,73 +256,120 @@ static void error(const char *text)
   SEND_LOG("(DIALOGS) Error description: %s",text,0);  
   }
 
-static void show_dialog_picture()
-  {
-  if (!showed)
-     {
-     put_picture(0, SCREEN_OFFLINE, (uint16_t*)ablock(H_DIALOG));
-     showed=1;
-     glob_y=250;
-     }
-  }
+static void show_dialog_picture() {
+	if (!showed) {
+		const Texture *tex = dynamic_cast<const Texture*>(ablock(H_DIALOG));
+		renderer->blit(*tex, 0, SCREEN_OFFLINE, tex->palette());
+		showed = 1;
+		glob_y = 250;
+	}
+}
 
-static T_PARAGRAPH *find_paragraph(int num)
-  {
-  int *pp;
-  int pocet,i;
-  T_PARAGRAPH *z;
+DialogList::DialogList(SeekableReadStream &stream) : _size(0), _info(NULL),
+	_data(NULL) {
+	int i;
+	unsigned tmp;
 
-  num+=local_pgf;
-  pp=(int *)ablock(H_DIALOGY_DAT);
-  pocet=*pp;pp+=2;
-  z=(T_PARAGRAPH *)pp;
-  for(i=0;i<pocet;i++,z++) if (z->num==(unsigned)num) return z;
-  {
-  char s[80];
+	_size = stream.readUint32LE();
+	_info = new Dialog[_size];
+	stream.readUint32LE();	// _data length, ignore and recalculate
 
-  sprintf(s,"Odstavec %d neexistuje! Odkaz byl vyvol n",num);
-  error(s);
-  return (T_PARAGRAPH *)pp;
-  }
-  }
+	for (i = 0; i < _size; i++) {
+		tmp = stream.readUint32LE();
+		_info[i].num = tmp & 0x7fff;
+		_info[i].alt = (tmp >> 15) & 0x7fff;
+		_info[i].visited = (tmp >> 30) & 0x1;
+		_info[i].first = (tmp >> 31) & 0x1;
+		_info[i].position = stream.readSint32LE();
+	}
 
-static int find_pgnum(char *pc)
-  {
-  T_PARAGRAPH *z;
-  int *pp;
-  int lastnum=-1;
-  int pocet;
-  int pcc,i;
+	_data = stream.readStream(stream.size() - stream.pos());
+}
 
-  pp=(int *)ablock(H_DIALOGY_DAT);
-  pocet=*pp;pp+=2;
-  pcc=pc-(char *)pp-8-sizeof(T_PARAGRAPH)*pocet;
-  z=(T_PARAGRAPH *)pp;
-  for(i=0;i<pocet;i++,z++) if (z->position>pcc) break;else lastnum=z->num;
-  return lastnum-local_pgf;
-  }
+DialogList::~DialogList(void) {
+	delete[] _info;
+	delete _data;
+}
 
-static void goto_paragraph(int prgf)
-  {
-  T_PARAGRAPH *z;
+void DialogList::setVisited(unsigned idx, unsigned value) {
+	assert(idx < _size && "Invalid dialog index");
+	_info[idx].visited = value;
+}
 
+void DialogList::setFirst(unsigned idx, unsigned value) {
+	assert(idx < _size && "Invalid dialog index");
+	_info[idx].first = value;
+}
 
-  do
-     {
-     z=find_paragraph(prgf);
-     if (z->visited) z->first=1;
-     if (z->alt==z->num || !z->visited)
-        {
-        pc=((char *)ablock(H_DIALOGY_DAT))+*((int *)ablock(H_DIALOGY_DAT))*sizeof(T_PARAGRAPH)+8+z->position;
-        last_pgf=prgf;
-        z->visited=1;
-        return;
-        }
-     prgf=z->alt-local_pgf;
-     do_events();
-     }
-  while (1);
-  }
+const DialogList::Dialog &DialogList::operator[](unsigned idx) const {
+	assert(idx < _size && "Invalid dialog index");
+	return _info[idx];
+}
+
+unsigned DialogList::find(unsigned num) const {
+	int i;
+
+	for (i = 0; i < _size; i++) {
+		if (_info[i].num == num) {
+			return i;
+		}
+	}
+
+	assert(0 && "Paragraph not found");
+}
+
+int DialogList::findNum(unsigned pos) const {
+	int i, num = -1;
+
+	for (i = 0; i < _size; i++) {
+		if (_info[i].position > pos) {
+			break;
+		} else {
+			num = _info[i].num;
+		}
+	}
+
+	return num;
+}
+
+DataBlock *loadDialogs(SeekableReadStream &stream) {
+	return new DialogList(stream);
+}
+
+static unsigned find_paragraph(int num) {
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
+	return list->find(num + local_pgf);
+}
+
+static int find_pgnum(unsigned pos) {
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
+	return list->findNum(pos) - local_pgf;
+}
+
+static void goto_paragraph(int prgf) {
+	unsigned idx;
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
+
+	do {
+		idx = find_paragraph(prgf);
+		const DialogList::Dialog &dlg = (*list)[idx];
+
+		if (dlg.visited) {
+			list->setFirst(idx, 1);
+		}
+
+		if (dlg.alt == dlg.num || !dlg.visited) {
+			pstream = list->data();
+			pstream->seek(dlg.position, SEEK_SET);
+			last_pgf = prgf;
+			list->setVisited(idx, 1);
+			return;
+		}
+
+		prgf = dlg.alt - local_pgf;
+		do_events();
+	} while (1);
+}
 
 static char *transfer_text(const char *source, char *target)
   {
@@ -399,160 +447,186 @@ static char *conv_text(const char *source)
   return transfer_text(source,string_buffer);
   }
 
-static char zjisti_typ()
-  {
-  return *pc;
-  }
+static char *Get_string() {
+	char *c, i;
 
-static char *Get_string()
-  {
-  char *c,i;
-  if (*pc==P_STRING)
-     {
-     pc++;
-     c=conv_text(pc);
-     do
-        {
-        pc+=strlen(pc)+1;
-        if ((i=zjisti_typ())==P_STRING)
-           {
-           pc++;
-           c=transfer_text(pc,c);
-           }
-        }
-     while(i==P_STRING);
-     return string_buffer;
-     }
-  if (zjisti_typ()==P_SHORT)
-     {
-     short i;
-     pc++;
-     i=*(short *)pc;pc+=2;
-     if (i<=0) c=conv_text(texty[abs(i)]);else c=conv_text(level_texts[i]);
-     return string_buffer;
-     }
-  error("O‡ek v  se ©etˆzec nebo index do tabulky ©etˆzc–");
-  exit(0);
-  return NULL;
-  }
+	i = pstream->readUint8();
 
-static short Get_short()
-  {
-  short p;
-  if (*pc==P_SHORT)
-     {
-     pc++;
-     p=*(short *)pc;
-     pc+=2;
-     return p;
-     }
-  if (*pc==P_VAR)
-     {
-     pc++;
-     p=*(short *)pc;
-     pc+=2;
-     return varibles[p];
-     }
-  error("O‡ek v  se ‡¡slo");
-  exit(0);
-  return 0;
-  }
+	if (i == P_STRING) {
+		c = conv_text(pstream->readCString());
 
-static void show_desc()
-  {
-  char *c=descript;
-  int y;
+		for (i = pstream->readUint8(); i == P_STRING; i = pstream->readUint8()) {
+			c = transfer_text(pstream->readCString(), c);
+		}
 
-  showed=0;
-  show_dialog_picture();
-  if (c==NULL) return;
-  y=34;
-  set_font(H_FBOLD,DESC_COLOR1);
-  while (*c)
-     {
-     position(382,y);
-     outtext(c);y+=text_height(c);
-     c=strchr(c,0)+1;
-     }
-  }
+		pstream->seek(-1, SEEK_CUR);
+		return string_buffer;
+	} else if (i == P_SHORT) {
+		i = pstream->readSint16LE();
 
-static void add_desc(char *c)
-  {
-  int xs,ys;
-  if (story_on) write_story_text(c);
-  if (descript!=NULL) free(descript);
-  descript=(char *)getmem(strlen(c)+2);
-  set_font(H_FBOLD,RGB555(31,31,31));
-  zalamovani(c,descript,225,&xs,&ys);
-  }
+		if (i <= 0) {
+			c = conv_text(texty[-i]);
+		} else {
+			c = conv_text(level_texts[i]);
+		}
 
-static void show_emote(char *c)
-  {
-  int xs,ys;
-  char *a;
+		return string_buffer;
+	} else {
+		assert(0 && "Expected string or string table index");
+	}
+}
 
-  if (story_on) write_story_text(c);
-  a=(char*)alloca(strlen(c)+2);
-  set_font(H_FBOLD,RGB555(31,31,31));
-  zalamovani(c,a,TEXT_XS,&xs,&ys);
-  while (*a)
-     {
-     char z[100]="M";
-     strcat(z,a);
-     end_text_line = history.insert(z) + 1;
-     a=strchr(a,0)+1;
-     }
-  }
+static int Get_short() {
+	int i = pstream->readUint8();
 
+	if (i == P_SHORT) {
+		return pstream->readSint16LE();
+	} else if (i == P_VAR) {
+		i = pstream->readUint16LE();
+		assert(i < VAR_COUNT && "Invalid variable index");
+		return varibles[i];
+	} else {
+		assert(0 && "Expected number or variable index");
+	}
+}
 
-static void echo(const char *c)
-  {
-  int xs,ys;
-  char *a;
+static void show_desc() {
+	char *c = descript;
+	int y;
+	const Font *font;
 
-  if (story_on) write_story_text(c);
-  a=(char*)alloca(strlen(c)+2);
-  set_font(H_FBOLD,RGB555(0,30,0));
-  zalamovani(c,a,TEXT_XS,&xs,&ys);
-  while (*a)
-     {
-     char z[100]="E";
-     strcat(z,a);
-     end_text_line = history.insert(z) + 1;
-     a=strchr(a,0)+1;
-     }
-  }
+	showed = 0;
+	show_dialog_picture();
 
-#define TEXT_UNSELECT *((uint16_t *)ablock(H_DIALOG)+3+254)
-#define TEXT_SELECT *((uint16_t *)ablock(H_DIALOG)+3+255)
+	if (c == NULL) {
+		return;
+	}
 
-static void redraw_text()
-  {
-  int y=TEXT_Y;
-  int ys=TEXT_YS;
-  int ls_cn,i;
+	y = 34;
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, DESC_COLOR1);
+
+	while (*c) {
+		renderer->drawText(382, y, c);
+		y += renderer->textHeight(c);
+		c = strchr(c, 0) + 1;
+	}
+}
+
+static void add_desc(char *c) {
+	int xs, ys;
+	const Font *font;
+
+	if (story_on) {
+		write_story_text(c);
+	}
+
+	if (descript != NULL) {
+		free(descript);
+	}
+
+	descript = (char *)getmem(strlen(c) + 2);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 1, 255, 255, 255);
+	zalamovani(c, descript, 225, &xs, &ys);
+}
+
+static void show_emote(char *c) {
+	int xs, ys;
+	char *a;
+	const Font *font;
+
+	if (story_on) {
+		write_story_text(c);
+	}
+
+	a = (char*)alloca(strlen(c) + 2);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 1, 255, 255, 255);
+	zalamovani(c, a, TEXT_XS, &xs, &ys);
+
+	while (*a) {
+		char z[100] = "M";
+		strcat(z, a);
+		end_text_line = history.insert(z) + 1;
+		a = strchr(a, 0) + 1;
+	}
+}
 
 
-  put_textured_bar((uint16_t*)ablock(H_DIALOG),TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS,TEXT_X,TEXT_Y-SCREEN_OFFLINE);
-  //create_frame(TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS,1);
-  ls_cn = history.size();
-  if (ls_cn<=his_line) return;
+static void echo(const char *c) {
+	int xs, ys;
+	char *a;
+	const Font *font;
 
-  for (i=his_line;i<ls_cn;i++)
-     if (history[i]!=NULL)
-        {
-        const char *c = history[i];
-        if (*c=='E') set_font(H_FBOLD,NOSHADOW(0));
-        else if(*c=='M') set_font(H_FBOLD,NOSHADOW(0)+TEXT_UNSELECT);
-        else if(*c-48==vyb_volba) set_font(H_FBOLD,NOSHADOW(0)+TEXT_SELECT);
-        else set_font(H_FBOLD,NOSHADOW(0)+TEXT_UNSELECT);
-        c++;
-        position(TEXT_X,y);outtext(c);
-        y+=TEXT_STEP;
-        ys-=TEXT_STEP;
-        if (ys<TEXT_STEP) break;
-        }
-  }
+	if (story_on) {
+		write_story_text(c);
+	}
+
+	a = (char*)alloca(strlen(c) + 2);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 1, 0, 247, 0);
+	zalamovani(c, a, TEXT_XS, &xs, &ys);
+
+	while (*a) {
+		char z[100]="E";
+
+		strcat(z, a);
+		end_text_line = history.insert(z) + 1;
+		a=strchr(a, 0) + 1;
+	}
+}
+
+#define TEXT_UNSELECT 254
+#define TEXT_SELECT 255
+
+static void redraw_text() {
+	int y = TEXT_Y;
+	int ys = TEXT_YS;
+	int ls_cn, i;
+	const uint8_t *pal;
+	const Font *font;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_DIALOG));
+
+	//create_frame(TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS,1);
+	// FIXME: this seems to break dialogs, is it needed?
+//	put_textured_bar(*tex, TEXT_X, TEXT_Y, TEXT_XS, TEXT_YS, TEXT_X, TEXT_Y - SCREEN_OFFLINE);
+	ls_cn = history.size();
+
+	if (ls_cn <= his_line) {
+		return;
+	}
+
+	for (i = his_line; i < ls_cn; i++) {
+		if (history[i] != NULL) {
+			const char *c = history[i];
+
+			font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+
+			if (*c == 'E') {
+				renderer->setFont(font, 0, 0, 0, 0);
+			} else if(*c == 'M') {
+				pal = tex->palette() + 3 * TEXT_UNSELECT;
+				renderer->setFont(font, 0, pal[0], pal[1], pal[2]);
+			} else if(*c - 48 == vyb_volba) {
+				pal = tex->palette() + 3 * TEXT_SELECT;
+				renderer->setFont(font, 0, pal[0], pal[1], pal[2]);
+			} else {
+				pal = tex->palette() + 3 * TEXT_UNSELECT;
+				renderer->setFont(font, 0, pal[0], pal[1], pal[2]);
+			}
+
+			c++;
+			renderer->drawText(TEXT_X, y, c);
+			y += TEXT_STEP;
+			ys -= TEXT_STEP;
+
+			if (ys < TEXT_STEP) {
+				break;
+			}
+		}
+	}
+}
 
 static int get_last_his_line()
   {
@@ -563,15 +637,25 @@ static int get_last_his_line()
   return i;
   }
 
-static void draw_all()
-  {
-  uint16_t *c;
-  show_desc();
-  if (back_pic_enable) c=back_pic;else c = (uint16_t*)ablock(H_DIALOG_PIC);
-  other_draw();
-  if (c!=NULL) put_picture(PIC_X,PIC_Y,c);
-  redraw_text();
-  }
+static void draw_all() {
+	const Texture *c;
+
+	show_desc();
+
+	if (back_pic_enable) {
+		c = back_pic;
+	} else {
+		c = dynamic_cast<const Texture*>(ablock(H_DIALOG_PIC));
+	}
+
+	other_draw();
+
+	if (c) {
+		renderer->blit(*c, PIC_X, PIC_Y, c->palette());
+	}
+
+	redraw_text();
+}
 
 static void lecho(char *c)
   {
@@ -647,22 +731,20 @@ iff=0;
 return;
 }
 
-static char visited(int prgf)
-  {
-  T_PARAGRAPH *z;
+static char visited(int prgf) {
+	unsigned idx = find_paragraph(prgf);
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
 
-  z=find_paragraph(prgf);
-  return z->visited;
-  }
+	return (*list)[idx].visited;
+}
 
-static void set_nvisited(int prgf)
-  {
-  T_PARAGRAPH *z;
+static void set_nvisited(int prgf) {
+	unsigned idx = find_paragraph(prgf);
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
 
-  z=find_paragraph(prgf);
-  z->visited=0;
-  z->first=0;
-  }
+	list->setVisited(idx, 0);
+	list->setFirst(idx, 0);
+}
 
 
 void q_flag(int flag)
@@ -694,13 +776,12 @@ char test_flag(int flag)
   return (_flag_map[flag>>3] & (1<<(flag & 0x7)))!=0;
   }
 
-static void first_visited(int prgf)
-  {
-  T_PARAGRAPH *z;
+static void first_visited(int prgf) {
+	unsigned idx = find_paragraph(prgf);
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
 
-  z=find_paragraph(prgf);
-  iff=!z->first;
-  }
+	iff = !(*list)[idx].first;
+}
 
 
 
@@ -833,26 +914,34 @@ void create_item(int itnum)
   pick_set_cursor();
   }
 
-static void add_case(int num,char *text)
-  {
-  char *a;
-  int xs,ys;
-  vol_n[pocet_voleb]=num;
-  if (pocet_voleb>MAX_VOLEB) {error("POZOR! Je priliz mnoho voleb");pocet_voleb=MAX_VOLEB;}
-  a = (char*)alloca(strlen(text)+2);
-  set_font(H_FBOLD,RGB555(0,30,0));
-  zalamovani(text,a,TEXT_XS,&xs,&ys);
-  while (*a)
-     {
-     char z[100];
-     z[0]=pocet_voleb+48;
-     z[1]=0;
-     strcat(z,a);
-     history.insert(z);
-     a=strchr(a,0)+1;
-     }
-  pocet_voleb++;
-  }
+static void add_case(int num, char *text) {
+	char *a;
+	int xs, ys;
+	const Font *font;
+
+	vol_n[pocet_voleb] = num;
+
+	if (pocet_voleb > MAX_VOLEB) {
+		error("POZOR! Je priliz mnoho voleb");
+		pocet_voleb = MAX_VOLEB;
+	}
+
+	a = (char*)alloca(strlen(text) + 2);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 1, 0, 247, 0);
+	zalamovani(text, a, TEXT_XS, &xs, &ys);
+
+	while (*a) {
+		char z[100];
+		z[0] = pocet_voleb + 48;
+		z[1] = 0;
+		strcat(z, a);
+		history.insert(z);
+		a = strchr(a, 0) + 1;
+	}
+
+	pocet_voleb++;
+}
 
 static void remove_all_cases() {
 	int cf, i;
@@ -948,7 +1037,7 @@ static void exit_dialog()
   free(string_buffer);string_buffer=NULL;
   remove_all_cases();
   history.clear();
-  free(back_pic);
+	delete back_pic;
   undef_handle(H_DIALOG_PIC);
   if (starting_shop!=-1 && !battle)
      {
@@ -1044,36 +1133,34 @@ char drop_character()
 
 static char dead_players=0;
 
-static char ask_who_proc(int id,int xa,int ya,int xr,int yr)
-  {
-  {
-  THUMAN *p;
-  int i;
-  uint16_t *xs;
+static char ask_who_proc(int id,int xa,int ya,int xr,int yr) {
+	THUMAN *p;
+	int i;
+	const Texture *tex;
 
-  if (id==2)
-     {
-     selected_player=-1;
-     exit_wait=1;
-     return 1;
-     }
-  xs = (uint16_t*)ablock(H_OKNO);
-  i=xr/xs[0];yr;xa;ya;id;
-  if (i<POCET_POSTAV)
-     {
-     i=group_sort[i];
-     p=&postavy[i];
-     if (p->used && ((p->lives!=0) ^ (dead_players)))
-        if (p->sektor==viewsector)
-           {
-           selected_player=i;
-           exit_wait=1;
-           }
-     }
-  return 1;
-  }
+	if (id == 2) {
+		selected_player = -1;
+		exit_wait = 1;
+		return 1;
+	}
 
-  }
+	tex = dynamic_cast<const Texture*>(ablock(H_OKNO));
+	i = xr / tex->width();
+
+	if (i < POCET_POSTAV) {
+		i = group_sort[i];
+		p = &postavy[i];
+
+		if (p->used && ((p->lives != 0) ^ (dead_players))) {
+			if (p->sektor == viewsector) {
+				selected_player = i;
+				exit_wait = 1;
+			}
+		}
+	}
+
+	return 1;
+}
 
 
 static int dlg_ask_who()
@@ -1185,27 +1272,52 @@ static char atsector(int oper,int sector)
   }
 
 
-static void dark_screen(int time,int gtime)
-  {
-  int z,i;
-  THUMAN *h;
-  i=Timer_GetValue()+time*50;
-  curcolor=0;
-  bar(0,17,639,377);
-  showview(0,0,0,0);
-  while (Timer_GetValue()<i) do_events();
-  game_time+=gtime*HODINA;
-  for(i=0,h=postavy;i<POCET_POSTAV;i++,h++) if (h->used && h->lives)
-     {
-     z=h->vlastnosti[VLS_HPREG]*gtime;z+=h->lives;
-     if (z>h->vlastnosti[VLS_MAXHIT]) z=h->vlastnosti[VLS_MAXHIT];h->lives=z;
-     z=h->vlastnosti[VLS_MPREG]*gtime;z+=h->mana;
-     if (z>h->vlastnosti[VLS_MAXMANA]) z=h->vlastnosti[VLS_MAXMANA];h->mana=z;
-     z=h->vlastnosti[VLS_VPREG]*gtime;z+=h->kondice;
-     if (z>h->vlastnosti[VLS_KONDIC]) z=h->vlastnosti[VLS_KONDIC];h->kondice=z;
-     }
-  bott_draw(0);
-  }
+static void dark_screen(int time, int gtime) {
+	int z, i;
+	THUMAN *h;
+
+	i = Timer_GetValue() + time * 50;
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 17, 639, 377);
+	showview(0, 0, 0, 0);
+
+	while (Timer_GetValue() < i) {
+		do_events();
+	}
+
+	game_time += gtime * HODINA;
+
+	for (i = 0, h = postavy; i < POCET_POSTAV; i++, h++) {
+		if (h->used && h->lives) {
+			z = h->vlastnosti[VLS_HPREG] * gtime;
+			z += h->lives;
+
+			if (z > h->vlastnosti[VLS_MAXHIT]) {
+				z = h->vlastnosti[VLS_MAXHIT];
+			}
+
+			h->lives = z;
+			z = h->vlastnosti[VLS_MPREG] * gtime;
+			z += h->mana;
+
+			if (z > h->vlastnosti[VLS_MAXMANA]) {
+				z = h->vlastnosti[VLS_MAXMANA];
+			}
+
+			h->mana = z;
+			z = h->vlastnosti[VLS_VPREG] * gtime;
+			z += h->kondice;
+
+			if (z > h->vlastnosti[VLS_KONDIC]) {
+				z = h->vlastnosti[VLS_KONDIC];
+			}
+
+			h->kondice=z;
+		}
+	}
+
+	bott_draw(0);
+}
 
 static char najist_postavy(int cena)
   {
@@ -1254,189 +1366,489 @@ static void cast_spell(int spell)
   }
 
 
-void do_dialog()
-  {
-  int i,p1,p2,p3;
-  char *c;
+void do_dialog() {
+	int i, p1, p2, p3;
+	char *c;
 
-  do
-     {
-  i=Get_short();p3=0;
-  switch(i)
-     {
-     case 128:add_desc(Get_string());break;
-     case 129:show_emote(Get_string());break;
-     case 130:save_name(Get_short());break;
-     case 131:iff=!iff;
-     case 132:load_name(Get_short());break;
-     case 133:nahodne(0,0,Get_short());break;
-     case 134:p1=Get_short();p2=Get_short();nahodne(VLS_SMAGIE,p1,p2);break;
-     case 135:p1=Get_short();p2=Get_short();nahodne(VLS_SILA,p1,p2);break;
-     case 136:p1=Get_short();p2=Get_short();nahodne(VLS_OBRAT,p1,p2);break;
-     case 137:c=Get_string();p1=Get_short();strncpy(sn_nams[0],c,32);sn_rods[0]=p1;break;
-     case 138:iff=Get_short();break;
-     case 139:goto_paragraph(Get_short());break;
-     case 140:p1=Get_short();if (iff) goto_paragraph(p1);break;
-     case 141:p1=Get_short();if (!iff) goto_paragraph(p1);break;
-     case 142:p1=Get_short();add_case(p1,Get_string());break;
-     case 143:p1=Get_short();p2=Get_short();c=Get_string();if (iff==p1) add_case(p2,c);break;
-     case 144:dialog_select(1);return;
-     case 145:iff=visited(Get_short());break;
-     case 146:p1=Get_short();c=Get_string();iff=visited(p1);if (iff==0) add_case(p1,c);break;
-     case 147:picture(Get_string());break;
-     case 148:echo(Get_string());break;
-     case 149:cur_page=count_pages();
-              cur_page&=~0x1;
-              cur_page++;
-              add_to_book(Get_short());
-              play_fx_at(FX_BOOK);
-			  if (game_extras & EX_AUTOOPENBOOK) autoopenaction=1;
-              break;
-     case 150:set_nvisited(Get_short());break;
-     case 151:iff=rnd(100)<=Get_short();break;
-     case 152:iff=q_item(Get_short(),viewsector)!=NULL;break;
-     case 153:create_item(Get_short());break;
-     case 154:destroy_item(Get_short());break;
-     case 155:money+=Get_short();break;
-     case 156:p1=Get_short();if (p1>money) iff=1;else money-=p1;break;
-     case 157:dlg_start_battle();break;
-     case 158:p1=Get_short();p2=Get_short();delay_action(0,p1,p2,0,0,0);break;
-     case 160:p1=Get_short();p2=Get_short();teleport_group(p1,p2);break;
-     case 161:c=Get_string();p1=Get_short();p2=Get_short();run_anim(c,p1,p2);break;
-     case 162:lecho(Get_string());break;
-     case 163:q_flag(Get_short());break;
-     case 164:dialog_select(0);return;
-     case 165:dialog_select_jump();break;
-     case 166:first_visited(Get_short());break;
-     case 167:local_pgf=Get_short();break;
-     case 168:starting_shop=Get_short();break;
-     case 169:p1=Get_short();if (!iff) pc+=p1;break;
-     case 170:p1=Get_short();if (iff) pc+=p1;break;
-     case 171:p1=Get_short();pc+=p1;break;
-     case 172:code_page=Get_short();break;
-     case 173:break; //ALT_SENTENCE
-     case 174:iff=join_character(Get_short());break;
-     case 189:dead_players=1;
-     case 175:echo(Get_string()); p1=Get_short();
-              if (dlg_ask_who()) if (p1) goto_paragraph(p1);
-                                   else iff=1;
-                               else iff=0;
-              break;
-     case 176:p1=Get_short();p2=Get_short();pract_to(sn_nums[0],p1,p2);break;
-     case 177:p1=Get_short();p2=Get_short();p3=Get_short();iff=test_vls(sn_nums[0],p1,p2,p3);break;
-     case 178:p1=Get_short();runes[p1/10]|=1<<(p1%10);break;
-     case 179:p1=Get_short();iff=((runes[p1/10] & (1<<(p1%10)))!=0);break;
-     case 180:p1=Get_short();iff=(money>=p1);break;
-     case 181:p1=Get_short();p2=Get_short();p3=Get_short();pract(sn_nums[0],p1,p2,p3);break;
-     case 182:p1=Get_short();p2=Get_short();dark_screen(p1,p2);break;
-     case 183:spat(Get_short());break;
-     case 184:p1=Get_short();iff=najist_postavy(p1);break;
-     case 185:iff=isall();break;
-		 case 186:enable_glmap=Get_short();break;
-     case 187:p1=Get_short();p2=Get_short();iff=atsector(p1,p2);break;
-     case 188:p1=Get_short();cast_spell(p1);break;
-     case 190:spell_sound(Get_string());break;
-     case 191:p1=Get_short();p2=Get_short();iff=test_volby_select(p1,p2);break;
-     case 192:p1=Get_short();p2=Get_short();varibles[p1]=p2;break;
-     case 193:p1=Get_short();p2=Get_short();varibles[p1]+=p2;break;
-     case 194:p1=Get_short();p2=Get_short();p3=Get_short();iff=oper_balance(varibles[p1],p3,p2);break;
-     case 195:p2=find_pgnum(pc);p1=Get_short();varibles[p1]=p2;break;
-     case 196:p1=Get_short();varibles[p1]=iff;break;
-     case 197:p1=Get_short();add_case(varibles[p1],Get_string());break;
-     case 198:p1=Get_short();p2=Get_short();c=Get_string();if (iff==p1) add_case(varibles[p2],c);break;
-     case 199:goto_paragraph(varibles[Get_short()]);break;
-     case 200:iff=drop_character();break;
-     case 201:pc_xicht(Get_short());break;
-     case 518:set_flag(Get_short());break;
-     case 519:reset_flag(Get_short());break;
-     case 255:exit_dialog();return;
-     default:
-        {
-        char s[80];
-        sprintf(s,"Nezn m  instrukce: %d",i);
-        error(s);
-        }
-        break;
-     }
-     }
-  while(1);
-  }
+	do {
+		i = Get_short();
+		p3 = 0;
 
-static void create_back_pic()
-  {
-  int skpx=4,skpy=5,xp,yp;
-  uint16_t *p,*s=Screen_GetAddr()+SCREEN_OFFSET,*s2;
+		switch(i) {
+		case 128:
+			add_desc(Get_string());
+			break;
 
-  schovej_mysku();
-  p=back_pic=NewArr(uint16_t,3+340*200);
-  *p++=340;
-  *p++=200;
-  *p++=A_16BIT;
-  for(yp=0;yp<200;yp++)
-    {
-    s2=s;
-    for(xp=0;xp<340;xp++)
-      {
-      *p++=*s2++;
-      if (!skpx) skpx=8;else s2++,skpx--;
-      }
-    s+=Screen_GetXSize();
-    if (!skpy) skpy=4;else s+=Screen_GetXSize(),skpy--;
-    }
-  ukaz_mysku();
-  }
+		case 129:
+			show_emote(Get_string());
+			break;
 
-void call_dialog(int entr,int mob)
-  {
-  int i;
-  void (*old_wire_proc)()=wire_proc;
-  curcolor=0;
-  create_back_pic();
-  bar(0,SCREEN_OFFLINE,639,SCREEN_OFFLINE+359);
-  SEND_LOG("(DIALOGS) Starting dialog...",0,0);
-  for(i=0;i<POCET_POSTAV;i++) if (isdemon(postavy+i)) unaffect_demon(i);
-  mute_all_tracks(0);
-  dialog_mob=mob;
-  if (mob>-1)
-     {
-     _flag_map[0]=mobs[mob].dialog_flags;
-     _flag_map[1]=mobs[mob].stay_strategy;
-     }
-  local_pgf=0;
-  poloz_vsechny_predmety();
-  cancel_render=1;
-  norefresh=1;
-  his_line=0;
-  memset(sn_nums,0xff,sizeof(sn_nums));
-  goto_paragraph(entr);
-  schovej_mysku();
-  alock(H_DIALOGY_DAT);
-  aswap(H_DIALOGY_DAT);
-  selected_player=-1;  
-  do_dialog();  
-  }
+		case 130:
+			save_name(Get_short());
+			break;
+
+		case 131:
+			iff = !iff;
+			// FIXME: break here?
+
+		case 132:
+			load_name(Get_short());
+			break;
+
+		case 133:
+			nahodne(0, 0, Get_short());
+			break;
+
+		case 134:
+			p1 = Get_short();
+			p2 = Get_short();
+			nahodne(VLS_SMAGIE, p1, p2);
+			break;
+
+		case 135:
+			p1 = Get_short();
+			p2 = Get_short();
+			nahodne(VLS_SILA, p1, p2);
+			break;
+
+		case 136:
+			p1 = Get_short();
+			p2 = Get_short();
+			nahodne(VLS_OBRAT, p1, p2);
+			break;
+
+		case 137:
+			c = Get_string();
+			p1 = Get_short();
+			strncpy(sn_nams[0], c, 32);
+			sn_rods[0] = p1;
+			break;
+
+		case 138:
+			iff = Get_short();
+			break;
+
+		case 139:
+			goto_paragraph(Get_short());
+			break;
+
+		case 140:
+			p1 = Get_short();
+
+			if (iff) {
+				goto_paragraph(p1);
+			}
+			break;
+
+		case 141:
+			p1 = Get_short();
+
+			if (!iff) {
+				goto_paragraph(p1);
+			}
+			break;
+
+		case 142:
+			p1 = Get_short();
+			add_case(p1, Get_string());
+			break;
+
+		case 143:
+			p1 = Get_short();
+			p2 = Get_short();
+			c = Get_string();
+
+			if (iff == p1) {
+				add_case(p2, c);
+			}
+			break;
+
+		case 144:
+			dialog_select(1);
+			return;
+
+		case 145:
+			iff = visited(Get_short());
+			break;
+
+		case 146:
+			p1 = Get_short();
+			c = Get_string();
+			iff = visited(p1);
+
+			if (iff == 0) {
+				add_case(p1, c);
+			}
+			break;
+
+		case 147:
+			picture(Get_string());
+			break;
+
+		case 148:
+			echo(Get_string());
+			break;
+
+		case 149:
+			cur_page = count_pages();
+			cur_page &= ~0x1;
+			cur_page++;
+			add_to_book(Get_short());
+			play_fx_at(FX_BOOK);
+
+			if (game_extras & EX_AUTOOPENBOOK) {
+				autoopenaction = 1;
+			}
+			break;
+
+		case 150:
+			set_nvisited(Get_short());
+			break;
+
+		case 151:
+			iff = rnd(100) <= Get_short();
+			break;
+
+		case 152:
+			iff = q_item(Get_short(), viewsector) != NULL;
+			break;
+
+		case 153:
+			create_item(Get_short());
+			break;
+
+		case 154:
+			destroy_item(Get_short());
+			break;
+
+		case 155:
+			money += Get_short();
+			break;
+
+		case 156:
+			p1 = Get_short();
+
+			if (p1 > money) {
+				iff = 1;
+			} else {
+				money -= p1;
+			}
+			break;
+
+		case 157:
+			dlg_start_battle();
+			break;
+
+		case 158:
+			p1 = Get_short();
+			p2 = Get_short();
+			delay_action(0, p1, p2, 0, 0, 0);
+			break;
+
+		case 160:
+			p1 = Get_short();
+			p2 = Get_short();
+			teleport_group(p1, p2);
+			break;
+
+		case 161:
+			c = Get_string();
+			p1 = Get_short();
+			p2 = Get_short();
+			run_anim(c, p1, p2);
+			break;
+
+		case 162:
+			lecho(Get_string());
+			break;
+
+		case 163:
+			q_flag(Get_short());
+			break;
+
+		case 164:
+			dialog_select(0);
+			return;
+
+		case 165:
+			dialog_select_jump();
+			break;
+
+		case 166:
+			first_visited(Get_short());
+			break;
+
+		case 167:
+			local_pgf = Get_short();
+			break;
+
+		case 168:
+			starting_shop = Get_short();
+			break;
+
+		case 169:
+			p1 = Get_short();
+
+			if (!iff) {
+				pstream->seek(p1, SEEK_CUR);
+			}
+			break;
+
+		case 170:
+			p1 = Get_short();
+
+			if (iff) {
+				pstream->seek(p1, SEEK_CUR);
+			}
+			break;
+
+		case 171:
+			p1 = Get_short();
+			pstream->seek(p1, SEEK_CUR);
+			break;
+
+		case 172:
+			code_page = Get_short();
+			break;
+
+		case 173:
+			break; //ALT_SENTENCE
+
+		case 174:
+			iff = join_character(Get_short());
+			break;
+
+		case 189:
+			dead_players = 1;
+
+		case 175:
+			echo(Get_string());
+			p1 = Get_short();
+
+			if (dlg_ask_who()) {
+				if (p1) {
+					goto_paragraph(p1);
+				} else {
+					iff = 1;
+				}
+			} else {
+				iff = 0;
+			}
+			break;
+
+		case 176:
+			p1 = Get_short();
+			p2 = Get_short();
+			pract_to(sn_nums[0], p1, p2);
+			break;
+
+		case 177:
+			p1 = Get_short();
+			p2 = Get_short();
+			p3 = Get_short();
+			iff = test_vls(sn_nums[0], p1, p2, p3);
+			break;
+
+		case 178:
+			p1 = Get_short();
+			runes[p1 / 10] |= 1 << (p1 % 10);
+			break;
+
+		case 179:
+			p1 = Get_short();
+			iff = ((runes[p1 / 10] & (1 << (p1 % 10))) != 0);
+			break;
+
+		case 180:
+			p1 = Get_short();
+			iff = (money >= p1);
+			break;
+
+		case 181:
+			p1 = Get_short();
+			p2 = Get_short();
+			p3 = Get_short();
+			pract(sn_nums[0], p1, p2, p3);
+			break;
+
+		case 182:
+			p1 = Get_short();
+			p2 = Get_short();
+			dark_screen(p1, p2);
+			break;
+
+		case 183:
+			spat(Get_short());
+			break;
+
+		case 184:
+			p1 = Get_short();
+			iff = najist_postavy(p1);
+			break;
+
+		case 185:
+			iff = isall();
+			break;
+
+		case 186:
+			enable_glmap = Get_short();
+			break;
+
+		case 187:
+			p1 = Get_short();
+			p2 = Get_short();
+			iff = atsector(p1, p2);
+			break;
+
+		case 188:
+			p1 = Get_short();
+			cast_spell(p1);
+			break;
+
+		case 190:
+			spell_sound(Get_string());
+			break;
+
+		case 191:
+			p1 = Get_short();
+			p2 = Get_short();
+			iff = test_volby_select(p1, p2);
+			break;
+
+		case 192:
+			p1 = Get_short();
+			p2 = Get_short();
+			varibles[p1] = p2;
+			break;
+
+		case 193:
+			p1 = Get_short();
+			p2 = Get_short();
+			varibles[p1] += p2;
+			break;
+
+		case 194:
+			p1 = Get_short();
+			p2 = Get_short();
+			p3 = Get_short();
+			iff = oper_balance(varibles[p1], p3, p2);
+			break;
+
+		case 195:
+			p2 = find_pgnum(pstream->pos());
+			p1 = Get_short();
+			varibles[p1] = p2;
+			break;
+
+		case 196:
+			p1 = Get_short();
+			varibles[p1] = iff;
+			break;
+
+		case 197:
+			p1 = Get_short();
+			add_case(varibles[p1], Get_string());
+			break;
+
+		case 198:
+			p1 = Get_short();
+			p2 = Get_short();
+			c = Get_string();
+
+			if (iff == p1) {
+				add_case(varibles[p2], c);
+			}
+			break;
+
+		case 199:
+			goto_paragraph(varibles[Get_short()]);
+			break;
+
+		case 200:
+			iff = drop_character();
+			break;
+
+		case 201:
+			pc_xicht(Get_short());
+			break;
+
+		case 518:
+			set_flag(Get_short());
+			break;
+
+		case 519:
+			reset_flag(Get_short());
+			break;
+
+		case 255:
+			exit_dialog();
+			return;
+
+		default: {
+			char s[80];
+			sprintf(s,"Nezn m  instrukce: %d",i);
+			error(s);
+			break;
+		}
+		}
+	} while(1);
+}
+
+void call_dialog(int entr, int mob) {
+	int i;
+	void (*old_wire_proc)()=wire_proc;
+
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	back_pic = new SubTexture(*renderer, 0, SCREEN_OFFLINE, 340, 200);
+	bar(0, SCREEN_OFFLINE, 639, SCREEN_OFFLINE + 359);
+	SEND_LOG("(DIALOGS) Starting dialog...", 0, 0);
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		if (isdemon(postavy + i)) {
+			unaffect_demon(i);
+		}
+	}
+
+	mute_all_tracks(0);
+	dialog_mob = mob;
+
+	if (mob > -1) {
+		_flag_map[0] = mobs[mob].dialog_flags;
+		_flag_map[1] = mobs[mob].stay_strategy;
+	}
+
+	local_pgf = 0;
+	poloz_vsechny_predmety();
+	cancel_render = 1;
+	norefresh = 1;
+	his_line = 0;
+	memset(sn_nums, 0xff, sizeof(sn_nums));
+	goto_paragraph(entr);
+	schovej_mysku();
+	alock(H_DIALOGY_DAT);
+	aswap(H_DIALOGY_DAT);
+	selected_player = -1;
+	do_dialog();
+}
 
 char save_dialog_info(WriteStream &stream) {
 	int pgf_pocet;
-	int *p, i;
+	int i;
 	size_t siz;
-	T_PARAGRAPH *q;
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
 
 	SEND_LOG("(DIALOGS)(SAVELOAD) Saving dialogs info...", 0, 0);
-	// FIXME: rewrite properly
-	p = (int*)ablock(H_DIALOGY_DAT);
-	pgf_pocet = *p;
+	pgf_pocet = list->size();
 	stream.writeSint32LE(pgf_pocet);
 	siz = (pgf_pocet + 3) / 4;
 
+
 	if (siz) {
-		p = (int*)ablock(H_DIALOGY_DAT);
-		q = (T_PARAGRAPH *)(p + 2);
 		unsigned char c = 0;
 
 		for (i = 0; i < pgf_pocet; i++) {
 			int j = (i & 3) << 1;
-			c |= (q[i].visited << j) | (q[i].first << (j + 1));
+			c |= ((*list)[i].visited << j) | ((*list)[i].first << (j + 1));
 
 			if ((i & 0x3) == 0x3) {
 				stream.writeUint8(c);
@@ -1460,27 +1872,22 @@ char save_dialog_info(WriteStream &stream) {
 
 char load_dialog_info(SeekableReadStream &stream) {
 	int pgf_pocet;
-	int *p, i;
+	int i;
 	size_t siz;
-	T_PARAGRAPH *q;
+	DialogList *list = dynamic_cast<DialogList*>(ablock(H_DIALOGY_DAT));
 
 	SEND_LOG("(DIALOGS)(SAVELOAD) Loading dialogs info...",0,0);
-	p = (int*)ablock(H_DIALOGY_DAT);
 	aswap(H_DIALOGY_DAT);
 	pgf_pocet = stream.readSint32LE();
 	siz = (pgf_pocet + 3) / 4;
 
-	if (pgf_pocet != *p) {
-		SEND_LOG("(ERROR) Dialogs has different sizes %d!=%d (can be skipped)", pgf_pocet, *p);
+	if (pgf_pocet != list->size()) {
+		SEND_LOG("(ERROR) Dialogs has different sizes %d!=%d (can be skipped)", pgf_pocet, list->size());
 		stream.seek(siz + 32, SEEK_CUR);
 		return 0;
 	}
 
 	if (siz) {
-		// FIXME: rewrite properly
-		p = (int*)ablock(H_DIALOGY_DAT);
-		q = (T_PARAGRAPH *)(p + 2);
-
 		for (i = 0; i < pgf_pocet; i++) {
 			int j = (i & 3) << 1;
 			unsigned char c;
@@ -1489,8 +1896,8 @@ char load_dialog_info(SeekableReadStream &stream) {
 				c = stream.readUint8();
 			}
 
-			q[i].visited = (c >> j);
-			q[i].first = (c >> (j + 1));
+			list->setVisited(i, c >> j);
+			list->setFirst(i, c >> (j + 1));
 		}
 	}
 

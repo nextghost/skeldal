@@ -23,6 +23,7 @@
 //Toto je hlavni soubor specialnich procedur pro hru BRANY SKELDALU
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/strlite.h"
@@ -257,68 +258,31 @@ static void show_liane(THE_TIMER *t)
   }
 */
 
+static void OtaceniObrazu() {
+	int maxtime = 500;
+	int lasttime = Timer_GetTick();
+	int curtime;
+	SubTexture picture(*renderer, 0, 17, 640, 360);
 
-static const float Inv2=0.5;
-static const float Snapper=3<<22;
+	do {
+		float phase;
+		float uhel;
 
-static __inline int toInt(float fval)
-  {
-	fval += Snapper;
-	return ( (*(int *)&fval)&0x007fffff ) - 0x00400000;
-  }
+		curtime = Timer_GetTick() - lasttime;
+		phase = curtime / (float)maxtime;
 
-static void OtocObrazPodleMatice(float mx[3][2], uint16_t *picture)
-  {
-  uint16_t *trg=Screen_GetAddr()+17*Screen_GetXSize();
-  int x,y;
-  picture+=6;
-  for (y=0;y<360;y++,trg+=Screen_GetXSize())
-	for (x=0;x<640;x++)
-	  {
-	  int oldx=x-320;
-	  int oldy=y-180;
-	  int newx=toInt(oldx*mx[0][0]+oldy*mx[1][0]+320);
-	  int newy=toInt(oldx*mx[0][1]+oldy*mx[1][1]+180);
-	  if (newx>=0 && newx<640 && newy>=0 && newy<360)		
-		trg[x]=picture[newx+640*newy];		
-	  else 
-		trg[x]=0;
-	  }
-  }
+		if (phase > 1.0f) {
+			phase = 1.0f;
+		}
 
-static void OtaceniObrazu()
-  {
-  uint16_t *picture=(uint16_t *)malloc(640*360*2+16);
-  float mx[3][2];
+		uhel = phase * 3.14159265;
+		renderer->rotBlit(picture, 0, 17, uhel);
+		showview(0, 17, 640, 360);
+		do_events();
+	} while (curtime < maxtime);
 
-  int maxtime=500;
-  int lasttime=Timer_GetTick();
-  int curtime;
-  get_picture(0,17,640,360,picture);
-  do
-	{
-	float phase;
-	float uhel;
-	float cosuhel;
-	float sinuhel;
-	curtime=Timer_GetTick()-lasttime;
-	phase=curtime/(float)maxtime;
-	if (phase>1.0f) phase=1.0f;
-	uhel=phase*3.14159265;
-	cosuhel=cos(uhel);
-	sinuhel=sin(uhel);
-	mx[0][0]=cosuhel;
-	mx[0][1]=sinuhel;
-	mx[1][0]=-sinuhel;
-	mx[1][1]=cosuhel;
-	OtocObrazPodleMatice(mx,picture);
-	showview(0,0,0,0);
-	do_events();
-	}
-  while (curtime<maxtime);
-  Timer_Sleep(1000);
-  free(picture);
-  }
+	Timer_Sleep(1000);
+}
 
 MAP_PROC(map_liana)
   {
@@ -349,68 +313,88 @@ MAP_PROC(map_liana)
 #define ID_XS 400
 #define ID_YS 380
 
-MAP_PROC(map_identify)
-  {
-  int x,y,yp,xp,ys,yss;
-  int i,cnt;char s[100];
-  TITEM *it;
-  StringList ls;
+MAP_PROC(map_identify) {
+	int x, y, yp, xp, ys, yss;
+	int i, cnt;
+	char s[100];
+	TITEM *it;
+	StringList ls;
+	const Font *font;
 
-  sector;side;event;value;
-  if (picked_item==NULL) return 0;
-  it=glob_items+*picked_item-1;
-  unwire_proc();
-  sprintf(s,texty[210],it->jmeno);
-  ls.insert(s);
-  sprintf(s,texty[211],it->hmotnost*2,it->hmotnost>0 && it->hmotnost<3?texty[236]:texty[237]);
-  ls.insert(s);
-  if (it->nosnost)
-     {
-     sprintf(s,texty[212],it->nosnost);
-     ls.insert(s);
-     }
-  for(i=0;i<21;i++)
-     if (it->zmeny[i] && texty[213+i]!=NULL)
-        {
-        if (i==VLS_HPREG || i==VLS_MPREG || i==VLS_VPREG)
-           sprintf(s,texty[213+i],it->zmeny[i]>0?texty[234]:texty[235]);
-        else
-           sprintf(s,texty[213+i],it->zmeny[i],it->zmeny[i+1]);
-	ls.insert(s);
-        }
-  if (it->zmeny[VLS_MGSIL_H])
-     {
-     sprintf(s,texty[233],texty[22+it->zmeny[VLS_MGZIVEL]]);
-     ls.insert(s);
-     }
-  for(i=0;i<16;i++)
-     if (it->zmeny[VLS_KOUZLA] & (1<<i) && texty[i+240]!=NULL) {
-		ls.insert(texty[i+240]);
+	if (picked_item == NULL) {
+		return 0;
 	}
-  for(i = ls.size(); i > 0; i--) if (ls[i-1]!=NULL) break;
-  cnt=i;i=0;
-  ys=cnt*10+10;
-  do
-     {
-     x=320-ID_XS/2;
-     y=y=240-ys/2;
-     create_frame(x,y,ID_XS,ys,1);
-     xp=x+5;yp=y+5;ys=ID_YS-10;
-     set_font(H_FBOLD,NOSHADOW(0));
-     yss=ys;
-     while(i<cnt)
-        {
-        position(xp,yp);outtext(ls[i]);
-        yp+=10;yss-=10;
-        i++;
-        }
-     showview(0,0,0,0);
-     getchar();
-     wire_proc();
-     }
-  while (i<cnt);
-  return 1;
-  }
+
+	it = glob_items + *picked_item - 1;
+	unwire_proc();
+	sprintf(s, texty[210], it->jmeno);
+	ls.insert(s);
+	sprintf(s, texty[211], it->hmotnost * 2, it->hmotnost > 0 && it->hmotnost < 3 ? texty[236] : texty[237]);
+	ls.insert(s);
+
+	if (it->nosnost) {
+		sprintf(s, texty[212], it->nosnost);
+		ls.insert(s);
+	}
+
+	for (i = 0; i < 21; i++) {
+		if (it->zmeny[i] && texty[213 + i] != NULL) {
+			if (i == VLS_HPREG || i == VLS_MPREG || i == VLS_VPREG) {
+				sprintf(s, texty[213 + i], it->zmeny[i] > 0 ? texty[234] : texty[235]);
+			} else {
+				sprintf(s, texty[213 + i], it->zmeny[i], it->zmeny[i + 1]);
+			}
+
+			ls.insert(s);
+		}
+	}
+
+	if (it->zmeny[VLS_MGSIL_H]) {
+		sprintf(s, texty[233], texty[22 + it->zmeny[VLS_MGZIVEL]]);
+		ls.insert(s);
+	}
+
+	for (i = 0; i < 16; i++) {
+		if (it->zmeny[VLS_KOUZLA] & (1 << i) && texty[i + 240] != NULL) {
+			ls.insert(texty[i + 240]);
+		}
+	}
+
+	for (i = ls.size(); i > 0; i--) {
+		if (ls[i - 1] != NULL) {
+			break;
+		}
+	}
+
+	cnt = i;
+	i = 0;
+	ys = cnt * 10 + 10;
+
+	do {
+		x = 320 - ID_XS / 2;
+		y = 240 - ys / 2;
+		create_frame(x, y, ID_XS, ys, 1);
+		xp = x + 5;
+		yp = y + 5;
+		ys = ID_YS - 10;
+		font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+		renderer->setFont(font, 0, 0, 0, 0);
+		yss = ys;
+
+		while (i < cnt) {
+			renderer->drawText(xp, yp, ls[i]);
+			yp += 10;
+			yss -= 10;
+			i++;
+		}
+
+		showview(0, 0, 0, 0);
+		getchar();
+		wire_proc();
+	} while (i < cnt);
+
+	return 1;
+}
 
 //Mob Procs ---------------------------------------
 

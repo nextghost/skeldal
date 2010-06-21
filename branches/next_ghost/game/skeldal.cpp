@@ -45,6 +45,7 @@
 #include "game/engine1.h"
 #include "game/wizard.h"
 #include "game/version.h"
+#include "libs/pcx.h"
 #include "libs/system.h"
 
 #define CONFIG_NAME SKELDALINI
@@ -142,12 +143,6 @@ static char windowedzoom=1;
 static char monitor=0;
 static int refresh=0;
 
-void pcx_fade_decomp(void **p,long *s);
-void pcx_15bit_decomp(void **p,long *s);
-void pcx_15bit_autofade(void **p,long *s);
-void pcx_15bit_backgrnd(void **p,long *s);
-void pcx_8bit_decomp(void **p,long *s);
-
 char *texty_knihy;
 static char *patch_file=NULL;
 int cur_page=0;
@@ -172,21 +167,20 @@ TDREGISTERS registred[]=
     {H_SIPKY_Z,"sipky_z.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_SIPKY_J,"sipky_j.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_BACKMAP,"backmap.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_FBOLD,"sada16.fon",NULL,SR_FONT},
-    {H_FSYMB,"ikones.fon",NULL,SR_FONT},
-    {H_FLITT,"font4x8.fon",NULL,SR_FONT},
-    {H_FLITT5,"font5x8.fon",NULL,SR_FONT},
-    {H_FONT6,"font6x9.fon",NULL,SR_FONT},
-    {H_FONT7,"sada7.fon",NULL,SR_FONT},
-    {H_FTINY,"tiny.fon",NULL,SR_FONT},
-    {H_FKNIHA,"kniha.fon",NULL,SR_FONT},
-    {H_FBIG,"timese.fon",NULL,SR_FONT},
+    {H_FBOLD,"sada16.fon",loadFont,SR_FONT},
+    {H_FSYMB,"ikones.fon",loadFont,SR_FONT},
+    {H_FLITT,"font4x8.fon",loadFont,SR_FONT},
+    {H_FLITT5,"font5x8.fon",loadFont,SR_FONT},
+    {H_FONT6,"font6x9.fon",loadFont,SR_FONT},
+    {H_FONT7,"sada7.fon",loadFont,SR_FONT},
+    {H_FTINY,"tiny.fon",loadFont,SR_FONT},
+    {H_FKNIHA,"kniha.fon",loadFont,SR_FONT},
+    {H_FBIG,"timese.fon",loadFont,SR_FONT},
     {H_IOBLOUK,"ioblouk.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_LODKA,"lodka.pcx",pcx_15bit_decomp,SR_BGRAFIKA},
     {H_IDESKA,"ideska.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_IMRIZ1,"imriz1.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_RAMECEK,"ramecek.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_ENEMY,"enemy.dat",NULL,SR_MAP},
     {H_BATTLE_BAR,"souboje.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_BATTLE_MASK,"m_souboj.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_MZASAH1,"mzasah1.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
@@ -195,15 +189,12 @@ TDREGISTERS registred[]=
     {H_PZASAH,"pzasah.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_BATTLE_CLICK,"souboje2.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_SIPKY_END,"sipky.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_KOUZLA,"kouzla.dat",NULL,SR_MAP},
     {H_LEBKA,"death.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_KOSTRA,"bones.pcx",pcx_fade_decomp,SR_BGRAFIKA},
     {H_RUNEHOLE,"runehole.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_RUNEMASK,"runemask.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_POWERBAR,"powerbar.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_POWERLED,"powerled.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_POSTAVY_DAT,"postavy.dat",NULL,SR_MAP},
-    {H_SOUND_DAT,"sound.dat",NULL,SR_MAP},
     {H_SND_SWHIT1,"swd_hit0.wav",wav_load,SR_ZVUKY},
     {H_SND_SWHIT2,"swd_hit1.wav",wav_load,SR_ZVUKY},
     {H_SND_SWMISS1,"swd_mis0.wav",wav_load,SR_ZVUKY},
@@ -234,9 +225,9 @@ TDREGISTERS registred[]=
     {H_SVITEK,"svitek.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_LOADTXTR,"loadtxtr.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_DIALOG,"dialog.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_DIALOGY_DAT,"dialogy.dat",NULL,SR_MAP},
+    {H_DIALOGY_DAT,"dialogy.dat",loadDialogs,SR_MAP},
     {H_SHOP_PIC,"shop.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_TELEPORT,"teleport.mgf",NULL,SR_BGRAFIKA},
+    {H_TELEPORT,"teleport.mgf",preloadStream,SR_BGRAFIKA},
     {H_FX,"fx.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_CHECKBOX,"checkbox.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_SETUPBAR,"volbades.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
@@ -265,7 +256,6 @@ TDREGISTERS registred[]=
     {H_CHARGEN,"chargen.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_CHARGENB,"chargenb.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_CHARGENM,"chargenm.pcx",pcx_8bit_nopal,SR_BGRAFIKA},
-    {H_BGR_BUFF,"",set_background,SR_BGRAFIKA},
 		{H_KREVMIN,"krevmin.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
 		{H_KREVMID,"krevmid.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
 		{H_KREVMAX,"krevmax.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
@@ -365,7 +355,6 @@ int set_video(int mode)
 
   default:er=-1;
   }*/
-  screen_buffer_size=Screen_GetScan()*480;
   return er;
   }
 
@@ -382,192 +371,70 @@ int ask_video()
   }
 */
 
-void pcx_fade_decomp(void **p, long *s) {
-	uint8_t *buff;
-
-	load_pcx((char*)*p, *s, A_FADE_PAL, &buff, gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
-// TODO: rewrite this properly
-//  *s=_msize(buff);
-	*s = *(unsigned short*)buff * *(unsigned short*)(buff + 2) + 10 * 512 + 16;
-	free(*p);
-	*p = buff;
+DataBlock *pcx_fade_decomp(SeekableReadStream &stream) {
+	return load_pcx(stream, A_FADE_PAL, gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
 }
 
-void pcx_15bit_decomp(void **p,long *s)
-  {
-  uint8_t *buff;
-  load_pcx((char*)*p,*s,A_16BIT,&buff);
-// TODO: rewrite this properly
-//  *s=_msize(buff);
-  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
-  free(*p);
-  *p=buff;
-  }
+DataBlock *pcx_15bit_decomp(SeekableReadStream &stream) {
+	return load_pcx(stream, A_16BIT);
+}
 
-void pcx_15bit_autofade(void **p,long *s)
-  {
-  uint8_t *buff;
-  load_pcx((char*)*p,*s,A_16BIT,&buff);
-// TODO: rewrite this properly
-//  *s=_msize(buff);
-  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
-  free(*p);
-  *p=buff;
-  buff[5]=0x80;
-  }
+DataBlock *pcx_15bit_autofade(SeekableReadStream &stream) {
+	return load_pcx(stream, A_16BIT);
+}
 
-void pcx_15bit_backgrnd(void **p,long *s)
-  {
-  uint8_t *buff;
-  long i;long *z;
-
-  if (*p!=NULL)
-     {
-     load_pcx((char*)*p,*s,A_16BIT,&buff);
-     z=(long *)buff;
-// TODO: rewrite this properly
-//     *s=_msize(buff);
-     *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) * 2 + 16;
-     for(i=*s;i>0;i-=4,z++) *z|=0x80008000;
-     free(*p);
-     *p=buff;
-     }
-  }
-
-void pcx_8bit_nopal(void **p,long *s)
-  {
-  uint8_t *buff;
-
-  if (*p!=NULL)
-     {
-     load_pcx((char*)*p,*s,A_8BIT_NOPAL,&buff);
-// TODO: rewrite this properly
-//     *s=_msize(buff);
-     *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 16;
-     free(*p);
-     *p=buff;
-     }
-  }
+DataBlock *pcx_8bit_nopal(SeekableReadStream &stream) {
+	return load_pcx(stream, A_8BIT_NOPAL);
+}
 
 
-void pcx_8bit_decomp(void **p,long *s)
-  {
-  uint8_t *buff;
-  load_pcx((char*)*p,*s,A_8BIT,&buff);
-// TODO: rewrite this properly
-//  *s=_msize(buff);
-  *s = *(unsigned short*)buff * *(unsigned short*)(buff+2) + 512 + 16;
-  free(*p);
-  *p=buff;
-  }
+DataBlock *pcx_8bit_decomp(SeekableReadStream &stream) {
+	return load_pcx(stream, A_8BIT);
+}
 
-void hi_8bit_correct(void **p,long *s)
-{
-  uint16_t *ptr=(uint16_t *)*p;
-  int i;
-  if (ptr[2]==8)
-  {
-	for (i=0;i<256;i++)
-	{
-//	  ptr[i+3]=((ptr[i+3] & ~0x1F)+ptr[i+3]);
-	  ptr[i+3] = Screen_RGB((ptr[i+3] >> 10) & 0x1f, (ptr[i+3] >> 5) & 0x1f, ptr[i+3] & 0x1f);
+DataBlock *hi_8bit_correct(SeekableReadStream &stream) {
+	return new TextureHi(stream);
+}
+
+void mouse_set_cursor(int cursor) {
+	static const Texture *ms_item = NULL;
+
+	if (cursor == last_ms_cursor) {
+		return;
 	}
-  } else if (ptr[2] == 15) {
-	Screen_FixPalette(ptr+3, ptr[0] * ptr[1]);
-  }
+
+	if (last_ms_cursor > 0) {
+		aunlock(last_ms_cursor);
+	}
+
+	if (cursor > 0) {
+		alock(cursor);
+		schovej_mysku();
+		register_ms_cursor(dynamic_cast<const Texture*>(ablock(cursor)));
+		last_ms_cursor = cursor;
+		set_ms_finger(0, 0);
+		ukaz_mysku();
+	} else {
+		const IconLib *tmp;
+
+		cursor = -cursor;
+
+		delete ms_item;
+		tmp = dynamic_cast<const IconLib*>(ablock(cursor / 18 + ikon_libs));
+		const Texture &cur = (*tmp)[cursor % 18];
+		ms_item = new SubTexture(cur, 0, 0, cur.width(), cur.height());
+		schovej_mysku();
+		register_ms_cursor(ms_item);
+		set_ms_finger(45 / 2, 55 / 2);
+		last_ms_cursor = -cursor;
+		ukaz_mysku();
+	}
 }
-
-
-void set_background(void **p,long *s)
-  {
-  uint16_t *data;
-  uint16_t *ptr;
-  uint16_t *pal;
-  char *pic;
-  int counter;
-
-  if (!bgr_handle) return;
-  if (bgr_distance==-1) return;
-  data = (uint16_t*)ablock(bgr_handle);
-  *s=Screen_GetXSize()*360*2;
-  *p = ptr = (uint16_t*)getmem(*s);
-  counter=Screen_GetXSize()*360;
-  pal=data+3+bgr_distance*256;
-  pic=(char *)data+PIC_FADE_PAL_SIZE;
-  do
-	*ptr++=pal[*pic++] | BGSWITCHBIT;
-  while (--counter);
-  }
-
-void mouse_set_cursor(int cursor)
-  {
-  static uint16_t *ms_item=NULL;
-
-  if (cursor==last_ms_cursor) return;
-  if (last_ms_cursor>0) aunlock(last_ms_cursor);
-  if (cursor>0)
-     {
-     alock(cursor);
-     schovej_mysku();
-     register_ms_cursor((uint16_t*)ablock(cursor));
-     last_ms_cursor=cursor;
-     set_ms_finger(0,0);
-     ukaz_mysku();
-     }
-  else
-     {
-     char *p;
-
-     cursor=-cursor;
-     if (ms_item==NULL) ms_item = (uint16_t*)getmem(IT_ICONE_SIZE);
-     p=(char *)ablock(cursor/18+ikon_libs);
-     memcpy(ms_item,&p[(cursor%18)*IT_ICONE_SIZE],IT_ICONE_SIZE);
-     schovej_mysku();
-     register_ms_cursor(ms_item);
-     set_ms_finger(45/2,55/2);
-     last_ms_cursor=-cursor;
-     ukaz_mysku();
-     }
-  }
 
 void mouse_set_default(int cursor)
   {
   default_ms_cursor=cursor;
   mouse_set_cursor(cursor);
-  }
-
-void set_font(int font,int c1,...)
-  {
-  static int last_font=-1;
-  int i;
-
-  if (last_font!=-1 && last_font!=font)
-     {
-     aunlock(last_font);
-     alock(font);
-     }
-  curfont = (uint16_t*)ablock(font);
-  if (c1>=0)
-     if (c1 & BGSWITCHBIT)
-      {
-      charcolors[0]=0xFFFF;
-      for (i=1;i<5;i++) charcolors[i]=c1 & ~0x20;
-      }
-     else
-      {
-      charcolors[0]=0;
-      for (i=1;i<5;i++) charcolors[i]=c1 & ~0x20;
-      }
-  else if (c1==-2)
-     {
-     int *p;
-
-     p=&c1;p++;
-     for (i=0;i<5;i++) charcolors[i]=*p++;
-     }
-  last_font=font;
-  default_font=curfont;
-  memcpy(f_default,charcolors,sizeof(charcolors));
   }
 
 void music_init()
@@ -917,15 +784,14 @@ void global_kbd(EVENT_MSG *msg, void **usr) {
 	return;
 }
 
-void  add_game_window()
-  {
-  WINDOW *p;
-  CTL3D *c;
+void add_game_window() {
+	WINDOW *p;
+	CTL3D *c;
 
-  c=def_border(0,0);
-  p=create_window(0,0,0,0,0,c);
-  desktop_add_window(p);
-  }
+	c = def_border(0, 0, 0, 0);
+	p = create_window(0, 0, 0, 0, 0, 0, 0, c);
+	desktop_add_window(p);
+}
 
 
 
@@ -967,7 +833,7 @@ void swap_error_exception()
   exit(0);
   }
 
-void *boldcz;
+Font *boldcz;
 
 #define ERR_WINX 320
 #define ERR_WINY 100
@@ -1003,26 +869,45 @@ char device_error(int chyba,char disk,char info)
   return (c==13?_ERR_RETRY:_ERR_FAIL);
   }
 */
-static void patch_error(int err)
-	{
-	position(0,460);
-	curcolor=0;bar(0,460,640,479);
-	memcpy(charcolors,flat_color(RGB555(31,31,31)),sizeof(charcolors));
-	curfont = (uint16_t*)boldcz;
-	switch(err)
-		{
-		case 0:outtext("File has been patched: ");outtext(patch_file);break;
-		case 1:outtext("Patch error within file: ");outtext(patch_file);break;
-		case 2:outtext("Cannot patch");break;
-		case 3:outtext("Missing or error in main data file, patching ingnored!");break;
+static void patch_error(int err) {
+	uint8_t fontPal[FONT_COLORS][3];
+
+	assert(0 && "Rewrite me");
+
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 460, 640, 479);
+	memset(fontPal, 255, sizeof(fontPal));
+	renderer->setFont(boldcz, 1, fontPal);
+
+	switch(err) {
+	case 0:
+		renderer->drawText(0, 460, "File has been patched: ");
+		renderer->drawText(renderer->textWidth("File has been patched: "), 460, patch_file);
 		break;
-		}
-	showview(0,460,640,20);
+
+	case 1:
+		renderer->drawText(0, 460, "Patch error within file: ");
+		renderer->drawText(renderer->textWidth("Patch error within file: "), 460, patch_file);
+		break;
+
+	case 2:
+		renderer->drawText(0, 460, "Cannot patch");
+		break;
+
+	case 3:
+		renderer->drawText(0, 460, "Missing or error in main data file, patching ingnored!");
+		break;
+	break;
 	}
 
-void *LoadDefaultFont(void) {
-	long tmp;
-	return afile("BOLDCZ.FON", SR_FONT, &tmp);
+	showview(0, 460, 640, 20);
+}
+
+Font *LoadDefaultFont(void) {
+	SeekableReadStream *stream = afile("BOLDCZ.FON", SR_FONT);
+	Font *ret = new Font(*stream);
+	delete stream;
+	return ret;
 }
 
 void init_skeldal(void)
@@ -1112,12 +997,6 @@ SEND_LOG("(INIT) Loading items.",0,0);
 SEND_LOG("(INIT) Loading shops.",0,0);
   load_shops();
   Mouse_MapWheel('H','P');
-  Automap_Init();
-  Builder_Init();
-  Chargen_Init();
-  Interface_Init();
-  Inv_Init();
-  Bgraph2_Init();
   }
 
 void wire_main_functs();
@@ -1199,7 +1078,6 @@ static void reload_map_handler(EVENT_MSG *msg, void **usr) {
 		hl_ptr = ikon_libs;
 		destroy_fly_map();
 		load_items();
-		kill_block(H_ENEMY);
 		kill_block(H_SHOP_PIC);
 		kill_block(H_DIALOGY_DAT);
 		load_shops();
@@ -1381,20 +1259,15 @@ void set_verify(char state);
                              "mov   ah,2eh"\
                              "int   21h"
 */
-void play_movie_seq(char *s,int y) {
-	int hic = full_video ? SMD_HICOLOR+128 : SMD_HICOLOR;
-	int cc = full_video ? SMD_256+128 : SMD_256;
+void play_movie_seq(char *s, int y) {
+	int hic = full_video ? SMD_HICOLOR + 128 : SMD_HICOLOR;
+	int cc = full_video ? SMD_256 + 128 : SMD_256;
 
-	uint16_t *lbuffer=Screen_GetAddr();
-	set_play_attribs(lbuffer, 0, banking, vmode == 5);
-
-	switch (vmode)
-	{
+	switch (vmode) {
 	case 1:
 		if (!banking) {
 			play_animation(s, cc, y, Sound_IsActive());
 		} else {
-			set_play_attribs(Screen_GetAddr(), 1, 0, vmode == 5);
 			play_animation(s, hic, y, Sound_IsActive());
 		}
 		break;
@@ -1403,37 +1276,40 @@ void play_movie_seq(char *s,int y) {
 		play_animation(s, hic, y, Sound_IsActive());
 		break;
 	default:
-		set_play_attribs(Screen_GetAddr(), 1, 0, vmode == 5);
 		play_animation(s, hic, y, Sound_IsActive());
 		break;
 	}
 }
 
 
-void play_anim(int anim_num)
-  {
-     char *s;
-     char *t,*z;
-     StringList titl;
+void play_anim(int anim_num) {
+	char *s;
+	char *t, *z;
+	StringList titl;
+	const Font *font;
+
 //     concat(s,pathtable[SR_VIDEO],texty[anim_num]);
 	s = Sys_FullPath(SR_VIDEO, texty[anim_num]);
-     if (!Sound_IsActive() || titles_on)
-      {
-      concat(t,s,"   ");
-      z=strrchr(t,'.');
-      if (z!=NULL)
-        {
-        strcpy(z,".TXT");
-        load_string_list_ex(titl, t);
-        }
-      }
-     set_title_list(&titl);
-     set_font(H_FBIG,RGB(200,200,200));
-     curcolor=0;bar(0,0,639,459);
-     showview(0,0,0,0);
-     play_movie_seq(s,60);
-     set_title_list(NULL);
-  }
+
+	if (!Sound_IsActive() || titles_on) {
+		concat(t, s, "   ");
+		z = strrchr(t, '.');
+
+		if (z != NULL) {
+			strcpy(z, ".TXT");
+			load_string_list_ex(titl, t);
+		}
+	}
+
+	set_title_list(&titl);
+	font = dynamic_cast<const Font*>(ablock(H_FBIG));
+	renderer->setFont(font, 1,200,200,200);
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 459);
+	showview(0, 0, 0, 0);
+	play_movie_seq(s, 60);
+	set_title_list(NULL);
+}
 
 
 /*main(int argc,char *argv[])
@@ -1658,45 +1534,49 @@ static void wire_load_saved()
   send_message(E_CLOSE_MAP,-1);
   }
 
-static void load_saved_game(void)
-  {
-  signed char game;
+static void load_saved_game(void) {
+	signed char game;
+	const Texture *tex;
 
-  err:
-  loadlevel.name[0]=0;
-  def_handle(H_ETOPBAR,"topbar_e.pcx",pcx_15bit_decomp,SR_BGRAFIKA);
-  schovej_mysku();wire_proc=wire_load_saved;
-  put_picture(0, 0, (uint16_t*)ablock(H_ETOPBAR));
-  put_picture(0, 378, (uint16_t*)ablock(H_DESK));
-  wire_save_load(4);
-  ukaz_mysku();
-  update_mysky();
-  Task_WaitEvent(E_CLOSE_MAP);
-  game = map_ret;
-  unwire_proc();
-  disable_click_map();
-  Task_WaitEvent(E_TIMER);
-  if (game!=-1)
-      {
-      reinit_kouzla_full();
-      open_story_file();
-	  memset(GlobEventList,0,sizeof(GlobEventList));
-      if (load_game(game))
-        {
-        send_message(E_ADD,E_IDLE,load_error_report);
-        Task_WaitEvent(E_CLOSE_MAP);
-        send_message(E_DONE,E_IDLE,load_error_report);
-        exit_wait=0;
-        goto err;
-        }
-      pick_set_cursor();
-      undef_menu();
-      init_game();
-      build_all_players();
-      game_big_circle(1);
-      exit_wait=1;
-      }
-  }
+err:
+	loadlevel.name[0] = 0;
+	def_handle(H_ETOPBAR, "topbar_e.pcx", pcx_15bit_decomp, SR_BGRAFIKA);
+	schovej_mysku();
+	wire_proc = wire_load_saved;
+	tex = dynamic_cast<const Texture*>(ablock(H_ETOPBAR));
+	renderer->blit(*tex, 0, 0, tex->palette());
+	tex = dynamic_cast<const Texture*>(ablock(H_DESK));
+	renderer->blit(*tex, 0, 378, tex->palette());
+	wire_save_load(4);
+	ukaz_mysku();
+	update_mysky();
+	Task_WaitEvent(E_CLOSE_MAP);
+	game = map_ret;
+	unwire_proc();
+	disable_click_map();
+	Task_WaitEvent(E_TIMER);
+
+	if (game != -1) {
+		reinit_kouzla_full();
+		open_story_file();
+		memset(GlobEventList, 0, sizeof(GlobEventList));
+
+		if (load_game(game)) {
+			send_message(E_ADD, E_IDLE, load_error_report);
+			Task_WaitEvent(E_CLOSE_MAP);
+			send_message(E_DONE, E_IDLE, load_error_report);
+			exit_wait = 0;
+			goto err;
+		}
+
+		pick_set_cursor();
+		undef_menu();
+		init_game();
+		build_all_players();
+		game_big_circle(1);
+		exit_wait = 1;
+	}
+}
 
 //static void start(va_list args)
 static void start()

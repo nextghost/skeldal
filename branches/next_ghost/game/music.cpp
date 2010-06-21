@@ -218,32 +218,34 @@ int calcul_volume(int chan,int x,int y,int side,int volume)
   return 0;
   }
 
-void wav_load(void **p,long *s)
-  {
-  const char *sr;
-  long *d;
-  char *c;
-  char *tg;
-  void *tgr;
-  size_t siz;
-  struct t_wave x[3];
+DataBlock *wav_load(SeekableReadStream &stream) {
+	const char *sr;
+	long *d;
+	char *c, *data;
+	char *tg;
+	void *tgr;
+	size_t siz;
+	struct t_wave x[3];
+	RawData *ret = new RawData;
 
-  sr = (char*)*p;
-  sr=find_chunk(sr,WAV_FMT);
-  read_chunk(sr,&x);
-  sr = (char*)*p;
-  sr=find_chunk(sr,WAV_DATA);
-  *s=get_chunk_size(sr);
-  tgr = tg = (char*)getmem(*s+sizeof(struct t_wave)+4);
-  memcpy(tgr,x,sizeof(struct t_wave));
-  tg+=sizeof(struct t_wave);
-  *(int *)tg=*s;
-  tg+=4;
-  read_chunk(sr,tg);
-  free(*p);
-  *p=tgr;
-  siz=*s;
-  *s+=sizeof(struct t_wave)+4;
+	data = new char[stream.size()];
+	stream.read(data, stream.size());
+	sr = data;
+	sr = find_chunk(sr, WAV_FMT);
+	read_chunk(sr, &x);
+	sr = data;
+	sr = find_chunk(sr, WAV_DATA);
+	siz = get_chunk_size(sr);
+	tgr = tg = (char*)getmem(siz + sizeof(struct t_wave) + 4);
+	memcpy(tgr, x, sizeof(struct t_wave));
+	tg += sizeof(struct t_wave);
+	*(int *)tg = siz;
+	tg += 4;
+	read_chunk(sr, tg);
+	delete[] data;
+	ret->data = tgr;
+	ret->size = siz;
+	return ret;
 /*  if (x[0].freq!=x[0].bps)
      {
      char s;
@@ -266,60 +268,71 @@ void wav_load(void **p,long *s)
      c=(char *)d;
      for(;s--;c++) *c^=0x80;
      }*/
-  }
+}
 
-void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
-  {
-  int chan;
-  int32_t blockid;
-  SND_INFO *track;
-  THANDLE_DATA *z;
-  char *s;
+void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p) {
+	int chan;
+	int32_t blockid;
+	SND_INFO *track;
+	THANDLE_DATA *z;
+	char *s;
 
-  if (!sound_enabled) return;
-  side;
-  chan=find_free_channel(p->soundid);
-  release_channel(chan);
-  track=&tracks[p->soundid];
-  track->data=p;
-  track->xpos=xd;
-  track->ypos=yd;
-  track->side=sided;
-  track_state[p->soundid]=-1;
-  if (p->bit16 & 0x8)
-     {
-     int vol=SND_EFF_MAXVOL*p->volume/100;
-     if (rnd(100)>50) Sound_SetVolume(chan,rnd(vol),vol);
-     else Sound_SetVolume(chan,vol,rnd(vol));
-     }
-  else
-     if (calcul_volume(chan,x-xd,y-yd,/*side-*/sided,p->volume)) return;
-  if (p->filename[0]==1) memcpy(&blockid,&p->filename[1],sizeof(int32_t));
-  else
-     {
-     blockid=find_handle(p->filename,wav_load);
-     if (blockid==-1)
-        {
-        z=def_handle(end_ptr,p->filename,wav_load,SR_ZVUKY);
-        blockid=end_ptr++;
-        if (level_preload) apreload(blockid);
-       }
-     memcpy(&p->filename[1],&blockid,sizeof(int32_t));
-     p->filename[0]=1;
-     }
-  alock(blockid);
-  s = (char*)ablock(blockid);
-  s+=p->offset+sizeof(struct t_wave)+4;
-  Sound_PlaySample(chan,s,p->end_loop-p->offset,p->start_loop-p->offset,p->freq,1+(p->bit16 & 1));
-  playings[chan].data=p;
-  playings[chan].xpos=xd;
-  playings[chan].ypos=yd;
-  playings[chan].side=sided;
-  playings[chan].volume=p->volume;
-  playings[chan].block=blockid;
-  chan_state[chan]=p->soundid;
-  track_state[p->soundid]=chan;
-  }
+	if (!sound_enabled) {
+		return;
+	}
+
+	chan = find_free_channel(p->soundid);
+	release_channel(chan);
+	track = &tracks[p->soundid];
+	track->data = p;
+	track->xpos = xd;
+	track->ypos = yd;
+	track->side = sided;
+	track_state[p->soundid] = -1;
+
+	if (p->bit16 & 0x8) {
+		int vol = SND_EFF_MAXVOL * p->volume / 100;
+
+		if (rnd(100) > 50) {
+			Sound_SetVolume(chan, rnd(vol), vol);
+		} else {
+			Sound_SetVolume(chan, vol, rnd(vol));
+		}
+	} else if (calcul_volume(chan, x - xd, y - yd, /*side-*/sided, p->volume)) {
+		return;
+	}
+
+	if (p->filename[0] == 1) {
+		memcpy(&blockid, &p->filename[1], sizeof(int32_t));
+	} else {
+		blockid = find_handle(p->filename, wav_load);
+
+		if (blockid == -1) {
+			z = def_handle(end_ptr, p->filename, wav_load, SR_ZVUKY);
+			blockid = end_ptr++;
+
+			if (level_preload) {
+				apreload(blockid);
+			}
+		}
+
+		memcpy(&p->filename[1], &blockid, sizeof(int32_t));
+		p->filename[0] = 1;
+	}
+
+	alock(blockid);
+	s = (char*)(dynamic_cast<const RawData*>(ablock(blockid))->data);
+	s += p->offset + sizeof(struct t_wave) + 4;
+	Sound_PlaySample(chan, s, p->end_loop - p->offset, p->start_loop - p->offset, p->freq, 1 + (p->bit16 & 1));
+	playings[chan].data = p;
+	playings[chan].xpos = xd;
+	playings[chan].ypos = yd;
+	playings[chan].side = sided;
+	playings[chan].volume = p->volume;
+	playings[chan].block = blockid;
+	chan_state[chan] = p->soundid;
+	track_state[p->soundid] = chan;
+}
 
 void restore_sound_name(TMA_SOUND *p)
   {
@@ -547,7 +560,7 @@ void play_sample_at_sector(int sample, int sector1, int sector2, int track, char
 
 	if (!track || oldtrack == -1) {
 		alock(sample);
-		s = (char*)ablock(sample);
+		s = (char*)(dynamic_cast<const RawData*>(ablock(sample))->data);
 		p = (struct t_wave *)s;
 		s += sizeof(struct t_wave);
 		siz = *(int *)s;
@@ -565,41 +578,50 @@ void play_sample_at_sector(int sample, int sector1, int sector2, int track, char
 	track_state[track] = chan;
 }
 
-void play_sample_at_channel(int sample,int channel,int vol)
-  {
-  char *s;
-  struct t_wave *p;
-  int siz;
+void play_sample_at_channel(int sample, int channel, int vol) {
+	char *s;
+	struct t_wave *p;
+	int siz;
 
-  if (!sound_enabled) return;
-  channel+=CHANNELS;
-  vol*=SND_EFF_MAXVOL/100;
-  Sound_SetVolume(channel,vol,vol);
-  if (locks[channel]) aunlock(locks[channel]);
-  alock(sample);
-  locks[channel]=sample;
-  s = (char*)ablock(sample);
-  p=(struct t_wave *)s;
-  s+=sizeof(struct t_wave);
-  siz=*(int *)s;s+=4;
-  Sound_PlaySample(channel,s,siz,siz,p->freq,(p->freq!=p->bps?2:1));
-  }
+	if (!sound_enabled) {
+		return;
+	}
 
-void create_sound_table_old()
-  {
-  char *c,*s;
-  long pocet;
-  int i=0;
+	channel += CHANNELS;
+	vol *= SND_EFF_MAXVOL / 100;
+	Sound_SetVolume(channel, vol, vol);
 
-  s = c = (char*)ablock(H_SOUND_DAT);
-  memcpy(&pocet,s,sizeof(long));c+=4;
-  while (pocet--)
-     {
-     if (c[0]!=0) sound_table.replace(i, c);
-     c=strchr(c,0)+1;
-     i++;
-     }
-  }
+	if (locks[channel]) {
+		aunlock(locks[channel]);
+	}
+
+	alock(sample);
+	locks[channel] = sample;
+	s = (char*)(dynamic_cast<const RawData*>(ablock(sample))->data);
+	p = (struct t_wave *)s;
+	s += sizeof(struct t_wave);
+	siz = *(int *)s;
+	s += 4;
+	Sound_PlaySample(channel, s, siz, siz, p->freq, (p->freq != p->bps ? 2 : 1));
+}
+
+void create_sound_table_old() {
+	int i, length;
+	const char *str;
+	SeekableReadStream *tmp = afile("SOUND.DAT", SR_MAP);
+	MemoryReadStream *stream = tmp->readStream(tmp->size());
+
+	delete tmp;
+	length = stream->readUint32LE();
+
+	for (i = 0; i < length; i++) {
+		str = stream->readCString();
+
+		if (str && *str) {
+			sound_table.replace(i, str);
+		}
+	}
+}
 
 
 void stop_track(int track)

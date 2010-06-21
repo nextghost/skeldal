@@ -22,6 +22,7 @@
  */
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/devices.h"
@@ -98,7 +99,7 @@ char clk_touch_vyk(int sector, int side, int xr, int yr) {
 			return 1;
 		} else {
 			int fc;
-			uint16_t *w;
+			const Texture *tex;
 
 			for (i = 0; v->items[i]; i++);
 
@@ -109,9 +110,9 @@ char clk_touch_vyk(int sector, int side, int xr, int yr) {
 
 			fc = picked_item[0];
 			fc = glob_items[fc-1].vzhled + face_arr[0];
-			w = (uint16_t*)ablock(fc);
+			tex = dynamic_cast<const Texture*>(ablock(fc));
 
-			if (v->xs < w[0] || v->ys < w[0]) {
+			if (v->xs < tex->width() || v->ys < tex->width()) {
 				bott_disp_text(texty[35]);
 				return 1;
 			}
@@ -130,8 +131,8 @@ char clk_touch_vyk(int sector, int side, int xr, int yr) {
 
 char clk_touch(int id, int xa, int ya, int xr, int yr) {
 	int x1, y1, x2, y2;
-	uint16_t *p;
 	int ext = 0;
+	const Texture *tex;
 
 	spell_cast = 0;
 	pick_set_cursor();
@@ -146,9 +147,9 @@ char clk_touch(int id, int xa, int ya, int xr, int yr) {
 	if (gameMap.sides()[id].flags & SD_SEC_VIS && gameMap.sides()[id].sec != 0) {
 		xa = gameMap.sides()[id].xsec << 1;
 		ya = 320 - (gameMap.sides()[id].ysec << 1);
-		p = (uint16_t *)ablock(gameMap.sides()[id].sec + num_ofsets[MAIN_NUM]);
-		x1 = *p++;
-		y1 = *p++;
+		tex = dynamic_cast<const Texture*>(ablock(gameMap.sides()[id].sec + num_ofsets[MAIN_NUM]));
+		x1 = tex->width();
+		y1 = tex->height();
 		x2 = xa + x1 / 2;
 		y2 = ya + y1 / 2;
 		y1 = y2 - y1;
@@ -170,6 +171,7 @@ char clk_touch(int id, int xa, int ya, int xr, int yr) {
 		a_touch(viewsector, viewdir);
 		return ext;
 	}
+
 	return 0;
 }
 
@@ -272,90 +274,105 @@ char clk_sleep(int id,int xa,int ya,int xr,int yr) {
 }
 
 
-char start_invetory(int id,int xa,int ya,int xr,int yr)
-  {
-  THUMAN *p;
-  int i;
-  uint16_t *xs;
+char start_invetory(int id, int xa, int ya, int xr, int yr) {
+	THUMAN *p;
+	int i;
+	const Texture *tex;
 
-  id;xa;ya;yr;
-  if (cur_mode==MD_ANOTHER_MAP) unwire_proc(),wire_proc();
-  if (bott_display!=BOTT_NORMAL)
-     {
-     schovej_mysku();
-     bott_draw(1);
-     other_draw();
-     ukaz_mysku();
-     showview(0,376,640,104);
-     return 1;
-     }
-  xs = (uint16_t*)ablock(H_OKNO);
-  i=xr/xs[0];
-  if (i<POCET_POSTAV)
-     {
-     i=group_sort[i];
-     p=&postavy[i];
-     if (p->used)
-        {
-        if (ms_last_event.event_type & 0x2)
-           {
-//         if (GetKeyState(VK_CONTROL) & 0x80)
-           if (get_control_state())
-              {
-              if (p->sektor==viewsector)
-                 {
-                 add_to_group(i);
-                 zmen_skupinu(p);
-                 return 1;
-                 }
-              return 1;
-              }
-           if (select_player!=i && select_player!=-1 && picked_item==NULL && !(cur_mode==MD_INV && battle_mode==MD_PREZBROJIT))
-                 {
-                 select_player=i;
-                 zmen_skupinu(p);
-                 bott_draw(1);
-                 if (cur_mode==MD_INBATTLE) return 1;
-                 }
-           if (p->groupnum!=cur_group || spell_cast)
-              {
-              if (picked_item!=NULL && p->sektor!=viewsector) return 0;
-              if (spell_cast && p->sektor==viewsector)
-                 {
-                 wire_fly_casting(i);
-                 spell_cast=0;
-                 mouse_set_default(H_MS_DEFAULT);
-                 return 1;
-                 }
-              zmen_skupinu(p);
-              if (cur_mode==MD_GAME && p->groupnum) return 1;
-              }
-           if (!p->groupnum && p->sektor!=viewsector) return 1;
-           unwire_proc();
-           wire_inv_mode(p);
-           return 0;
-           }
-        else
-           {
-           if (picked_item==NULL) return 0;
-           if (p->sektor==viewsector)
-           if (put_item_to_inv(p,picked_item))
-              {
-              free(picked_item);
-              picked_item=NULL;
-              }
-           pick_set_cursor();
-           if (cur_mode==MD_INV)
-             {
-             unwire_proc();
-             wire_inv_mode(human_selected);
-             }
-           return 1;
-           }
-         }
-     }
-  return 0;
-  }
+	if (cur_mode == MD_ANOTHER_MAP) {
+		unwire_proc();
+		wire_proc();
+	}
+
+	if (bott_display != BOTT_NORMAL) {
+		schovej_mysku();
+		bott_draw(1);
+		other_draw();
+		ukaz_mysku();
+		showview(0, 376, 640, 104);
+		return 1;
+	}
+
+	tex = dynamic_cast<const Texture*>(ablock(H_OKNO));
+	i = xr / tex->width();
+
+	if (i < POCET_POSTAV) {
+		i = group_sort[i];
+		p = &postavy[i];
+		if (p->used) {
+			if (ms_last_event.event_type & 0x2) {
+				if (get_control_state()) {
+					if (p->sektor == viewsector) {
+						add_to_group(i);
+						zmen_skupinu(p);
+						return 1;
+					}
+
+					return 1;
+				}
+
+				if (select_player != i && select_player != -1 && picked_item == NULL && !(cur_mode == MD_INV && battle_mode == MD_PREZBROJIT)) {
+					select_player = i;
+					zmen_skupinu(p);
+					bott_draw(1);
+
+					if (cur_mode == MD_INBATTLE) {
+						return 1;
+					}
+				}
+
+				if (p->groupnum != cur_group || spell_cast) {
+					if (picked_item != NULL && p->sektor != viewsector) {
+						return 0;
+					}
+
+					if (spell_cast && p->sektor == viewsector) {
+						wire_fly_casting(i);
+						spell_cast = 0;
+						mouse_set_default(H_MS_DEFAULT);
+						return 1;
+					}
+
+					zmen_skupinu(p);
+
+					if (cur_mode == MD_GAME && p->groupnum) {
+						return 1;
+					}
+				}
+
+				if (!p->groupnum && p->sektor != viewsector) {
+					return 1;
+				}
+
+				unwire_proc();
+				wire_inv_mode(p);
+				return 0;
+			} else {
+				if (picked_item == NULL) {
+					return 0;
+				}
+
+				if (p->sektor == viewsector) {
+					if (put_item_to_inv(p, picked_item)) {
+						free(picked_item);
+						picked_item = NULL;
+					}
+				}
+
+				pick_set_cursor();
+
+				if (cur_mode == MD_INV) {
+					unwire_proc();
+					wire_inv_mode(human_selected);
+				}
+
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 char clk_group_all(int id,int xa,int ya,int xr,int yr)
   {
@@ -427,20 +444,17 @@ char empty_clk(int id,int xa,int ya,int xr,int yr) //tato udalost slouzi ke zrus
   }
 
 static char sing_song_clk(int id, int xa, int ya, int xr, int yr) {
-	int8_t *xadr;
-	uint16_t *xs;
 	static char playing = 0;
 	char standardflute = gameMap.sectors()[viewsector].sector_type >= S_FLT_SMER && gameMap.sectors()[viewsector].sector_type < S_FLT_SMER + 4;
+	const Texture *tex;
 
 	if (bott_display != BOTT_FLETNA) {
 		return 0;
 	}
 
-	xadr = (int8_t*)ablock(H_FLETNA_MASK);
-	xs = (uint16_t *)xadr;
-	xadr += 6;
-	xadr += *xs * yr + xr;
-	id = *xadr;
+	tex = dynamic_cast<const Texture*>(ablock(H_FLETNA_MASK));
+	assert(tex->depth() == 1 && "Invalid click map texture depth");
+	id = tex->pixels()[yr * tex->width() + xr];
 	id--;
 
 	if (id < 0 || id > 12 || (ms_last_event.event_type & 0x4)) {
@@ -527,26 +541,33 @@ int click_map_size=0;
 T_CLK_MAP *global_click_map=NULL;
 int global_click_map_size=0;
 
-int find_in_click_map(MS_EVENT *ms,T_CLK_MAP *pt,int pocet,int *evtype)
-  {
-  int mscur=-1;
-  while (pocet--)
-     {
-     if (ms->x>=pt->xlu && ms->x<=pt->xrb && ms->y>=pt->ylu && ms->y<=pt->yrb)
-        {
-        if (mscur==-1) mscur=pt->cursor;
-        if ((*evtype) & pt->mask)
-         if (pt->proc!=NULL)
-           if (pt->proc(pt->id,ms->x,ms->y,ms->x-pt->xlu,ms->y-pt->ylu))
-              {
-              evtype[0]&=~pt->mask;
-              if (!evtype[0]) break;
-              }
-        }
-     pt++;
-     }
-  return mscur;
-  }
+int find_in_click_map(MS_EVENT *ms, T_CLK_MAP *pt, int pocet, int *evtype) {
+	int mscur = -1;
+
+	while (pocet--) {
+		if (ms->x >= pt->xlu && ms->x < pt->xrb && ms->y >= pt->ylu && ms->y < pt->yrb) {
+			if (mscur == -1) {
+				mscur = pt->cursor;
+			}
+
+			if ((*evtype) & pt->mask) {
+				if (pt->proc != NULL) {
+					if (pt->proc(pt->id, ms->x, ms->y, ms->x - pt->xlu, ms->y - pt->ylu)) {
+						evtype[0] &= ~pt->mask;
+
+						if (!evtype[0]) {
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		pt++;
+	}
+
+	return mscur;
+}
 
 
 void ms_clicker(EVENT_MSG *msg,void **usr) {

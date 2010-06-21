@@ -82,37 +82,13 @@ void Sys_PreparePaths(void);
 void Sys_ProcessEvents(void);
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
-int Screen_GetXSize(void);
-int Screen_GetYSize(void);
-uint16_t *Screen_GetAddr(void);
-uint16_t *Screen_GetBackAddr(void);
-long Screen_GetSize(void);
-void Screen_SetAddr(unsigned short *addr);
-void Screen_SetBackAddr();
-void Screen_Restore(void);
-void Screen_DrawRect(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys);
 void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys);
 void *Screen_PrepareWalk(int ypos);
 void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
 void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
-int Screen_GetScan(void);
 
-void Screen_StripBlt(uint16_t *data, unsigned int startline, unsigned long width);
 void Screen_Shift(int x, int y);
-
-void Screen_FixPalette(uint16_t *pal, int size);
-uint16_t Screen_FixMGIFPalette(uint16_t color);
-uint16_t Screen_RGB(unsigned r, unsigned g, unsigned b);
-uint16_t Screen_ColorMin(uint16_t c1, uint16_t c2);
-uint16_t Screen_ColorSub(uint16_t color, int sub);
-uint16_t Screen_ColorAvg(uint16_t c1, uint16_t c2);
-uint16_t Screen_ColorBlend(uint16_t c1, uint16_t c2, float factor);
-
-unsigned Screen_ColorR(uint16_t c);
-unsigned Screen_ColorG(uint16_t c);
-unsigned Screen_ColorB(uint16_t c);
-
 
 void ShareCPU(void);
 
@@ -151,10 +127,10 @@ void Timer_Sleep(int msec);
 int get_control_state(void);
 int get_shift_state(void);
 
-void *LoadDefaultFont(void);
 void *PrepareVideoSound(int mixfreq, int buffsize);
 void DoneVideoSound(void *buffer);
 char LoadNextVideoFrame(void *buffer, SeekableReadStream &stream, short *xlat, short *accnums, long *writepos);
+int LoadNextAudioFrame(void *buff, const int16_t *data, unsigned length);
 
 char OtevriUvodniOkno();
 char SelectAdventure();

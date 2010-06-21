@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
@@ -281,87 +282,157 @@ static char test_kriterii(void)
   return vysl;
   }
 
-static char proved_prikaz()
-  {
-  char prikaz[20];
-  char text[128];
-  int c;
-  char op;
+static char proved_prikaz() {
+	char prikaz[20];
+	char text[128];
+	int c;
+	char op;
 
-  ODD=cti_oddelovac();
-  while (ODD==OD_NEWLINE) ODD=cti_oddelovac(); //preskoc prazdne radky
-  if (ODD==OD_IN) return 0;  //cti znak {
-  do
-     {
-     while (ODD==OD_NEWLINE || ODD==OD_COMMAND) ODD=cti_oddelovac();
-     if (ODD!=0) error("O‡ek v  se jm‚no definice (p©¡klad: INDX=)");
-     cti_retezec(20,prikaz,1,1);
-     op=get_symbol(prikaz);
-     if (op==OP_BREAK) return 1;
-     ODD=cti_oddelovac();
-     if (ODD!=OD_SET) ex_error(OD_SET);
-     switch(op)
-        {
-        case OP_INDX:
-                if (cti_int_num(&c)) error("INDX=?");
-                if (c<0 || c>255) error("INDX=<0,255>");
-                index_tab[last_index=c].defined=1;
-                break;
-        case OP_TEXT:
-                cti_retezec(128,text,0,0);
-                index_tab[last_index].text=NewArr(char,strlen(text)+1);
-                strcpy(index_tab[last_index].text,text);
-                break;
-        case OP_MAP:
-                cti_retezec(13,index_tab[last_index].mapname,1,1);
-                break;
-        case OP_DRAW:
-                {
-                char file[20];
-                int xp,yp;
-                int h;
+	ODD = cti_oddelovac();
+	while (ODD == OD_NEWLINE) {
+		ODD = cti_oddelovac(); //preskoc prazdne radky
+	}
 
-                cti_retezec(20,file,1,1);
-                ODD=cti_oddelovac();if (ODD!=OD_COMMA)ex_error(OD_COMMA);
-                if (cti_int_num(&xp)) error("O‡ek v  se ‡¡slo xp");
-                ODD=cti_oddelovac();if (ODD!=OD_COMMA)ex_error(OD_COMMA);
-                if (cti_int_num(&yp)) error("O‡ek v  se ‡¡slo yp");
-                h=find_handle(file,pcx_8bit_decomp);
-                if (h==-1) def_handle(h=end_ptr++,file,pcx_8bit_decomp,SR_DIALOGS);
-                put_picture(xp, yp+SCREEN_OFFLINE, (uint16_t*)ablock(h));
-                }
-                break;
-        case OP_UNDEF:
-                if (cti_int_num(&c)) error("UNDEF=?");
-                if (c<0 || c>255) error("UNDEF=<0,255>");
-                index_tab[c].defined=0;
-                break;
-        case OP_USEMAP:
-                {
-                char file[20];
-                cti_retezec(20,file,1,1);
-                usemap=find_handle(file,pcx_8bit_nopal);
-                if (usemap==-1) def_handle(usemap=end_ptr++,file,pcx_8bit_nopal,SR_DIALOGS);
-                }
-                break;
-        case OP_ESCAPE:
-                {
-                char *s;
-                cti_retezec(20,prikaz,1,1);
-                fclose(glbm);
-								s=find_map_path(prikaz);
-                if ((glbm=fopen(s,"r"))==NULL) error(s);
-								free(s);
-                return 0;
-                }
-        default:error(prikaz);
-        }
-     ODD=cti_oddelovac();
-     if (ODD!=OD_COMMAND && ODD!=OD_NEWLINE && ODD!=EOF) ex_error(OD_COMMAND);
-     }
-  while (ODD!=OD_NEWLINE && ODD!=EOF);
-  return 0;
-  }
+	if (ODD == OD_IN) {
+		return 0;  //cti znak {
+	}
+
+	do {
+		while (ODD == OD_NEWLINE || ODD == OD_COMMAND) {
+			ODD = cti_oddelovac();
+		}
+
+		if (ODD != 0) {
+			error("O‡ek v  se jm‚no definice (p©¡klad: INDX=)");
+		}
+
+		cti_retezec(20, prikaz, 1, 1);
+		op = get_symbol(prikaz);
+
+		if (op == OP_BREAK) {
+			return 1;
+		}
+
+		ODD = cti_oddelovac();
+
+		if (ODD != OD_SET) {
+			ex_error(OD_SET);
+		}
+
+		switch(op) {
+		case OP_INDX:
+			if (cti_int_num(&c)) {
+				error("INDX=?");
+			}
+
+			if (c < 0 || c > 255) {
+				error("INDX=<0,255>");
+			}
+
+			index_tab[last_index = c].defined = 1;
+			break;
+
+		case OP_TEXT:
+			cti_retezec(128, text, 0, 0);
+			index_tab[last_index].text = NewArr(char, strlen(text) + 1);
+			strcpy(index_tab[last_index].text, text);
+			break;
+
+		case OP_MAP:
+			cti_retezec(13, index_tab[last_index].mapname, 1, 1);
+			break;
+
+		case OP_DRAW: {
+			char file[20];
+			int xp, yp;
+			int h;
+			const Texture *tex;
+
+			cti_retezec(20, file, 1, 1);
+			ODD = cti_oddelovac();
+
+			if (ODD != OD_COMMA) {
+				ex_error(OD_COMMA);
+			}
+
+			if (cti_int_num(&xp)) {
+				error("O‡ek v  se ‡¡slo xp");
+			}
+
+			ODD = cti_oddelovac();
+
+			if (ODD != OD_COMMA) {
+				ex_error(OD_COMMA);
+			}
+
+			if (cti_int_num(&yp)) {
+				error("O‡ek v  se ‡¡slo yp");
+			}
+
+			h = find_handle(file, pcx_8bit_decomp);
+
+			if (h == -1) {
+				def_handle(h = end_ptr++, file, pcx_8bit_decomp, SR_DIALOGS);
+			}
+
+			tex = dynamic_cast<const Texture*>(ablock(h));
+			renderer->blit(*tex, xp, yp + SCREEN_OFFLINE, tex->palette());
+			break;
+		}
+
+		case OP_UNDEF:
+			if (cti_int_num(&c)) {
+				error("UNDEF=?");
+			}
+
+			if (c < 0 || c > 255) {
+				error("UNDEF=<0,255>");
+			}
+
+			index_tab[c].defined = 0;
+			break;
+
+		case OP_USEMAP: {
+			char file[20];
+
+			cti_retezec(20, file, 1, 1);
+			usemap = find_handle(file, pcx_8bit_nopal);
+
+			if (usemap == -1) {
+				def_handle(usemap = end_ptr++, file, pcx_8bit_nopal, SR_DIALOGS);
+			}
+
+			break;
+		}
+
+		case OP_ESCAPE: {
+			char *s;
+
+			cti_retezec(20, prikaz, 1, 1);
+			fclose(glbm);
+			s = find_map_path(prikaz);
+
+			if ((glbm = fopen(s, "r")) == NULL) {
+				error(s);
+			}
+
+			free(s);
+			return 0;
+		}
+
+		default:
+			error(prikaz);
+		}
+
+		ODD = cti_oddelovac();
+
+		if (ODD != OD_COMMAND && ODD != OD_NEWLINE && ODD != EOF) {
+			ex_error(OD_COMMAND);
+		}
+	} while (ODD != OD_NEWLINE && ODD != EOF);
+
+	return 0;
+}
 
 static void preskoc_prikaz(void)
   {
@@ -547,7 +618,7 @@ static char load_index_map(int index)
 
 static char *fly_text;
 static int fly_x,fly_y,fly_xs,fly_ys;
-static uint16_t *fly_background;
+static Texture *fly_background;
 
 EVENT_PROC(global_map_point) {
 	MS_EVENT *ms;
@@ -565,6 +636,7 @@ EVENT_PROC(global_map_point) {
 	WHEN_MSG(E_MOUSE) {
 		int x, y, i, xs, ys;
 		char *ptr;
+		const Font *font;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -578,25 +650,28 @@ EVENT_PROC(global_map_point) {
 			if (y < 0 || y > 359) {
 				return;
 			} else {
+				const Texture *tex;
+
 				alock(usemap);
-				ptr = (char*)ablock(usemap);
-				ptr += 640 * y + x + 6;
-				i = *ptr;
+				tex = dynamic_cast<const Texture*>(ablock(usemap));
+				i = tex->pixels()[x + y * tex->width()];
 			}
 
 			y += 60;
 			schovej_mysku();
 
 			if (fly_background != NULL) {
-				put_picture(fly_x, fly_y, fly_background);
+				renderer->blit(*fly_background, fly_x, fly_y, fly_background->palette());
 			}
 
-			set_font(H_FTINY, RGB555(31, 31, 0));
+			font = dynamic_cast<const Font*>(ablock(H_FTINY));
+			renderer->setFont(font, 1, 255, 255, 0);
 			xs = fly_xs;
 			ys=fly_ys;
 
 			if (i != last_index) {
-				free(fly_background);
+				delete fly_background;
+				fly_background = NULL;
 				last_index = i;
 
 				if (index_tab[i].defined) {
@@ -609,14 +684,12 @@ EVENT_PROC(global_map_point) {
 				}
 				
 				if (fly_text != NULL) {
-					xs = text_width(fly_text) + 4;
-					ys = text_height(fly_text) + 4;
-					fly_background = NewArr(uint16_t, xs * ys * 2 + 6);
+					xs = renderer->textWidth(fly_text) + 4;
+					ys = renderer->textHeight(fly_text) + 4;
 				} else {
-				   fly_text = NULL;
-				   xs = 4;
-				   ys = 4;
-				   fly_background = NULL;
+					fly_text = NULL;
+					xs = 4;
+					ys = 4;
 				}
 			}
 
@@ -625,10 +698,9 @@ EVENT_PROC(global_map_point) {
 					x = 639 - xs;
 				}
 
-				get_picture(x, y, xs, ys, fly_background);
-				trans_bar(x, y, xs, ys, 0);
-				position(x + 2, y + 2);
-				outtext(fly_text);
+				fly_background = new SubTexture(*renderer, x, y, xs, ys);
+				trans_bar(x, y, xs, ys, 0, 0, 0);
+				renderer->drawText(x + 2, y + 2, fly_text);
 			}
 
 			send_message(E_MOUSE, msg); // WTF?!
@@ -660,7 +732,7 @@ EVENT_PROC(global_map_point) {
 	}
 
 	WHEN_MSG(E_DONE) {
-		free(fly_background);
+		delete fly_background;
 	}
 }
 

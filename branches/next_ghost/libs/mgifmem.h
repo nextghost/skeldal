@@ -25,6 +25,7 @@
 #define _MGIFMEM_H
 
 #include <inttypes.h>
+#include "libs/pcx.h"
 
 #pragma pack(1)
 typedef void (*MGIF_PROC)(int, SeekableReadStream &); //prvni cislo akce, druhy data akce
@@ -56,6 +57,29 @@ typedef struct mgif_header {
 	int16_t reserved[32];
 } MGIF_HEADER_T;
 
+#define FLAG_PLAYING 0x1
+#define FLAG_VIDEO 0x2
+#define FLAG_AUDIO 0x4
+#define FLAG_TEXT 0x8
+
+class MGIFReader : public Texture {
+private:
+	ReadStream &_stream;
+	MGIF_HEADER_T _header;
+	uint8_t _pal[4 * 256];
+	char *_text;
+	int16_t *_audio, accnums[2];
+	unsigned _textSize, _audioSize, _audioLength, _frame, _forceAlpha;
+
+public:
+	MGIFReader(ReadStream &stream, unsigned width, unsigned height, unsigned forceAlpha = 0);
+	~MGIFReader(void);
+
+	unsigned decodeFrame(void);
+	const char *getText(void) const { return _text; }
+	const int16_t *getAudio(void) const { return _audio; }
+	unsigned getAudioSize(void) const { return _audioLength; }
+};
 
 void mgif_install_proc(MGIF_PROC proc);
 int open_mgif(const mgif_header &mgh);

@@ -1,7 +1,7 @@
 bin_PROGRAMS = skeldal
 skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	game/clk_map.cpp game/dialogs.cpp game/dump.cpp game/enemy.cpp \
-	game/engine1.cpp game/engine2.cpp game/gamesave.cpp game/globmap.cpp \
+	game/engine1.cpp game/gamesave.cpp game/globmap.cpp \
 	game/chargen.cpp game/interfac.cpp game/inv.cpp game/book.cpp \
 	game/magic.cpp game/macros.cpp game/menu.cpp game/realgame.cpp \
 	game/setup.cpp game/skeldal.cpp game/music.cpp game/combat.cpp \
@@ -17,4 +17,4 @@ skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	libs/wav.h libs/strlite.h libs/sound.h libs/wav_mem.h libs/mgifmem.h \
 	libs/event.h libs/bmouse.h libs/basicobj.h libs/system.h \
 	libs/mgifmapmem.h libs/bgraph.h libs/strlists.h libs/inicfg.h \
-	libs/memman.h unix/system.h lzwc.h cztable.h
+	libs/memman.h sdl/screen.h unix/system.h lzwc.h cztable.h

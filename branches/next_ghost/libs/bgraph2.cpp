@@ -21,87 +21,838 @@
  *  Last commit made by: $Id$
  */
 #include <inttypes.h>
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "libs/bgraph.h"
 #include "libs/memman.h"
 
 //uint16_t *screen;
 //uint16_t curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,0),RGB555(0,20,0),0x0000,0x0000};
-uint16_t curcolor, charcolors[7];
+uint8_t curcolor[3];
+
 //long scr_linelen;
 //long scr_linelen2;
 //long dx_linelen;
 uint16_t *curfont,*writepos,writeposx;
-uint8_t fontdsize=0;
 uint8_t *palmem=NULL,*xlatmem=NULL;
 void (*showview)(uint16_t,uint16_t,uint16_t,uint16_t);
 char line480=0;
-long screen_buffer_size=0;
 char banking=0;
 char screenstate=0;
 char __skip_change_line_test=0;
 char no_restore_mode=0;
 
-uint16_t *mscursor,*mssavebuffer=NULL;
+const Texture *mscursor;
+Texture *mssavebuffer = NULL;
 int16_t mscuroldx=0,mscuroldy=0;
 int16_t mscuroldxs=1,mscuroldys=1;
 char write_window=0;
 long pictlen; // Tato promenna je pouze pouzita v BGRAPH1.ASM
 
+SoftRenderer *renderer = NULL, *backbuffer = NULL;
+
 void text_mode();
 
 void wait_retrace();
 
-void Bgraph2_Init(void) {
-	charcolors[0] = 0;
-	charcolors[1] = RGB555(0,31,0);
-	charcolors[2] = RGB555(0,28,0);
-	charcolors[3] = RGB555(0,24,0);
-	charcolors[4] = RGB555(0,20,0);
-	charcolors[5] = 0;
-	charcolors[6] = 0;
+Font::Font(SeekableReadStream &stream) {
+	int i, j, pix, bufsize = 0;
+	long pos;
+	unsigned seek;
+	uint8_t *buf = NULL;
+
+	for (i = 0; i < GLYPH_COUNT; i++) {
+		seek = stream.readUint16LE();
+		pos = stream.pos();
+		stream.seek(seek, SEEK_SET);
+		_glyphs[i].width = stream.readUint8();
+		_glyphs[i].height = stream.readUint8();
+
+		if (bufsize < _glyphs[i].width * _glyphs[i].height) {
+			delete[] buf;
+			buf = new uint8_t[_glyphs[i].width * _glyphs[i].height];
+		}
+
+		for (j = 0, pix = 0; pix < _glyphs[i].width * _glyphs[i].height; j++) {
+			buf[j] = stream.readUint8();
+
+			// end of glyph mark
+			if (buf[j] == 0xff) {
+				j++;
+				break;
+			// blank mark
+			} else if (buf[j] >= 8) {
+				pix += buf[j] - 6;
+			// color pixel
+			} else {
+				pix++;
+			}
+		}
+
+		if (_glyphs[i].width * _glyphs[i].height == 0) {
+			_glyphs[i].data = new uint8_t[1];
+			_glyphs[i].data[0] = 0xff;
+		} else {
+			_glyphs[i].data = new uint8_t[j];
+			memcpy(_glyphs[i].data, buf, j * sizeof(uint8_t));
+		}
+
+		stream.seek(pos, SEEK_SET);
+	}
+
+	delete[] buf;
 }
 
+Font::~Font(void) {
+	for (int i = 0; i < GLYPH_COUNT; i++) {
+		delete[] _glyphs[i].data;
+	}
+}
 
-void line32(uint16_t x1,uint16_t y1, uint16_t x2, uint16_t y2)
-  {
-  line_32(x1,y1,(x2-x1),(y2-y1));
-  }
+const Font::Glyph &Font::glyph(unsigned idx) const {
+	assert(idx < GLYPH_COUNT && "Invalid glyph");
+	return _glyphs[idx];
+}
 
-void position(uint16_t x,uint16_t y)
-  {
-  writeposx=x;
-  writepos=getadr32(x,y);
-  }
+unsigned Font::textWidth(const char *text) const {
+	unsigned i, sum;
 
-void rel_position_x(uint16_t x)
-  {
-  writeposx+=x;
-  writepos+=x;
-  }
+	for (i = 0, sum = 0; text[i]; i++) {
+		sum += glyph((unsigned char)text[i]).width;
+	}
 
+	return sum;
+}
 
-void outtext(const char *text) {
-	int pos;
+unsigned Font::textHeight(const char *text) const {
+	unsigned i, max, tmp;
 
-	if (fontdsize) {
-		while (*text) {
-			char2_32(writepos, curfont, *text);
-			pos = (charsize(curfont, *text) & 0xff) << 1;
-			writepos += pos;
-			writeposx += pos;
-			text++;
+	for (i = 0, max = 0; text[i]; i++) {
+		tmp = glyph((unsigned char)text[i]).height;
+		max = tmp > max ? tmp : max;
+	}
+
+	return max;
+}
+
+SoftRenderer::SoftRenderer(unsigned xs, unsigned ys) :
+	Texture(new uint8_t[xs * ys * 3], xs, ys, 3), _font(NULL) {
+
+	memset(_pixels, 0, xs * ys * 3 * sizeof(uint8_t));
+	memset(_fontPal, 0, sizeof(_fontPal));
+	// initial charcolors non-zero values
+	_fontPal[1][1] = 255;
+	_fontPal[2][1] = 231;
+	_fontPal[3][1] = 198;
+	_fontPal[4][1] = 165;
+}
+
+SoftRenderer::~SoftRenderer(void) {
+	delete[] _pixels;
+}
+
+void SoftRenderer::blit(const Texture &tex, int x, int y, const uint8_t *pal, unsigned scale, int mirror) {
+	int i, j, tx, ty, basex = 0, basey = 0;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	if (x < 0) {
+		basex = -x;
+	}
+
+	if (y < 0) {
+		basey = -y;
+	}
+
+	if (tex.depth() != 3 && !pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || tex.depth() == 4 || (tex.depth() == 1 && pal));
+
+	for (i = basey; i + y < height(); i++) {
+		ty = i *  320 / scale;
+
+		if (ty >= tex.height()) {
+			break;
 		}
-	} else {
-		while (*text) {
-			char_32(writepos, curfont, *text);
-			pos = charsize(curfont, *text) & 0xff;
-			writepos += pos;
-			writeposx += pos;
-			text++;
+
+		for (j = basex; j + x < width(); j++) {
+			tx = j * 320 / scale;
+
+			if (tx >= tex.width()) {
+				break;
+			}
+
+			if (mirror) {
+				tx = tex.width() - tx;
+			}
+
+			dst = _pixels + 3 * (j + x + (i + y) * width());
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (tx + ty * tex.width());
+			} else if (tex.depth() == 4) {
+				src = tex.pixels() + 4 * (tx + ty * tex.width()) + 1;
+
+				// alpha channel > 0 => transparent
+				if (src[-1]) {
+					continue;
+				}
+			} else if (!tex.pixels()[tx + ty * tex.width()]) {
+				continue;
+			} else {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+			}
+
+			dst[0] = src[0];
+			dst[1] = src[1];
+			dst[2] = src[2];
 		}
 	}
+}
+
+void SoftRenderer::rotBlit(const Texture &tex, int x, int y, float angle, const uint8_t *pal) {
+	float sine = sin(angle), cosine = cos(angle);
+	int i, j, sx, sy, tx, ty, basex, basey;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	basex = x >= 0 ? 0 : -x;
+	basey = y >= 0 ? 0 : -y;
+
+	if (tex.depth() != 3 && !pal) {
+		pal = tex.palette();
+	}
+
+	for (i = basey; i < tex.height(); i++) {
+		ty = i - tex.height() / 2;
+		dst = _pixels + 3 * (x + 2 * basex + (i + y) * width());
+
+		for (j = basex; j < tex.width(); j++) {
+			tx = j - tex.width() / 2;
+			sx = tx * cosine - ty * sine + tex.width() / 2;
+			sy = tx * sine + ty * cosine + tex.height() / 2;
+
+			if (sx < 0 || sx >= tex.width() || sy < 0 || sy >= tex.height()) {
+				*dst++ = 0;
+				*dst++ = 0;
+				*dst++ = 0;
+				continue;
+			}
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (sx + sy * tex.width());
+			} else {
+				src = pal + 3 * tex.pixels()[sx + sy * tex.width()];
+			}
+
+			*dst++ = *src++;
+			*dst++ = *src++;
+			*dst++ = *src++;
+		}
+	}
+}
+
+void SoftRenderer::enemyBlit(const Texture &tex, int x, int y, const uint8_t *pal, unsigned scale, int mirror) {
+	int i, j, tx, ty, basey = 0, basex = 0, tmp;
+	unsigned xs = tex.width() * scale / 320;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	y -= tex.height() * scale / 320;
+
+	if (y < 0) {
+		basey = -y;
+	}
+
+	if (xs * 320 / scale >= tex.width()) {
+		xs--;
+	}
+
+	if (tex.depth() != 3 && !pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+
+	for (i = basey; i + y < height(); i++) {
+		ty = i *  320 / scale;
+
+		if (ty >= tex.height()) {
+			break;
+		}
+
+		for (j = 0; ; j++) {
+			tx = j * 320 / scale;
+
+			if (tx >= tex.width()) {
+				break;
+			}
+
+			tmp = mirror ? xs - j : j;
+
+			if (tmp + x < 0 || tmp + x >= width()) {
+				continue;
+			}
+
+			dst = _pixels + 3 * (tmp + x + (i + y) * width());
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (tx + ty * tex.width());
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			} else if (tex.pixels()[tx + ty * tex.width()] == 0) {
+				continue;
+			} else if (tex.pixels()[tx + ty * tex.width()] == 1) {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				// explicit cast is needed
+				dst[0] = (src[0] + (unsigned)dst[0]) / 2;
+				dst[1] = (src[1] + (unsigned)dst[1]) / 2;
+				dst[2] = (src[2] + (unsigned)dst[2]) / 2;
+			} else {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			}
+		}
+	}
+}
+
+void SoftRenderer::transparentBlit(const Texture &tex, int x, int y, const uint8_t *pal, unsigned scale, int mirror) {
+	int i, j, tx, ty, basey = 0, tmp;
+	unsigned xs = tex.width() * scale / 320;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	y -= tex.height() * scale / 320;
+
+	if (y < 0) {
+		basey = -y;
+	}
+
+	if (xs * 320 / scale >= tex.width()) {
+		xs--;
+	}
+
+	if (tex.depth() != 3 && !pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+
+	for (i = basey; i + y < height(); i++) {
+		ty = i *  320 / scale;
+
+		if (ty >= tex.height()) {
+			break;
+		}
+
+		for (j = 0; ; j++) {
+			tx = j * 320 / scale;
+
+			if (tx >= tex.width()) {
+				break;
+			}
+
+			tmp = mirror ? xs - j : j;
+
+			if (tmp + x < 0 || tmp + x >= width()) {
+				continue;
+			}
+
+			dst = _pixels + 3 * (tmp + x + (i + y) * width());
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (tx + ty * tex.width());
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			} else if (tex.pixels()[tx + ty * tex.width()] == 0) {
+				continue;
+			} else if (tex.pixels()[tx + ty * tex.width()] & 0x80) {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				// explicit cast is needed
+				dst[0] = (src[0] + (unsigned)dst[0]) / 2;
+				dst[1] = (src[1] + (unsigned)dst[1]) / 2;
+				dst[2] = (src[2] + (unsigned)dst[2]) / 2;
+			} else {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			}
+		}
+	}
+}
+
+void SoftRenderer::wallBlit(const Texture &tex, int x, int y, int32_t *xtable, unsigned xlen, int16_t *ytable, unsigned ylen, const uint8_t *pal, int mirror) {
+	int i, j, tx, ty, basey = 0, tmp;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	if (y < 0) {
+		return;
+	}
+
+	if (tex.depth() != 3 && !pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+
+	if (mirror) {
+		x = width() - x - 1;
+	}
+
+	for (i = 0, ty = 0; y - i >= 0 && i < ylen; ty += ytable[i++]) {
+		if (ty >= tex.height()) {
+			break;
+		}
+
+		for (j = 0, tx = 0; j < xlen; tx += xtable[j++] + 1) {
+			if (tx >= tex.width()) {
+				break;
+			}
+
+			tmp = mirror ? x - j : x + j;
+
+			if (tmp < 0 || tmp >= width()) {
+				continue;
+			}
+
+			dst = _pixels + 3 * (tmp + (y - i) * width());
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (tx + ty * tex.width());
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			} else if (tex.pixels()[tx + ty * tex.width()] == 0) {
+				continue;
+			} else if (tex.pixels()[tx + ty * tex.width()] == 1) {
+				break;
+			} else {
+				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			}
+		}
+	}
+}
+
+void SoftRenderer::videoBlit(unsigned ypos, const Texture &tex, const uint8_t *pal) {
+	unsigned x, y, tmp1, tmp2;
+	uint8_t *dst;
+	const uint8_t *src1, *src2;
+
+	assert(width() >= 2 * tex.width() && height() >= 2 * tex.height());
+
+	if (!pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || tex.depth() == 4 || (tex.depth() == 1 && pal));
+
+	for (y = 0; y < tex.height() * 2 - 1; y++) {
+		for (x = 0; x < tex.width() * 2 - 1; x++) {
+			dst = _pixels + 3 * (x + (y + ypos) * width());
+			tmp1 = tmp2 = (x >> 1) + (y >> 1) * tex.width();
+
+			if (x & 1) {
+				tmp2++;
+			}
+
+			if (y & 1) {
+				tmp2 += tex.width();
+			}
+
+			if (tex.depth() == 3) {
+				src1 = tex.pixels() + tmp1 * 3;
+				src2 = tex.pixels() + tmp2 * 3;
+			} else if (tex.depth() == 4) {
+				src1 = tex.pixels() + tmp1 * 4 + 1;
+				src2 = tex.pixels() + tmp2 * 4 + 1;
+			} else {
+				src1 = pal + 3 * tex.pixels()[tmp1];
+				src2 = pal + 3 * tex.pixels()[tmp2];
+			}
+
+			if (tmp1 != tmp2) {
+				// explicit cast is needed
+				dst[0] = (src1[0] + (unsigned)src2[0]) / 2;
+				dst[1] = (src1[1] + (unsigned)src2[1]) / 2;
+				dst[2] = (src1[2] + (unsigned)src2[2]) / 2;
+			} else {
+				dst[0] = src1[0];
+				dst[1] = src1[1];
+				dst[2] = src1[2];
+			}
+		}
+	}
+}
+
+void SoftRenderer::rectBlit(const Texture &tex, int x, int y, unsigned tx, unsigned ty, unsigned w, unsigned h, const uint8_t *pal) {
+	unsigned i, j;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	if (!pal) {
+		pal = tex.palette();
+	}
+
+	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+
+	for (i = 0; i < h && i + y < height() && i + ty < tex.height(); i++) {
+		dst = _pixels + 3 * ((i + y) * width() + x);
+
+		for (j = 0; j < w && j + x < width() && j + tx < tex.width(); j++) {
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (j + tx + (i + ty) * tex.width());
+			} else {
+				src = tex.pixels() + j + tx + (i + ty) * tex.width();
+
+				if (!*src) {
+					dst += 3;
+					continue;
+				}
+
+				src = pal + 3 * *src;
+			}
+
+			*dst++ = src[0];
+			*dst++ = src[1];
+			*dst++ = src[2];
+		}
+	}
+}
+
+void SoftRenderer::maskFill(const Texture &tex, int x, int y, uint8_t mask, int action, uint8_t r, uint8_t g, uint8_t b) {
+	int i, j, basex = 0, basey = 0;
+	uint8_t *dst;
+	const uint8_t *src;
+
+	if (x < 0) {
+		basex = -x;
+	}
+
+	if (y < 0) {
+		basey = -y;
+	}
+
+	assert(tex.depth() == 1);
+
+	for (i = basey; i + y < height() && i < tex.height(); i++) {
+		for (j = basex; j + x < width() && j < tex.width(); j++) {
+			src = tex.pixels() + j + i * tex.width();
+			dst = _pixels + 3 * (j + x + (i + y) * width());
+
+			if (*src != mask) {
+				continue;
+			}
+
+			switch (action) {
+			case 0:
+				dst[0] = r;
+				dst[1] = g;
+				dst[2] = b;
+				break;
+
+			case 1:
+				dst[0] = (dst[0] + (unsigned)r) / 2;
+				dst[1] = (dst[1] + (unsigned)g) / 2;
+				dst[2] = (dst[2] + (unsigned)b) / 2;
+				break;
+
+			case 2:
+				assert(r && g && b && "Invalid fraction");
+				dst[0] -= dst[0] / r;
+				dst[1] -= dst[1] / g;
+				dst[2] -= dst[2] / b;
+				break;
+
+			}
+		}
+	}
+}
+
+void SoftRenderer::maskBlit(const Texture &tex, const Texture &mask, int x, int y, uint8_t shape, const uint8_t *pal) {
+	int i, j, basex = 0, basey = 0;
+	uint8_t *dst;
+	const uint8_t *src, *msk;
+
+	if (x < 0) {
+		basex = -x;
+	}
+
+	if (y < 0) {
+		basey = -y;
+	}
+
+	if (!pal) {
+		pal = tex.palette();
+	}
+
+	assert(mask.depth() == 1 && (tex.depth() == 3 || (tex.depth() == 1 && pal)));
+	assert(mask.width() == tex.width() && mask.height() == tex.height());
+
+	for (i = basey; i + y < height() && i < tex.height(); i++) {
+		for (j = basex; j + x < width() && j < tex.width(); j++) {
+			msk = mask.pixels() + j + i * tex.width();
+			dst = _pixels + 3 * (j + x + (i + y) * width());
+
+			if (*msk != shape) {
+				continue;
+			}
+
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (i * tex.width() + j);
+			} else {
+				src = pal + 3 * tex.pixels()[i * tex.width() + j];
+			}
+
+			dst[0] = src[0];
+			dst[1] = src[1];
+			dst[2] = src[2];
+		}
+	}
+}
+
+void SoftRenderer::bar(unsigned x, unsigned y, unsigned w, unsigned h, uint8_t r, uint8_t g, uint8_t b, int action) {
+	int i, j;
+	uint8_t *dst;
+
+	for (i = 0; i < h && i + y < height(); i++) {
+		dst = _pixels + 3 * ((i + y) * width() + x);
+
+		for (j = 0; j < w && j + x < width(); j++) {
+			switch (action) {
+			case 0:
+				*dst++ = r;
+				*dst++ = g;
+				*dst++ = b;
+				break;
+
+			case 1:
+				dst[0] = (dst[0] + (unsigned)r) / 2;
+				dst[1] = (dst[1] + (unsigned)g) / 2;
+				dst[2] = (dst[2] + (unsigned)b) / 2;
+				dst += 3;
+				break;
+
+			case 2:
+				dst[0] -= dst[0] / r;
+				dst[1] -= dst[1] / g;
+				dst[2] -= dst[2] / b;
+				dst += 3;
+				break;
+
+			case 3:
+				*dst++ ^= r;
+				*dst++ ^= g;
+				*dst++ ^= b;
+				break;
+
+			default:
+				assert(0 && "Action not supported");
+			}
+		}
+	}
+}
+
+void SoftRenderer::fcBlit(const Texture &tex, unsigned y, const T_FLOOR_MAP *celmask, const uint8_t *fog, const uint8_t *pal) {
+	int i;
+	float factor;
+	const uint8_t *src;
+	uint8_t *dst;
+
+	assert(celmask && "celmask not set");
+	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+
+	do {
+		dst = _pixels + depth() * ((y + celmask->dsty) * width() + celmask->x);
+		factor = (float)celmask->srcy / (tex.height() - 1);
+
+		for (i = 0; i < celmask->linewidth; i++) {
+			if (tex.depth() == 3) {
+				src = tex.pixels() + 3 * (celmask->srcy * tex.width() + celmask->x + i);
+			} else {
+				src = pal + 3 * tex.pixels()[celmask->srcy * tex.width() + celmask->x + i];
+			}
+
+			if (fog) {
+				*dst++ = src[0] + factor * (fog[0] - src[0]);
+				*dst++ = src[1] + factor * (fog[1] - src[1]);
+				*dst++ = src[2] + factor * (fog[2] - src[2]);
+			} else {
+				*dst++ = src[0];
+				*dst++ = src[1];
+				*dst++ = src[2];
+			}
+		}
+	} while ((celmask++)->counter);
+}
+
+void SoftRenderer::drawText(int x, int y, const char *text) {
+	unsigned char c;
+
+	for (; *text; text++, x += charWidth(c)) {
+		c = (unsigned char)*text;
+		drawChar(x, y, c);
+	}
+}
+
+void SoftRenderer::drawAlignedText(int x, int y, int halign, int valign, const char *text) {
+	x -= textWidth(text) * halign / 2;
+	y -= textHeight(text) * valign / 2;
+	drawText(x, y, text);
+}
+
+void SoftRenderer::drawChar(int x, int y, unsigned char c) {
+	int i, j;
+
+	assert(_font && "Font not set");
+
+	const Font::Glyph &glyph = _font->glyph(c);
+	const uint8_t *ptr = glyph.data;
+	uint8_t tmp = 0;
+
+	for (i = 0; i < glyph.width && x + i <= width(); i++) {
+		for (j = 0; j < glyph.height && y + j <= height(); j++) {
+			if (tmp--) {
+				continue;
+			}
+
+			tmp = *ptr++;
+
+			if (!tmp) {
+				continue;
+			} else if (tmp == 0xff) {
+				return;
+			} else if (tmp >= 8) {
+				tmp -= 7;
+				continue;
+			}
+
+			if (x + i >= 0 && y + j >= 0 && (tmp != 1 || _shadow)) {
+				_pixels[3 * (x + i + (y + j) * width())] = _fontPal[tmp - 1][0];
+				_pixels[3 * (x + i + (y + j) * width()) + 1] = _fontPal[tmp - 1][1];
+				_pixels[3 * (x + i + (y + j) * width()) + 2] = _fontPal[tmp - 1][2];
+			}
+
+			tmp = 0;
+		}
+	}
+}
+
+void SoftRenderer::setFont(const Font *font, int shadow, uint8_t r, uint8_t g, uint8_t b) {
+	_font = font;
+	_shadow = shadow;
+
+	_fontPal[0][0] = 0;
+	_fontPal[0][1] = 0;
+	_fontPal[0][2] = 0;
+
+	for (int i = 1; i < 5; i++) {
+		_fontPal[i][0] = r;
+		_fontPal[i][1] = g;
+		_fontPal[i][2] = b;
+	}
+}
+
+void SoftRenderer::setFont(const Font *font, int shadow, uint8_t pal[][3]) {
+	_font = font;
+	_shadow = shadow;
+	memcpy(_fontPal, pal, sizeof(_fontPal));
+}
+
+void SoftRenderer::setFontColor(unsigned idx, uint8_t r, uint8_t g, uint8_t b) {
+	assert(idx < FONT_COLORS);
+
+	_fontPal[idx][0] = r;
+	_fontPal[idx][1] = g;
+	_fontPal[idx][2] = b;
+}
+
+unsigned SoftRenderer::textWidth(const char *text) const {
+	assert(_font && "Font not set");
+	return _font->textWidth(text);
+}
+
+unsigned SoftRenderer::textHeight(const char *text) const {
+	assert(_font && "Font not set");
+	return _font->textHeight(text);
+}
+
+unsigned SoftRenderer::charWidth(char text) const {
+	assert(_font);
+	return _font->glyph((unsigned char)text).width;
+}
+
+unsigned SoftRenderer::charHeight(char text) const {
+	assert(_font);
+	return _font->glyph((unsigned char)text).height;
+}
+
+FadeRenderer::FadeRenderer(const uint8_t *pal, unsigned width, unsigned height, uint8_t r, uint8_t g, uint8_t b) : TextureFade(pal, width, height, r, g, b) { }
+
+void FadeRenderer::blit(const Texture &tex, int x, int y) {
+	int i, j, basex, basey;
+	const uint8_t *src;
+	uint8_t *dst;
+	assert(tex.depth() == 1 && "Invalid texture depth");
+
+	basex = x < 0 ? -x : 0;
+	basey = y < 0 ? -y : 0;
+
+	for (i = basey; i < tex.height() && i + y < height(); i++) {
+		src = tex.pixels() + basex + i * tex.width();
+		dst = _pixels + basex + x + (i + y) * width();
+
+		for (j = basex; j < tex.width() && j + x < width(); j++, src++, dst++) {
+			if (*src) {
+				*dst = *src;
+			}
+		}
+	}
+}
+
+IconLib::IconLib(ReadStream &stream, unsigned count) : DataBlock(),
+	_icons(NULL), _count(count) {
+	int i;
+
+	assert(count > 0);
+
+	_icons = new TexturePal*[_count];
+
+	for (i = 0; i < _count; i++) {
+		_icons[i] = new TexturePal(stream);
+	}
+}
+
+IconLib::~IconLib(void) {
+	int i;
+
+	for (i = 0; i < _count; i++) {
+		delete _icons[i];
+	}
+
+	delete[] _icons;
+}
+
+const TexturePal &IconLib::operator[](unsigned idx) const {
+	assert(idx < _count && "Index out of bounds");
+	return *_icons[idx];
+}
+
+DataBlock *loadFont(SeekableReadStream &stream) {
+	return new Font(stream);
 }
 
 /*MODEinfo vesadata[3];
@@ -442,18 +1193,35 @@ void closemode()
 
   }
 
-static void showview_dx(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
-  {
+static void showview_dx(uint16_t x, uint16_t y, uint16_t xs, uint16_t ys) {
 //  register longint a;
 
-  if (x>Screen_GetXSize() || y>Screen_GetYSize()) return;
-  if (xs==0) xs=Screen_GetXSize();
-  if (ys==0) ys=Screen_GetYSize();
-  xs+=2;ys+=2;
-  if (x+xs>Screen_GetXSize()) xs=Screen_GetXSize()-x;
-  if (y+ys>Screen_GetYSize()) ys=Screen_GetYSize()-y;
-  Screen_DrawRect(x,y,xs,ys);  
-  }
+	if (x > renderer->width() || y > renderer->height()) {
+		return;
+	}
+
+	if (xs == 0) {
+		xs = renderer->width();
+	}
+
+	if (ys == 0) {
+		ys = renderer->height();
+	}
+
+	xs += 2;
+	ys += 2;
+
+	if (x + xs > renderer->width()) {
+		xs = renderer->width() - x;
+	}
+
+	if (y + ys > renderer->height()) {
+		ys = renderer->height() - y;
+	}
+
+	renderer->drawRect(x, y, xs, ys);
+}
+
 /*
 static void showview64b(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {
@@ -513,110 +1281,96 @@ void showview_lo(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   b=x+640*y;
   redrawbox_lo(xs,ys,(void *)((char *)screen+a),(void *)((char *)lbuffer+b),xlatmem);
   }
-
-
-
 */
-void show_ms_cursor(int16_t x,int16_t y)
-  {
-  int16_t xs,ys;
-
-  int mx =  Screen_GetXSize() - 1;
-  int my =  Screen_GetYSize() - 1;
-
-  if (x<0) x=0;
-  if (x>mx) x=mx;
-  if (y<0) y=0;
-  if (y>my) y=my;
-  xs=*(int16_t *)mscursor;
-  ys=*((int16_t *)mscursor+1);
-  get_picture(x,y,xs,ys,mssavebuffer);
-  put_picture(x,y,mscursor);
-  mscuroldx=x;
-  mscuroldy=y;
-  }
-
-void hide_ms_cursor()
-  {
-  put_picture(mscuroldx,mscuroldy,mssavebuffer);
-  }
-
-void *register_ms_cursor(uint16_t *cursor)
-  {
-  int16_t xs,ys;
-
-  mscursor=cursor;
-  xs=*(int16_t *)mscursor;
-  ys=*((int16_t *)mscursor+1);
-  if (mssavebuffer!=NULL) free(mssavebuffer);
-  mssavebuffer = (uint16_t*)malloc(xs*ys*2+10);//5 bajtu pro strejcka prihodu
-  return mssavebuffer;
-  }
-
-void move_ms_cursor(int16_t newx,int16_t newy,char nodraw)
-  {
-  int16_t xs,ys;
-  int mx =  Screen_GetXSize() - 1;
-  int my =  Screen_GetYSize() - 1;
-  static int16_t msshowx=0,msshowy=0;
-
-  xs=*(int16_t *)mscursor;
-  ys=*((int16_t *)mscursor+1);
-  if (nodraw)
-     {
-     showview(msshowx,msshowy,xs,ys);
-     msshowx=mscuroldx;
-     msshowy=mscuroldy;
-     return;
-     }
-  if (newx<0) newx=0;
-  if (newy<0) newy=0;
-  if (newx>mx) newx=mx;
-  if (newy>my) newy=my;
-  put_picture(mscuroldx,mscuroldy,mssavebuffer);
-  show_ms_cursor(newx,newy);
-  mscuroldx=newx;mscuroldy=newy;
-  showview(msshowx,msshowy,mscuroldxs,mscuroldys);
-  if (mscuroldx!=msshowx || mscuroldy!=msshowy)showview(mscuroldx,mscuroldy,mscuroldxs,mscuroldys);
-  msshowx=newx;msshowy=newy;
-  showview(msshowx,msshowy,xs,ys);
-  mscuroldxs=xs;
-  mscuroldys=ys;
-  }
-
-int text_height(const char *text)
-  {
-  char max=0,cur;
-
-  while (*text)
-     if ((cur=charsize(curfont,*text++)>>8)>max) max=cur;
-  return max<<fontdsize;
-  }
-
-int text_width(const char *text)
-  {
-  int suma=0;
-
-  while (*text)
-     suma+=charsize(curfont,*text++) & 0xff;
-  return suma<<fontdsize;
-  }
 
 
-void set_aligned_position(int x,int y,char alignx,char aligny,const char *text)
-  {
-  switch (alignx)
-     {
-     case 1:x-=text_width(text)>>1;break;
-     case 2:x-=text_width(text);break;
-     }
-  switch (aligny)
-     {
-     case 1:y-=text_height(text)>>1;break;
-     case 2:y-=text_height(text);break;
-     }
-  position(x,y);
-  }
+void show_ms_cursor(int x, int y) {
+	int16_t xs, ys;
+
+	int mx = renderer->width() - 1;
+	int my = renderer->height() - 1;
+
+	if (x < 0) {
+		x = 0;
+	}
+
+	if (x > mx) {
+		x = mx;
+	}
+
+	if (y < 0) {
+		y = 0;
+	}
+
+	if (y > my) {
+		y = my;
+	}
+
+	delete mssavebuffer;
+	mssavebuffer = new SubTexture(*renderer, x, y, mscursor->width(), mscursor->height());
+	renderer->blit(*mscursor, x, y, mscursor->palette());
+	mscuroldx = x;
+	mscuroldy = y;
+}
+
+void hide_ms_cursor() {
+	renderer->blit(*mssavebuffer, mscuroldx, mscuroldy, mssavebuffer->palette());
+}
+
+void register_ms_cursor(const Texture *cursor) {
+	mscursor = cursor;
+	delete mssavebuffer;
+	mssavebuffer = NULL;
+}
+
+void move_ms_cursor(int16_t newx, int16_t newy, char nodraw) {
+	unsigned xs, ys;
+	int mx = renderer->width() - 1;
+	int my = renderer->height() - 1;
+	static int16_t msshowx = 0, msshowy = 0;
+
+	xs = mscursor->width();
+	ys = mscursor->height();
+
+	if (nodraw) {
+		showview(msshowx, msshowy, xs, ys);
+		msshowx = mscuroldx;
+		msshowy = mscuroldy;
+		return;
+	}
+
+	if (newx < 0) {
+		newx = 0;
+	}
+
+	if (newy < 0) {
+		newy = 0;
+	}
+
+	if (newx > mx) {
+		newx = mx;
+	}
+
+	if (newy > my) {
+		newy = my;
+	}
+
+	renderer->blit(*mssavebuffer, mscuroldx, mscuroldy, mssavebuffer->palette());
+	show_ms_cursor(newx, newy);
+	mscuroldx = newx;
+	mscuroldy = newy;
+	showview(msshowx, msshowy, mscuroldxs, mscuroldys);
+
+	if (mscuroldx != msshowx || mscuroldy != msshowy) {
+		showview(mscuroldx, mscuroldy, mscuroldxs, mscuroldys);
+	}
+
+	msshowx = newx;
+	msshowy = newy;
+	showview(msshowx, msshowy, xs, ys);
+	mscuroldxs = xs;
+	mscuroldys = ys;
+}
 
 /*void pal_optimize()
   {
@@ -682,14 +1436,15 @@ void set_aligned_position(int x,int y,char alignx,char aligny,const char *text)
   free(stattable);
   }
 */
-void rectangle(int x1,int y1,int x2,int y2,int color)
-  {
-  curcolor=color;
-  hor_line(x1,y1,x2);
-  hor_line(x1,y2,x2);
-  ver_line(x1,y1,y2);
-  ver_line(x2,y1,y2);
-  }
+void rectangle(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, uint8_t b) {
+	curcolor[0] = r;
+	curcolor[1] = g;
+	curcolor[2] = b;
+	hor_line(x1,y1,x2);
+	hor_line(x1,y2,x2);
+	ver_line(x1,y1,y2);
+	ver_line(x2,y1,y2);
+}
 
 void *create_special_palette()
   {

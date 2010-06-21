@@ -48,158 +48,197 @@
 
 #define MES_MAXSIZE 500
 #define CHECK_BOX_ANIM 6
+#define COL_SIZE 776
 
 //static const char *error_hack = "....Source compiled.";
 static char shadow_enabled=1;
 
 //uint16_t color_topbar[7]={0,RGB555(22,14,4),RGB555(24,16,6),RGB555(25,17,7)};
-uint16_t color_topbar[7] = {0};
+uint8_t color_topbar[7][3] = {
+	{0,0,0},
+	{181,115,33},
+	{198,132,49},
+	{206,140,57}
+};
 
 int input_txtr=H_LOADTXTR;
 
-void Interface_Init(void) {
-	color_topbar[0] = 0;
-	color_topbar[1] = RGB555(22,14,4);
-	color_topbar[2] = RGB555(24,16,6);
-	color_topbar[3] = RGB555(25,17,7);
+PalBlock::PalBlock(SeekableReadStream &stream, uint8_t r, uint8_t g, uint8_t b)
+	: _pals(NULL), _size(0) {
+
+	int i, j, k;
+
+	_size = stream.size() / COL_SIZE;
+	assert(_size && "Invalid palette data");
+	_pals = new fadepal_t[_size];
+
+	for (i = 0; i < _size; i++) {
+		stream.readUint32LE();
+		stream.readUint32LE();
+
+		for (j = 0; j < PAL_SIZE; j++) {
+			_pals[i][0][j] = stream.readUint8();
+		}
+
+		palette_shadow(_pals[i], r, g, b);
+	}
 }
 
-void create_frame(int x,int y,int xs,int ys,char clear)
-   {
-   uint16_t *line;
-   uint16_t *col;
-   int i;
+PalBlock::~PalBlock(void) {
+	delete[] _pals;
+}
 
-   x-=VEL_RAMEC;
-   y-=VEL_RAMEC;
-   xs=(xs+VEL_RAMEC-1)/VEL_RAMEC+1;
-   ys=(ys+VEL_RAMEC-1)/VEL_RAMEC+1;
-   line=Screen_GetAddr()+y*Screen_GetXSize()+x;
-   col=line;
-   put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,0,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
-   for(i=1;i<xs;i++)
-     {
-     put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,VEL_RAMEC,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
-     }
-  put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,VEL_RAMEC*2,VEL_RAMEC,VEL_RAMEC);
-  line+=Screen_GetXSize()*VEL_RAMEC;
-  for(i=1;i<ys;i++)
-     {
-     put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),line,VEL_RAMEC*3,VEL_RAMEC,VEL_RAMEC);
-     put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),line+VEL_RAMEC*xs,VEL_RAMEC*4,VEL_RAMEC,VEL_RAMEC);
-     line+=Screen_GetXSize()*VEL_RAMEC;
-     }
-  col=line;
-  put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,VEL_RAMEC*5,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
-  for(i=1;i<xs;i++)
-     {
-     put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,VEL_RAMEC*6,VEL_RAMEC,VEL_RAMEC);col+=VEL_RAMEC;
-     }
-  put_8bit_clipped((uint16_t*)ablock(H_RAMECEK),col,VEL_RAMEC*7,VEL_RAMEC,VEL_RAMEC);
-  if (clear)
-     {
-     curcolor=COL_RAMEC;
-     x+=VEL_RAMEC;y+=VEL_RAMEC;
-     xs=(xs-1)*VEL_RAMEC;
-     ys=(ys-1)*VEL_RAMEC;
-     bar(x,y,x+xs-1,y+ys-1);
-     }
-  }
+const pal_t *PalBlock::getPal(unsigned pal) const {
+	assert(pal < _size && "Invalid palette index");
+	return _pals[pal];
+}
 
+void create_frame(int x, int y, int xs, int ys, char clear) {
+	int i;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_RAMECEK));
 
-void show_textured_button(int x,int y,int xs,int ys,int texture,CTL3D *border3d)
-  {
+	x -= VEL_RAMEC;
+	y -= VEL_RAMEC;
+	xs = (xs + VEL_RAMEC - 1) / VEL_RAMEC + 1;
+	ys = (ys + VEL_RAMEC - 1) / VEL_RAMEC + 1;
+	renderer->rectBlit(*tex, x, y, 0, 0, VEL_RAMEC, VEL_RAMEC, tex->palette());
 
-  int i;i=0;
-  if (texture) put_textured_bar((uint16_t*)ablock(texture),x,y,xs,ys,border3d->light,border3d->shadow);
+	for (i = 1; i < xs; i++) {
+		renderer->rectBlit(*tex, x + i * VEL_RAMEC, y, 0, VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
+	}
 
-  for(i=border3d->bsize-1;i>=0;i--)
-     if (border3d->ctldef & (1<<i))
-        {
-        trans_line_x(x+i,y+i,xs-(i<<1),0);
-        trans_line_x(x+i,y+ys-i-1,xs-(i<<1),RGB555(31,31,31));
-        trans_line_y(x+i,y+i,ys-(i<<1),0);
-        trans_line_y(x+xs-i-1,y+i,ys-(i<<1),RGB555(31,31,31));
-        }
-     else
-        {
-        trans_line_x(x+i,y+i,xs-(i<<1),RGB555(31,31,31));
-        trans_line_x(x+i,y+ys-i-1,xs-(i<<1),0);
-        trans_line_y(x+i,y+i,ys-(i<<1),RGB555(31,31,31));
-        trans_line_y(x+xs-i-1,y+i,ys-(i<<1),0);
-        }
+	renderer->rectBlit(*tex, x + xs * VEL_RAMEC, y, 0, 2 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
 
-  }
-void show_textured_win(struct window *w)
-  {
-  show_textured_button(w->x,w->y,w->xs-10,w->ys-10,w->color,&w->border3d);
-  if (shadow_enabled)
-    {
-    trans_bar((w->x+10),w->y+w->ys-10,(w->xs-10),10,0);
-    trans_bar(w->x+w->xs-10,w->y+10,10,w->ys-20,0);
-    }
-  else shadow_enabled=1;
-  }
+	for (i = 1; i < ys; i++) {
+		renderer->rectBlit(*tex, x, y + i * VEL_RAMEC, 0, 3 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
+		renderer->rectBlit(*tex, x + xs * VEL_RAMEC, y + i * VEL_RAMEC, 0, 4 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
+	}
 
-void add_window(int x,int y,int xs,int ys,int texture,int border,int txtx,int txty)
-  {
-  CTL3D wb;
-  WINDOW *p;
+	renderer->rectBlit(*tex, x, y + ys * VEL_RAMEC, 0, 5 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
 
-  xs&=~1;
-  wb.bsize=abs(border);
-  wb.ctldef=-1*(border<0);
-  wb.light=txtx;
-  wb.shadow=txty;
-  p=create_window(x,y,xs,ys,texture,&wb);
-  p->draw_event=show_textured_win;
-  desktop_add_window(p);
+	for (i = 1; i < xs; i++) {
+		renderer->rectBlit(*tex, x + i * VEL_RAMEC, y + ys * VEL_RAMEC, 0, 6 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
+	}
 
-  }
+	renderer->rectBlit(*tex, x + xs * VEL_RAMEC, y + ys * VEL_RAMEC, 0, 7 * VEL_RAMEC, VEL_RAMEC, VEL_RAMEC, tex->palette());
+
+	if (clear) {
+		uint8_t tmp[3] = {COL_RAMEC};
+		memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
+		x += VEL_RAMEC;
+		y += VEL_RAMEC;
+		xs = (xs - 1) * VEL_RAMEC;
+		ys = (ys - 1) * VEL_RAMEC;
+		bar(x, y, x + xs - 1, y + ys - 1);
+	}
+}
 
 
-void zalamovani(const char *source,char *target,int maxxs,int *xs,int *ys)
-  {
-  strcpy(target,source);
-  xs[0]=0;
-  ys[0]=0;
-  if ((xs[0]=text_width(target))>maxxs)
-     {
-     char c[2]=" ";
-     char *ls,*ps,*cs;
-     int sum;
+void show_textured_button(int x, int y, int xs, int ys, int texture, CTL3D *border3d, int xofs, int yofs) {
+	int i;
+	const Texture *tex;
 
-     cs=ps=target;
-     do
-        {
-        ls=NULL;
-        sum=0;
-        while (sum<maxxs || ls==NULL)
-           {
-           c[0]=*ps++;
-           if (c[0]==0) {ls=NULL;break;}
-           if (c[0]==32) ls=ps-1;
-           sum+=text_width(c);
-           }
-        if (ls!=NULL)
-           {
-           *ls=0;
-           ps=ls+1;ls=NULL;
-           }
-        ys[0]+=text_height(cs);
-        cs=ps;
-        }
-     while (c[0]);
-     xs[0]=maxxs;
-     *ps=0;
-     }
-  else
-     {
-     char *c;
-     c=target;c=strchr(c,0);c++;*c=0;
-     ys[0]=text_height(target);
-     }
-  }
+	i = 0;
+
+	if (texture) {
+		tex = dynamic_cast<const Texture*>(ablock(texture));
+		put_textured_bar(*tex, x, y, xs, ys, xofs, yofs);
+	}
+
+	for (i = border3d->bsize - 1; i >= 0; i--) {
+		if (border3d->ctldef & (1 << i)) {
+			trans_line_x(x + i, y + i, xs - (i << 1), 0, 0, 0);
+			trans_line_x(x + i, y + ys - i - 1, xs - (i << 1), 255, 255, 255);
+			trans_line_y(x + i, y + i, ys - (i << 1), 0, 0, 0);
+			trans_line_y(x + xs - i - 1, y + i, ys - (i << 1), 255, 255, 255);
+		} else {
+			trans_line_x(x + i, y + i, xs - (i << 1), 255, 255, 255);
+			trans_line_x(x + i, y + ys - i - 1, xs - (i << 1), 0, 0, 0);
+			trans_line_y(x + i, y + i, ys - (i << 1), 255, 255, 255);
+			trans_line_y(x + xs - i - 1, y + i, ys - (i << 1), 0, 0, 0);
+		}
+	}
+}
+void show_textured_win(struct window *w) {
+	show_textured_button(w->x, w->y, w->xs - 10, w->ys - 10, w->txtid, &w->border3d, w->txtx, w->txty);
+
+	if (shadow_enabled) {
+		trans_bar((w->x + 10), w->y + w->ys - 10, (w->xs - 10), 10, 0, 0, 0);
+		trans_bar(w->x + w->xs - 10, w->y + 10, 10, w->ys - 20, 0, 0, 0);
+	} else {
+		shadow_enabled = 1;
+	}
+}
+
+void add_window(int x, int y, int xs, int ys, int texture, int border, int txtx, int txty) {
+	CTL3D wb;
+	WINDOW *p;
+
+	xs &= ~1;
+	wb.bsize = abs(border);
+	wb.ctldef = -1 * (border < 0);
+	p = create_window(x, y, xs, ys, 0, 0, 0, &wb);
+	p->txtx = txtx;
+	p->txty = txty;
+	p->txtid = texture;
+	p->draw_event = show_textured_win;
+	desktop_add_window(p);
+}
+
+
+void zalamovani(const char *source, char *target, int maxxs, int *xs, int *ys) {
+	strcpy(target, source);
+	xs[0] = 0;
+	ys[0] = 0;
+
+	if ((xs[0] = renderer->textWidth(target)) > maxxs) {
+		char c[2] = " ";
+		char *ls, *ps, *cs;
+		int sum;
+
+		cs = ps = target;
+
+		do {
+			ls = NULL;
+			sum = 0;
+
+			while (sum < maxxs || ls == NULL) {
+				c[0] = *ps++;
+
+				if (c[0] == 0) {
+					ls = NULL;
+					break;
+				}
+
+				if (c[0] == 32) {
+					ls = ps - 1;
+				}
+
+				sum += renderer->textWidth(c);
+			}
+
+			if (ls != NULL) {
+				*ls = 0;
+				ps = ls + 1;
+				ls = NULL;
+			}
+
+			ys[0] += renderer->textHeight(cs);
+			cs = ps;
+		} while (c[0]);
+
+		xs[0] = maxxs;
+		*ps = 0;
+	} else {
+		char *c;
+
+		c = target;
+		c = strchr(c, 0);
+		c++;
+		*c = 0;
+		ys[0] = renderer->textHeight(target);
+	}
+}
 
 static T_CLK_MAP message_win[]=
   {
@@ -207,56 +246,82 @@ static T_CLK_MAP message_win[]=
   {-1,0,0,639,479,empty_clk,0xff,H_MS_DEFAULT},
   };
 
-#define MSG_COLOR1 (RGB555(30,30,23))
+#define MSG_COLOR1 1,247,247,189
 
-void open_message_win(int pocet_textu,char **texts)
-  {
-  int maxxs;
-  int maxys,maxws,wscelk,wsx,wsy,wsys,y;
-  int x1,y1,x2,y2;
-  int i;
-  char *text;
+void open_message_win(int pocet_textu, char **texts) {
+	int maxxs;
+	int maxys, maxws, wscelk, wsx, wsy, wsys, y;
+	int x1, y1, x2, y2;
+	int i;
+	char *text;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FBOLD));
 
-  set_font(H_FBOLD,MSG_COLOR1);
-  text = (char*)alloca(strlen(texts[0])+2);
-  zalamovani(texts[0],text,MES_MAXSIZE,&maxxs,&maxys);
-  maxws=0;wsys=0;
-  for(i=1;i<pocet_textu;i++)
-     {
-     int z1=text_width(texts[i]);
-     int z2=text_height(texts[i]);
-     if (z1>maxws) maxws=z1;
-     if (z2>wsys) wsys=z2;
-     }
-  maxws+=10;
-  if (maxws<50) maxws=50;
-  wscelk=(pocet_textu-1)*(maxws+20);
-  if (wscelk>maxxs) maxxs=wscelk;
-  wsy=10+wsys;
-  maxys+=wsy+40;
-  if (maxys<50) maxys=50;
-  maxxs+=20;
-  add_window(x1=320-(maxxs>>1),y1=180-(maxys>>1),x2=maxxs+10,y2=maxys+10,H_WINTXTR,2,0,0);
-  message_win[0].xlu=x1; message_win[0].ylu=y1; message_win[0].xrb=x1+x2;message_win[0].yrb=y1+y2;
-  change_click_map(message_win,2);
-  set_window_modal();
-  y=10;
-  while (text[0])
-     {
-     define(new Label(-1, 10, y, 1, 1, 0, text));
-     y+=text_height(text);
-     text=strchr(text,0)+1;
-     }
-  wsx=(maxxs-wscelk)>>1;
-  for(i=1;i<pocet_textu;i++)
-     {
-     define(new Button(i-1, wsx+10, wsy, maxws+10, wsys+10, 3, texts[i]));
-     property(def_border(5,BAR_COLOR),curfont,flat_color(MSG_COLOR1),BAR_COLOR);
-     on_change(terminate);
-     wsx+=maxws+20;
-     }
-  redraw_window();
-  }
+	renderer->setFont(font, MSG_COLOR1);
+	GUIObject::setDefaultFont(font, MSG_COLOR1);
+	text = (char*)alloca(strlen(texts[0]) + 2);
+	zalamovani(texts[0], text, MES_MAXSIZE, &maxxs, &maxys);
+	maxws = 0;
+	wsys = 0;
+
+	for (i = 1; i < pocet_textu; i++) {
+		int z1 = renderer->textWidth(texts[i]);
+		int z2 = renderer->textHeight(texts[i]);
+
+		if (z1 > maxws) {
+			maxws = z1;
+		}
+
+		if (z2 > wsys) {
+			wsys = z2;
+		}
+	}
+
+	maxws += 10;
+
+	if (maxws < 50) {
+		maxws = 50;
+	}
+
+	wscelk = (pocet_textu - 1) * (maxws + 20);
+
+	if (wscelk > maxxs) {
+		maxxs = wscelk;
+	}
+
+	wsy = 10 + wsys;
+	maxys += wsy + 40;
+
+	if (maxys < 50) {
+		maxys = 50;
+	}
+
+	maxxs += 20;
+	add_window(x1 = 320 - (maxxs >> 1), y1 = 180 - (maxys >> 1), x2 = maxxs + 10, y2 = maxys + 10, H_WINTXTR, 2, 0, 0);
+	message_win[0].xlu = x1;
+	message_win[0].ylu = y1;
+	message_win[0].xrb = x1 + x2;
+	message_win[0].yrb = y1 + y2;
+	change_click_map(message_win, 2);
+	set_window_modal();
+	y = 10;
+
+	while (text[0]) {
+		define(new Label(-1, 10, y, 1, 1, 0, text));
+		y += renderer->textHeight(text);
+		text = strchr(text, 0) + 1;
+	}
+
+	wsx = (maxxs - wscelk) >> 1;
+
+	for (i = 1; i < pocet_textu; i++) {
+		define(new Button(i - 1, wsx + 10, wsy, maxws + 10, wsys + 10, 3, texts[i]));
+		property(def_border(5, BAR_COLOR), font, 0, flat_color(247, 247, 189), single_color(BAR_COLOR));
+		on_change(terminate);
+		wsx += maxws + 20;
+	}
+
+	redraw_window();
+}
 
 static char default_action,cancel_action;
 
@@ -343,10 +408,12 @@ void type_text(EVENT_MSG *msg,void **data) {
 	static char text[255], index, len;
 	static char *source;
 	static int max_size, max_chars;
-	static int font, color, edit, tw;
+	static int font, edit, tw;
+	static uint8_t color[3];
 	static type_text_exit_proc exit_proc;
-	static uint16_t *back_pic;
+	static Texture *back_pic;
 	int i, px, ok = 0;
+	const Font *fnt;
 	va_list args;
 
 	if (msg->msg == E_INIT) {
@@ -360,7 +427,9 @@ void type_text(EVENT_MSG *msg,void **data) {
 		max_size = va_arg(args, int);
 		max_chars = va_arg(args, int);
 		font = va_arg(args, int);
-		color = va_arg(args, int);
+		color[0] = va_arg(args, int);
+		color[1] = va_arg(args, int);
+		color[2] = va_arg(args, int);
 		exit_proc = va_arg(args, type_text_exit_proc);
 		va_end(args);
 
@@ -370,24 +439,22 @@ void type_text(EVENT_MSG *msg,void **data) {
 		}
 	
 		text[i] = 0;
-		ys = text_height(text) + 5;
+		ys = renderer->textHeight(text) + 5;
 		edit = 0;
 
 		strcpy(text, c);
 		source = c;
-		set_font(font, color);
-		tw = text_width(text);
+		fnt = dynamic_cast<const Font*>(ablock(font));
+		renderer->setFont(fnt, 0, color[0], color[1], color[2]);
+		tw = renderer->textWidth(text);
 		len = index = strlen(text);
-		xs = max_size + text_width("_");
-		back_pic = (uint16_t*)getmem(xs * ys * 2 + 6);
-		get_picture(x, y, xs, ys, back_pic);
+		xs = max_size + renderer->textWidth("_");
+		back_pic = new SubTexture(*renderer, x, y, xs, ys);
 
 		// render string
 		schovej_mysku();
-		position(x, y);
-		outtext(text);
-		position(tw + x, y + 3);
-		outtext("_");
+		renderer->drawText(x, y, text);
+		renderer->drawText(tw + x, y + 3, "_");
 		ukaz_mysku();
 		showview(x, y, xs, ys);
 	} else if (msg->msg == E_KEYBOARD) {
@@ -397,7 +464,8 @@ void type_text(EVENT_MSG *msg,void **data) {
 		va_copy(args, msg->data);
 		c = va_arg(args, int);
 		va_end(args);
-		set_font(font, color);
+		fnt = dynamic_cast<const Font*>(ablock(font));
+		renderer->setFont(fnt, 0, color[0], color[1], color[2]);
 
 		switch (c & 0xff) {
 		case 8:
@@ -478,7 +546,7 @@ void type_text(EVENT_MSG *msg,void **data) {
 			sz[0] = c & 0xff;
 
 			if (edit) {
-				if (sz[0] < 32 || tw + text_width(sz) > max_size || len >= max_chars) {
+				if (sz[0] < 32 || tw + renderer->textWidth(sz) > max_size || len >= max_chars) {
 					break;
 				}
 
@@ -495,213 +563,27 @@ void type_text(EVENT_MSG *msg,void **data) {
 			break;
 		}
 
-		tw = text_width(text);
+		tw = renderer->textWidth(text);
 		edit = c ? 1 : edit;	// Shift makes a keypress now too
 
-		put_picture(x, y, back_pic);
-		position(x, y);
-		set_font(font, color);
-		outtext(text);
+		renderer->blit(*back_pic, x, y, back_pic->palette());
+		fnt = dynamic_cast<const Font*>(ablock(font));
+		renderer->setFont(fnt, 0, color[0], color[1], color[2]);
+		renderer->drawText(x, y, text);
 		sz[0] = text[index];
 		text[index] = 0;
-		px = text_width(text);
+		px = renderer->textWidth(text);
 		text[index] = sz[0];
-		position(px + x, y + 3);
-		outtext("_");
+		renderer->drawText(px + x, y + 3, "_");
 		ukaz_mysku();
 		showview(x, y, xs, ys);
 	} else if (msg->msg == E_DONE) {
-		free(back_pic);
+		delete back_pic;
 	}
 }
 
-#define COL_SIZE 776
-
-//rutina je pro vstup radky, po ukonceni zavola proceduru exit_proc pokud uzivatel stiskne ENTER
-//volat jako task
-//#pragma aux type_text_v2 parm []
-void type_text_v2(va_list args) {
-	char *text_buffer = va_arg(args, char *);
-	int x = va_arg(args, int);
-	int y = va_arg(args, int);
-	int max_size = va_arg(args, int);
-	int max_chars = va_arg(args, int);
-	int font = va_arg(args, int);
-	int color = va_arg(args, int);
-	type_text_exit_proc exit_proc = va_arg(args, type_text_exit_proc);
-
-	int xs, ys, tw;
-	char *text, pos, len;
-	char wait_loop = 1, ok = 0, edit = 0;
-	uint16_t *back_pic;
-	int i;
-
-	Task_Sleep(NULL);
-	schovej_mysku();
-	set_font(font, color);
-	xs = max_size + text_width("_");
-
-	if (max_chars < 257) {
-		text = (char*)alloca(257);
-	} else {
-		text = (char*)alloca(max_chars);
-	}
-
-	for (i = 0; i < 255; i++) {
-		text[i] = i + 1;
-	}
-
-	text[i] = 0;
-	ys = text_height(text) + 5;
-	strcpy(text, text_buffer);
-	back_pic = (uint16_t*)getmem(xs * ys * 2 + 6);
-	get_picture(x, y, xs, ys, back_pic);
-	pos = strlen(text);
-	len = pos;
-	tw = text_width(text);
-	do {
-		char sz[2] = " ";
-		uint16_t znak, px;
-		
-		put_picture(x, y, back_pic);
-		position(x, y);
-		set_font(font, color);
-		outtext(text);
-		sz[0] = text[pos];
-		text[pos] = 0;
-		px = text_width(text);
-		text[pos] = sz[0];
-		position(px + x, y + 3);
-		outtext("_");
-		ukaz_mysku();
-		showview(x, y, xs, ys);
-		znak=*(uint16_t *)Task_WaitEvent(E_KEYBOARD); //proces bude cekat na klavesu
-		schovej_mysku();
-
-		if (Task_QuitMsg() == 1) {
-			znak = 27;
-		}
-
-		switch(znak & 0xff) {
-		case 8:
-			if (pos > 0) {
-				pos--;
-				// WRONG! strcpy() arguments must not overlap!
-				strcpy(&text[pos], &text[pos+1]);
-				len--;
-			}
-			break;
-
-		case 13:
-			strcpy(text_buffer, text);
-			ok = 1;
-
-		case 27:
-			wait_loop=0;
-			break;
-
-		case 0:
-			switch (znak >> 8) {
-			case 'K':
-				if (pos > 0) {
-					pos--;
-				}
-				break;
-
-			case 'M':
-				if (pos < len) {
-					pos++;
-				}
-				break;
-
-			case 'G':
-				pos = 0;
-				break;
-
-			case 'O':
-				pos = len;
-				break;
-
-			case 'S':
-				if (len > pos) {
-					strcpy(text + pos, text + pos + 1);
-					len--;
-				}
-				break;
-			case 't':
-				while (pos < len) {
-					pos++;
-					if (text[pos] == ' ') {
-						break;
-					}
-				}
-				break;
-
-			case 's':
-				while (pos > 0) {
-					pos--;
-					if (text[pos] == ' ') {
-						break;
-					}
-				}
-				break;
-			}
-			break;
-
-		default:
-			sz[0] = znak & 0xff;
-			if (edit) {
-				if (sz[0] < 32 || tw + text_width(sz) > max_size || len >= max_chars) {
-					break;
-				}
-
-				memmove(&text[pos+1], &text[pos], len - pos + 1);
-				text[pos] = sz[0];
-				len++;
-				pos++;
-			} else {
-				text[0] = sz[0];
-				text[1] = 0;
-				len = 1;
-				pos = 1;
-			}
-			break;
-		}
-
-		tw = text_width(text);
-		edit = 1;
-	} while (wait_loop);
-
-	put_picture(x, y, back_pic);
-	position(x, y);
-	set_font(font, color);
-	outtext(text);
-	ukaz_mysku();
-	showview(x, y, xs, ys);
-	free(back_pic);
-	exit_proc(ok);
-}
-
-
-void col_load(void **data, long *size) {
-	int siz = *size;
-	char *s;
-	uint8_t *c;
-	int palcount;
-	int i;
-
-	palcount = siz / COL_SIZE;
-	*size = PIC_FADE_PAL_SIZE * palcount;
-	s = (char*)getmem(*size);
-	c = (uint8_t*)*data;
-	c += 8;
-
-	for (i = 0; i < palcount; i++, c += COL_SIZE) {
-		palette_shadow(c, (pal_t*)&s[i * PIC_FADE_PAL_SIZE], gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
-	}
-
-	free(*data);
-	*data = s;
+DataBlock *col_load(SeekableReadStream &stream) {
+	return new PalBlock(stream, gameMap.global().fade_r, gameMap.global().fade_g, gameMap.global().fade_b);
 }
 
 
@@ -1015,24 +897,22 @@ SkeldalCheckBox::SkeldalCheckBox(int id, int x, int y, int width, int height,
 
 SkeldalCheckBox::~SkeldalCheckBox(void) {
 	if (_background) {
-		delete[] _background;
+		delete _background;
 	}
 }
 
 void SkeldalCheckBox::draw(int x, int y, int width, int height) {
-	uint16_t *pic;
 	int phase;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_CHECKBOX));
 
-	pic = (uint16_t*)ablock(H_CHECKBOX);
 	if (!_background) {
-		_background = new uint16_t[pic[0] * pic[0] + 3];
-		get_picture(x, y, pic[0], pic[0], _background);
+		_background = new SubTexture(*renderer, x, y, tex->width(), tex->width());
 	} else {
-		put_picture(x, y, _background);
+		renderer->blit(*_background, x, y, _background->palette());
 	}
 
 	phase = (CHECK_BOX_ANIM - (_phase >> 1)) * 20;
-	put_8bit_clipped(pic, Screen_GetAddr() + x + y * Screen_GetXSize(), phase, pic[0], pic[0]);
+	renderer->rectBlit(*tex, x, y, 0, phase, tex->width(), tex->width());
 }
 
 void SkeldalCheckBox::event(EVENT_MSG *msg) {
@@ -1077,28 +957,26 @@ SetupOkButton::~SetupOkButton(void) {
 	delete[] _text;
 
 	if (_background) {
-		delete[] _background;
+		delete _background;
 	}
 }
 
 void SetupOkButton::draw(int x, int y, int width, int height) {
-	uint16_t *bb = (uint16_t*)ablock(H_SETUPOK);
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_SETUPOK));
 
 	if (!_background) {
-		_background = new uint16_t[bb[0] * bb[1] + 3];
-		get_picture(x, y, bb[0], bb[1], _background);
+		_background = new SubTexture(*renderer, x, y, tex->width(), tex->height());
 	}
 
 	if (_toggle) {
-		put_picture(x, y, bb);
+		renderer->blit(*tex, x, y, tex->palette());
 	} else {
-		put_picture(x, y, _background);
+		renderer->blit(*_background, x, y, _background->palette());
 	}
 
 	x = x + (10 + width) / 2;
 	y = y + height / 2;
-	set_aligned_position(x, y, 1, 1, _text);
-	outtext(_text);
+	renderer->drawAlignedText(x, y, HALIGN_CENTER, VALIGN_CENTER, _text);
 }
 
 void SetupOkButton::event(EVENT_MSG *msg) {
@@ -1136,35 +1014,33 @@ SkeldalSlider::SkeldalSlider(int id, int x, int y, int width, int height,
 
 SkeldalSlider::~SkeldalSlider(void) {
 	if (_background) {
-		delete[] _background;
+		delete _background;
 	}
 }
 
 void SkeldalSlider::draw(int x, int y, int width, int height) {
-	uint16_t *pic;
 	int total;
 	int xpos;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_SOUPAK));
 
-	pic = (uint16_t*)ablock(H_SOUPAK);
-	total = height - pic[1];
-	xpos = y + height - pic[1] - _value * total / _range;
+	total = height - tex->height();
+	xpos = y + height - tex->height() - _value * total / _range;
 
 	if (!_background) {
-		_background = new uint16_t[(width + 1) * (height + 1) + 3];
-		get_picture(x, y, width + 1, height + 1, _background);
+		_background = new SubTexture(*renderer, x, y, width + 1, height + 1);
 	} else {
-		put_picture(x, y, _background);
+		renderer->blit(*_background, x, y, _background->palette());
 	}
 
-	put_picture(x, xpos, pic);
+	renderer->blit(*tex, x, xpos, tex->palette());
 }
 
 void SkeldalSlider::event(EVENT_MSG *msg) {
 	if (msg->msg == E_MOUSE) {
 		MS_EVENT *ms;
 		int total;
-		uint16_t *pic;
 		int ypos;
+		const Texture *tex;
 		va_list args;
 
 		va_copy(args, msg->data);
@@ -1172,10 +1048,10 @@ void SkeldalSlider::event(EVENT_MSG *msg) {
 		va_end(args);
 
 		if (ms->tl1) {
-			pic = (uint16_t*)ablock(H_SOUPAK);
-			total = _height - pic[1];
+			tex = dynamic_cast<const Texture*>(ablock(H_SOUPAK));
+			total = _height - tex->height();
 			ypos = ms->y - _locy;
-			ypos += pic[1] / 2;
+			ypos += tex->height();
 			_value = (_height - ypos) * _range / total;
 
 			if (_value < 0) {
@@ -1541,76 +1417,104 @@ static void smlouvat_enter(EVENT_MSG *msg) {
 	}
 }
 
-int smlouvat(int cena,int puvod,int pocet,int money,char mode)
-  {
-  int ponuka=0,posledni=0;
-  char text[255],buffer[20];
-  const char *c;
-  int y,yu,xu;
-  int temp1,temp2;
+int smlouvat(int cena, int puvod, int pocet, int money, char mode) {
+	int ponuka = 0, posledni = 0;
+	char text[255], buffer[20];
+	const char *c;
+	int y, yu, xu;
+	int temp1, temp2;
+	const Font *font;
 
-  cena,puvod,pocet,money;text[0]=0;text[1]=0;
-  add_window(170,130,300,150,H_IDESKA,3,20,20);
-  define(new Label(-1, 10, 15, 1, 1, 0, texty[241]));
+	text[0] = 0;
+	text[1] = 0;
+	add_window(170, 130, 300, 150, H_IDESKA, 3, 20, 20);
+	define(new Label(-1, 10, 15, 1, 1, 0, texty[241]));
 //  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
-  sprintf(buffer, "%d", cena);
-  set_font(H_FBOLD,RGB555(31,31,31));
-  define(new Label(-1, 150, 15, 100, 13, 0, buffer));
-  set_font(H_FBOLD,MSG_COLOR1);
-  define(new Label(-1, 10, 30, 1, 1, 0, texty[238]));
-  define(new InputLine(10, 150, 30, 100, 13, 0, 8));
-  property(def_border(5,BAR_COLOR),NULL,NULL,0);
-    on_event(smlouvat_enter);
-  define(new Button(20, 20, 20, 80, 20, 2, texty[239]));
-  property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);
-  on_change(terminate);
-  define(new Button(30, 110, 20, 80, 20, 2, texty[230]));
-  property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);
-  on_change(terminate);
-  do
-    {
-    redraw_window();
-    schovej_mysku();set_font(H_FBOLD,RGB555(31,31,31));
-    c=text;yu=y=waktual->y+50;xu=waktual->x+10;
-    do {position(xu,y);outtext(c);y+=text_height(c)+1;c=strchr(c,0)+1;} while(*c);
-    ukaz_mysku();
-    showview(xu,yu,280,y-yu);
-    goto_control(10);
-    escape();
-    temp1=1;
-    if (o_aktual->id() == 20) cena=-1;
-    else
-      {
-      WINDOW *wi;
-      InputLine *line = dynamic_cast<InputLine*>(find_object_desktop(0, 10, &wi));
-      assert(line);
-      strcpy(buffer, line->getString());
-      if (buffer[0]==0) c=texty[240];
-      else
-        {
-        if (sscanf(buffer,"%d",&ponuka)!=1) c=texty[237];
-        else
-          {
-          if (ponuka>money && mode==1) c=texty[104];
-          else
-            {
-            if (mode) temp1=smlouvat_nakup(cena,ponuka,posledni,puvod,pocet);
-            else temp1=smlouvat_prodej(cena,ponuka,posledni,puvod,pocet+1);
-            posledni=ponuka;
-            if (rnd(100)<50) c=texty[230+temp1];else c=texty[250+temp1];
-            }
-          }
-        }
-      shadow_enabled=0;
-      }
-    if (c) zalamovani(c,text,280,&temp2,&temp2);
-    }
-  while (temp1!=0 && cena!=-1);
-  if (temp1==0) cena=ponuka;
-  close_current();
-  shadow_enabled=1;
-  return cena;
-  }
+	sprintf(buffer, "%d", cena);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 1, 255, 255, 255);
+	define(new Label(-1, 150, 15, 100, 13, 0, buffer));
+	renderer->setFont(font, MSG_COLOR1);
+	define(new Label(-1, 10, 30, 1, 1, 0, texty[238]));
+	define(new InputLine(10, 150, 30, 100, 13, 0, 8));
+	property(def_border(5, BAR_COLOR), NULL, -1, NULL, NULL);
+	on_event(smlouvat_enter);
+	define(new Button(20, 20, 20, 80, 20, 2, texty[239]));
+	property(def_border(5, BAR_COLOR), NULL, -1, NULL, single_color(BAR_COLOR));
+	on_change(terminate);
+	define(new Button(30, 110, 20, 80, 20, 2, texty[230]));
+	property(def_border(5, BAR_COLOR), NULL, -1, NULL, single_color(BAR_COLOR));
+	on_change(terminate);
+
+	do {
+		redraw_window();
+		schovej_mysku();
+		font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+		renderer->setFont(font, 1, 255, 255, 255);
+		c = text;
+		yu = y = waktual->y + 50;
+		xu = waktual->x + 10;
+
+		do {
+			renderer->drawText(xu, y, c);
+			y += renderer->textHeight(c) + 1;
+			c = strchr(c, 0) + 1;
+		} while(*c);
+
+		ukaz_mysku();
+		showview(xu, yu, 280, y - yu);
+		goto_control(10);
+		escape();
+		temp1 = 1;
+
+		if (o_aktual->id() == 20) {
+			cena = -1;
+		} else {
+			WINDOW *wi;
+			InputLine *line = dynamic_cast<InputLine*>(find_object_desktop(0, 10, &wi));
+			assert(line);
+			strcpy(buffer, line->getString());
+
+			if (buffer[0] == 0) {
+				c = texty[240];
+			} else {
+				if (sscanf(buffer, "%d", &ponuka) != 1) {
+					c = texty[237];
+				} else if (ponuka > money && mode == 1) {
+					c = texty[104];
+				} else {
+					if (mode) {
+						temp1 = smlouvat_nakup(cena, ponuka, posledni, puvod, pocet);
+					} else {
+						temp1 = smlouvat_prodej(cena, ponuka, posledni, puvod, pocet + 1);
+					}
+
+					posledni = ponuka;
+
+					if (rnd(100) < 50) {
+						c = texty[230 + temp1];
+					} else {
+						c = texty[250 + temp1];
+					}
+				}
+			}
+
+			shadow_enabled=0;
+		}
+
+		if (c) {
+			zalamovani(c, text, 280, &temp2, &temp2);
+		}
+	} while (temp1 != 0 && cena != -1);
+
+	if (temp1 == 0) {
+		cena = ponuka;
+	}
+
+	close_current();
+	shadow_enabled = 1;
+	return cena;
+}
 
 //----------------- JRC LOGO ----------------------------------
 
@@ -1624,78 +1528,81 @@ typedef struct _hicolpal
   unsigned red:5;
   }HICOLPAL;
 
-void show_jrc_logo(const char *filename)
-  {
-  char *s;
-  uint8_t *pcx;
-  uint16_t *pcxw;
-  char bnk=1;
-  int xp,yp,i;
-  uint16_t palette[256],*palw;
-  int cntr,cdiff,cpalf,ccc;
+void show_jrc_logo(const char *filename) {
+	char *s;
+	char bnk = 1;
+	int xp, yp, i;
+	uint8_t palette[3 * 256] = {0};
+	int cntr, cdiff, ccc;
+	unsigned cpalf;
+	Texture *pcx;
 
-  Sound_ChangeMusic("?");
-  curcolor=0;bar(0,0,639,479);
-  showview(0,0,0,0);Timer_Sleep(1000);
+	Sound_ChangeMusic("?");
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	showview(0, 0, 0, 0);
+	Timer_Sleep(1000);
 //  concat(s,pathtable[SR_VIDEO],filename);
 //  if (open_pcx(s,A_8BIT,&pcx)) return;
-	if (open_pcx(Sys_FullPath(SR_VIDEO, filename), A_8BIT, &pcx)) {
+
+	pcx = open_pcx(Sys_FullPath(SR_VIDEO, filename), A_8BIT);
+
+	if (!pcx) {
 		return;
 	}
-  pcxw=(uint16_t *)pcx;
-  xp=pcxw[0];
-  yp=pcxw[1];
-  palw=pcxw+3;
-  memcpy(palette,palw,256*sizeof(uint16_t));
-  memset(palw,0,256*sizeof(uint16_t));
-  xp/=2;yp/=2;xp=320-xp;yp=240-yp;
-  cntr=Timer_GetValue();ccc=0;
-  do
-    {
-    cdiff=(Timer_GetValue()-cntr)/2;
-    if (cdiff<SHOWDEND && ccc!=cdiff)
-      {
-      cpalf=cdiff;
-      if (cpalf<32)
-        for (i=0;i<256;i++)
-        {
-/*
-        int r=(cpalf<<11),g=(cpalf<<6),b=cpalf,k;
-        k=palette[i] & 0xF800;if (k>r) palw[i]=r;else palw[i]=k;
-        k=palette[i] & 0x7e0;if (k>g) palw[i]|=g;else palw[i]|=k;
-        k=palette[i] & 0x1f;if (k>b) palw[i]|=b;else palw[i]|=k;
-*/
-		palw[i] = Screen_ColorMin(palette[i], Screen_RGB(cpalf, cpalf, cpalf));
-        }
-      }
-    else if (ccc!=cdiff)
-      {
-      cpalf=SHOWDELAY-cdiff;
-      if (cpalf<32)
-        for (i=0;i<256;i++)
-        {
-/*
-        int r,g,b,k=32-cpalf;
 
-        b=palette[i];g=b>>5;b&=0x1f;r=g>>6;g&=0x1f;
-        b-=k;r-=k;g-=k;
-        if (b<0) b=0;
-        if (r<0) r=0;
-        if (g<0) g=0;
-        palw[i]=b | (r<<11) | (g<<6);
-*/
-		palw[i] = Screen_ColorSub(palette[i], 32-cpalf);
-        }
-      }
-    if (!bnk) wait_retrace();
-    put_picture(xp, yp, (uint16_t*)pcx);
-    if (bnk) {wait_retrace();showview(xp,yp,pcxw[0],pcxw[1]);}
-    ccc=cdiff;
-    Sound_MixBack(0);
-    }
-//  while (cdiff<SHOWDELAY && !_bios_keybrd(_KEYBRD_READY));
-  while (cdiff<SHOWDELAY && !Input_Kbhit());
-  curcolor=0;bar(0,0,639,479);
-  showview(0,0,0,0);
-  free(pcx);
-  }
+	xp = pcx->width();
+	yp = pcx->height();
+	assert(pcx->palette());
+	xp /= 2;
+	yp /= 2;
+	xp = 320 - xp;
+	yp = 240 - yp;
+	cntr = Timer_GetValue();
+	ccc = 0;
+
+	do {
+		cdiff = (Timer_GetValue() - cntr) / 2;
+
+		if (cdiff < SHOWDEND && ccc != cdiff) {
+			cpalf = cdiff;
+
+			if (cpalf < 32) {
+				cpalf = (cpalf << 3) | (cpalf >> 2);
+
+				for (i = 0; i < 3 * 256; i++) {
+					palette[i] = min(pcx->palette()[i], cpalf);
+				}
+			}
+		} else if (ccc != cdiff) {
+			cpalf = SHOWDELAY - cdiff;
+
+			if (cpalf < 32) {
+				cpalf = 0xff - ((cpalf << 3) | (cpalf >> 2));
+
+				for (i = 0; i < 3 * 256; i++) {
+					palette[i] = (pcx->palette()[i] > cpalf) ? pcx->palette()[i] - cpalf : 0;
+				}
+			}
+		}
+
+		if (!bnk) {
+			wait_retrace();
+		}
+
+		renderer->blit(*pcx, xp, yp, palette);
+
+		if (bnk) {
+			wait_retrace();
+			showview(xp, yp, pcx->width(), pcx->height());
+		}
+
+		ccc = cdiff;
+		Sound_MixBack(0);
+	} while (cdiff < SHOWDELAY && !Input_Kbhit());
+
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	showview(0, 0, 0, 0);
+	delete pcx;
+}

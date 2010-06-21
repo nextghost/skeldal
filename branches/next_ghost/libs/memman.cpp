@@ -641,19 +641,17 @@ void DDLFile::close(void) {
 	_namesize = 0;
 }
 
-void *DDLFile::readFile(int group, const char *name, long &size) {
+MemoryReadStream *DDLFile::readFile(int group, const char *name) {
 	assert(_nametable);
 	int entry = findEntry(group, name);
+	unsigned size;
 	void *ret;
 
 	assert(entry >= 0);
 
 	_file.seek(_nametable[entry].offset, SEEK_SET);
 	size = _file.readSint32LE();
-	ret = malloc(size); // FIXME: change to something else later
-	_file.read(ret, size);
-
-	return ret;
+	return _file.readStream(size);
 }
 
 int DDLFile::findEntry(int group, const char *name) const {
@@ -683,6 +681,18 @@ int DDLFile::getOffset(unsigned id) const {
 	assert(id < _namesize);
 
 	return _nametable[id].offset;
+}
+
+DataBlock::~DataBlock(void) {
+
+}
+
+RawData::~RawData(void) {
+	free(data);
+}
+
+DataBlock *preloadStream(SeekableReadStream &stream) {
+	return stream.readStream(stream.size());
 }
 
 #ifdef LOGFILE
@@ -750,38 +760,53 @@ void swap_init(void);
 int swap_add_block(long size);
 void swap_free_block(long seek, long size);
 
-int swap_block(THANDLE_DATA *h)
-  {
-  long wsize,pos;
+int swap_block(THANDLE_DATA *h) {
+	long wsize, pos;
 
-  if (mman_action!=NULL) mman_action(MMA_SWAP);
+	assert(0 && "Tried to swap block");
+
+	if (mman_action != NULL) {
+		mman_action(MMA_SWAP);
+	}
+
 //  if (swap==-1) return -1;
-  if (!swap) return -1;
-  if (h->flags & BK_HSWAP) pos=h->seekpos; else pos=swap_add_block(h->size);
-  wsize=fseek(swap,0,SEEK_END);
+	if (!swap) {
+		return -1;
+	}
+
+	if (h->flags & BK_HSWAP) {
+		pos = h->seekpos;
+	} else {
+		pos = swap_add_block(h->size);
+	}
+
+	wsize = fseek(swap, 0, SEEK_END);
 //  lseek(swap,0,SEEK_END);
 //  wsize=tell(swap);
 //  if (wsize<pos) write(swap,NULL,pos-wsize);
-  fseek(swap,pos,SEEK_SET);
-  SEND_LOG("(SWAP) Swaping block '%-.12s'",h->src_file,0);
+	fseek(swap, pos, SEEK_SET);
+	SEND_LOG("(SWAP) Swaping block '%-.12s'", h->src_file, 0);
 //  wsize=write(swap,h->blockdata,h->size);
-  wsize=fwrite(h->blockdata,h->size,1,swap);
-  swap_status=1;
-  if ((unsigned)wsize==h->size)
-     {
-     h->seekpos=pos;
-     if (h->flags & BK_PRELOAD) h->flags&=~BK_SWAPABLE;
-     h->flags|=BK_HSWAP;
-     return 0;
-     }
-  else
-     {
-     SEND_LOG("(SWAP) Swap failed!",0,0);
-     swap_error();
-     }
-  swap_free_block(pos,h->size);
-  return -1;
-  }
+	wsize = fwrite(h->blockdata, h->size, 1, swap);
+	swap_status = 1;
+
+	if ((unsigned)wsize == h->size) {
+		h->seekpos = pos;
+
+		if (h->flags & BK_PRELOAD) {
+			h->flags &= ~BK_SWAPABLE;
+		}
+
+		h->flags |= BK_HSWAP;
+		return 0;
+	} else {
+		SEND_LOG("(SWAP) Swap failed!", 0, 0);
+		swap_error();
+	}
+
+	swap_free_block(pos, h->size);
+	return -1;
+}
 
 THANDLE_DATA *get_handle(int handle)
   {
@@ -798,103 +823,126 @@ THANDLE_DATA *get_handle(int handle)
   return ((THANDLE_DATA *)_handles[group])+list;
   }
 
-void heap_error(size_t size) //heap system
-  {
-  int i,j;
-  char swaped=0;
-  unsigned long maxcounter=0;
-  THANDLE_DATA *sh;
-  char repeat=0,did=0;
-  THANDLE_DATA *lastblock=NULL;
-  char *last_free=NULL;
-  int num;
-  do
-  {
-  maxcounter=0;
-  sh=NULL;
-  repeat=0;did=0;
-  for(i=0;i<BK_MAJOR_HANDLES;i++)
-       if (_handles[i]!=NULL)
-         {
-         unsigned long c,max=0xffffffff,d;
-         for (j=0;j<BK_MINOR_HANDLES;j++)
-           {
-           THANDLE_DATA *h;
+//heap system
+void heap_error(size_t size) {
+	int i, j;
+	char swaped = 0;
+	unsigned long maxcounter = 0;
+	THANDLE_DATA *sh;
+	char repeat = 0, did = 0;
+	THANDLE_DATA *lastblock = NULL;
+	char *last_free = NULL;
+	int num;
 
-           h=((THANDLE_DATA *)_handles[i]+j);
-           c=bk_global_counter-h->counter;
-           if (h->status==BK_PRESENT && ~h->flags & BK_LOCKED) {
-              if (last_free!=NULL)
-                 {
-                 d=(char *)h->blockdata-last_free;
-                 if (d<max) sh=h,max=d,did=1,num=i*BK_MINOR_HANDLES+j;
-                 }
-              else if (c>maxcounter)
-                 {
-                 maxcounter=c;
-                 sh=h;
-                 did=1;
-                 num=i*BK_MINOR_HANDLES+j;
-                 }
-             }
-           }
-         }
-  if (lastblock==sh)
-     {
-     did=0;repeat=0;
-     }
-  if (did)
-     {
-     size-=sh->size;
-     last_free = (char*)sh->blockdata;
-     if (sh->flags & BK_SWAPABLE)
-        {
-        if (swap_block(sh))  //pri neuspechu o ulozeni je nalezen blok jiny
-           {
-           sh->counter=bk_global_counter;
-           repeat=1;
-           }
-        else
-           {
-           free(sh->blockdata);
-           sh->status=BK_SWAPED;
-           swaped=1;
-           }
-        }
-     else
-        {
-        if (sh->flags & BK_PRELOAD) sh->status=BK_SWAPED;
-        else sh->status=BK_NOT_LOADED;
-        free(sh->blockdata);
-        if (mman_action!=NULL) mman_action(MMA_FREE);
-        }
-     }
-  else
-     standard_mem_error(size);
-  lastblock=sh;
-  }
-  while (repeat || size>0);
+	do {
+		maxcounter = 0;
+		sh = NULL;
+		repeat = 0;
+		did = 0;
+
+		for (i = 0; i < BK_MAJOR_HANDLES; i++) {
+			if (_handles[i] != NULL) {
+				unsigned long c, max = 0xffffffff, d;
+
+				for (j = 0; j < BK_MINOR_HANDLES; j++) {
+					THANDLE_DATA *h;
+
+					h = ((THANDLE_DATA*)_handles[i] + j);
+					c = bk_global_counter - h->counter;
+
+					if (h->status == BK_PRESENT && ~h->flags & BK_LOCKED) {
+						if (last_free != NULL) {
+							d = (char *)h->blockdata - last_free;
+							if (d < max) {
+								sh = h;
+								max = d;
+								did = 1;
+								num = i * BK_MINOR_HANDLES + j;
+							}
+						} else if (c>maxcounter) {
+							maxcounter = c;
+							sh = h;
+							did = 1;
+							num = i * BK_MINOR_HANDLES + j;
+						}
+					}
+				}
+			}
+		}
+
+		if (lastblock == sh) {
+			did = 0;
+			repeat = 0;
+		}
+
+		if (did) {
+			size -= sh->size;
+			last_free = (char*)sh->blockdata;
+
+			if (sh->flags & BK_SWAPABLE) {
+				//pri neuspechu o ulozeni je nalezen blok jiny
+				if (swap_block(sh)) {
+					sh->counter = bk_global_counter;
+					repeat = 1;
+				} else {
+					delete sh->blockdata;
+					sh->status = BK_SWAPED;
+					swaped = 1;
+				}
+			} else {
+				if (sh->flags & BK_PRELOAD) {
+					sh->status = BK_SWAPED;
+				} else {
+					sh->status = BK_NOT_LOADED;
+				}
+
+				delete sh->blockdata;
+
+				if (mman_action != NULL) {
+					mman_action(MMA_FREE);
+				}
+			}
+		} else {
+			standard_mem_error(size);
+		}
+
+		lastblock = sh;
+	} while (repeat || size > 0);
 //  if (swaped) _dos_commit(swap);
-  }
+}
 
-THANDLE_DATA *kill_block(int handle)
-  {
-  THANDLE_DATA *h;
+THANDLE_DATA *kill_block(int handle) {
+	THANDLE_DATA *h;
 
-  h=get_handle(handle);if (h->status==BK_NOT_USED) return h;
-  if (h->flags & BK_LOCKED)
-     {
-     SEND_LOG("(ERROR) Unable to kill block! It is LOCKED! '%-.12s' (%04X)",h->src_file,handle);
-     return NULL;
-     }
-  SEND_LOG("(KILL) Killing block '%-.12s' (%04X)",h->src_file,handle);
-  if (h->status==BK_SAME_AS) return h;
-  if (h->status==BK_PRESENT) free(h->blockdata);
-  if (h->flags & BK_HSWAP) swap_free_block(h->seekpos,h->size);
-  h->status=BK_NOT_LOADED;
-  h->flags&=~BK_HSWAP;
-  return h;
-  }
+	h = get_handle(handle);
+
+	if (h->status == BK_NOT_USED) {
+		return h;
+	}
+
+	if (h->flags & BK_LOCKED) {
+		SEND_LOG("(ERROR) Unable to kill block! It is LOCKED! '%-.12s' (%04X)", h->src_file, handle);
+		return NULL;
+	}
+
+	SEND_LOG("(KILL) Killing block '%-.12s' (%04X)", h->src_file, handle);
+
+	if (h->status == BK_SAME_AS) {
+		return h;
+	}
+
+	if (h->status == BK_PRESENT) {
+		delete h->blockdata;
+	}
+
+	if (h->flags & BK_HSWAP) {
+		swap_free_block(h->seekpos,h->size);
+	}
+
+	h->status = BK_NOT_LOADED;
+	h->flags &= ~BK_HSWAP;
+	return h;
+}
 
 THANDLE_DATA *zneplatnit_block(int handle)
   {
@@ -943,7 +991,7 @@ void *load_swaped_block(THANDLE_DATA *h)
   }
 
 
-int find_same(const char *name,void (*decomp)(void**, long*))
+int find_same(const char *name,DataBlock *(*decomp)(SeekableReadStream&))
   {
   THANDLE_DATA *p;
   int i,j;
@@ -960,7 +1008,7 @@ int find_same(const char *name,void (*decomp)(void**, long*))
   return -1;
   }
 
-int find_handle(const char *name,void (*decomp)(void**, long*))
+int find_handle(const char *name, DataBlock *(*decomp)(SeekableReadStream&))
   {
   return find_same(name,decomp);
   }
@@ -971,67 +1019,79 @@ int test_file_exist(int group,const char *filename)
   return 1;
   }
 
-THANDLE_DATA *def_handle(int handle,const char *filename,void (*decompress)(void**, long*),char path)
-  {
-  THANDLE_DATA *h;
-  int i;
+THANDLE_DATA *def_handle(int handle, const char *filename, DataBlock *(*decompress)(SeekableReadStream&), char path) {
+	THANDLE_DATA *h;
+	int i;
 
-  i=find_same(filename,decompress);
-  h=get_handle(handle);
-  if (i==handle) return h;
-  if (kill_block(handle)==NULL)
-     {
-     SEND_LOG("(ERROR) File/Block can't be registred, handle is already in use '%-.12s' handle %04X",filename,handle);
-     return NULL;
-     }
-  if (i!=-1 && i!=handle)
-     {
-     h->status=BK_SAME_AS;
-     h->seekpos=i;
-     return h;
-     }
-  strncpy(h->src_file,filename,12);
-  h->src_file[12] = '\0';
-  h->seekpos=0;
-  strupr(h->src_file);
-  h->loadproc=decompress;
-  if (filename[0])
-      h->seekpos=get_file_entry(path,h->src_file);
-  SEND_LOG("(REGISTER) File/Block registred '%-.12s' handle %04X",h->src_file,handle);
-  SEND_LOG("(REGISTER) Seekpos=%d",h->seekpos,0);
-  h->flags=0;
-  h->path=path;
-  if (h->status!=BK_DIRLIST) h->status=BK_NOT_LOADED;
-  h->counter=bk_global_counter++;
-  return h;
-  }
+	i = find_same(filename, decompress);
+	h = get_handle(handle);
 
-void *afile(const char *filename,int group,long *blocksize)
-  {
-  char *c,*d;
-  long entr;
-  void *p;
+	if (i == handle) {
+		return h;
+	}
 
-  d = (char*)alloca(strlen(filename)+1);
-  strcpy(d,filename);
-  strupr(d);
-  if (mman_patch && test_file_exist_DOS(group,d)) entr=0;
-  else entr=get_file_entry(group,d);
-  if (entr!=0)
-     {
+	if (kill_block(handle) == NULL) {
+		SEND_LOG("(ERROR) File/Block can't be registred, handle is already in use '%-.12s' handle %04X", filename, handle);
+		return NULL;
+	}
+
+	if (i != -1 && i != handle) {
+		h->status = BK_SAME_AS;
+		h->seekpos = i;
+		return h;
+	}
+
+	strncpy(h->src_file, filename, 12);
+	h->src_file[12] = '\0';
+	h->seekpos = 0;
+	strupr(h->src_file);
+	h->loadproc = decompress;
+
+	if (filename[0]) {
+		h->seekpos = get_file_entry(path, h->src_file);
+	}
+
+	SEND_LOG("(REGISTER) File/Block registred '%-.12s' handle %04X", h->src_file, handle);
+	SEND_LOG("(REGISTER) Seekpos=%d", h->seekpos, 0);
+	h->flags = 0;
+	h->path = path;
+
+	if (h->status != BK_DIRLIST) {
+		h->status = BK_NOT_LOADED;
+	}
+
+	h->counter = bk_global_counter++;
+	return h;
+}
+
+SeekableReadStream *afile(const char *filename, int group) {
+	char *c, *d;
+	long entr;
+	SeekableReadStream *ret;
+
+	d = (char*)alloca(strlen(filename) + 1);
+	strcpy(d, filename);
+	strupr(d);
+
+	if (mman_patch && test_file_exist_DOS(group, d)) {
+		entr = 0;
+	} else {
+		entr = get_file_entry(group, d);
+	}
+
+	if (entr != 0) {
 //		 int hnd;
-		 FILE *hnd;
-		 SEND_LOG("(LOAD) Afile is loading file '%s' from group %d",d,group);
+		FILE *hnd;
+		SEND_LOG("(LOAD) Afile is loading file '%s' from group %d",d,group);
 
 		if (entr < 0) {
-			p = patchfile.readFile(group, d, *blocksize);
+			ret = patchfile.readFile(group, d);
 		} else {
-			p = datafile.readFile(group, d, *blocksize);
+			ret = datafile.readFile(group, d);
 		}
 	} else {
 		SEND_LOG("(LOAD) Afile is loading file '%s' from disk", d, group);
-		p = load_file(Sys_FullPath(group, filename));
-		*blocksize=last_load_size;
+		ret = new File(Sys_FullPath(group, filename));
 	}
 /*
   else if (mman_pathlist!=NULL)
@@ -1044,83 +1104,94 @@ void *afile(const char *filename,int group,long *blocksize)
      }
   else return NULL;
 */
-  return p;
-  }
+	return ret;
+}
 
-void *ablock(int handle)
-  {
-  THANDLE_DATA *h;
+DataBlock *ablock(int handle) {
+	THANDLE_DATA *h;
 
-  sem:
-  h=get_handle(handle);
-  if (memman_handle!=handle || h->status!=BK_PRESENT) h->counter=bk_global_counter++;
-  memman_handle=handle;
-  if (h->status==BK_SAME_AS)
-     {
-     handle=h->seekpos;
-     goto sem;
-     }
-  if (h->status==BK_PRESENT) return h->blockdata;
-  if (h->status==BK_DIRLIST)
-     {
-     free(h->blockdata);h->status=BK_NOT_LOADED;
-     }
-  if (h->status==BK_NOT_LOADED)
-     {
-        void *p;long s;
-//        char c[200];
-	char *c;
+sem:
+	h = get_handle(handle);
 
-        SEND_LOG("(LOAD) Loading file as block '%-.12s' %04X",h->src_file,handle);
-        if (h->seekpos==0)
-           {
-           if (h->src_file[0]!=0)
-              {
-              if (mman_action!=NULL) mman_action(MMA_READ);
-		c = Sys_FullPath(h->path, "");
-		s = strlen(c);
-		strcpy(c+s, h->src_file);
-		c[s+12] = '\0';
-              p=load_file(c);
-              s=last_load_size;
-              }
-           else
-              {
-              p=NULL;
-              s=0;
-              }
-           if (h->loadproc!=NULL) h->loadproc(&p,&s);
-           h->blockdata=p;
-           h->status=BK_PRESENT;
-           h->size=s;
-           return p;
-           }
-        else
-           {
-					 int entr=h->seekpos;//,hnd;
-					 FILE *hnd;
-           if (mman_action!=NULL) mman_action(MMA_READ);
+	if (memman_handle != handle || h->status != BK_PRESENT) {
+		h->counter = bk_global_counter++;
+	}
 
-		if (entr < 0) {
-			p = patchfile.readFile(h->path, h->src_file, s);
+	memman_handle = handle;
+
+	if (h->status == BK_SAME_AS) {
+		handle = h->seekpos;
+		goto sem;
+	}
+
+	if (h->status == BK_PRESENT) {
+		return h->blockdata;
+	}
+
+	if (h->status == BK_DIRLIST) {
+		delete h->blockdata;
+		h->status = BK_NOT_LOADED;
+	}
+
+	if (h->status == BK_NOT_LOADED) {
+		void *p;
+		long s;
+		char *c;
+
+		SEND_LOG("(LOAD) Loading file as block '%-.12s' %04X",h->src_file,handle);
+
+		assert(h->loadproc && "Missing loadproc");
+
+		if (h->seekpos == 0) {
+			if (h->src_file[0] != 0) {
+				File file;
+
+				if (mman_action != NULL) {
+					mman_action(MMA_READ);
+				}
+
+				c = Sys_FullPath(h->path, "");
+				s = strlen(c);
+				strcpy(c + s, h->src_file);
+				c[s + 12] = '\0';
+				file.open(c);
+				h->blockdata = h->loadproc(file);
+			} else {
+				MemoryReadStream tmp(NULL, 0);
+				h->blockdata = h->loadproc(tmp);
+			}
+
+			h->status = BK_PRESENT;
+			return h->blockdata;
 		} else {
-			p = datafile.readFile(h->path, h->src_file, s);
-		}
+			int entr = h->seekpos;//,hnd;
+			MemoryReadStream *stream;
 
-           if (h->loadproc!=NULL) h->loadproc(&p,&s);
-           h->blockdata=p;
-           h->status=BK_PRESENT;
-           h->size=s;
-           return p;
-           }
-        }
-     //tato cast programu bude jeste dodelana - else ....
-  if (h->status==BK_SWAPED)
-     {
-     return h->blockdata=load_swaped_block(h);
-     }
-  return NULL;
-  }
+			if (mman_action != NULL) {
+				mman_action(MMA_READ);
+			}
+
+			if (entr < 0) {
+				stream = patchfile.readFile(h->path, h->src_file);
+			} else {
+				stream = datafile.readFile(h->path, h->src_file);
+			}
+
+			h->blockdata = h->loadproc(*stream);
+			h->status = BK_PRESENT;
+			delete stream;
+			return h->blockdata;
+		}
+	}
+
+	//tato cast programu bude jeste dodelana - else ....
+	if (h->status == BK_SWAPED) {
+//		return h->blockdata = load_swaped_block(h);
+		assert(0 && "Trying to unswap block");
+	}
+
+	return NULL;
+}
 
 void alock(int handle)
   {

@@ -25,7 +25,9 @@
 #define __LIBS_GUI_H
 
 #include <inttypes.h>
+#include "libs/pcx.h"
 #include "libs/devices.h"
+#include "libs/bgraph.h"
 
 #pragma pack(1)
 
@@ -41,8 +43,7 @@
 #define E_CONTROL 59 //User defined feature, enables direct controling desktop objects
 
 #define CURSOR_SPEED 5
-#define get_title(title) (char *)*(long *)(title)
-#define DESK_TOP_COLOR RGB555(0,15,15)
+#define DESK_TOP_COLOR 0,123,123
 #define MINSIZX 60
 #define MINSIZY 40
 
@@ -51,12 +52,13 @@
 //#define SCR_WIDTH_Y DxGetResY()
 
 
-typedef struct ctl3d
-  {
-  uint16_t light,shadow,bsize,ctldef;
-  }CTL3D;
+typedef struct ctl3d {
+	uint8_t light[3], shadow[3];
+	uint16_t bsize, ctldef;
+} CTL3D;
 
-typedef uint16_t FC_TABLE[7];
+typedef uint8_t FC_TABLE[7][3];
+typedef uint8_t FC_PTR[3];
 typedef FC_TABLE FC_PALETTE[16];
 
 // align urcuje vzhledem ke ktermu rohu je vypocet souradnic vztazen
@@ -75,14 +77,17 @@ struct window;
 class GUIObject {
 private:
 	int _id;
+	static const Font *_dFont;
+	static int _dShadow;
+	static uint8_t _dColor[FONT_COLORS][3];
 
 protected:
 	int _x, _y, _width, _height, _locx, _locy, _align;
 	bool _autoResizeX, _autoResizeY, _enabled, _drawError;
-	uint16_t *_font;
+	const Font *_font;
 	CTL3D _border;
-	uint16_t _color;
-	FC_TABLE _fColor;
+	uint8_t _fColor[FONT_COLORS][3], _color[3];
+	int _shadow;
 
 	void (*_onEvent)(EVENT_MSG *msg);
 	void (*_gotFocus)();
@@ -95,6 +100,8 @@ protected:
 
 public:
 	GUIObject *_next;
+
+	static void setDefaultFont(const Font *font, int shadow, uint8_t r, uint8_t g, uint8_t b);
 
 	GUIObject(int id, int x, int y, int width, int height, int align);
 	virtual ~GUIObject(void) = 0;
@@ -114,9 +121,9 @@ public:
 	void (*getOnActivate(void))(void);
 
 	void render(window *w, int show);
-	void setFColor(unsigned idx, uint16_t color);
+	void setFColor(unsigned idx, uint8_t r, uint8_t g, uint8_t b);
 	void align(window *w, int &x, int &y) const;
-	void property(CTL3D *ctl, uint16_t *font, FC_TABLE *fcolor, uint16_t color);
+	void property(CTL3D *ctl, const Font *font, int shadow, uint8_t fcolor[][3], uint8_t *color);
 	bool inside(window *w, int x, int y) const;
 	void autoResize(int xdiff, int ydiff);
 
@@ -133,21 +140,21 @@ typedef struct tidlist
 	GUIObject *obj;
   }TIDLIST;
 
-
-typedef struct window
-  {
-  int16_t x,y,xs,ys;
-  CTL3D border3d;
-  uint16_t color;
+// FIXME: rewrite to proper class
+typedef struct window {
+	int16_t x, y, xs, ys;
+	CTL3D border3d;
+	uint8_t color[3];
 	GUIObject *objects;
-  uint32_t id;
-  int8_t modal,minimized,popup;
-  uint16_t minsizx,minsizy;
-  int8_t *window_name;
-  void (*draw_event)(struct window *);
-  struct window *next;
-  TIDLIST *idlist;
-  }WINDOW;
+	uint32_t id;
+	int8_t modal, minimized, popup;
+	uint16_t minsizx, minsizy;
+	int8_t *window_name;
+	int txtid, txtx, txty;
+	void (*draw_event)(struct window *);
+	struct window *next;
+	TIDLIST *idlist;
+} WINDOW;
 
 extern WINDOW *desktop,*waktual;
 extern GUIObject *o_aktual, *o_end, *o_start;
@@ -156,13 +163,12 @@ extern FC_TABLE f_default;
 extern uint16_t desktop_y_size;
 //extern char change_flag;
 extern uint16_t *default_font;
-extern uint16_t *gui_background;
-
+extern const Texture *gui_background;
 
 
 
 void draw_border(int16_t x,int16_t y,int16_t xs,int16_t ys,CTL3D *btype);
-WINDOW *create_window(int x,int y, int xs, int ys, uint16_t color, CTL3D *okraj);
+WINDOW *create_window(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b, CTL3D *okraj);
 long desktop_add_window(WINDOW *w);
 void select_window(long id);
 WINDOW *find_window(long id);
@@ -170,8 +176,9 @@ void redraw_object(GUIObject *o);
 void redraw_window();
 void define(GUIObject *o);
 CTL3D *border(uint16_t light,uint16_t shadow, uint16_t bsize, uint16_t btype);
-void property(CTL3D *ctl,uint16_t *font,FC_TABLE *fcolor,uint16_t color);
-FC_TABLE *flat_color(uint16_t color);
+void property(CTL3D *ctl, const Font *font, int shadow, uint8_t fcolor[][3], uint8_t *color);
+FC_PTR *flat_color(uint8_t r, uint8_t g, uint8_t b);
+uint8_t *single_color(uint8_t r, uint8_t g, uint8_t b);
 void aktivate_window(MS_EVENT *ms);
 void redraw_desktop();
 void close_window(WINDOW *w);
@@ -191,7 +198,7 @@ GUIObject *find_object_desktop(int wid, int id, WINDOW **wi);
 void set_window_modal(void);
 void set_enable(int win_id,int obj_id,int condition);
 void run_background(void (*p)());
-void disable_bar(int x,int y,int xs,int ys,uint16_t color);
+void disable_bar(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b);
 void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys);
 void goto_control(int obj_id);
 

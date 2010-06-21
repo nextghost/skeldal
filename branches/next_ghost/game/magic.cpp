@@ -22,6 +22,7 @@
  */
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/bgraph.h"
 #include <cstring>
@@ -164,6 +165,26 @@ typedef struct tkouzlo {
 } TKOUZLO;
 #pragma option align=reset
 
+class SpellList {
+private:
+	static const int _size = 5 * 7 * 3;
+	TKOUZLO _spells[_size];
+	MemoryReadStream *_spellData;
+
+	// do not implement
+	SpellList(const SpellList &src);
+	const SpellList &operator=(const SpellList &src);
+
+public:
+	SpellList(void) : _spellData(NULL) { }
+	~SpellList(void);
+
+	void load(SeekableReadStream &stream);
+	TKOUZLO &operator[](unsigned idx);
+	MemoryReadStream *data(void) const { return _spellData; }
+};
+
+SpellList spells;
 TKOUZLO *spell_table[MAX_SPELLS];
 short *vls_table[MAX_SPELLS];   //nove vlastnosti postav
                                    //pokud je cislo vetsi nez 0x7f00 pak dolni byte uvadi percentualni pomer
@@ -248,60 +269,77 @@ void play_big_mgif_animation(int block)
   }
 */
 
-int get_spell_mana(int num)
-  {
-  TKOUZLO *p;
+SpellList::~SpellList(void) {
+	delete _spellData;
+}
 
-  p=(TKOUZLO *)ablock(H_KOUZLA);
-  return p[num].mge;
-  }
+void SpellList::load(SeekableReadStream &stream) {
+	int i;
 
-int get_spell_um(int num)
-  {
-  TKOUZLO *p;
+	for (i = 0; i < _size; i++) {
+		_spells[i].num = stream.readUint16LE();
+		_spells[i].um = stream.readUint16LE();
+		_spells[i].mge = stream.readUint16LE();
+		_spells[i].pc = stream.readUint16LE();
+		_spells[i].owner = stream.readSint16LE();
+		_spells[i].accnum = stream.readSint16LE();
+		_spells[i].start = stream.readSint32LE() - _size * 56;
+		_spells[i].cil = stream.readSint16LE();
+		_spells[i].povaha = stream.readSint8();
+		_spells[i].backfire = stream.readUint16LE();
+		_spells[i].wait = stream.readUint16LE();
+		_spells[i].delay = stream.readUint16LE();
+		_spells[i].traceon = stream.readSint8();
+		stream.read(_spells[i].spellname, 28);
+		_spells[i].spellname[27] = '\0';
+		_spells[i].teleport_target = stream.readUint16LE();
+	}
 
-  p=(TKOUZLO *)ablock(H_KOUZLA);
-  return p[num].um;
-  }
+	_spellData = stream.readStream(stream.size() - stream.pos());
+}
+
+TKOUZLO &SpellList::operator[](unsigned idx) {
+	assert(_spellData && idx < _size && "Invalid spell index");
+	return _spells[idx];
+}
+
+int get_spell_mana(int num) {
+	return spells[num].mge;
+}
+
+int get_spell_um(int num) {
+	return spells[num].um;
+}
 
 
-int get_spell_used(int num)
-  {
-  TKOUZLO *p;
+int get_spell_used(int num) {
+	return spells[num].start != 0;
+}
 
-  p=(TKOUZLO *)ablock(H_KOUZLA);
-  return (p[num].start!=0);
-  }
+char get_spell_track(int num) {
+	return spells[num].traceon & 1;
+}
 
-char get_spell_track(int num)
-  {
-  TKOUZLO *p;
-
-  p=(TKOUZLO *)ablock(H_KOUZLA);
-  return (p[num].traceon & 1);
-  }
-
-char get_spell_teleport(int num)
-  {
-  TKOUZLO *p;
-
-  p=(TKOUZLO *)ablock(H_KOUZLA);
-  return (p[num].traceon & 2);
-  }
+char get_spell_teleport(int num) {
+	return spells[num].traceon & 2;
+}
 
 
-int get_spell_color(THUMAN *p,int num)
-  {
-  TKOUZLO *z;
+int get_spell_color(THUMAN *p, int num) {
+	const TKOUZLO &z = spells[num];
 
-  z=(TKOUZLO *)ablock(H_KOUZLA);
-  z+=num;
-  if (!z->start) return 1;
-  if (z->mge>p->mana) return 1;
-  if (z->um<=p->vlastnosti[VLS_SMAGIE]) return 0;
-  if (z->um<=(p->vlastnosti[VLS_SMAGIE]*2)) return 2;
-  return 1;
-  }
+	if (!z.start) {
+		return 1;
+	} else if (z.mge > p->mana) {
+		return 1;
+	} else if (z.um <= p->vlastnosti[VLS_SMAGIE]) {
+		return 0;
+	} else if (z.um <= (p->vlastnosti[VLS_SMAGIE] * 2)) {
+		return 2;
+	}
+
+	return 1;
+}
 
 char get_rune_enable(THUMAN *p,int strnum)
   {
@@ -310,32 +348,36 @@ char get_rune_enable(THUMAN *p,int strnum)
   return 0;
   }
 
-char *get_rune_name(int strnum)
-  {
-  TKOUZLO *z;
-  z=(TKOUZLO *)ablock(H_KOUZLA);
-  z+=strnum;
-  return z->spellname;
-  }
+const char *get_rune_name(int strnum) {
+	return spells[strnum].spellname;
+}
 
-void spell_anim(char *name)
-  {
-  int i;
-  i=find_handle(name,NULL);
-  if (i==-1) i=end_ptr++;
-  def_handle(i,name,NULL,SR_ITEMS);
+void spell_anim(const char *name) {
+	int i;
+
+	i = find_handle(name, NULL);
+
+	if (i == -1) {
+		i = end_ptr++;
+	}
+
+	def_handle(i, name, preloadStream, SR_ITEMS);
 //  Task_Add(8196,play_anim,i);
 	play_big_mgif_animation(i);
-  }
+}
 
-void spell_sound(char *name)
-  {
-  int i;
-  i=find_handle(name,wav_load);
-  if (i==-1) i=end_ptr++;
-  def_handle(i,name,wav_load,SR_ZVUKY);
-  play_sample_at_channel(i,0,100);
-  }
+void spell_sound(const char *name) {
+	int i;
+
+	i = find_handle(name, wav_load);
+
+	if (i == -1) {
+		i = end_ptr++;
+	}
+
+	def_handle(i, name, wav_load, SR_ZVUKY);
+	play_sample_at_channel(i, 0, 100);
+}
 
 void get_sector_dir(int cil,uint16_t *sector,char *dir)
   {
@@ -1545,144 +1587,362 @@ static void calc_rand_value(int val1,int val2)
   rand_value=val1+rnd(val2-val1+1);
   }
 
-void call_spell(int i)
-  {
-  TKOUZLO *p;
-  uint8_t *c;
-  int z;
-  char ext=0;
-  int cil;
+void call_spell(int i) {
+	TKOUZLO *p;
+	int z;
+	char ext = 0;
+	int cil;
+	unsigned inst;
+	const char *str;
+	MemoryReadStream *stream;
 
-  SEND_LOG("(SPELLS) Calculating spell ID: %d",i,0);
-  p=spell_table[i];
-  if (p==NULL) return;
-  cil=p->cil;
-  if (cil>0)
-     {
-     cil--;
-     if (postavy[cil].stare_vls[VLS_KOUZLA] & SPL_DEMON && ~_flag_map[i] & SPL_DEMON && p->backfire==0)
-        {
-        p->wait=1;
-        return;
-        }
-     }
-  if (p->delay) return;
-  if (p->wait) return;
-  c=(uint8_t*)ablock(H_KOUZLA);
-  c+=p->start;
-  twins=0;
-  do
-  switch (twins=twins==3?0:twins,*c++)
-     {
-     case S_zivel:p->pc=GET_WORD(c);
-	   if (p->owner>=0 && !GlobEvent(MAGLOB_ONFIREMAGIC+p->pc,postavy[p->owner].sektor,postavy[p->owner].direction))
-	   {
-		   spell_end(i,p->cil,p->owner);
-		   return;
-       }
-       break;
-     case S_hpnorm_min:parm1=GET_WORD(c);twins|=1;if (twins==3) spell_hit(p->cil,parm1,parm2,p->owner);break;
-     case S_hpnorm_max:parm2=GET_WORD(c);twins|=2;if (twins==3) spell_hit(p->cil,parm1,parm2,p->owner);break;
-     case S_hpzivl_min:parm1=GET_WORD(c);twins|=1;if (twins==3) spell_hit_zivel(p->cil,parm1,parm2,p->owner,p->pc);break;
-     case S_hpzivl_max:parm2=GET_WORD(c);twins|=2;if (twins==3) spell_hit_zivel(p->cil,parm1,parm2,p->owner,p->pc);break;
-     case S_vlastnost:parm1=GET_WORD(c);twins|=1;
-                      if (twins==3) if (hod_na_uspech(p->cil,p)) zmen_vlastnost(i,p->cil,parm1,parm2);break;
-     case S_vls_kolik:parm2=GET_WORD(c);twins|=2;
-                      if (twins==3) if (hod_na_uspech(p->cil,p)) zmen_vlastnost(i,p->cil,parm1,parm2);break;
-     case S_trvani:p->delay=GET_WORD(c);p->wait=0;ext=1;break;
-     case S_throw_item:z=GET_WORD(c);spell_throw(p->cil,z);break;
-     case S_create_item:z=GET_WORD(c);spell_create(p->cil,z);break;
-     case S_create_weapon:z=GET_WORD(c);spell_create_weapon(p->cil,z);break;
-     case S_animace:if (p->owner>=0 && !p->traceon)spell_anim((char*)c);c=(uint8_t*)strchr((char*)c,0);c++;break;
-     case S_zvuk:if (p->owner>=0 && !p->traceon)spell_sound((char*)c);c=(uint8_t*)strchr((char*)c,0);c++;break;
-     case S_wait:p->wait=GET_WORD(c);if (p->owner>=0) ext=1;break;
-     case 0xff:spell_end(i,p->cil,p->owner);return;
-     case S_pvls:parm2=GET_WORD(c);twins|=2;
-                      if (twins==3) if (hod_na_uspech(p->cil,p)) zmen_vlastnost_percent(i,p->cil,parm1,parm2);break;
-     case S_set:parm2=GET_WORD(c);if (hod_na_uspech(p->cil,p)) set_flag(i,p->cil,parm2,1);break;
-     case S_reset:parm2=GET_WORD(c);if (hod_na_uspech(p->cil,p)) set_flag(i,p->cil,parm2,0);break;
-     case S_special:parm2=GET_WORD(c);spell_special(i,p,parm2);break;
-     case S_drain_min:parm1=GET_WORD(c);twins|=1;if (twins==3) spell_drain(p,p->cil,parm1,parm2);break;
-     case S_drain_max:parm2=GET_WORD(c);twins|=2;if (twins==3) spell_drain(p,p->cil,parm1,parm2);break;
-     case S_rand_min:parm1=GET_WORD(c);twins|=1;if (twins==3) calc_rand_value(parm1,parm2);break;
-     case S_rand_max:parm2=GET_WORD(c);twins|=2;if (twins==3) calc_rand_value(parm1,parm2);break;
-     case S_mana:parm1=GET_WORD(c);set_kondice_mana(parm1,p,S_mana,0);break;
-     case S_kondice:parm1=GET_WORD(c);set_kondice_mana(parm1,p,S_kondice,1);break;
-     case S_mana_clip:parm1=GET_WORD(c);set_kondice_mana(parm1,p,S_mana,1);break;
-     case S_mana_steal:parm1=GET_WORD(c);spell_mana_steal(parm1,p->cil,p->owner);break;
-     case S_location_sector: parm1=GET_WORD(c);
-       TelepLocation.sector=parm1;
-       TelepLocation.loc_x=0;
-       TelepLocation.loc_y=0;
-       break;
-     case S_location_map: TelepLocation.map=(const char*)c;c=(uint8_t*)strchr((char*)c,0);c++;break;
-     case S_location_dir: parm1=GET_WORD(c);TelepLocation.dir=parm1;break;
-     case S_location_x: TelepLocation.loc_x=GET_WORD(c);TelepLocation.map=0;break;
-     case S_location_y: TelepLocation.loc_y=GET_WORD(c);TelepLocation.map=0;break;
-     default:
-            {
-            const char *d="Chyba v popisu kouzel: Program narazil na neznamou instrukci %d (%02X) pri zpracovani kouzla s cislem %d. Kouzlo bylo ukon‡eno";
-            char *ptr = (char*)alloca(strlen(d)+20);
-            sprintf(ptr,d,*(c-1),*(c-1),p->num);
-            bott_disp_text(ptr);
-            spell_end(i,p->cil,p->owner);
-            return;
-            }
+	SEND_LOG("(SPELLS) Calculating spell ID: %d", i, 0);
+	p = spell_table[i];
 
+	if (p == NULL) {
+		return;
+	}
 
-     }
-  while(!ext);
-  p->start=c-(uint8_t*)ablock(H_KOUZLA);
-  }
+	cil = p->cil;
 
-int add_spell(int num,int cil,int owner,char noanim)
-  {
-  int i,nl=-1;
-  TKOUZLO *p;
-  TKOUZLO *q;
-  int accnum;
-  char time_acc=1;
+	if (cil>0) {
+		cil--;
 
-  SEND_LOG("(SPELLS) Casting spell number %d",num,0);
-  alock(H_KOUZLA);
-  q=(TKOUZLO *)ablock(H_KOUZLA)+num;
-  accnum=q->accnum;
-  if (accnum<0)
-     {
-     time_acc=0;
-     accnum=abs(accnum);
-     }
-  if (!accnum) accnum=-1;
-  for(i=0;i<MAX_SPELLS  && (spell_table[i]==NULL || abs(spell_table[i]->accnum)!=accnum || spell_table[i]->cil!=cil);i++)
-     if (spell_table[i]==NULL) nl=i;
-  if (i==MAX_SPELLS) i=nl;
-  if (i==-1)
-     {
-     SEND_LOG("(ERROR) Too many spells in game!",0,0);
-     return -1;
-     }
-  if (spell_table[i]!=NULL)
-     {
-     if (!time_acc) return -1;
-     spell_end(i,spell_table[i]->cil,spell_table[i]->owner);
-     }
-  SEND_LOG("(SPELLS) Current spell number %d was assigned to ID number : %d",num,i);
-  p=New(TKOUZLO);
-  vls_table[i]=NewArr(short,24);
-  memset(vls_table[i],0,2*24);
-  memcpy(p,q,sizeof(TKOUZLO));
-  p->cil=cil;
-  p->num=num;
-  p->owner=owner;
-  p->traceon=noanim;
-  p->teleport_target=teleport_target;
-  if (cil>0) p->backfire=(postavy[cil-1].stare_vls[VLS_KOUZLA] & SPL_DEMON)!=0;
-  aunlock(H_KOUZLA);
-  spell_table[i]=p;
-  if (cil>0 && owner>=0) postavy[cil-1].spell=1;
-  call_spell(i);
-  return i;
-  }
+		if (postavy[cil].stare_vls[VLS_KOUZLA] & SPL_DEMON && ~_flag_map[i] & SPL_DEMON && p->backfire == 0) {
+			p->wait = 1;
+			return;
+		}
+	}
+
+	if (p->delay) {
+		return;
+	}
+
+	if (p->wait) {
+		return;
+	}
+
+	stream = spells.data();
+	stream->seek(p->start, SEEK_SET);
+	twins = 0;
+
+	do {
+		inst = stream->readUint8();
+		twins = twins == 3 ? 0 : twins;
+
+		switch (inst) {
+		case S_zivel:
+			p->pc = stream->readUint16LE();
+
+			if (p->owner >= 0 && !GlobEvent(MAGLOB_ONFIREMAGIC + p->pc, postavy[p->owner].sektor, postavy[p->owner].direction)) {
+				spell_end(i, p->cil, p->owner);
+				return;
+			}
+			break;
+
+		case S_hpnorm_min:
+			parm1 = stream->readUint16LE();
+			twins |= 1;
+
+			if (twins == 3) {
+				spell_hit(p->cil, parm1, parm2, p->owner);
+			}
+			break;
+
+		case S_hpnorm_max:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				spell_hit(p->cil, parm1, parm2, p->owner);
+			}
+			break;
+
+		case S_hpzivl_min:
+			parm1 = stream->readUint16LE();
+			twins |= 1;
+
+			if (twins == 3) {
+				spell_hit_zivel(p->cil, parm1, parm2, p->owner, p->pc);
+			}
+			break;
+
+		case S_hpzivl_max:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				spell_hit_zivel(p->cil, parm1, parm2, p->owner, p->pc);
+			}
+			break;
+
+		case S_vlastnost:
+			parm1 = stream->readUint16LE();
+			twins |= 1;
+
+			if (twins == 3) {
+				if (hod_na_uspech(p->cil, p)) {
+					zmen_vlastnost(i, p->cil, parm1, parm2);
+				}
+			}
+			break;
+
+		case S_vls_kolik:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				if (hod_na_uspech(p->cil, p)) {
+					zmen_vlastnost(i, p->cil, parm1, parm2);
+				}
+			}
+			break;
+
+		case S_trvani:
+			p->delay = stream->readUint16LE();
+			p->wait = 0;
+			ext = 1;
+			break;
+
+		case S_throw_item:
+			z = stream->readUint16LE();
+			spell_throw(p->cil, z);
+			break;
+
+		case S_create_item:
+			z = stream->readUint16LE();
+			spell_create(p->cil, z);
+			break;
+
+		case S_create_weapon:
+			z = stream->readUint16LE();
+			spell_create_weapon(p->cil, z);
+			break;
+
+		case S_animace:
+			str = stream->readCString();
+
+			if (p->owner >= 0 && !p->traceon) {
+				spell_anim(str);
+			}
+			break;
+
+		case S_zvuk:
+			str = stream->readCString();
+
+			if (p->owner >= 0 && !p->traceon) {
+				spell_sound(str);
+			}
+			break;
+
+		case S_wait:
+			p->wait = stream->readUint16LE();
+
+			if (p->owner >= 0) {
+				ext = 1;
+			}
+			break;
+
+		case 0xff:
+			spell_end(i, p->cil, p->owner);
+			return;
+
+		case S_pvls:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				if (hod_na_uspech(p->cil, p)) {
+					zmen_vlastnost_percent(i, p->cil, parm1, parm2);
+				}
+			}
+			break;
+
+		case S_set:
+			parm2 = stream->readUint16LE();
+
+			if (hod_na_uspech(p->cil, p)) {
+				set_flag(i, p->cil, parm2, 1);
+			}
+			break;
+
+		case S_reset:
+			parm2 = stream->readUint16LE();
+
+			if (hod_na_uspech(p->cil, p)) {
+				set_flag(i, p->cil, parm2, 0);
+			}
+			break;
+
+		case S_special:
+			parm2 = stream->readUint16LE();
+			spell_special(i, p, parm2);
+			break;
+
+		case S_drain_min:
+			parm1 = stream->readUint16LE();
+			twins |= 1;
+
+			if (twins == 3) {
+				spell_drain(p, p->cil, parm1, parm2);
+			}
+			break;
+
+		case S_drain_max:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				spell_drain(p, p->cil, parm1, parm2);
+			}
+			break;
+
+		case S_rand_min:
+			parm1 = stream->readUint16LE();
+			twins |= 1;
+
+			if (twins == 3) {
+				calc_rand_value(parm1, parm2);
+			}
+			break;
+
+		case S_rand_max:
+			parm2 = stream->readUint16LE();
+			twins |= 2;
+
+			if (twins == 3) {
+				calc_rand_value(parm1, parm2);
+			}
+			break;
+
+		case S_mana:
+			parm1 = stream->readUint16LE();
+			set_kondice_mana(parm1, p, S_mana, 0);
+			break;
+
+		case S_kondice:
+			parm1 = stream->readUint16LE();
+			set_kondice_mana(parm1, p, S_kondice, 1);
+			break;
+
+		case S_mana_clip:
+			parm1 = stream->readUint16LE();
+			set_kondice_mana(parm1, p, S_mana, 1);
+			break;
+
+		case S_mana_steal:
+			parm1 = stream->readUint16LE();
+			spell_mana_steal(parm1, p->cil, p->owner);
+			break;
+
+		case S_location_sector:
+			parm1 = stream->readUint16LE();
+			TelepLocation.sector = parm1;
+			TelepLocation.loc_x = 0;
+			TelepLocation.loc_y = 0;
+			break;
+
+		case S_location_map:
+			TelepLocation.map = stream->readCString();
+			break;
+
+		case S_location_dir:
+			parm1 = stream->readUint16LE();
+			TelepLocation.dir = parm1;
+			break;
+
+		case S_location_x:
+			TelepLocation.loc_x = stream->readUint16LE();
+			TelepLocation.map = 0;
+			break;
+
+		case S_location_y:
+			TelepLocation.loc_y = stream->readUint16LE();
+			TelepLocation.map = 0;
+			break;
+
+		default:
+			{
+				const char *d = "Chyba v popisu kouzel: Program narazil na neznamou instrukci %d (%02X) pri zpracovani kouzla s cislem %d. Kouzlo bylo ukon‡eno";
+				char *ptr = (char*)alloca(strlen(d) + 20);
+				sprintf(ptr, d, inst, inst, p->num);
+				bott_disp_text(ptr);
+				spell_end(i, p->cil, p->owner);
+				return;
+			}
+		}
+	} while(!ext);
+
+	p->start = stream->pos();
+}
+
+int add_spell(int num, int cil, int owner, char noanim) {
+	int i, nl = -1;
+	TKOUZLO *p;
+	const TKOUZLO *q;
+	int accnum;
+	char time_acc = 1;
+
+	SEND_LOG("(SPELLS) Casting spell number %d", num, 0);
+	q = &spells[num];
+	accnum = q->accnum;
+
+	if (accnum < 0) {
+		time_acc = 0;
+		accnum = abs(accnum);
+	}
+
+	if (!accnum) {
+		accnum = -1;
+	}
+
+	for (i = 0; i < MAX_SPELLS && (spell_table[i] == NULL || abs(spell_table[i]->accnum) != accnum || spell_table[i]->cil != cil); i++) {
+		if (spell_table[i] == NULL) {
+			nl = i;
+		}
+	}
+
+	if (i == MAX_SPELLS) {
+		i = nl;
+	}
+
+	if (i == -1) {
+		SEND_LOG("(ERROR) Too many spells in game!", 0, 0);
+		return -1;
+	}
+
+	if (spell_table[i] != NULL) {
+		if (!time_acc) {
+			return -1;
+		}
+
+		spell_end(i, spell_table[i]->cil, spell_table[i]->owner);
+	}
+
+	SEND_LOG("(SPELLS) Current spell number %d was assigned to ID number : %d", num, i);
+	p = New(TKOUZLO);
+	vls_table[i] = NewArr(short, 24);
+	memset(vls_table[i], 0, 2 * 24);
+	memcpy(p, q, sizeof(TKOUZLO));
+	p->cil = cil;
+	p->num = num;
+	p->owner = owner;
+	p->traceon = noanim;
+	p->teleport_target = teleport_target;
+
+	if (cil > 0) {
+		p->backfire = (postavy[cil - 1].stare_vls[VLS_KOUZLA] & SPL_DEMON) != 0;
+	}
+
+	spell_table[i] = p;
+
+	if (cil > 0 && owner >= 0) {
+		postavy[cil - 1].spell = 1;
+	}
+
+	call_spell(i);
+	return i;
+}
 
 void kouzla_kola(EVENT_MSG *msg,void **unused)
   {
@@ -1769,16 +2029,21 @@ char add_group_spell(int num, int sector, int owner, int mode, char noanim) {
 	return c;
 }
 
-char ask_who(int num)
-  {
-  TKOUZLO *k=((TKOUZLO *)ablock(H_KOUZLA))+num;
+char ask_who(int num) {
+	const TKOUZLO &k = spells[num];
 
-  if (k->cil==C_kouzelnik) return 1;
-  if (k->cil==C_postava) return 2;
-  if (k->cil==C_mrtva_postava) return 3;
-  if (k->cil==C_postava_jinde) return 4;
-  return 0;
-  }
+	if (k.cil == C_kouzelnik) {
+		return 1;
+	} else if (k.cil == C_postava) {
+		return 2;
+	} else if (k.cil == C_mrtva_postava) {
+		return 3;
+	} else if (k.cil == C_postava_jinde) {
+		return 4;
+	}
+
+	return 0;
+}
 
 static uint16_t last_sector;
 
@@ -1792,7 +2057,7 @@ static char get_valid_sector(uint16_t sector)
 
 void cast(int num, THUMAN *p, int owner, char backfire) {
 	int i, um, cil, num2;
-	TKOUZLO *k;
+	const TKOUZLO *k;
 
 	if (num > 511) {
 		cil = num >> 9;
@@ -1803,7 +2068,7 @@ void cast(int num, THUMAN *p, int owner, char backfire) {
 	}
 
 	SEND_LOG("(SPELLS) Cast num %d cil %d", num2, cil);
-	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num2;
+	k = &spells[num2];
 	SEND_LOG("(SPELLS) Cast spell name %s", k->spellname, 0);
 
 	if (cil > 0 && k->cil != C_postava_jinde) {
@@ -1926,10 +2191,10 @@ end:
 }
 
 void mob_cast(int num, TMOB *m, int mob_num) {
-	TKOUZLO *k;
+	const TKOUZLO *k;
 
 	SEND_LOG("(SPELLS) Enemy tries to cast the spell (mob: %d, spell: %d", mob_num, num);
-	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num;
+	k = &spells[num];
 
 	switch (k->cil) {
 	case C_postava:
@@ -2011,12 +2276,12 @@ static int calculatePhaseDoor(int sector, int dir, int um) {
 }
 
 void thing_cast(int num, int postava, int sector, TMOB *victim, char noanim) {
-	TKOUZLO *k;
+	const TKOUZLO *k;
 	THUMAN *h = postavy + postava;
 	char telep = get_spell_teleport(num);
 
 	SEND_LOG("(SPELLS) Item casts the spell (sector: %d, spell: %d)", sector, num);
-	k = ((TKOUZLO *)ablock(H_KOUZLA)) + num;
+	k = &spells[num];
 
 	if (telep) {
 		teleport_target = calculatePhaseDoor(h->sektor, h->direction, h->vlastnosti[VLS_SMAGIE]);
@@ -2070,19 +2335,23 @@ void area_cast(int num,int sector,int owner,char noanim)
 
 
 
-void kouzla_init()
-  {
-  SEND_LOG("(SPELLS) Init...",0,0);
-  send_message(E_ADD,E_KOUZLO_ANM,kouzla_anm);
-  send_message(E_ADD,E_KOUZLO_KOLO,kouzla_kola);
-  memset(spell_table,0,sizeof(spell_table));
-  memset(vls_table,0,sizeof(vls_table));
-  memset(_flag_map,0,sizeof(_flag_map));
-  true_seeing=0;
-  hlubina_level=0;
-  show_lives=0;
-  set_halucination=0;
-  }
+void kouzla_init() {
+	SeekableReadStream *stream;
+
+	SEND_LOG("(SPELLS) Init...",0,0);
+	send_message(E_ADD, E_KOUZLO_ANM, kouzla_anm);
+	send_message(E_ADD, E_KOUZLO_KOLO, kouzla_kola);
+	memset(spell_table, 0, sizeof(spell_table));
+	memset(vls_table, 0, sizeof(vls_table));
+	memset(_flag_map, 0, sizeof(_flag_map));
+	true_seeing = 0;
+	hlubina_level = 0;
+	show_lives = 0;
+	set_halucination = 0;
+	stream = afile("KOUZLA.DAT", SR_MAP);
+	spells.load(*stream);
+	delete stream;
+}
 
 void reinit_kouzla_full() {
 	int i;

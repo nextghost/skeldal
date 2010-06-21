@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
@@ -82,9 +83,19 @@ static T_STATY cur_stats;
 uint16_t color_butt_on[]={0,RGB555(31,27,4),RGB555(30,26,4),RGB555(29,25,4)};
 uint16_t color_butt_off[]={0,RGB555(10,10,10),RGB555(10,10,10),RGB555(10,10,10)};
 */
-uint16_t color_butt_on[4];
-uint16_t color_butt_off[4];
+uint8_t color_butt_on[FONT_COLORS][3] = {
+	{0,0,0},
+	{255,222,33},
+	{247,214,33},
+	{239,206,33}
+};
 
+uint8_t color_butt_off[FONT_COLORS][3] = {
+	{0,0,0},
+	{82,82,82},
+	{82,82,82},
+	{82,82,82}
+};
 
 typedef struct vlasts
   {
@@ -139,7 +150,8 @@ static int close_ret = 0;
 
 #define PERLA_POLOMER cur_polomer
 #define PERLA_MAXPOLOMER 75
-uint16_t *pod_perlou=NULL;
+// FIXME: pod_perlou is never delete'd...
+Texture *pod_perlou = NULL;
 short pod_perlou_x=0;
 short pod_perlou_y=0;
 const char *error_text = NULL;
@@ -218,76 +230,70 @@ TDREGISTERS char_gen_reg[]=
 const char *b_texty[4];
 char b_disables;
 
-void Chargen_Init(void) {
-	color_butt_on[0] = 0;
-	color_butt_on[1] = RGB555(31,27,4);
-	color_butt_on[2] = RGB555(30,26,4);
-	color_butt_on[3] = RGB555(29,25,4);
+void displ_button(char disable, const char **text) {
+	int posy[] = {0, 18, 37, 55};
+	int sizy[] = {18, 20, 20, 21};
+	int i;
+	const Texture *tex;
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FTINY));
 
-	color_butt_off[0] = 0;
-	color_butt_off[1] = RGB555(10,10,10);
-	color_butt_off[2] = RGB555(10,10,10);
-	color_butt_off[3] = RGB555(10,10,10);
+	renderer->setFont(font, 1, 0, 0, 0);
+	tex = dynamic_cast<const Texture*>(ablock(H_GEN_CHARGEN));
+	renderer->blit(*tex, LEFT, BOTT, tex->palette());
+
+	for (i = 0; i < 4; i++) {
+		if (disable & 1) {
+			tex = dynamic_cast<const Texture*>(ablock(H_GEN_CHARGENB));
+			renderer->rectBlit(*tex, 524, 392 + posy[i], 0, posy[i], 96, sizy[i], tex->palette());
+			renderer->setFont(font, 1, color_butt_off);
+		} else {
+			renderer->setFont(font, 1, color_butt_on);
+		}
+
+		disable >>= 1;
+		renderer->drawAlignedText(LEFT + 50, BOTT + 14 + 13 + i * 19, HALIGN_CENTER, VALIGN_BOTTOM, *text);
+		text++;
+	}
 }
 
-void displ_button(char disable,const char **text)
-  {
-  int posy[]={0,18,37,55};
-  int sizy[]={18,20,20,21};
-  int i;
+static void draw_other_bar() {
+	int i;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_BOTTBAR));
 
-  set_font(H_FTINY,0);
-  put_picture(LEFT, BOTT, (uint16_t*)ablock(H_GEN_CHARGEN));
-  for(i=0;i<4;i++)
-     {
-     if (disable & 1)
-        {
-        put_8bit_clipped((uint16_t*)ablock(H_GEN_CHARGENB),(392+posy[i])*Screen_GetXSize()+524+Screen_GetAddr(),posy[i],96,sizy[i]);
-        font_color(color_butt_off);
-        }
-     else
-        {
-        font_color(color_butt_on);
-        }
-     disable>>=1;
-     set_aligned_position(LEFT+50,BOTT+14+13+i*19,1,2,*text);
-     outtext(*text);
-     text++;
-     }
-  }
-static void draw_other_bar()
-  {
-  int i;
-  uint16_t *bbar = (uint16_t*)ablock(H_BOTTBAR);
-  uint16_t *screen=Screen_GetAddr()+(480-102)*Screen_GetXSize();
-  for (i=0;i<102;i++,screen+=Screen_GetXSize(),bbar+=Screen_GetXSize()) memcpy(screen,bbar,Screen_GetScan());
-  //put_8bit_clipped(ablock(H_GEN_OKBUTT),378*640+520+screen,0,120,102);
-  displ_button(b_disables,b_texty);
-  put_picture(0, 0, (uint16_t*)ablock(H_GEN_TOPBAR));
-  zobraz_staty(&cur_vls);
-  }
+	renderer->blit(*tex, 0, 480 - 102, tex->palette());
+
+	//put_8bit_clipped(ablock(H_GEN_OKBUTT),378*640+520+screen,0,120,102);
+	displ_button(b_disables, b_texty);
+	tex = dynamic_cast<const Texture*>(ablock(H_GEN_TOPBAR));
+	renderer->blit(*tex, 0, 0, tex->palette());
+	zobraz_staty(&cur_vls);
+}
 
 
-static void display_character(THUMAN *p,char i)
-  {
-  uint16_t *w;
- put_picture(4, SCREEN_OFFLINE, (uint16_t*)ablock(H_IOBLOUK));
- if (p->used)
-     {
-     w = (uint16_t*)ablock(H_GEN_POSTAVY+(p->xicht));
-     put_picture(HUMAN_X+30,HUMAN_Y-w[1],w);
-     }
-  if (i) draw_other_bar();
-  }
-static void zobraz_error_text()
-  {
-  if (error_text!=NULL)
-     {
-     trans_bar(0,362,640,16,0);
-     set_font(H_FONT6,RGB555(31,31,0));
-     position(10,364);outtext(error_text);
-     }
-  }
+static void display_character(THUMAN *p, char i) {
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_IOBLOUK));
+
+	renderer->blit(*tex, 4, SCREEN_OFFLINE, tex->palette());
+
+	if (p->used) {
+		tex = dynamic_cast<const Texture*>(ablock(H_GEN_POSTAVY + p->xicht));
+		renderer->blit(*tex, HUMAN_X + 30, HUMAN_Y - tex->height(), tex->palette());
+	}
+
+	if (i) {
+		draw_other_bar();
+	}
+}
+
+static void zobraz_error_text() {
+	if (error_text != NULL) {
+		const Font *font = dynamic_cast<const Font*>(ablock(H_FONT6));
+
+		trans_bar(0, 362, 640, 16, 0, 0, 0);
+		renderer->setFont(font, 1, 255, 255, 0);
+		renderer->drawText(10, 364, error_text);
+	}
+}
 
 
 
@@ -306,49 +312,32 @@ static void vypocet_perly(int angle,int xp,int yp,int *x,int *y)
   y[0]-=yp>>1;
   }
 
-static void zobraz_perlu(void)
-  {
-  uint16_t *perla;
-  int x,y;
-  uint16_t *scr,*sss;
-  uint8_t *p;
-  uint16_t *b;
-  int xs,ys,xxs;
+static void zobraz_perlu(void) {
+	const Texture *perla;
+	int x, y;
+	uint16_t *scr, *sss;
+	uint8_t *p;
+	uint16_t *b;
+	int xs, ys, xxs;
 
-  alock(H_GEN_PERLA);
-  perla = (uint16_t*)ablock(H_GEN_PERLA);
-  if (pod_perlou==NULL)
-     {
-     pod_perlou = (uint16_t*)getmem(perla[0]*perla[1]*2+6);
-     }
-  vypocet_perly(cur_angle,perla[0],perla[1],&x,&y);
-  xs=perla[0];ys=perla[1];
-  get_picture(x,y,xs,ys,pod_perlou);
-  sss=x+Screen_GetXSize()*y+Screen_GetAddr();
-  p=(uint8_t*)(perla+256+3);
-  b=perla+3;
-  for(;ys>0;ys--)
-     {
-     scr=sss;
-     for(xxs=0;xxs<xs;xxs++)
-        if (!*p) scr++,p++;else
-        if (*p<128) *scr++=b[*p++];else
-           {
-           *scr=(*scr & RGB555(30,30,30))>>1;
-           scr++;p++;
-           }
-     sss+=Screen_GetXSize();
-     }
-  //put_picture(x,y,perla);
-  pod_perlou_x=x;
-  pod_perlou_y=y;
-  aunlock(H_GEN_PERLA);
-  }
+	alock(H_GEN_PERLA);
+	perla = dynamic_cast<const Texture*>(ablock(H_GEN_PERLA));
+	xs = perla->width();
+	ys = perla->height();
 
-static void schovej_perlu(void)
-  {
-  put_picture(pod_perlou_x,pod_perlou_y,pod_perlou);
-  }
+	vypocet_perly(cur_angle, xs, ys, &x, &y);
+	delete pod_perlou;
+	pod_perlou = new SubTexture(*renderer, x, y, xs, ys);
+	renderer->transparentBlit(*perla, x, y + perla->height(), perla->palette());
+	//put_picture(x,y,perla);
+	pod_perlou_x = x;
+	pod_perlou_y = y;
+	aunlock(H_GEN_PERLA);
+}
+
+static void schovej_perlu(void) {
+	renderer->blit(*pod_perlou, pod_perlou_x, pod_perlou_y, pod_perlou->palette());
+}
 
 static void vypocet_vlastnosti(int angle,T_VLASTS *vls)
   {
@@ -398,46 +387,55 @@ static void vypocet_vlastnosti(int angle,T_VLASTS *vls)
   }
 */
 
-static void zobraz_staty(T_VLASTS *st)
-  {
-  char s[100];
+static void zobraz_staty(T_VLASTS *st) {
+	char s[100];
+	const Font *font = dynamic_cast<const Font*>(ablock(H_FTINY));
 
-  set_font(H_FTINY,0);font_color(color_topbar);
-  sprintf(s,texty[2],st->sill,st->silh);
-  position(230,2);outtext(s);
-  sprintf(s,texty[3],st->smgl,st->smgh);
-  position(330,2);outtext(s);
-  sprintf(s,texty[4],st->pohl,st->pohh);
-  position(430,2);outtext(s);
-  sprintf(s,texty[5],st->obrl,st->obrh);
-  position(530,2);outtext(s);
-  }
+	renderer->setFont(font, 1, color_topbar);
+	sprintf(s, texty[2], st->sill, st->silh);
+	renderer->drawText(230, 2, s);
+	sprintf(s, texty[3], st->smgl, st->smgh);
+	renderer->drawText(330, 2, s);
+	sprintf(s, texty[4], st->pohl, st->pohh);
+	renderer->drawText(430, 2, s);
+	sprintf(s, texty[5], st->obrl, st->obrh);
+	renderer->drawText(530, 2, s);
+}
 
 
-void redraw_generator(int show)
-  {
-  T_STATY z;
-  int i;
-  memset(&z,20,sizeof(z));
-  schovej_mysku();
-  put_picture(INV_DESK, SCREEN_OFFLINE, (uint16_t*)ablock(H_GENERACE));
-  if (cur_xicht==-1)
-     {
-     put_picture(4, SCREEN_OFFLINE, (uint16_t*)ablock(H_IOBLOUK));
-     bott_draw(1);
-     draw_other_bar();
-     }
-  else display_character(postavy+cur_edited,1);
-  zobraz_error_text();
-  zobraz_perlu();
-  for(i=0;i<MAX_XICHTS;i++)
-     {
-     if (disable[poradi[i]])
-        trans_bar(28+INV_DESK+i*XICHT_STEP,18+INV_DESK_Y,26,38,0);
-     }
-  ukaz_mysku();
-  if (show) showview(0,0,0,0);
-  }
+void redraw_generator(int show) {
+	T_STATY z;
+	int i;
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_GENERACE));
+
+	memset(&z, 20, sizeof(z));
+	schovej_mysku();
+	renderer->blit(*tex, INV_DESK, SCREEN_OFFLINE, tex->palette());
+
+	if (cur_xicht == -1) {
+		tex = dynamic_cast<const Texture*>(ablock(H_IOBLOUK));
+		renderer->blit(*tex, 4, SCREEN_OFFLINE, tex->palette());
+		bott_draw(1);
+		draw_other_bar();
+	} else {
+		display_character(postavy + cur_edited, 1);
+	}
+
+	zobraz_error_text();
+	zobraz_perlu();
+
+	for (i = 0; i < MAX_XICHTS; i++) {
+		if (disable[poradi[i]]) {
+			trans_bar(28 + INV_DESK + i * XICHT_STEP, 18 + INV_DESK_Y, 26, 38, 0, 0, 0);
+		}
+	}
+
+	ukaz_mysku();
+
+	if (show) {
+		showview(0, 0, 0, 0);
+	}
+}
 
 static void redraw_gen_wrap() {
 	redraw_generator(1);
@@ -461,94 +459,124 @@ static void set_xicht(int player,int xicht)
      h->spell=0;
   }
 
-static char select_xicht(int id,int xa,int ya,int xr,int yr)
-  {
-  int i,j,k;
-  char s[20];
+static char select_xicht(int id, int xa, int ya, int xr, int yr) {
+	int i, j, k;
+	char s[20];
 
-  i=xr/XICHT_STEP;
-  j=xr%XICHT_STEP;
-  if (j>27) return 0;
-  k=poradi[i];
-  if (disable[k]) return 1;
-  memset(disable,0,sizeof(disable));
-  set_xicht(cur_edited,cur_xicht=k);
-  postavy[cur_edited].female=women[i];
-  b_disables=0x6;
-   if (was_enter) send_message(E_KEYBOARD,13);
-  else
-   {
-   strcpy(postavy[cur_edited].jmeno,texty[160+i]);
-   send_message(E_KEYBOARD,27);
-   was_enter=0;
-   }
-  sprintf(s,XICHT_NAME,k);
-  def_handle(H_XICHTY+cur_edited,s,pcx_8bit_decomp,SR_BGRAFIKA);
-  sprintf(s,CHAR_NAME,k);
-  def_handle(H_POSTAVY+cur_edited,s,pcx_8bit_decomp,SR_BGRAFIKA);
-  for(j=0;j<MAX_XICHTS;j++) if (postavy[j].used) disable[postavy[j].xicht]=1;
-  error_text=NULL;
-  bott_draw(1);
-  redraw_generator(1);
-  displ_button(b_disables,b_texty);
-  showview(0,0,0,0);
-  id,xa,ya,xr,yr;
-  return 1;
-  }
+	i = xr / XICHT_STEP;
+	j = xr % XICHT_STEP;
 
-static char vol_vlastnosti(int id,int xa,int ya,int xr,int yr)
-  {
-  int a;
-  static char cancel=1;
+	if (j > 27) {
+		return 0;
+	}
 
-  id,xa,ya,xr,yr;
-  if (!ms_last_event.tl1)
-     {
-      cancel=1;
-      return 0;
-     }
-  if (ms_last_event.event_type & 0x2)
-     if (xa<pod_perlou_x || ya<pod_perlou_y || xa>pod_perlou_x+pod_perlou[0] ||  ya>pod_perlou_y+pod_perlou[1] )
-        {
-        cancel=1;
-        return 0;
-        }
-     else cancel=0;
-  if (cancel) return 0;
-  xr=xa-PERLA_STRED_X;
-  yr=-(ya-PERLA_STRED_Y);
-  a=(int)(atan2((double)yr,(double)xr)*180/3.14159265);
-  cur_polomer=(int)sqrt(xr*xr+yr*yr);
-  if (cur_polomer>PERLA_MAXPOLOMER) cur_polomer=PERLA_MAXPOLOMER;
-  xa=pod_perlou_x;
-  ya=pod_perlou_y;
-  schovej_mysku();
-  schovej_perlu();
-  if (a<0) a+=360;
-  vypocet_vlastnosti(a,&cur_vls);
-  cur_angle=a;
-  zobraz_perlu();
-  ukaz_mysku();
-  update_mysky();
-  showview(pod_perlou_x,pod_perlou_y,pod_perlou[0],pod_perlou[1]);
-  showview(xa,ya,pod_perlou[0],pod_perlou[1]);
-  put_picture(0, 0, (uint16_t*)ablock(H_GEN_TOPBAR));
-  zobraz_staty(&cur_vls);
-  showview(250,0,640,17);
-  return 1;
-  }
+	k = poradi[i];
+
+	if (disable[k]) {
+		return 1;
+	}
+
+	memset(disable, 0, sizeof(disable));
+	set_xicht(cur_edited, cur_xicht = k);
+	postavy[cur_edited].female = women[i];
+	b_disables = 0x6;
+
+	if (was_enter) {
+		send_message(E_KEYBOARD, 13);
+	} else {
+		strcpy(postavy[cur_edited].jmeno, texty[160+i]);
+		send_message(E_KEYBOARD, 27);
+		was_enter = 0;
+	}
+
+	sprintf(s, XICHT_NAME, k);
+	def_handle(H_XICHTY + cur_edited, s, pcx_8bit_decomp, SR_BGRAFIKA);
+	sprintf(s, CHAR_NAME, k);
+	def_handle(H_POSTAVY + cur_edited, s, pcx_8bit_decomp, SR_BGRAFIKA);
+
+	for (j = 0; j < MAX_XICHTS; j++) {
+		if (postavy[j].used) {
+			disable[postavy[j].xicht] = 1;
+		}
+	}
+
+	error_text = NULL;
+	bott_draw(1);
+	redraw_generator(1);
+	displ_button(b_disables, b_texty);
+	showview(0, 0, 0, 0);
+	id,xa,ya,xr,yr;
+	return 1;
+}
+
+static char vol_vlastnosti(int id, int xa, int ya, int xr, int yr) {
+	int a;
+	static char cancel = 1;
+	const Texture *tex;
+
+	if (!ms_last_event.tl1) {
+		cancel = 1;
+		return 0;
+	}
+
+	if (ms_last_event.event_type & 0x2) {
+		if (xa < pod_perlou_x || ya < pod_perlou_y || xa > pod_perlou_x + pod_perlou->width() ||  ya > pod_perlou_y + pod_perlou->height()) {
+			cancel = 1;
+			return 0;
+		} else {
+			cancel = 0;
+		}
+	}
+
+	if (cancel) {
+		return 0;
+	}
+
+	xr = xa - PERLA_STRED_X;
+	yr = -(ya - PERLA_STRED_Y);
+	a = (int)(atan2((double)yr, (double)xr) * 180 / 3.14159265);
+	cur_polomer = (int)sqrt(xr * xr + yr * yr);
+
+	if (cur_polomer > PERLA_MAXPOLOMER) {
+		cur_polomer = PERLA_MAXPOLOMER;
+	}
+
+	xa = pod_perlou_x;
+	ya = pod_perlou_y;
+	schovej_mysku();
+	schovej_perlu();
+
+	if (a < 0) {
+		a += 360;
+	}
+
+	vypocet_vlastnosti(a, &cur_vls);
+	cur_angle = a;
+	zobraz_perlu();
+	ukaz_mysku();
+	update_mysky();
+	showview(pod_perlou_x, pod_perlou_y, pod_perlou->width(), pod_perlou->height());
+	showview(xa, ya, pod_perlou->width(), pod_perlou->height());
+	tex = dynamic_cast<const Texture*>(ablock(H_GEN_TOPBAR));
+	renderer->blit(*tex, 0, 0, tex->palette());
+	zobraz_staty(&cur_vls);
+	showview(250, 0, 640, 17);
+	return 1;
+}
 
 //static int edit_task=-1;
 
-static void edit_name()
-  {
-  if (shut_downing_text) return;
-  curcolor=0;bar(120,2,120+104,16);
+static void edit_name() {
+	if (shut_downing_text) {
+		return;
+	}
+
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(120, 2, 120 + 104, 16);
 //  edit_task=Task_Add(16384,type_text_v2,postavy[cur_edited].jmeno,120,2,104,
 //     sizeof(postavy[cur_edited].jmeno)-1,H_FONT6,RGB555(31,31,0),edit_name);
-  send_message(E_ADD, E_KEYBOARD, type_text,postavy[cur_edited].jmeno,120,2,104,
-     sizeof(postavy[cur_edited].jmeno)-1,H_FONT6,RGB555(31,31,0),edit_name);
-  }
+	send_message(E_ADD, E_KEYBOARD, type_text,postavy[cur_edited].jmeno, 120, 2, 104, sizeof(postavy[cur_edited].jmeno) - 1, H_FONT6, 255, 255, 0, edit_name);
+}
 
 static void stop_edit_name()
   {
@@ -615,22 +643,26 @@ static void def_entries()
      }
   }
 
-static char go_next_page(int id,int xa,int ya,int xr,int yr)
-  {
-  uint16_t *w;
-  char *b;
+static char go_next_page(int id, int xa, int ya, int xr, int yr) {
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_GEN_CHARGENM));
 
-  xa,ya;
-  w = (uint16_t*)ablock(H_GEN_CHARGENM);
-  b=(char *)(w+3+256);
-  b+=*w*yr+xr;
-  if (!*b) return 1;
-  id=*b-1;
-  if (b_disables & (1<<id)) return 1;
+	assert(xr < tex->width() && yr < tex->height() && tex->depth() == 1);
+	id = tex->pixels()[xr + yr * tex->width()];
+
+	if (!id) {
+		return 1;
+	}
+
+	id--;
+
+	if (b_disables & (1 << id)) {
+		return 1;
+	}
+
 	close_ret = id;
-  send_message(E_CLOSE_GEN,id);
-  return 1;
-  }
+	send_message(E_CLOSE_GEN, id);
+	return 1;
+}
 
 
 void generuj_postavu(THUMAN *h)
@@ -665,51 +697,60 @@ void generuj_postavu(THUMAN *h)
   //postava je vygenerovana
   }
 
-static void redraw_page3()
-  {
-  update_mysky();
-  schovej_mysku();
-  curcolor=0;
-  inv_display_vlastnosti();
-  display_character(postavy+cur_edited,1);
-  write_human_big_name(postavy[cur_edited].jmeno);
-  draw_other_bar();
-  displ_button(b_disables,b_texty);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  inv_redraw=redraw_page3;
-  }
+static void redraw_page3() {
+	update_mysky();
+	schovej_mysku();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	inv_display_vlastnosti();
+	display_character(postavy + cur_edited, 1);
+	write_human_big_name(postavy[cur_edited].jmeno);
+	draw_other_bar();
+	displ_button(b_disables, b_texty);
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	inv_redraw = redraw_page3;
+}
 
 
-static void redraw_svitek()
-  {
-  if (postavy[cur_edited].bonus==0)
-     {
-     char mode;
-     mode=7;
-     if (postavy[charmin-1].used) mode&=~2;
-     if (!postavy[charmax-1].used) mode&=~1;
-     if (!del_mode) mode&=~4;
-     b_disables=mode;
-     redraw_page3();
-     return;
-     }
-  update_mysky();
-  schovej_mysku();
-  curcolor=0;
-  bar(0,16,30,16+360);
-  bar(620,16,640,16+360);
-  inv_display_vlastnosti();
-  display_character(postavy+cur_edited,0);
+static void redraw_svitek() {
+	if (postavy[cur_edited].bonus == 0) {
+		char mode;
+
+		mode = 7;
+
+		if (postavy[charmin - 1].used) {
+			mode &= ~2;
+		}
+
+		if (!postavy[charmax - 1].used) {
+			mode &= ~1;
+		}
+
+		if (!del_mode) {
+			mode &= ~4;
+		}
+
+		b_disables = mode;
+		redraw_page3();
+		return;
+	}
+
+	update_mysky();
+	schovej_mysku();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 16, 30, 16 + 360);
+	bar(620, 16, 640, 16 + 360);
+	inv_display_vlastnosti();
+	display_character(postavy + cur_edited, 0);
 //  display_items_wearing(human_selected);
 //  write_pocet_sipu();
 //  display_rings();
-  zobraz_error_text();
-  displ_button(b_disables,b_texty);
-  ukaz_mysku();
-  showview(0,0,0,0);
-  inv_redraw=redraw_svitek;
-  }
+	zobraz_error_text();
+	displ_button(b_disables, b_texty);
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	inv_redraw = redraw_svitek;
+}
 
 
 static char validate_character(THUMAN *h)
@@ -747,34 +788,41 @@ char potvrzeno(const char *text,void (*redraw)())
   return i;
   }
 
-static char view_another_click2(int id,int xa,int ya,int xr,int yr)
-  {
-  uint16_t *w;
+static char view_another_click2(int id, int xa, int ya, int xr, int yr) {
+	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_OKNO));
 
-  id,xa,ya,xr,yr;
-  w = (uint16_t*)ablock(H_OKNO);
-  id=xr/w[0];
-  if (!(~b_disables & 0x3)) return 1;
-  if (!postavy[id].used) return 0;
-  shut_downing_text=1;send_message(E_KEYBOARD,13);
-  shut_downing_text=0;
-  select_player=id;
-  bott_draw(1);
-  human_selected=postavy+id;
-  cur_edited=id;
-  edit_name();
-  redraw_page3();
-  if (del_mode)
-     if (potvrzeno(texty[117],redraw_page3))
-     {
-     del_mode=0;
-     postavy[cur_edited].used=0;
-     disable[postavy[cur_edited].xicht]=0;
-	close_ret = 0;
-     send_message(E_CLOSE_GEN,0);
-     }
-  return 0;
-  }
+	id = xr / tex->width();
+
+	if (!(~b_disables & 0x3)) {
+		return 1;
+	}
+
+	if (!postavy[id].used) {
+		return 0;
+	}
+
+	shut_downing_text = 1;
+	send_message(E_KEYBOARD, 13);
+	shut_downing_text = 0;
+	select_player = id;
+	bott_draw(1);
+	human_selected = postavy + id;
+	cur_edited = id;
+	edit_name();
+	redraw_page3();
+
+	if (del_mode) {
+		if (potvrzeno(texty[117], redraw_page3)) {
+			del_mode = 0;
+			postavy[cur_edited].used = 0;
+			disable[postavy[cur_edited].xicht] = 0;
+			close_ret = 0;
+			send_message(E_CLOSE_GEN, 0);
+		}
+	}
+
+	return 0;
+}
 
 void effect_show(va_list args)
   {
@@ -859,102 +907,128 @@ char gen_exit_editor(int id,int xa,int ya,int xr,int yr)
   return 1;
   }
 
-char enter_generator()
-  {
-  int i;
-  char rep=0;
+char enter_generator() {
+	int i;
+	char rep = 0;
 
-  znova:
-  del_mode=0;
-  stop_edit_name();
-  b_texty[0]=texty[170];
-  b_texty[1]=texty[171];
-  b_texty[2]=texty[172];
-  b_texty[3]=texty[173];
-  def_entries();
-  curcolor=0;bar(0,0,639,479);
-  cur_angle=315;
-  cur_edited=0;
-  memset(postavy,0,sizeof(postavy));
-  memset(disable,0,sizeof(disable));
-  memset(save_values,0,sizeof(save_values));
-  do
-     {
-     mouse_set_default(H_MS_DEFAULT);
-     cur_angle=save_values[cur_edited][0];
-     cur_polomer=save_values[cur_edited][1];
-     set_xicht(cur_edited,cur_xicht=-1);
-     select_player=-1;
-     memset(&cur_stats,0,sizeof(cur_stats));
-     vypocet_vlastnosti(cur_angle,&cur_vls);
-     b_disables=0x7;
-     redraw_generator(rep);if (!rep)effect_show(NULL);rep=1;
-     edit_name();
-     change_click_map(clk_page1,CLK_PAGE1);
-     was_enter=0;
-     do
-       {
-       send_message(E_ADD,E_KEYBOARD,enter_reaction);
-       Task_WaitEvent(E_CLOSE_GEN);
-       i = close_ret;
-       send_message(E_DONE,E_KEYBOARD,enter_reaction);
-       if (i==3 && potvrzeno(texty[116],redraw_gen_wrap)) goto znova;
-       if (i==255) return 1;
-       }
-     while (cur_xicht==-1 || i==3);
-     send_message(E_KEYBOARD,13);
-     save_values[cur_edited][0]=cur_angle;
-     save_values[cur_edited][1]=cur_polomer;
-     cur_xicht=0;
-     error_text=NULL;
-     generuj_postavu(postavy+cur_edited);
-     human_selected=postavy+cur_edited;
-     b_disables=0x7;
-     do
-       {
-       redraw_svitek();
-       change_click_map(clk_page2,CLK_PAGE2);
-       do
-        {
-        send_message(E_ADD,E_KEYBOARD,enter_reaction2);
-        Task_WaitEvent(E_CLOSE_GEN);
-	i = close_ret;
-        send_message(E_DONE,E_KEYBOARD,enter_reaction2);
-        if (i==3 && potvrzeno(texty[116],redraw_svitek)) goto znova;
-        if (i==2)
-           {
-           del_mode=1;
-           mouse_set_default(H_MS_WHO);
-           b_disables|=0x4;
-           redraw_svitek();
-           i=3;
-           }
-        }
-       while (i==3);
-       mouse_set_default(H_MS_DEFAULT);
-       del_mode=0;
-       send_message(E_KEYBOARD,13);
-       if (i==255) return 1;
-       if (validate_character(postavy+cur_edited))
-           for(cur_edited=0;postavy[cur_edited].used;cur_edited++);
-       }
-     while (error_text!=NULL);
-     stop_edit_name();
-     }
-  while (i!=1);
-  disable_click_map();
-  schovej_mysku();
-  curcolor=0;
-  bar(0,0,639,479);
-  showview(0,0,0,0);
-  ukaz_mysku();
-  for(i=0;i<3;i++)
-     {
-     if (postavy[i].vlastnosti[VLS_SILA]>20) postavy[i].stare_vls[VLS_UTOK_H]++;
-     if (postavy[i].vlastnosti[VLS_OBRAT]>20) postavy[i].stare_vls[VLS_OBRAN_H]++;
-     }
-  return 0;
-  }
+znova:
+	del_mode = 0;
+	stop_edit_name();
+	b_texty[0] = texty[170];
+	b_texty[1] = texty[171];
+	b_texty[2] = texty[172];
+	b_texty[3] = texty[173];
+	def_entries();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	cur_angle = 315;
+	cur_edited = 0;
+	memset(postavy, 0, sizeof(postavy));
+	memset(disable, 0, sizeof(disable));
+	memset(save_values, 0, sizeof(save_values));
+
+	do {
+		mouse_set_default(H_MS_DEFAULT);
+		cur_angle = save_values[cur_edited][0];
+		cur_polomer = save_values[cur_edited][1];
+		set_xicht(cur_edited, cur_xicht = -1);
+		select_player = -1;
+		memset(&cur_stats, 0, sizeof(cur_stats));
+		vypocet_vlastnosti(cur_angle, &cur_vls);
+		b_disables = 0x7;
+		redraw_generator(rep);
+
+		if (!rep) {
+			effect_show(NULL);
+		}
+
+		rep = 1;
+		edit_name();
+		change_click_map(clk_page1, CLK_PAGE1);
+		was_enter = 0;
+
+		do {
+			send_message(E_ADD, E_KEYBOARD, enter_reaction);
+			Task_WaitEvent(E_CLOSE_GEN);
+			i = close_ret;
+			send_message(E_DONE, E_KEYBOARD, enter_reaction);
+
+			if (i == 3 && potvrzeno(texty[116], redraw_gen_wrap)) {
+				goto znova;
+			}
+
+			if (i == 255) {
+				return 1;
+			}
+		} while (cur_xicht == -1 || i == 3);
+
+		send_message(E_KEYBOARD, 13);
+		save_values[cur_edited][0] = cur_angle;
+		save_values[cur_edited][1] = cur_polomer;
+		cur_xicht = 0;
+		error_text = NULL;
+		generuj_postavu(postavy + cur_edited);
+		human_selected = postavy + cur_edited;
+		b_disables = 0x7;
+
+		do {
+			redraw_svitek();
+			change_click_map(clk_page2, CLK_PAGE2);
+
+			do {
+				send_message(E_ADD, E_KEYBOARD, enter_reaction2);
+				Task_WaitEvent(E_CLOSE_GEN);
+				i = close_ret;
+				send_message(E_DONE, E_KEYBOARD, enter_reaction2);
+
+				if (i == 3 && potvrzeno(texty[116], redraw_svitek)) {
+					goto znova;
+				}
+
+				if (i == 2) {
+					del_mode = 1;
+					mouse_set_default(H_MS_WHO);
+					b_disables |= 0x4;
+					redraw_svitek();
+					i = 3;
+				}
+			} while (i == 3);
+
+			mouse_set_default(H_MS_DEFAULT);
+			del_mode = 0;
+			send_message(E_KEYBOARD, 13);
+
+			if (i == 255) {
+				return 1;
+			}
+
+			if (validate_character(postavy + cur_edited)) {
+				for (cur_edited = 0; postavy[cur_edited].used; cur_edited++);
+			}
+		} while (error_text != NULL);
+
+		stop_edit_name();
+	} while (i != 1);
+
+	disable_click_map();
+	schovej_mysku();
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 0, 639, 479);
+	showview(0, 0, 0, 0);
+	ukaz_mysku();
+
+	for (i = 0; i < 3; i++) {
+		if (postavy[i].vlastnosti[VLS_SILA] > 20) {
+			postavy[i].stare_vls[VLS_UTOK_H]++;
+		}
+
+		if (postavy[i].vlastnosti[VLS_OBRAT] > 20) {
+			postavy[i].stare_vls[VLS_OBRAN_H]++;
+		}
+	}
+
+	return 0;
+}
 
 
 

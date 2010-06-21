@@ -473,7 +473,9 @@ int Map::load(const char *filename) {
 				def_handle(ofsts++, _glob.back_fnames[i], pcx_fade_decomp, SR_GRAFIKA);
 			}
 
-			back_color = RGB888(_glob.fade_r, _glob.fade_g, _glob.fade_b);
+			back_color[0] = _glob.fade_r;
+			back_color[1] = _glob.fade_g;
+			back_color[2] = _glob.fade_b;
 			break;
 
 		case A_MAPITEM:
@@ -496,18 +498,20 @@ int Map::load(const char *filename) {
 			SEND_LOG("(GAME) Loading enemies...", 0, 0);
 
 			if (!mob_template) {
-				unsigned char *block = (unsigned char*)ablock(H_ENEMY);
 				TMOB *templ;
-				MemoryReadStream enemies(block + 8, get_handle_size(H_ENEMY) - 8);
+				SeekableReadStream *enemies = afile("ENEMY.DAT", SR_MAP);
 
-				templ = new TMOB[size = enemies.size() / 376];
+				templ = new TMOB[size = (enemies->size() - 8) / 376];
+				enemies->readUint32LE();
+				enemies->readUint32LE();
 
 				for (i = 0; i < size; i++) {
-					loadMob(templ[i], enemies);
+					loadMob(templ[i], *enemies);
 				}
 
 				load_enemies(stream, &ofsts, templ, size);
 				delete[] templ;
+				delete enemies;
 			} else {
 				load_enemies(stream, &ofsts, mob_template, mob_size);
 				delete[] mob_template;
@@ -1831,7 +1835,7 @@ void Map::removeNote(unsigned idx) {
 	}
 }
 
-void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, long*), int cls) {
+void prepare_graphics(int *ofs, MemoryReadStream *names, DataBlock *(*decomp)(SeekableReadStream&), int cls) {
 	const char *ptr;
 
 	for (ptr = names->readCString(); !names->eos(); ptr = names->readCString()) {
@@ -1839,23 +1843,37 @@ void prepare_graphics(int *ofs, MemoryReadStream *names, void (*decomp)(void**, 
 	}
 }
 
-static void preload_percent(int cur,int max)
-  {
-  int pos;
-  pos=cur*640/max;
-  if (pos>640) pos=640;
-  curcolor=RGB555(16,16,16);hor_line(0,476,pos);
-  curcolor=RGB555(8,8,8);hor_line(0,477,pos);
-  curcolor=RGB555(31,31,31);hor_line(0,475,pos);
-  showview(0,460,640,20);
-  do_events();
-  }
+static void preload_percent(int cur, int max) {
+	int pos;
+
+	pos = cur * 640 / max;
+
+	if (pos > 640) {
+		pos = 640;
+	}
+
+	curcolor[0] = 132;
+	curcolor[1] = 132;
+	curcolor[2] = 132;
+	hor_line(0, 476, pos);
+	curcolor[0] = 66;
+	curcolor[1] = 66;
+	curcolor[2] = 66;
+	hor_line(0, 477, pos);
+	curcolor[0] = 255;
+	curcolor[1] = 255;
+	curcolor[2] = 255;
+	hor_line(0, 475, pos);
+	showview(0, 460, 640, 20);
+	do_events();
+}
 
 //#pragma preload_objects parm [];
 void preload_objects(int ofsts) {
 	int i;
 	char lodka = 1;
 	char c[200];
+	const Font *font;
 
 	for (i = 1; i < gameMap.coordCount(); i++) {
 		if (gameMap.sectors()[i].sector_type == S_LODKA) {
@@ -1870,11 +1888,11 @@ void preload_objects(int ofsts) {
 //  sprintf(c,"%sLOADING.MUS",pathtable[SR_DATA]);
 //  Sound_ChangeMusic(c);
 //  Sound_ChangeMusic(Sys_FullPath(SR_DATA, "LOADING.MUS"));
-	trans_bar(0, 460, 640, 20, 0);
-	position(0, 460);
-	set_font(H_FBOLD, RGB555(0, 31, 0));
+	trans_bar(0, 460, 640, 20, 0, 0, 0);
+	font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+	renderer->setFont(font, 0, 0, 255, 0);
 	sprintf(c, texty[TX_LOAD], gameMap.global().mapname);
-	outtext(c);
+	renderer->drawText(0, 460, c);
 
 	for (i = 0; i < ofsts; i++) {
 		if (i < H_LODKA0 || i > H_LODKA7 || lodka) {
@@ -1914,21 +1932,20 @@ char *pripona(const char *filename,const char *pripona)
   return buff;
   }
 
-void show_loading_picture(const char *filename)
-  {
-  uint16_t *p;
-  long s;
+void show_loading_picture(const char *filename) {
+	long s;
+	SeekableReadStream *stream;
 
-  p = (uint16_t*)afile(filename,SR_BGRAFIKA,&s);
-  Screen_FixPalette(p + 3, s/sizeof(uint16_t) - 3);
-  put_picture(0,0,p);
-  showview(0,0,0,0);
-  free(p);
-  #ifdef LOGFILE
-  display_ver(639,0,2,0);
-  #endif
-  cancel_pass=1;
-  }
+	stream = afile(filename, SR_BGRAFIKA);
+	TextureHi tex(*stream);
+	delete stream;
+	renderer->blit(tex, 0, 0, tex.palette());
+	showview(0, 0, 0, 0);
+	#ifdef LOGFILE
+	display_ver(639, 0, HALIGN_RIGHT, VALIGN_TOP);
+	#endif
+	cancel_pass = 1;
+}
 
 extern int snd_devnum;
 
@@ -2809,23 +2826,33 @@ char chod_s_postavama(char sekupit)
   return gatt;
   }
 
-void shift_zoom(char smer)
-  {
-  if (cancel_pass) return;
-  hold_timer(TM_BACK_MUSIC,1);
-  switch (smer & 3)
-     {
-     case 0:if (lodka)zooming_forward((uint16_t*)ablock(H_LODKA));
-             else
-            zooming_forward((uint16_t*)ablock(H_BGR_BUFF));break;
-     case 1:turn_left();break;
-     case 2:if (lodka)zooming_backward((uint16_t*)ablock(H_LODKA));
-             else
-            zooming_backward((uint16_t*)ablock(H_BGR_BUFF));break;
-     case 3:turn_right();break;
-     }
-  hold_timer(TM_BACK_MUSIC,0);
-  }
+void shift_zoom(const Texture &prev, const Texture &next, char smer) {
+	if (cancel_pass) {
+		return;
+	}
+
+	hold_timer(TM_BACK_MUSIC, 1);
+
+	switch (smer & 3) {
+	case 0:
+		zooming_forward_backward(prev, 0);
+		break;
+
+	case 1:
+		turn_left_right(prev, next, 0);
+		break;
+
+	case 2:
+		zooming_forward_backward(next, 1);
+		break;
+
+	case 3:
+		turn_left_right(next, prev, 1);
+		break;
+	}
+
+	hold_timer(TM_BACK_MUSIC,0);
+}
 
 void hide_ms_at(int line)
   {
@@ -2860,13 +2887,15 @@ void sector0(void)
      }
   }
 
-static void tele_redraw()
-  {
-  if (!running_anm) return;
-  redraw_scene();
+static void tele_redraw() {
+	if (!anim_reader) {
+		return;
+	}
+
+	redraw_scene();
 	gameMap.calcAnimations();
-  showview(0,17,640,360);
-  }
+	showview(0, 17, 640, 360);
+}
 
 static void tele_redraw_wrap(the_timer *arg) {
 	tele_redraw();
@@ -2934,14 +2963,14 @@ void postavy_teleport_effect(int sector, int dir, int postava, char effect) {
 		add_to_timer(-1, gamespeed, -1, tele_redraw_wrap);
 		gameMap.addSpecTexture(viewsector, H_TELEP_PCX, 14, 1, 0);
 
-		while (running_anm) {
+		while (anim_reader) {
 			do_events();
 		}
 
 		play_sample_at_channel(H_SND_TELEPIN, 2, 100);
 		play_big_mgif_animation(H_TELEPORT);
 
-		while (!running_anm) {
+		while (!anim_reader) {
 			Task_Sleep(NULL);
 		}
 
@@ -2952,7 +2981,7 @@ void postavy_teleport_effect(int sector, int dir, int postava, char effect) {
 			cancel_pass = 1;
 		}
 
-		while (running_anm) {
+		while (anim_reader) {
 			do_events();
 
 			if (kolo != global_anim_counter) {
@@ -3021,11 +3050,19 @@ static char test_can_walk(int grp)
 void step_zoom(char smer) {
 	char nopass, drs;
 	int sid, nsect, sect;
-	char can_go=1;
+	char can_go = 1;
 	
-	if (running_anm) return;
-	if (pass_zavora) return;
-	if (lodka && (smer == 1 || smer == 3)) return;
+	if (anim_reader) {
+		return;
+	}
+
+	if (pass_zavora) {
+		return;
+	}
+
+	if (lodka && (smer == 1 || smer == 3)) {
+		return;
+	}
 
 	cancel_pass = 0;
 	drs = (viewdir + smer) & 3;
@@ -3135,14 +3172,25 @@ void step_zoom(char smer) {
 	}
 
 	if (!cancel_pass) {
+		SoftRenderer *tmp, backrend(renderer->width(), renderer->height());
+		SubTexture front(*renderer, 0, 0, renderer->width(), renderer->height());
+
+		tmp = renderer;
+		renderer = &backrend;
 		render_scene(viewsector, viewdir);
+		renderer = tmp;
+
 		if (smer == 2) {
-			OutBuffer2nd();
-			if (!nopass) shift_zoom(smer);
+			if (!nopass) {
+				shift_zoom(front, backrend, smer);
+			}
 		} else {
-			shift_zoom(smer);
-			OutBuffer2nd();
-			if (nopass) shift_zoom(smer + 2);
+			shift_zoom(front, backrend, smer);
+			renderer->blit(backrend, 0, 0, backrend.palette());
+
+			if (nopass) {
+				shift_zoom(backrend, front, smer + 2);
+			}
 		}
 		if (battle || (game_extras & EX_ALWAYS_MINIMAP)) draw_medium_map();
 		sort_groups();
@@ -3172,44 +3220,68 @@ void step_zoom(char smer) {
 	if (cur_mode == MD_GAME) recalc_volumes(viewsector, viewdir);
 }
 
-void turn_zoom(int smer)
-  {
-  if (running_anm) return;
-  if (pass_zavora) return;else pass_zavora=1;
-  if (!GlobEvent(MAGLOB_ONTURN,viewsector,viewdir)) return;
-  if (set_halucination) do_halucinace();
-  norefresh=1;
-  hold_timer(TM_BACK_MUSIC,1);
-                 viewdir=(viewdir+smer)&3;
-                 render_scene(viewsector,viewdir);
-                 hide_ms_at(387);
-                 if (smer==1)
-                    {
-                    anim_sipky(H_SIPKY_SV,1);
-                    anim_sipky(0,255);
-                    turn_left();
-                    }
-                    else
-                    {
-                    anim_sipky(H_SIPKY_SZ,1);
-                    anim_sipky(0,255);
-                    turn_right();
-                    }
-  chod_s_postavama(0);
-  OutBuffer2nd();
-  if (battle || (game_extras & EX_ALWAYS_MINIMAP)) draw_medium_map();
-  other_draw();
-  update_mysky();
-  ukaz_mysku();
-  showview(0,0,0,0);
-  recalc_volumes(viewsector,viewdir);
-  if (!battle) calc_game();
-  norefresh=0;
-  cancel_render=1;
-  hold_timer(TM_BACK_MUSIC,0);
-  Sound_MixBack(0);
-  pass_zavora=0;
-  }
+void turn_zoom(int smer) {
+	SoftRenderer backrend(renderer->width(), renderer->height()), *tmp = renderer;
+	SubTexture front(*renderer, 0, 0, renderer->width(), renderer->height());
+
+	if (anim_reader) {
+		return;
+	}
+
+	if (pass_zavora) {
+		return;
+	} else {
+		pass_zavora = 1;
+	}
+
+	if (!GlobEvent(MAGLOB_ONTURN, viewsector, viewdir)) {
+		return;
+	}
+
+	if (set_halucination) {
+		do_halucinace();
+	}
+
+	norefresh = 1;
+	hold_timer(TM_BACK_MUSIC, 1);
+	viewdir = (viewdir + smer) & 3;
+	renderer = &backrend;
+	render_scene(viewsector, viewdir);
+	renderer = tmp;
+	hide_ms_at(387);
+
+	if (smer == 1) {
+		anim_sipky(H_SIPKY_SV, 1);
+		anim_sipky(0, 255);
+		turn_left_right(front, backrend, 0);
+	} else {
+		anim_sipky(H_SIPKY_SZ, 1);
+		anim_sipky(0, 255);
+		turn_left_right(backrend, front, 1);
+	}
+
+	chod_s_postavama(0);
+
+	if (battle || (game_extras & EX_ALWAYS_MINIMAP)) {
+		draw_medium_map();
+	}
+
+	other_draw();
+	update_mysky();
+	ukaz_mysku();
+	showview(0, 0, 0, 0);
+	recalc_volumes(viewsector, viewdir);
+
+	if (!battle) {
+		calc_game();
+	}
+
+	norefresh = 0;
+	cancel_render = 1;
+	hold_timer(TM_BACK_MUSIC, 0);
+	Sound_MixBack(0);
+	pass_zavora = 0;
+}
 
 int check_path(uint16_t **path, uint16_t tosect) {
 	uint16_t *p, *n, ss;
@@ -3323,46 +3395,57 @@ void key_break_sleep(EVENT_MSG *msg,void **unused) {
 //void sleep_players(va_list args) {
 void sleep_players(void) {
 	int i;
-	int hours=0;
+	int hours = 0;
 	char reg;
 	char enablity;
-	
-	if (!sleep_ticks) return;
-	if (!GlobEvent(MAGLOB_STARTSLEEP,viewsector,viewdir)) return;
+	const Font *font;
 
-	enablity=enable_sound(0);
+	if (!sleep_ticks) {
+		return;
+	}
+
+	if (!GlobEvent(MAGLOB_STARTSLEEP, viewsector, viewdir)) {
+		return;
+	}
+
+	enablity = enable_sound(0);
 	mute_all_tracks(0);
 	autosave();
-	insleep=1;
+	insleep = 1;
 	update_mysky();
 	schovej_mysku();
-	curcolor=0;bar(0,17,639,360+16);
-	send_message(E_ADD,E_KEYBOARD,key_break_sleep);
+	memset(curcolor, 0, 3 * sizeof(uint8_t));
+	bar(0, 17, 639, 360 + 16);
+	send_message(E_ADD, E_KEYBOARD, key_break_sleep);
 	ukaz_mysku();
-	showview(0,0,0,0);
+	showview(0, 0, 0, 0);
 	unwire_proc();
-	break_sleep=0;
+	break_sleep = 0;
 
 	while (sleep_ticks && !break_sleep) {
-		reg=0;
-		if (!(sleep_ticks%6)) {
-			if ((reg=(sleep_ticks%HODINA==0))==1) {
+		reg = 0;
+
+		if (!(sleep_ticks % 6)) {
+			if ((reg = (sleep_ticks % HODINA == 0)) == 1) {
 				char s[50];
-				for(i=0;i<POCET_POSTAV;i++) {
+
+				for (i = 0; i < POCET_POSTAV; i++) {
 					break_sleep |= sleep_regenerace(&postavy[i]);
 				}
 
 				update_mysky();
 				schovej_mysku();
 				bott_draw(0);
-				curcolor=0;bar(0,120,639,140);
-				sprintf(s,texty[71],hours++);
-				set_font(H_FBOLD,RGB555(31,31,0));
-				set_aligned_position(320,130,1,1,s);outtext(s);
+				memset(curcolor, 0, 3 * sizeof(uint8_t));
+				bar(0, 120, 639, 140);
+				sprintf(s, texty[71], hours++);
+				font = dynamic_cast<const Font*>(ablock(H_FBOLD));
+				renderer->setFont(font, 1, 255, 255, 0);
+				renderer->drawAlignedText(320, 130, HALIGN_CENTER, VALIGN_CENTER, s);
 				other_draw();
 				ukaz_mysku();
-				showview(0,120,640,20);
-				showview(0,378,640,102);
+				showview(0, 120, 640, 20);
+				showview(0, 378, 640, 102);
 				Task_WaitEvent(E_TIMER);
 				Task_WaitEvent(E_TIMER);
 				Task_WaitEvent(E_TIMER);
@@ -3374,27 +3457,28 @@ void sleep_players(void) {
 		}
 
 		if (battle) {
-			break_sleep|=1;
+			break_sleep |= 1;
 		}
 
-		for(i=0;i<POCET_POSTAV;i++) {
+		for (i = 0; i < POCET_POSTAV; i++) {
 			break_sleep |= check_jidlo_voda(&postavy[i]) | check_map_specials(&postavy[i]);
 		}
 
 		send_message(E_KOUZLO_KOLO);
 		sleep_ticks--;
 		tick_tack(1);
-		if (!TimerEvents(viewsector,viewdir,game_time)) {
+
+		if (!TimerEvents(viewsector, viewdir, game_time)) {
 			break;
 		}
 	}
 
-	send_message(E_DONE,E_KEYBOARD,key_break_sleep);
+	send_message(E_DONE, E_KEYBOARD, key_break_sleep);
 	wire_proc();
 	bott_draw(1);
-	insleep=0;
+	insleep = 0;
 	enable_sound(enablity);
-	GlobEvent(MAGLOB_ENDSLEEP,viewsector,viewdir);
+	GlobEvent(MAGLOB_ENDSLEEP, viewsector, viewdir);
 }
 
 
