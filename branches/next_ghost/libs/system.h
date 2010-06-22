@@ -82,9 +82,6 @@ void Sys_PreparePaths(void);
 void Sys_ProcessEvents(void);
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
-void *Screen_PrepareWalk(int ypos);
-void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
-void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
 
 void ShareCPU(void);
@@ -126,7 +123,6 @@ int get_shift_state(void);
 
 void *PrepareVideoSound(int mixfreq, int buffsize);
 void DoneVideoSound(void *buffer);
-char LoadNextVideoFrame(void *buffer, SeekableReadStream &stream, short *xlat, short *accnums, long *writepos);
 int LoadNextAudioFrame(void *buff, const int16_t *data, unsigned length);
 
 char OtevriUvodniOkno();

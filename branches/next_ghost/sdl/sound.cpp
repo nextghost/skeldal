@@ -118,33 +118,6 @@ int LoadNextAudioFrame(void *ptr, const int16_t *data, unsigned length) {
 	return 1;
 }
 
-char LoadNextVideoFrame(void *ptr, SeekableReadStream &stream, int16_t *samples, int16_t *accnums, long *writepos) {
-	ringbuffer_t *buff = (ringbuffer_t*)ptr;
-	int len, i, val;
-
-	SDL_LockAudio();
-	len = buff->readoff <= buff->writeoff ? buff->size - buff->writeoff + buff->readoff - 1 : buff->readoff - buff->writeoff - 1;
-
-	if (len < stream.size()) {
-		SDL_UnlockAudio();
-		return 0;
-	}
-
-	for (i = 0; i < stream.size(); i++) {
-		val = accnums[i % 2] + samples[stream.readUint8()];
-		val = val > 32767 ? 32767 : val;
-		val = val < -32767 ? -32767 : val;
-		buff->buff[buff->writeoff++] = accnums[i % 2] = val;
-
-		if (buff->writeoff >= buff->size) {
-			buff->writeoff = 0;
-		}
-	}
-
-	SDL_UnlockAudio();
-	return 1;
-}
-
 void DoneVideoSound(void *ptr) {
 	ringbuffer_t *buff = (ringbuffer_t*)ptr;
 
