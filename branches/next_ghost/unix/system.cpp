@@ -151,16 +151,6 @@ int Sys_FileExists(const char *file) {
 	return !access(file, F_OK);
 }
 
-void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys) {
-	assert(0);
-
-}
-
-void Screen_Shift(int x, int y) {
-	assert(0);
-
-}
-
 // FIXME: rewrite
 void ShareCPU(void) {
 //	assert(0);

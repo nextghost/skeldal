@@ -35,7 +35,9 @@ extern uint16_t scancodes[];
 
 int SDLRenderer::_active = 0;
 
-SDLRenderer::SDLRenderer(unsigned xs, unsigned ys) : SoftRenderer(xs, ys) {
+SDLRenderer::SDLRenderer(unsigned xs, unsigned ys) : SoftRenderer(xs, ys),
+	_screen(NULL), _remap(NULL), _x(0) {
+
 	assert(!_active && "Video already initialized");
 	_active = 1;
 	_screen = SDL_SetVideoMode(xs, ys, 24, SDL_SWSURFACE);
@@ -58,12 +60,30 @@ SDLRenderer::~SDLRenderer(void) {
 }
 
 void SDLRenderer::drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) {
-	SDL_Rect rect = {x, y, xs, ys};
+	SDL_Rect rect = {x + _x, y, xs, ys}, rect2 = {x, y, xs, ys};
+	SDL_Rect rect3 = {0, 0, 0, height()};
+	Uint32 black = SDL_MapRGB(_screen->format, 0, 0, 0);
+
 	SDL_LockSurface(_remap);
 	memcpy(_remap->pixels, pixels(), width() * height() * 3 * sizeof(uint8_t));
 	SDL_UnlockSurface(_remap);
-	SDL_BlitSurface(_remap, &rect, _screen, &rect);
+
+	if (_x > 0) {
+		rect3.x = 0;
+		rect3.w = _x;
+		SDL_FillRect(_screen, &rect3, black);
+	} else if (_x < 0) {
+		rect3.x = width() + _x;
+		rect3.w = -_x;
+		SDL_FillRect(_screen, &rect3, black);
+	}
+
+	SDL_BlitSurface(_remap, &rect2, _screen, &rect);
 	SDL_UpdateRect(_screen, x, y, xs, ys);
+}
+
+void SDLRenderer::xshift(int shift) {
+	_x = shift;
 }
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {

@@ -247,18 +247,30 @@ void anim_sipky(int h, int mode) {
 	}
 }
 
-void chveni(int i)
-  {
-  static int pos=0;
-  static int count=0;
+void chveni(int i) {
+	static int pos = 0;
+	static int count = 0;
 
-  if (!count && !i) return;
-  if (i) count=i;count--;
-  if (!count) pos=0;
-  wait_retrace();
-  Screen_Shift(8*pos,0);
-  pos=!pos;
-  }
+	if (!count && !i) {
+		return;
+	}
+
+	if (i) {
+		count = i;
+		pos = 1;
+	}
+
+	count--;
+
+	if (!count) {
+		pos = 0;
+	}
+
+	wait_retrace();
+	renderer->xshift(8 * pos);
+	renderer->drawRect(0, 0, renderer->width(), renderer->height());
+	pos = -pos;
+}
 
 void objekty_mimo(the_timer *arg)
   {

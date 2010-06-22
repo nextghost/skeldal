@@ -124,6 +124,7 @@ public:
 	unsigned charHeight(char text) const;
 
 	virtual void drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) { }
+	virtual void xshift(int shift) { }
 };
 
 class FadeRenderer : public TextureFade {

@@ -82,13 +82,10 @@ void Sys_PreparePaths(void);
 void Sys_ProcessEvents(void);
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh);
-void Screen_DrawRectZoom2(unsigned short x, unsigned short y, unsigned short xs, unsigned short ys);
 void *Screen_PrepareWalk(int ypos);
 void Screen_ZoomWalk(void *handle, int ypos, int *points,float phase, void *lodka);
 void Screen_DoneWalk(void *handle);
 void Screen_Shutdown(void);
-
-void Screen_Shift(int x, int y);
 
 void ShareCPU(void);
 

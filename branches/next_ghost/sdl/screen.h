@@ -27,10 +27,12 @@ class SDLRenderer : public SoftRenderer {
 private:
 	static int _active;
 	SDL_Surface *_screen, *_remap;
+	int _x;
 
 public:
 	SDLRenderer(unsigned xs, unsigned ys);
 	~SDLRenderer(void);
 
 	void drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys);
+	void xshift(int shift);
 };
