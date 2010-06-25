@@ -290,8 +290,9 @@ T_EVENT_POINT *install_event(T_EVENT_ROOT **tree, int ev_num, EV_PROC proc, va_l
 	T_EVENT_POINT *p;
 
 	x.msg = E_INIT;
-	x.data = procdata;
+	va_copy(x.data, procdata);
 	proc(&x, &user);
+	va_end(x.data);
 
 	p = add_event(tree, ev_num, proc, end);
 	p->user_data = user;
@@ -316,8 +317,9 @@ void deinstall_event(T_EVENT_ROOT **tree, int ev_num, EV_PROC proc, va_list proc
 	}
 
 	x.msg = E_DONE;
-	x.data = procdata;
+	va_copy(x.data, procdata);
 	proc(&x, &p->user_data);
+	va_end(x.data);
 
 	if (p->user_data != NULL) {
 		free(p->user_data);
