@@ -232,18 +232,22 @@ char go_book(int id,int xa,int ya,int xr,int yr)
   }
 
 
-char konec(int id,int xa,int ya,int xr,int yr)
- {
- id;xa;ya;xr;yr;
- unwire_proc();
- if (!message(2,0,1,texty[118],texty[76],texty[77],texty[78]))
-  {
-  if (cur_mode==MD_ANOTHER_MAP) unwire_proc(),wire_proc();
-  send_message(E_CLOSE_MAP);
-  }
- else wire_proc();
- return 1;
- }
+char konec(int id, int xa, int ya, int xr, int yr) {
+	unwire_proc();
+
+	if (!message(2, 0, 1, texty[118], texty[76], texty[77], texty[78])) {
+		if (cur_mode == MD_ANOTHER_MAP) {
+			unwire_proc();
+			wire_proc();
+		}
+
+		send_message(E_CLOSE_MAP);
+	} else {
+		wire_proc();
+	}
+
+	return 1;
+}
 
 char spell_casting(int id,int xa,int ya,int xr,int yr)
  {

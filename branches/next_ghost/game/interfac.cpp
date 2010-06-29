@@ -248,24 +248,29 @@ static T_CLK_MAP message_win[]=
 
 #define MSG_COLOR1 1,247,247,189
 
-void open_message_win(int pocet_textu, char **texts) {
+void open_message_win(int pocet_textu, va_list args) {
 	int maxxs;
 	int maxys, maxws, wscelk, wsx, wsy, wsys, y;
 	int x1, y1, x2, y2;
 	int i;
 	char *text;
+	const char *ptr;
+	va_list locargs;
 	const Font *font = dynamic_cast<const Font*>(ablock(H_FBOLD));
 
 	renderer->setFont(font, MSG_COLOR1);
 	GUIObject::setDefaultFont(font, MSG_COLOR1);
-	text = (char*)alloca(strlen(texts[0]) + 2);
-	zalamovani(texts[0], text, MES_MAXSIZE, &maxxs, &maxys);
+	va_copy(locargs, args);
+	ptr = va_arg(locargs, const char*);
+	text = (char*)alloca(strlen(ptr) + 2);
+	zalamovani(ptr, text, MES_MAXSIZE, &maxxs, &maxys);
 	maxws = 0;
 	wsys = 0;
 
 	for (i = 1; i < pocet_textu; i++) {
-		int z1 = renderer->textWidth(texts[i]);
-		int z2 = renderer->textHeight(texts[i]);
+		ptr = va_arg(locargs, const char*);
+		int z1 = renderer->textWidth(ptr);
+		int z2 = renderer->textHeight(ptr);
 
 		if (z1 > maxws) {
 			maxws = z1;
@@ -276,6 +281,7 @@ void open_message_win(int pocet_textu, char **texts) {
 		}
 	}
 
+	va_end(locargs);
 	maxws += 10;
 
 	if (maxws < 50) {
@@ -312,14 +318,18 @@ void open_message_win(int pocet_textu, char **texts) {
 	}
 
 	wsx = (maxxs - wscelk) >> 1;
+	va_copy(locargs, args);
+	ptr = va_arg(locargs, const char*);
 
 	for (i = 1; i < pocet_textu; i++) {
-		define(new Button(i - 1, wsx + 10, wsy, maxws + 10, wsys + 10, 3, texts[i]));
+		ptr = va_arg(locargs, const char*);
+		define(new Button(i - 1, wsx + 10, wsy, maxws + 10, wsys + 10, 3, ptr));
 		property(def_border(5, BAR_COLOR), font, 0, flat_color(247, 247, 189), single_color(BAR_COLOR));
 		on_change(terminate);
 		wsx += maxws + 20;
 	}
 
+	va_end(locargs);
 	redraw_window();
 }
 
@@ -376,28 +386,29 @@ EVENT_PROC(message_keyboard) {
 	}
 }
 
-int message(int butts,char def,char canc,const char *keys,...)
-  {
-  char **texty;
-  int id;
-  void *clksav;int clksav2;
+int message(int butts, char def, char canc, const char *keys, ...) {
+	int id;
+	void *clksav;
+	int clksav2;
+	va_list args;
 
-  default_action=def;
-  cancel_action=canc;
-  mute_all_tracks(0);
-  unwire_proc();
-  save_click_map(&clksav,&clksav2);
-  change_click_map(NULL,0);
-  texty=(char **)(&keys+1);
-  open_message_win(butts+1,texty);
-  send_message(E_ADD,E_KEYBOARD,message_keyboard,keys);
-  escape();
-  id = o_aktual->id();
-  send_message(E_DONE,E_KEYBOARD,message_keyboard,keys);
-  close_current();
-  restore_click_map(clksav,clksav2);
-  return id;
-  }
+	default_action = def;
+	cancel_action = canc;
+	mute_all_tracks(0);
+	unwire_proc();
+	save_click_map(&clksav, &clksav2);
+	change_click_map(NULL, 0);
+	va_start(args, keys);
+	open_message_win(butts + 1, args);
+	va_end(args);
+	send_message(E_ADD, E_KEYBOARD, message_keyboard, keys);
+	escape();
+	id = o_aktual->id();
+	send_message(E_DONE, E_KEYBOARD, message_keyboard, keys);
+	close_current();
+	restore_click_map(clksav, clksav2);
+	return id;
+}
 
 //------------------
 
