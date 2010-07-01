@@ -232,7 +232,6 @@ int initmode_lo(void *paletefile);
 int initmode16(void *paletefile);
 int initmode64(void *paletefile);
 int initmode64b(void *paletefile);
-void *create_hixlat();
 void closemode();
 void show_ms_cursor(int x, int y);
 void register_ms_cursor(const Texture *cursor);
@@ -242,9 +241,6 @@ void wait_retrace();
 void pal_optimize();
 void rectangle(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, uint8_t b);
 uint16_t *mapvesaadr1(uint16_t *a);
-void *create_special_palette();
-void *create_special_palette2();
-void *create_blw_palette16();
 int init_empty_mode();
 
 void put_8bit_clipped(uint16_t *src,uint16_t *trg,int startline,int velx,int vely);

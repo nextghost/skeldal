@@ -939,16 +939,6 @@ int get_scan_line();
            "int  10h"\
    modify[eax ebx] value[ecx];
 
-void *create_hixlat()
-  {
-  uint16_t *s;
-  uint16_t i;
-
-  s=NewArr(uint16_t,32768);
-  for (i=0;i<32768;i++) s[i]=((i & ~0x1f)<<1) | (i & 0x1f);
-  return (uint8_t *)s;
-  }
-
 int initmode64b(void *paletefile)
   {
   int i;
@@ -1371,81 +1361,6 @@ void rectangle(int x1, int y1, int x2, int y2, uint8_t r, uint8_t g, uint8_t b) 
 	ver_line(x2,y1,y2);
 }
 
-void *create_special_palette()
-  {
-  char *c;
-  int i,j,k;
-  void *z;
-
-  z = c = (char*)getmem(3*256+2*32768);
-  for(i=0;i<6;i++)
-     for(j=0;j<7;j++)
-        for(k=0;k<6;k++)
-     {*c++=12*i;*c++=10*j;*c++=12*k;}
-  c = (char*)z;
-  c+=768;
-  for(i=0;i<32;i++)
-     for(j=0;j<32;j++)
-        for(k=0;k<32;k++)
-           {
-           *c++=((i+3)/6)*42+((j+3)/5)*6+((k+3)/6);
-           *c++=(i*2/12)*42+(j/5)*6+(k*2/12);
-           }
-  return z;
-  }
-void *create_special_palette2()
-  {
-  char *c;
-  int i,j,k;
-  void *z;
-
-  z = c = (char*)getmem(3*256+2*32768);
-  for(i=0;i<64;i++)
-     {
-     *c++=0;*c++=i;*c++=0;
-     }
-  for(j=0;j<24;j++)
-     for(k=0;k<8;k++)
-     {*c++=j*64/24;*c++=0;*c++=k*8;}
-  c = (char*)z;
-  c+=768;
-  for(i=0;i<32;i++)
-     for(j=0;j<32;j++)
-        for(k=0;k<32;k++)
-           {
-           *c++=64+(i*24/32)*8+k/4;
-           *c++=j*2;
-           }
-  return z;
-  }
-
-
-void *create_blw_palette16()
-  {
-  char *c;
-  int i,j,k;
-  void *z;
-  char pal_colors[]={0,1,2,3,4,5,20,7,56,57,58,59,60,61,62,63};
-  char carnat[]={0,1,3,2,4,5,7,6,12,13,15,14,8,9,11,10};
-
-  z = c = (char*)getmem(3*256+2*32768);
-  for(i=0;i<16;i++)
-     {
-     j=pal_colors[carnat[i]]*3;k=i*4+3;
-     c[j]=k;c[j+1]=k;c[j+2]=k;
-     }
-  c+=768;
-  for(i=0;i<32;i++)
-     for(j=0;j<32;j++)
-        for(k=0;k<32;k++)
-           {
-           int u=(i*3+j*5+k*2)/10;
-           c[0]=carnat[u/2];
-           c[1]=carnat[(u+1)/2];
-           c+=2;
-           }
-  return z;
-  }
 /*
 void showview16(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
   {

@@ -104,8 +104,6 @@ int charmax=3;
 int autoopenaction=0;
 int autoopendata=0;
 
-void *cur_xlat;
-
 void redraw_desktop_call(EVENT_MSG*, void**);
 
 TMA_LOADLEV loadlevel;
@@ -317,46 +315,13 @@ int last_ms_cursor=-1;
 int vmode=2;
 int map_ret = 0;
 
-int set_video(int mode)
-  {
-  int er=0;
+int set_video(int mode) {
+	int er = 0;
 
-  report_mode(1);
-  er=initmode_dx(windowed,windowedzoom,monitor,refresh);
-/*
-  switch(mode)
-  {
-  case 1:er=initmode256(cur_xlat);
-              if (banking) report_mode(5); else report_mode(2);
-              SEND_LOG("(GAME) Video changed to 256 colors %s",banking?"Bank":"LFB",0);
-               break;
-  case 2:er=initmode32();
-              if (banking) report_mode(4); else report_mode(1);
-              SEND_LOG("(GAME) Video changed to HIcolor %s",banking?"Bank":"LFB",0);
-               break;
-  case 0:er=initmode_lo(cur_xlat);
-              report_mode(3);
-              SEND_LOG("(GAME) Video changed to 256 VGA comp. ",0,0);
-               break;
-  case 3: free(cur_xlat);cur_xlat=create_blw_palette16();
-               er=initmode16(cur_xlat);
-              SEND_LOG("(GAME) Video changed to 16 grayscale",0,0);
-              report_mode(3);
-               break;
-  case 4:er=init_empty_mode();
-             report_mode(3);
-              SEND_LOG("(GAME) Video changed to <empty>",0,0);
-              break;
-  case 5:free(cur_xlat);cur_xlat=create_hixlat();
-              er=initmode64(cur_xlat);
-              if (banking) report_mode(7); else report_mode(6);
-              SEND_LOG("(GAME) Video changed to HIcolor64 %s",banking?"Bank":"LFB",0);
-              break;
-
-  default:er=-1;
-  }*/
-  return er;
-  }
+	report_mode(1);
+	er = initmode_dx(windowed, windowedzoom, monitor, refresh);
+	return er;
+}
 
 /*
 int ask_video()
@@ -921,8 +886,6 @@ SEND_LOG("(INIT) Reading texts.",0,0);
   timer_tree.next=NULL;
 SEND_LOG("(INIT) Setting random seed.",0,0);
   srand(clock());
-SEND_LOG("(INIT) Creating 256 color palette.",0,0);
-  cur_xlat=create_special_palette();
 SEND_LOG("(INIT) Init message system - event handler",0,0);
   init_events();
 SEND_LOG("(INIT) Setting videomode.",0,0);
