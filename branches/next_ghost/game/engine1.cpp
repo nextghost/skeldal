@@ -998,17 +998,19 @@ void draw_item(int celx, int cely, int posx, int posy, const Texture *tex, int i
 void put_textured_bar(const Texture &tex, int x, int y, int xs, int ys, int xofs, int yofs) {
 	int i, j, rx, ry, rxs, rys;
 
-	xofs %= tex.width();
-	yofs %= tex.height();
+	xofs %= (signed)tex.width();
+	yofs %= (signed)tex.height();
+	xofs += xofs < 0 ? tex.width() : 0;
+	yofs += yofs < 0 ? tex.height() : 0;
 
 	for (i = -yofs; i < ys; i += tex.height()) {
-		ry = y < 0 ? -y : 0;
+		ry = i < 0 ? -i : 0;
 		rys = tex.height() < ys - i ? tex.height() : ys - i;
 
 		for (j = -xofs; j < xs; j += tex.width()) {
-			rx = x < 0 ? -x : 0;
+			rx = j < 0 ? -j : 0;
 			rxs = tex.width() < xs - j ? tex.width() : xs - j;
-			renderer->rectBlit(tex, j < 0 ? x : x + j, i < 0 ? 0 : y + i, rx, ry, rxs, rys, tex.palette());
+			renderer->rectBlit(tex, j < 0 ? x : x + j, i < 0 ? y : y + i, rx, ry, rxs, rys, tex.palette());
 		}
 	}
 }
