@@ -463,10 +463,8 @@ void type_text(EVENT_MSG *msg,void **data) {
 		back_pic = new SubTexture(*renderer, x, y, xs, ys);
 
 		// render string
-		schovej_mysku();
 		renderer->drawText(x, y, text);
 		renderer->drawText(tw + x, y + 3, "_");
-		ukaz_mysku();
 		showview(x, y, xs, ys);
 	} else if (msg->msg == E_KEYBOARD) {
 		char sz[2] = " ";
@@ -1459,7 +1457,6 @@ int smlouvat(int cena, int puvod, int pocet, int money, char mode) {
 
 	do {
 		redraw_window();
-		schovej_mysku();
 		font = dynamic_cast<const Font*>(ablock(H_FBOLD));
 		renderer->setFont(font, 1, 255, 255, 255);
 		c = text;
@@ -1472,7 +1469,6 @@ int smlouvat(int cena, int puvod, int pocet, int money, char mode) {
 			c = strchr(c, 0) + 1;
 		} while(*c);
 
-		ukaz_mysku();
 		showview(xu, yu, 280, y - yu);
 		goto_control(10);
 		escape();

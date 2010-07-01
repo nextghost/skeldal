@@ -658,7 +658,6 @@ EVENT_PROC(global_map_point) {
 			}
 
 			y += 60;
-			schovej_mysku();
 
 			if (fly_background != NULL) {
 				renderer->blit(*fly_background, fly_x, fly_y, fly_background->palette());
@@ -667,7 +666,7 @@ EVENT_PROC(global_map_point) {
 			font = dynamic_cast<const Font*>(ablock(H_FTINY));
 			renderer->setFont(font, 1, 255, 255, 0);
 			xs = fly_xs;
-			ys=fly_ys;
+			ys = fly_ys;
 
 			if (i != last_index) {
 				delete fly_background;
@@ -704,9 +703,8 @@ EVENT_PROC(global_map_point) {
 			}
 
 			send_message(E_MOUSE, msg); // WTF?!
-			ukaz_mysku();
 			showview(fly_x, fly_y, fly_xs + 1, fly_ys);
-			showview(fly_x = x, fly_y = y, (fly_xs = xs)+1, fly_ys = ys);
+			showview(fly_x = x, fly_y = y, (fly_xs = xs) + 1, fly_ys = ys);
 			aunlock(usemap);
 		}
 
@@ -745,18 +743,15 @@ void unwire_global_map()
   }
 
 
-void wire_global_map()
-  {
-  unwire_proc();
-  schovej_mysku();
-  ready_index_tab();
-  do_script();
-  ukaz_mysku();
-  showview(0,0,0,0);
-  send_message(E_ADD,E_MOUSE,global_map_point);
-  unwire_proc=unwire_global_map;
-  change_click_map(NULL,0);
-  }
+void wire_global_map() {
+	unwire_proc();
+	ready_index_tab();
+	do_script();
+	showview(0,0,0,0);
+	send_message(E_ADD,E_MOUSE,global_map_point);
+	unwire_proc=unwire_global_map;
+	change_click_map(NULL,0);
+}
 
 static void (*old_wire_save)();
 static int old_viewsector;

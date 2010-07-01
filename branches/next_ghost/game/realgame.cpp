@@ -1953,14 +1953,11 @@ int load_map(char *filename) {
 	int ret;
 	char *c, *d;
 
-	schovej_mysku();
-
 	if (level_preload) {
 		show_loading_picture("LOADING.HI");
 	}
 
 	Sound_ChangeMusic("?");
-	zobraz_mysku();
 	ret = gameMap.load(filename);
 
 	if (ret < 0) {
@@ -2644,23 +2641,28 @@ void a_pass(int sector, int dir) {
 	delay_action(q->action, q->sector_tag, q->side_tag, q->flags, 0, 0);
 }
 
-void zmen_skupinu(THUMAN *p)
-  {
-  int i;
+void zmen_skupinu(THUMAN *p) {
+	int i;
 
-  if (p->groupnum==0) {bott_draw(0);return;}
-  cur_group=p->groupnum;
-  for(i=0;i<POCET_POSTAV;i++) if (!postavy[i].lives && postavy[i].groupnum!=cur_group) postavy[i].groupnum=0;
-  viewsector=p->sektor;
-  viewdir=p->direction;
-  schovej_mysku();
-  bott_draw(0);
-  other_draw();
-  ukaz_mysku();
-  showview(0,378,640,480);
-  ukaz_mysku();
-  cancel_render=1;
-  }
+	if (p->groupnum == 0) {
+		bott_draw(0);
+		return;
+	}
+
+	cur_group = p->groupnum;
+
+	for (i = 0; i < POCET_POSTAV; i++) {
+		if (!postavy[i].lives && postavy[i].groupnum!=cur_group) postavy[i].groupnum=0;
+	}
+
+	viewsector=p->sektor;
+	viewdir=p->direction;
+	bott_draw(0);
+	other_draw();
+	showview(0,378,640,480);
+	ukaz_mysku();
+	cancel_render=1;
+}
 
 void sort_groups()
   {
@@ -3141,11 +3143,9 @@ void step_zoom(char smer) {
 
 	pass_zavora=1;
 	norefresh=1;
-	schovej_mysku();
 	anim_sipky(H_SIPKY_S+smer,1);
 	anim_sipky(0,255);
 	hide_ms_at(385);
-	ukaz_mysku();
 
 	if (set_halucination) do_halucinace();
 	if (loadlevel.name[0]) {
@@ -3413,11 +3413,9 @@ void sleep_players(void) {
 	autosave();
 	insleep = 1;
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 17, 639, 360 + 16);
 	send_message(E_ADD, E_KEYBOARD, key_break_sleep);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 	unwire_proc();
 	break_sleep = 0;
@@ -3434,7 +3432,6 @@ void sleep_players(void) {
 				}
 
 				update_mysky();
-				schovej_mysku();
 				bott_draw(0);
 				memset(curcolor, 0, 3 * sizeof(uint8_t));
 				bar(0, 120, 639, 140);
@@ -3443,7 +3440,6 @@ void sleep_players(void) {
 				renderer->setFont(font, 1, 255, 255, 0);
 				renderer->drawAlignedText(320, 130, HALIGN_CENTER, VALIGN_CENTER, s);
 				other_draw();
-				ukaz_mysku();
 				showview(0, 120, 640, 20);
 				showview(0, 378, 640, 102);
 				Task_WaitEvent(E_TIMER);

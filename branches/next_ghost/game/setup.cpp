@@ -295,14 +295,12 @@ void GamePause() {
 	unwire_proc();
 	send_message(E_ADD, E_KEYBOARD, GameResume);
 	update_mysky();
-	schovej_mysku();
 	trans_bar(0, 0, 640, 480, 0, 0, 0);
 	renderer->setFont(font, 1, 0, 189, 0);
 	i = renderer->textWidth(texty[5]);
 	add_window(320 - (i / 2) - 10, 100, i + 40, 40, H_IDESKA, 4, 20, 20);
 	redraw_window();
 	renderer->drawAlignedText(320, 115, HALIGN_CENTER, VALIGN_CENTER, texty[5]);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 	cancel_render = 1;
 }

@@ -272,16 +272,13 @@ void chveni(int i) {
 	pos = -pos;
 }
 
-void objekty_mimo(the_timer *arg)
-  {
-  schovej_mysku();
-  ukaz_kompas(1);
-  anim_sipky(0,0);
-  ukaz_mysku();
-  ukaz_kompas(255);
-  anim_sipky(0,255);
-  chveni(0);
-  }
+void objekty_mimo(the_timer *arg) {
+	ukaz_kompas(1);
+	anim_sipky(0, 0);
+	ukaz_kompas(255);
+	anim_sipky(0, 255);
+	chveni(0);
+}
 
 void draw_blood(char mode, int mob_dostal, int mob_dostal_pocet) {
 	static int phase = 100;
@@ -1562,7 +1559,6 @@ void redraw_scene() {
 	}
 
 	update_mysky();
-	schovej_mysku();
 
 	if (battle || (game_extras & EX_ALWAYS_MINIMAP)) {
 		draw_medium_map();
@@ -1573,7 +1569,6 @@ void redraw_scene() {
 	}
 
 	other_draw();
-	ukaz_mysku();
 	global_anim_counter++;
 	send_message(E_KOUZLO_ANM);
 	// originally done by a task woken by the message above

@@ -125,6 +125,10 @@ public:
 
 	virtual void drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) { }
 	virtual void xshift(int shift) { }
+	virtual void setMouseCursor(const Texture &tex) { }
+	virtual void showMouse(void) { }
+	virtual void hideMouse(void) { }
+	virtual void moveMouse(int x, int y) { }
 };
 
 class FadeRenderer : public TextureFade {

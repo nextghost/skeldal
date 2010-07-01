@@ -289,10 +289,8 @@ char start_invetory(int id, int xa, int ya, int xr, int yr) {
 	}
 
 	if (bott_display != BOTT_NORMAL) {
-		schovej_mysku();
 		bott_draw(1);
 		other_draw();
-		ukaz_mysku();
 		showview(0, 376, 640, 104);
 		return 1;
 	}

@@ -409,7 +409,6 @@ void redraw_generator(int show) {
 	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_GENERACE));
 
 	memset(&z, 20, sizeof(z));
-	schovej_mysku();
 	renderer->blit(*tex, INV_DESK, SCREEN_OFFLINE, tex->palette());
 
 	if (cur_xicht == -1) {
@@ -429,8 +428,6 @@ void redraw_generator(int show) {
 			trans_bar(28 + INV_DESK + i * XICHT_STEP, 18 + INV_DESK_Y, 26, 38, 0, 0, 0);
 		}
 	}
-
-	ukaz_mysku();
 
 	if (show) {
 		showview(0, 0, 0, 0);
@@ -543,7 +540,6 @@ static char vol_vlastnosti(int id, int xa, int ya, int xr, int yr) {
 
 	xa = pod_perlou_x;
 	ya = pod_perlou_y;
-	schovej_mysku();
 	schovej_perlu();
 
 	if (a < 0) {
@@ -553,7 +549,6 @@ static char vol_vlastnosti(int id, int xa, int ya, int xr, int yr) {
 	vypocet_vlastnosti(a, &cur_vls);
 	cur_angle = a;
 	zobraz_perlu();
-	ukaz_mysku();
 	update_mysky();
 	showview(pod_perlou_x, pod_perlou_y, pod_perlou->width(), pod_perlou->height());
 	showview(xa, ya, pod_perlou->width(), pod_perlou->height());
@@ -699,14 +694,12 @@ void generuj_postavu(THUMAN *h)
 
 static void redraw_page3() {
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	inv_display_vlastnosti();
 	display_character(postavy + cur_edited, 1);
 	write_human_big_name(postavy[cur_edited].jmeno);
 	draw_other_bar();
 	displ_button(b_disables, b_texty);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 	inv_redraw = redraw_page3;
 }
@@ -736,7 +729,6 @@ static void redraw_svitek() {
 	}
 
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 16, 30, 16 + 360);
 	bar(620, 16, 640, 16 + 360);
@@ -747,7 +739,6 @@ static void redraw_svitek() {
 //  display_rings();
 	zobraz_error_text();
 	displ_button(b_disables, b_texty);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 	inv_redraw = redraw_svitek;
 }
@@ -824,18 +815,19 @@ static char view_another_click2(int id, int xa, int ya, int xr, int yr) {
 	return 0;
 }
 
-void effect_show(va_list args)
-  {
-  int i;
-  schovej_mysku();
-  for(i=0;i<12;i++)
-     {
-     showview(0,240-i*20-20,640,20);
-     showview(0,240+(i*20),640,20);
-     Task_WaitEvent(E_TIMER);
-     }
-  ukaz_mysku();
-  }
+void effect_show(va_list args) {
+	int i;
+
+	schovej_mysku();
+
+	for (i = 0; i < 12; i++) {
+		showview(0, 240 - i * 20 - 20, 640, 20);
+		showview(0, 240 + (i * 20), 640, 20);
+		Task_WaitEvent(E_TIMER);
+	}
+
+	ukaz_mysku();
+}
 
 
 static void enter_reaction(EVENT_MSG *msg,void **unused) {
@@ -1011,11 +1003,9 @@ znova:
 	} while (i != 1);
 
 	disable_click_map();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 0, 639, 479);
 	showview(0, 0, 0, 0);
-	ukaz_mysku();
 
 	for (i = 0; i < 3; i++) {
 		if (postavy[i].vlastnosti[VLS_SILA] > 20) {

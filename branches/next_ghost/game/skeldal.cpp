@@ -1541,14 +1541,12 @@ static void load_saved_game(void) {
 err:
 	loadlevel.name[0] = 0;
 	def_handle(H_ETOPBAR, "topbar_e.pcx", pcx_15bit_decomp, SR_BGRAFIKA);
-	schovej_mysku();
 	wire_proc = wire_load_saved;
 	tex = dynamic_cast<const Texture*>(ablock(H_ETOPBAR));
 	renderer->blit(*tex, 0, 0, tex->palette());
 	tex = dynamic_cast<const Texture*>(ablock(H_DESK));
 	renderer->blit(*tex, 0, 378, tex->palette());
 	wire_save_load(4);
-	ukaz_mysku();
 	update_mysky();
 	Task_WaitEvent(E_CLOSE_MAP);
 	game = map_ret;

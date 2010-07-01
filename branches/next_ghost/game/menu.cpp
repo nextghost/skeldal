@@ -179,8 +179,6 @@ static void prehraj_animaci_v_menu(EVENT_MSG *msg, char **unused) {
 			int i = counter / SPEED;
 			char show = 0;
 
-			schovej_mysku();
-
 			if (!low_mem || ~i & 1) {
 				tex = dynamic_cast<const Texture*>(ablock(H_ANIM + i));
 				renderer->blit(*tex, 0, 56, tex->palette());
@@ -202,7 +200,6 @@ static void prehraj_animaci_v_menu(EVENT_MSG *msg, char **unused) {
 				}
 			}
 
-			ukaz_mysku();
 			update_mysky();
 			showview(0, 56, 640, 250);
 
@@ -323,14 +320,12 @@ int enter_menu(char open) {
 	}
 
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 0, 639, 479);
 	tex = dynamic_cast<const Texture*>(ablock(H_MENU_BAR));
 	renderer->blit(*tex, 0, 0, tex->palette());
 	tex = dynamic_cast<const Texture*>(ablock(H_ANIM));
 	renderer->blit(*tex, 0, 56, tex->palette());
-	ukaz_mysku();
 
 	if (open) {
 		effect_show(NULL);

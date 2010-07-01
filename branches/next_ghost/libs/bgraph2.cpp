@@ -45,10 +45,6 @@ char screenstate=0;
 char __skip_change_line_test=0;
 char no_restore_mode=0;
 
-const Texture *mscursor;
-Texture *mssavebuffer = NULL;
-int16_t mscuroldx=0,mscuroldy=0;
-int16_t mscuroldxs=1,mscuroldys=1;
 char write_window=0;
 long pictlen; // Tato promenna je pouze pouzita v BGRAPH1.ASM
 
@@ -1285,91 +1281,20 @@ void showview_lo(uint16_t x,uint16_t y,uint16_t xs,uint16_t ys)
 
 
 void show_ms_cursor(int x, int y) {
-	int16_t xs, ys;
-
-	int mx = renderer->width() - 1;
-	int my = renderer->height() - 1;
-
-	if (x < 0) {
-		x = 0;
-	}
-
-	if (x > mx) {
-		x = mx;
-	}
-
-	if (y < 0) {
-		y = 0;
-	}
-
-	if (y > my) {
-		y = my;
-	}
-
-	delete mssavebuffer;
-	mssavebuffer = new SubTexture(*renderer, x, y, mscursor->width(), mscursor->height());
-	renderer->blit(*mscursor, x, y, mscursor->palette());
-	mscuroldx = x;
-	mscuroldy = y;
+	renderer->moveMouse(x, y);
+	renderer->showMouse();
 }
 
 void hide_ms_cursor() {
-	renderer->blit(*mssavebuffer, mscuroldx, mscuroldy, mssavebuffer->palette());
+	renderer->hideMouse();
 }
 
 void register_ms_cursor(const Texture *cursor) {
-	mscursor = cursor;
-	delete mssavebuffer;
-	mssavebuffer = NULL;
+	renderer->setMouseCursor(*cursor);
 }
 
 void move_ms_cursor(int16_t newx, int16_t newy, char nodraw) {
-	unsigned xs, ys;
-	int mx = renderer->width() - 1;
-	int my = renderer->height() - 1;
-	static int16_t msshowx = 0, msshowy = 0;
-
-	xs = mscursor->width();
-	ys = mscursor->height();
-
-	if (nodraw) {
-		showview(msshowx, msshowy, xs, ys);
-		msshowx = mscuroldx;
-		msshowy = mscuroldy;
-		return;
-	}
-
-	if (newx < 0) {
-		newx = 0;
-	}
-
-	if (newy < 0) {
-		newy = 0;
-	}
-
-	if (newx > mx) {
-		newx = mx;
-	}
-
-	if (newy > my) {
-		newy = my;
-	}
-
-	renderer->blit(*mssavebuffer, mscuroldx, mscuroldy, mssavebuffer->palette());
-	show_ms_cursor(newx, newy);
-	mscuroldx = newx;
-	mscuroldy = newy;
-	showview(msshowx, msshowy, mscuroldxs, mscuroldys);
-
-	if (mscuroldx != msshowx || mscuroldy != msshowy) {
-		showview(mscuroldx, mscuroldy, mscuroldxs, mscuroldys);
-	}
-
-	msshowx = newx;
-	msshowy = newy;
-	showview(msshowx, msshowy, xs, ys);
-	mscuroldxs = xs;
-	mscuroldys = ys;
+	renderer->moveMouse(newx, newy);
 }
 
 /*void pal_optimize()

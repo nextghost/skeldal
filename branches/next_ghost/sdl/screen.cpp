@@ -36,7 +36,8 @@ extern uint16_t scancodes[];
 int SDLRenderer::_active = 0;
 
 SDLRenderer::SDLRenderer(unsigned xs, unsigned ys) : SoftRenderer(xs, ys),
-	_screen(NULL), _remap(NULL), _x(0) {
+	_screen(NULL), _remap(NULL), _mouse(NULL), _x(0), _mousex(0),
+	_mousey(0), _drawMouse(0) {
 
 	assert(!_active && "Video already initialized");
 	_active = 1;
@@ -54,19 +55,23 @@ SDLRenderer::SDLRenderer(unsigned xs, unsigned ys) : SoftRenderer(xs, ys),
 
 SDLRenderer::~SDLRenderer(void) {
 	SDL_FreeSurface(_remap);
+	SDL_FreeSurface(_mouse);
 	SDL_ShowCursor(SDL_ENABLE);
 	SDL_Quit();
 	_active = 0;
 }
 
 void SDLRenderer::drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) {
-	SDL_Rect rect = {x + _x, y, xs, ys}, rect2 = {x, y, xs, ys};
-	SDL_Rect rect3 = {0, 0, 0, height()};
-	Uint32 black = SDL_MapRGB(_screen->format, 0, 0, 0);
-
 	SDL_LockSurface(_remap);
 	memcpy(_remap->pixels, pixels(), width() * height() * 3 * sizeof(uint8_t));
 	SDL_UnlockSurface(_remap);
+	flushRect(x, y, xs, ys);
+}
+
+void SDLRenderer::flushRect(unsigned x, unsigned y, unsigned xs, unsigned ys) {
+	SDL_Rect dstrect = {x + _x, y, xs, ys}, srcrect = {x, y, xs, ys};
+	SDL_Rect rect3 = {0, 0, 0, height()};
+	Uint32 black = SDL_MapRGB(_screen->format, 0, 0, 0);
 
 	if (_x > 0) {
 		rect3.x = 0;
@@ -78,12 +83,92 @@ void SDLRenderer::drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys) {
 		SDL_FillRect(_screen, &rect3, black);
 	}
 
-	SDL_BlitSurface(_remap, &rect2, _screen, &rect);
+	SDL_BlitSurface(_remap, &srcrect, _screen, &dstrect);
+
+	if (_drawMouse) {
+		dstrect.x = _mousex;
+		dstrect.y = _mousey;
+		dstrect.w = _mouse->w;
+		dstrect.h = _mouse->h;
+		SDL_BlitSurface(_mouse, NULL, _screen, &dstrect);
+	}
+
+	x = x < 0 ? 0 : x;
+	x = x >= width() ? width() : x;
+	y = y < 0 ? 0 : y;
+	y = y >= height() ? height() : y;
+	xs = x + xs > width() ? width() - x : xs;
+	ys = y + ys > height() ? height() - y : ys;
 	SDL_UpdateRect(_screen, x, y, xs, ys);
 }
 
 void SDLRenderer::xshift(int shift) {
 	_x = shift;
+}
+
+void SDLRenderer::setMouseCursor(const Texture &tex) {
+	SDL_Color *pal;
+	int i, w, h;
+
+	assert(tex.depth() == 1 && "Mouse cursor must use palette");
+
+	w = _mouse && _mouse->w > tex.width() ? _mouse->w : tex.width();
+	h = _mouse && _mouse->h > tex.height() ? _mouse->h : tex.height();
+	SDL_FreeSurface(_mouse);
+	_mouse = SDL_CreateRGBSurface(SDL_SWSURFACE, tex.width(), tex.height(), 8, 0, 0, 0, 0);
+	SDL_LockSurface(_mouse);
+	memset(_mouse->pixels, 0, _mouse->pitch * _mouse->h * sizeof(uint8_t));
+
+	for (i = 0; i < tex.height(); i++) {
+		memcpy((uint8_t*)_mouse->pixels + i * _mouse->pitch, tex.pixels() + i * tex.width(), tex.width() * sizeof(uint8_t));
+	}
+
+	SDL_UnlockSurface(_mouse);
+	pal = new SDL_Color[256];
+
+	for (i = 0; i < 256; i++) {
+		pal[i].r = tex.palette()[3 * i];
+		pal[i].g = tex.palette()[3 * i + 1];
+		pal[i].b = tex.palette()[3 * i + 2];
+		pal[i].unused = 0;
+	}
+
+	SDL_SetPalette(_mouse, SDL_LOGPAL, pal, 0, 256);
+	delete[] pal;
+	SDL_SetColorKey(_mouse, SDL_SRCCOLORKEY, 0);
+
+	if (_drawMouse) {
+		flushRect(_mousex, _mousey, w, h);
+	}
+}
+
+void SDLRenderer::showMouse(void) {
+	assert(_mouse && "No mouse texture set before showMouse() call");
+	_drawMouse = 1;
+	flushRect(_mousex, _mousey, _mouse->w, _mouse->h);
+}
+
+void SDLRenderer::hideMouse(void) {
+	_drawMouse = 0;
+
+	if (_mouse) {
+		flushRect(_mousex, _mousey, _mouse->w, _mouse->h);
+	}
+}
+
+void SDLRenderer::moveMouse(int x, int y) {
+	int top, left, bottom, right;
+
+	top = y < _mousey ? y : _mousey;
+	left = x < _mousex ? x : _mousex;
+	bottom = (y < _mousey ? _mousey : y) - top;
+	right = (x < _mousex ? _mousex : x) - left;
+	_mousex = x;
+	_mousey = y;
+
+	if (_drawMouse) {
+		flushRect(left, top, right + _mouse->w, bottom + _mouse->h);
+	}
 }
 
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {

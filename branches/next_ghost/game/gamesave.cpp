@@ -924,14 +924,9 @@ static void place_name(int c, int i, char show) {
 		x = LOAD_SLOT_S;
 	}
 
-	if (show) {
-		schovej_mysku();
-	}
-
 	renderer->drawText(x, z = i * SLOT_SPACE + 21 + SCREEN_OFFLINE, slot_list[i]);
 
 	if (show) {
-		ukaz_mysku();
 		showview(x, z, 204, 18);
 	}
 }
@@ -941,7 +936,6 @@ static void redraw_save() {
 	const Texture *tex;
 	const Font *font;
 
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_SAVELOAD));
 	renderer->blit(*tex, 0, SCREEN_OFFLINE, tex->palette());
 	tex = dynamic_cast<const Texture*>(ablock(H_SVITEK));
@@ -952,8 +946,6 @@ static void redraw_save() {
 	for (i = 0; i < SLOTS_MAX; i++) {
 		place_name(1, i, 0);
 	}
-
-	ukaz_mysku();
 }
 
 static void redraw_load() {
@@ -961,7 +953,6 @@ static void redraw_load() {
 	const Texture *tex;
 	const Font *font;
 
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_SVITEK));
 	renderer->blit(*tex, 0, SCREEN_OFFLINE, tex->palette());
 	tex = dynamic_cast<const Texture*>(ablock(H_SAVELOAD));
@@ -972,15 +963,11 @@ static void redraw_load() {
 	for (i = 0; i < SLOTS_MAX; i++) {
 		place_name(0, i, 0);
 	}
-
-	ukaz_mysku();
 }
 
 static void redraw_story_bar(int pos) {
 	int i, y, ys, x, count;
 	const Font *font;
-
-	schovej_mysku();
 
 	if (force_save) {
 		x = STORY_X + 274;
@@ -1016,7 +1003,6 @@ static void redraw_story_bar(int pos) {
 		}
 	}
 
-	ukaz_mysku();
 	showview(x, STORY_Y + SCREEN_OFFLINE, STORY_XS, STORY_YS);
 }
 
@@ -1362,14 +1348,12 @@ void wire_ask_gamename(int id) {
 	x = SAVE_SLOT_S;
 	y = id * SLOT_SPACE + 21 + SCREEN_OFFLINE;
 	slot_pos = id;
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_LOADTXTR));
 	renderer->blit(*tex, x, y, tex->palette());
 	strcpy(global_gamename, slot_list[id]);
 //  clk_ask_name[0].id=Task_Add(16384,type_text_v2,global_gamename,x,y,SAVE_SLOT_E-SAVE_SLOT_S,SAVE_NAME_SIZE,H_FBOLD,RGB555(31,31,0),save_it);
 	send_message(E_ADD, E_KEYBOARD, type_text, global_gamename, x, y, SAVE_SLOT_E - SAVE_SLOT_S, SAVE_NAME_SIZE, H_FBOLD, 255, 255, 0, save_it);
 	change_click_map(clk_ask_name, CLK_ASK_NAME);
-	ukaz_mysku();
 }
 
 
@@ -1472,7 +1456,6 @@ void unwire_save_load() {
 }
 
 void wire_save_load(char save) {
-	schovej_mysku();
 	mute_all_tracks(0);
 	force_save = save & 1;
 	load_mode = save;
@@ -1518,7 +1501,6 @@ void wire_save_load(char save) {
 		bright_slot(x);
 	}
 
-	ukaz_mysku();
 	update_mysky();
 }
 

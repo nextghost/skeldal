@@ -627,7 +627,6 @@ void draw_automap(int xr, int yr) {
 	const Texture *tex;
 
 	update_mysky();
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_BACKMAP));
 	put_textured_bar(*tex, 0, 17, 640, 360, -xr * 8, -yr * 8);
 	memcpy(curcolor, tmp, 3 * sizeof(uint8_t));
@@ -636,6 +635,7 @@ void draw_automap(int xr, int yr) {
 	depth = cur_depth;
 	map_xr = xp - xr * 8;
 	map_yr = yp - yr * 8;
+
 	for(k = 0; k < 2; k++) {
 		for(i = 1; i < gameMap.coordCount(); i++) {
 			int flagmask = MC_AUTOMAP | (k != 0 ? MC_DISCLOSED : 0);
@@ -647,11 +647,13 @@ void draw_automap(int xr, int yr) {
 				s = gameMap.sectors()[i].step_next;
 				x -= xp;
 				y -= yp;
+
 				if (y >= -178 && y < 170 && x >= -312 && x < 310) {
 					uint8_t tmp1[3] = {AUTOMAP_LINE1}, tmp2[3] = {AUTOMAP_LINE2};
 					x += 320;
 					y += 197;
 					draw_amap_sector(x, y, i, k, 0, tmp1, tmp2);
+
 					if (gameMap.coord()[i].flags & MC_PLAYER && !noarrows) {
 						int j, l = -1;
 
@@ -695,7 +697,6 @@ void draw_automap(int xr, int yr) {
 	sprintf(str, texty[153], gameMap.global().mapname, depth);
 	renderer->drawAlignedText(5, 372, HALIGN_LEFT, VALIGN_BOTTOM, str);
 
-	ukaz_mysku();
 	wait_retrace();
 	showview(0, 16, 640, 360);
 }
@@ -824,7 +825,6 @@ void show_automap(char full) {
 
 	hold_timer(TM_FAST_TIMER, 1);
 	unwire_proc = unwire_automap;
-	schovej_mysku();
 
 	if (cur_mode != MD_ANOTHER_MAP) {
 		bott_draw(1);
@@ -839,7 +839,6 @@ void show_automap(char full) {
 		displ_button(7, btexts);
 	}
 
-	ukaz_mysku();
 	showview(0, 376, 640, 480);
 	cur_depth = gameMap.coord()[viewsector].layer;
 	draw_automap(0, 0);
@@ -952,10 +951,8 @@ static char map_menu_glob_map(int id,int xa,int ya,int xr,int yr) {
 	id = set_select_mode(0);
 
 	if (id) {
-		schovej_mysku();
 		pick_set_cursor();
 		displ_button(1, btexts);
-		ukaz_mysku();
 		showview(520, 378, 120, 120);
 		return 1;
 	}
@@ -968,11 +965,9 @@ static void wire_glob_map_control() {
 	const char *btexts[4] = {texty[210], texty[211], texty[212], texty[213]};
 
 	set_select_mode(0);
-	schovej_mysku();
 	other_draw();
 	displ_button(1, btexts);
 	wire_global_map();
-	ukaz_mysku();
 	update_mysky();
 	change_click_map(clk_glob_map, CLK_GLOB_MAP);
 }
@@ -1022,10 +1017,8 @@ char map_menu(int id,int xa,int ya,int xr,int yr) {
 
 	case 2:
 		set_select_mode(1);
-		schovej_mysku();
 		displ_button(5, btexts);
 		mouse_set_default(H_MS_WHO);
-		ukaz_mysku();
 		showview(0, 0, 0, 0);break;
 
 	case 3:
@@ -1112,7 +1105,6 @@ void wire_kniha() {
 
 	mute_all_tracks(0);
 	unwire_proc();
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_KNIHA));
 	renderer->blit(*tex, 0, 0, tex->palette());
 	change_click_map(clk_kniha, CLK_KNIHA);
@@ -1120,7 +1112,6 @@ void wire_kniha() {
 	font = dynamic_cast<const Font*>(ablock(H_FONT6));
 	renderer->setFont(font, 0, 0, 0, 0);
 	write_book(cur_page);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 	hold_timer(TM_FAST_TIMER, 1);
 }
@@ -1193,12 +1184,10 @@ int select_teleport_target() {
 	disable_all_map();
 	labyrinth_find_path(viewsector, 65535, SD_PLAY_IMPS, path_ok, NULL);
 	gameMap.setCoordFlags(viewsector, MC_MARKED);
-	schovej_mysku();
 	send_message(E_ADD, E_KEYBOARD, map_teleport_keyboard);
 	show_automap(0);
 	change_click_map(clk_teleport_view, CLK_TELEPORT_VIEW);
 	last_selected = 0;
-	ukaz_mysku();
 	escape();
 	send_message(E_DONE, E_KEYBOARD, map_teleport_keyboard);
 	disable_all_map();

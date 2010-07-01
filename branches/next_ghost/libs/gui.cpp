@@ -148,7 +148,6 @@ void GUIObject::render(window *w, int show) {
 		return;
 	}
 
-	schovej_mysku();
 	draw_border(_locx, _locy, _width, _height, &_border);
 	memcpy(curcolor, _color, 3 * sizeof(uint8_t));
 
@@ -159,8 +158,6 @@ void GUIObject::render(window *w, int show) {
 	if (!_enabled) {
 		disable_bar(_locx, _locy, _width, _height, _color[0], _color[1], _color[2]);
 	}
-
-	ukaz_mysku();
 
 	if (show) {
 		showview(_locx - ok, _locy - ok, _width + 2 * ok, _height + 2 * ok);
@@ -441,22 +438,20 @@ void redraw_object(GUIObject *o) {
 }
 
 
-void redraw_window_call()
-  {
-  GUIObject *p;
+void redraw_window_call() {
+	GUIObject *p;
 
-  schovej_mysku();
-  waktual->draw_event(waktual);
-  p = waktual->objects;
-  while (p!=NULL)
-     {
-     p->render(waktual, 0);
-     p=p->_next;
-     }
-  ukaz_mysku();
-  show_window(waktual);
-  return;
-  }
+	waktual->draw_event(waktual);
+	p = waktual->objects;
+
+	while (p != NULL) {
+		p->render(waktual, 0);
+		p = p->_next;
+	}
+
+	show_window(waktual);
+	return;
+}
 
 void add_to_idlist(GUIObject *o)
   {
@@ -560,7 +555,6 @@ void redraw_desktop_call(EVENT_MSG *msg, void **data) {
 	}
 
 	force_redraw_desktop = 0;
-	schovej_mysku();
 
 	if (gui_background == NULL) {
 		uint8_t tmp[3] = {DESK_TOP_COLOR};
@@ -592,9 +586,7 @@ void redraw_desktop_call(EVENT_MSG *msg, void **data) {
 	}
 
 	send_message(E_REDRAW);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
-	move_ms_cursor(0, 0, 1);
 }
 
 void redraw_desktop()

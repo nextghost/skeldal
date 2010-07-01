@@ -294,7 +294,6 @@ void xor_rectangle(int x, int y, int xs, int ys) {
 		ys = renderer->height() - y - 1;
 	}
 
-	schovej_mysku();
 	hor_line_xor(x, y, x + xs);
 	ver_line_xor(x, y, y + ys);
 
@@ -303,7 +302,6 @@ void xor_rectangle(int x, int y, int xs, int ys) {
 		ver_line_xor(x + xs, y, y + ys);
 	}
 
-	ukaz_mysku();
 	showview(x, y, x + xs, 4);
 	showview(x, y, 4, ys + 4);
 

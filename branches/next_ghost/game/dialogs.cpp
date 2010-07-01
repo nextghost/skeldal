@@ -184,7 +184,6 @@ static void dialog_anim(va_list args) {
 
 	void *anm;
 	char *ch;
-	char hid;
 	int spdc = 0, cntr = rep, tm, tm2, ret = 1;
 	File file;
 
@@ -199,22 +198,11 @@ static void dialog_anim(va_list args) {
 			Task_Sleep(NULL);
 
 			if (!spdc) {
-				if (ms_last_event.x <= PIC_X + 320 && ms_last_event.y <= PIC_Y + 180) {
-					hid = 1;
-					schovej_mysku();
-				} else {
-					hid = 0;
-				}
-
 				ret = reader.decodeFrame();
 				spdc = speed;
 
 				if (ret & FLAG_VIDEO) {
 					renderer->blit(reader, PIC_X, PIC_Y, reader.palette());
-				}
-
-				if (hid) {
-					ukaz_mysku();
 				}
 
 				showview(PIC_X, PIC_Y, 320, 180);
@@ -832,9 +820,7 @@ static void key_check(EVENT_MSG *msg, void **unused) {
 				break;
 			}
 
-			schovej_mysku();
 			redraw_text();
-			ukaz_mysku();
 			showview(TEXT_X, TEXT_Y, TEXT_XS, TEXT_YS);
 		} else if (c == 13 || c == 32) {
 			dialog_cont();
@@ -846,14 +832,12 @@ static void key_check(EVENT_MSG *msg, void **unused) {
 }
 
 void wire_dialog();
-void wire_dialog_drw()
-  {
-  schovej_mysku();
-  wire_dialog();
-  draw_all();
-  ukaz_mysku();
-  showview(0,0,0,0);
-  }
+void wire_dialog_drw() {
+	wire_dialog();
+	draw_all();
+	showview(0,0,0,0);
+}
+
 void unwire_dialog()
   {
   send_message(E_DONE,E_KEYBOARD,key_check);
@@ -969,42 +953,45 @@ static void remove_all_cases() {
 	vyb_volba=0;
 }
 
-static char case_click(int id,int xa,int ya,int xr,int yr)
-  {
-  int cf;
+static char case_click(int id, int xa, int ya, int xr, int yr) {
+	int cf;
 
-  xa,ya,xr,yr;
+	if (pocet_voleb > 1) {
+		id = yr / TEXT_STEP;
+		cf = history.size();
+		id += his_line;
 
-  if (pocet_voleb>1)
-     {
-     id=yr/TEXT_STEP;
-     cf = history.size();
-     id+=his_line;
-     if (id>=cf) return 0;
-     if (history[id]==NULL) return 0;
-     id=history[id][0];
-     if (id=='E' || id=='M') return 0;
-     id-=48;
-  if (id!=vyb_volba)
-     {
-     vyb_volba=id;
-     schovej_mysku();
-     redraw_text();
-     ukaz_mysku();
-     showview(TEXT_X,TEXT_Y,TEXT_XS,TEXT_YS);
-     }
-  if (ms_last_event.event_type & 0x2)
-     {
-     dialog_cont();
-     }
-     }
-  else
-  if (ms_last_event.event_type & 0x2)
-     {
-     dialog_cont();
-     }
-  return 1;
-  }
+		if (id >= cf) {
+			return 0;
+		}
+
+		if (history[id] == NULL) {
+			return 0;
+		}
+
+		id = history[id][0];
+
+		if (id == 'E' || id == 'M') {
+			return 0;
+		}
+
+		id -= 48;
+
+		if (id != vyb_volba) {
+			vyb_volba = id;
+			redraw_text();
+			showview(TEXT_X, TEXT_Y, TEXT_XS, TEXT_YS);
+		}
+
+		if (ms_last_event.event_type & 0x2) {
+			dialog_cont();
+		}
+	} else if (ms_last_event.event_type & 0x2) {
+		dialog_cont();
+	}
+
+	return 1;
+}
 
 void dialog_select(char halt)
   {

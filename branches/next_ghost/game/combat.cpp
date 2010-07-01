@@ -478,42 +478,55 @@ void rozhodni_o_poradi()
   *r++=0;
   prave_hraje=poradi;
   }
-void hrat_souboj(the_timer *arg)
-  {
-  static int counter=0;
-	char cond=ms_last_event.y>378 && ms_last_event.x>510 && cur_mode!=MD_PRESUN;
-  if (cond) schovej_mysku();
-  redraw_scene();
-  if (!cancel_render && !norefresh)
-     {
-     if (cur_mode!=MD_PRESUN)
-			 {
-			 program_draw();
-			 draw_blood(0,0,0);
-			 check_players_place(0);
-			 }
-     showview(0,0,0,0);
-     if (neco_v_pohybu==2) neco_v_pohybu=0; else neco_v_pohybu=2;
-     calc_fly(NULL);
-     mob_animuj();
-     if (d_action!=NULL) do_delay_actions();
-     }
-  if (cond) ukaz_mysku();
-  if (neco_v_pohybu)
-     {
-     if (++counter>=maxwait && maxwait>0) neco_v_pohybu=0;
-     }
-  else
-     if (++counter<minwait) neco_v_pohybu=2;
-  if (!neco_v_pohybu)
-     {
-       if (JePozdrzeno()) neco_v_pohybu=1;
-     counter=0;
-     maxwait=-1;
-     minwait=0;
-     }
+
+void hrat_souboj(the_timer *arg) {
+	static int counter = 0;
+
+	redraw_scene();
+
+	if (!cancel_render && !norefresh) {
+		if (cur_mode != MD_PRESUN) {
+			program_draw();
+			draw_blood(0, 0, 0);
+			check_players_place(0);
+		}
+
+		showview(0, 0, 0, 0);
+
+		if (neco_v_pohybu == 2) {
+			neco_v_pohybu = 0;
+		} else {
+			neco_v_pohybu = 2;
+		}
+
+		calc_fly(NULL);
+		mob_animuj();
+
+		if (d_action != NULL) {
+			do_delay_actions();
+		}
+	}
+
+	if (neco_v_pohybu) {
+		if (++counter >= maxwait && maxwait > 0) {
+			neco_v_pohybu = 0;
+		}
+	} else if (++counter < minwait) {
+		neco_v_pohybu = 2;
+	}
+
+	if (!neco_v_pohybu) {
+		if (JePozdrzeno()) {
+			neco_v_pohybu = 1;
+		}
+
+		counter = 0;
+		maxwait = -1;
+		minwait = 0;
+	}
+
 	gameMap.calcAnimations();
-  }
+}
 
 void auto_group()
   {
@@ -1452,8 +1465,6 @@ void display_rune_bar(the_timer *arg) {
 	int i;
 	const Texture *tex;
 
-	schovej_mysku();
-
 	if (runebar != NULL) {
 		renderer->blit(*runebar, 520, 378, runebar->palette());
 	} else {
@@ -1482,8 +1493,6 @@ void display_rune_bar(the_timer *arg) {
 		runebar = new SubTexture(*renderer, 520, 378, 120, 102);
 	}
 
-	ukaz_mysku();
-
 	if (je_myska_zobrazena()) {
 		showview(520, 378, 120, 102);
 	}
@@ -1491,18 +1500,15 @@ void display_rune_bar(the_timer *arg) {
 
 
 
-void rune_bar_redrawing(the_timer *arg)
-  {
-  redraw_scene();
-  if (!norefresh && !cancel_render)
-     {
-     schovej_mysku();
-     program_draw();
-     display_rune_bar(NULL);
-     ukaz_mysku();
-     showview(0,0,0,0);
-     }
-  }
+void rune_bar_redrawing(the_timer *arg) {
+	redraw_scene();
+
+	if (!norefresh && !cancel_render) {
+		program_draw();
+		display_rune_bar(NULL);
+		showview(0,0,0,0);
+	}
+}
 
 
 void display_power_bar(char drw) {
@@ -1510,7 +1516,6 @@ void display_power_bar(char drw) {
 	int i;
 	const Texture *tex;
 
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_POWERBAR));
 	renderer->blit(*tex, 520, 378, tex->palette());
 
@@ -1518,8 +1523,6 @@ void display_power_bar(char drw) {
 		tex = dynamic_cast<const Texture*>(ablock(H_POWERLED));
 		renderer->rectBlit(*tex, 520 + coords[i][0], 378 + coords[i][1], 0, 24 * powers[i], 21, 24, tex->palette());
 	}
-
-	ukaz_mysku();
 
 	if (drw) {
 		showview(520, 378, 120, 102);
@@ -1536,17 +1539,13 @@ void wire_select_rune();
 void unwire_select_rune();
 void wire_select_power();
 
-char cancel_power(int id,int xa,int ya,int xr,int yr)
-  {
-  xa;ya;xr;yr;id;
-  schovej_mysku();
-  unwire_proc();
-  magic_data->action=0;
-  after_spell_wire();
-  mouse_set_default(H_MS_DEFAULT);
-  ukaz_mysku();
-  return 1;
-  }
+char cancel_power(int id, int xa, int ya, int xr, int yr) {
+	unwire_proc();
+	magic_data->action = 0;
+	after_spell_wire();
+	mouse_set_default(H_MS_DEFAULT);
+	return 1;
+}
 
 char ask_who_proc(int id, int xa, int ya, int xr, int yr) {
 	THUMAN *p;
@@ -1597,39 +1596,46 @@ void vyber_cil(int typ)
   mouse_set_default(H_MS_WHO);
   }
 
-char power(int id,int xa,int ya,int xr,int yr)
-  {
-  xa;ya;xr;yr;
-  if (powers[id]==1) return 1;
-  schovej_mysku();
-  display_power_bar(0);
-  trans_bar(520+44,378+11+30*id,76,24,255,255,255);
-  mouse_set_default(H_MS_DEFAULT);
-  ukaz_mysku();
-  showview(520,378,120,102);
-  magic_data->data1-=magic_data->data1 % 3;
-  magic_data->data1+=id;
-  id=magic_data->data1;
-  if ((id=ask_who(id))>1)
-     {
-     vyber_cil(id);
-     return 1;
-     }
-  magic_data->action=AC_MAGIC;
-  if (get_spell_teleport(magic_data->data1))
-     if ((magic_data->data2=select_teleport_target())==0)
-         {
-         cancel_power(id,xa,ya,xr,yr);
-         return 1;
-         }
-  if (id==1) magic_data->data1+=(select_player+1)<<9;
-  schovej_mysku();
-  if (battle) souboje_vybrano(AC_MAGIC);
-  unwire_proc();
-  after_spell_wire();
-  ukaz_mysku();
-  return 1;
-  }
+char power(int id, int xa, int ya, int xr, int yr) {
+	if (powers[id] == 1) {
+		return 1;
+	}
+
+	display_power_bar(0);
+	trans_bar(520 + 44, 378 + 11 + 30 * id, 76, 24, 255, 255, 255);
+	mouse_set_default(H_MS_DEFAULT);
+	showview(520, 378, 120, 102);
+	magic_data->data1 -= magic_data->data1 % 3;
+	magic_data->data1 += id;
+	id = magic_data->data1;
+
+	if ((id = ask_who(id)) > 1) {
+		vyber_cil(id);
+		return 1;
+	}
+
+	magic_data->action = AC_MAGIC;
+
+	if (get_spell_teleport(magic_data->data1)) {
+		if ((magic_data->data2 = select_teleport_target()) == 0) {
+			cancel_power(id, xa, ya, xr, yr);
+			return 1;
+		}
+	}
+
+	if (id == 1) {
+		magic_data->data1 += (select_player + 1) << 9;
+	}
+
+
+	if (battle) {
+		souboje_vybrano(AC_MAGIC);
+	}
+
+	unwire_proc();
+	after_spell_wire();
+	return 1;
+}
 
 char runes_mask(int id, int xa, int ya, int xr, int yr) {
 	int c, cc;
@@ -1648,9 +1654,7 @@ char runes_mask(int id, int xa, int ya, int xr, int yr) {
 				magic_data->data1 = x;
 				unwire_select_rune();
 				wire_select_power();
-				schovej_mysku();
 				renderer->maskFill(*tex, 520, 378, c, 2, 4, 4, 4);
-				ukaz_mysku();
 				showview(520, 378, 120, 102);
 				return 1;
 			} else {
@@ -1669,17 +1673,13 @@ char runes_mask(int id, int xa, int ya, int xr, int yr) {
 	return 1;
 }
 
-char cancel_runes(int id,int xa,int ya,int xr,int yr)
-  {
-  xa;ya;xr;yr;id;
-  rune_name=NULL;
-  schovej_mysku();
-  unwire_select_rune();
-  magic_data->action=0;
-  after_spell_wire();
-  ukaz_mysku();
-  return 1;
-  }
+char cancel_runes(int id, int xa, int ya, int xr, int yr) {
+	rune_name = NULL;
+	unwire_select_rune();
+	magic_data->action = 0;
+	after_spell_wire();
+	return 1;
+}
 
 void unwire_select_rune() {
 	wire_proc = wire_select_rune;
@@ -1747,8 +1747,6 @@ void program_draw() {
 	int i, j, maxy = 0;
 	const Font *font = dynamic_cast<const Font*>(ablock(H_FLITT5));
 
-	schovej_mysku();
-
 	for (j = 0; j < POCET_POSTAV; j++) {
 		if (postavy[i = group_sort[j]].used) {
 			int y;
@@ -1806,35 +1804,30 @@ void program_draw() {
 		renderer->setFont(font, PRG_HELP_COLOR);
 		renderer->drawAlignedText(580, 376, HALIGN_CENTER, VALIGN_BOTTOM, c);
 	}
-
-	ukaz_mysku();
 }
 
 
-void souboje_redrawing(the_timer *arg)
-  {
-  if (neco_v_pohybu) calc_mobs();
-	gameMap.calcAnimations();
-  redraw_scene();
-  if (!norefresh && !cancel_render)
-     {
-     schovej_mysku();
-     program_draw();
-     ukaz_mysku();
-     showview(0,0,0,0);
-     }
-  }
+void souboje_redrawing(the_timer *arg) {
+	if (neco_v_pohybu) {
+		calc_mobs();
+	}
 
+	gameMap.calcAnimations();
+	redraw_scene();
+
+	if (!norefresh && !cancel_render) {
+		program_draw();
+		showview(0, 0, 0, 0);
+	}
+}
 
 void souboje_stisknout(int d) {
 	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_BATTLE_CLICK));
 
 	update_mysky();
-	schovej_mysku();
 	d--;
 	d *= 105;
 	renderer->rectBlit(*tex, 520, 378, 0, d, 120, 102, tex->palette());
-	ukaz_mysku();
 	showview(520, 378, 120, 102);
 	cancel_render = 1;
 }
@@ -2137,16 +2130,12 @@ void souboje_turn(char smer) {
 	draw_medium_map();
 	ukaz_mysku();
 	showview(0, 0, 0, 0);
-	schovej_mysku();
-	ukaz_mysku();
 	norefresh = 0;
 	cancel_render = 1;
 	hold_timer(TM_BACK_MUSIC, 0);
 	recalc_volumes(viewsector, viewdir);
 	Sound_MixBack(0);
 }
-
-
 
 void programming_keyboard(EVENT_MSG *msg,void **unused) {
 	char c;
@@ -2226,22 +2215,22 @@ void unwire_programming()
 
 
 
-void wire_programming()
-  {
-  schovej_mysku();
-  after_spell_wire=wire_programming;
-  cur_mode=MD_INBATTLE;
-  battle_mode=0;
-  change_click_map(clk_souboje,CLK_SOUBOJE);
-  send_message(E_ADD,E_KEYBOARD,programming_keyboard);
-  add_to_timer(TM_SCENE,gamespeed,-1,souboje_redrawing);
-  ukaz_mysku();
-  unwire_proc=unwire_programming;
-  bott_draw(1);
-  showview(0,0,0,0);
-  recalc_volumes(viewsector,viewdir);
-  if (autostart_round) zahajit_kolo(1);
-  }
+void wire_programming() {
+	after_spell_wire = wire_programming;
+	cur_mode = MD_INBATTLE;
+	battle_mode = 0;
+	change_click_map(clk_souboje, CLK_SOUBOJE);
+	send_message(E_ADD, E_KEYBOARD, programming_keyboard);
+	add_to_timer(TM_SCENE, gamespeed, -1, souboje_redrawing);
+	unwire_proc = unwire_programming;
+	bott_draw(1);
+	showview(0, 0, 0, 0);
+	recalc_volumes(viewsector, viewdir);
+
+	if (autostart_round) {
+		zahajit_kolo(1);
+	}
+}
 
 void wait_to_stop(EVENT_MSG *msg,void **unused)
   {

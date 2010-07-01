@@ -26,8 +26,10 @@
 class SDLRenderer : public SoftRenderer {
 private:
 	static int _active;
-	SDL_Surface *_screen, *_remap;
-	int _x;
+	SDL_Surface *_screen, *_remap, *_mouse;
+	int _x, _mousex, _mousey, _drawMouse;
+
+	void flushRect(unsigned x, unsigned y, unsigned xs, unsigned ys);
 
 public:
 	SDLRenderer(unsigned xs, unsigned ys);
@@ -35,4 +37,8 @@ public:
 
 	void drawRect(unsigned x, unsigned y, unsigned xs, unsigned ys);
 	void xshift(int shift);
+	void setMouseCursor(const Texture &tex);
+	void showMouse(void);
+	void hideMouse(void);
+	void moveMouse(int x, int y);
 };

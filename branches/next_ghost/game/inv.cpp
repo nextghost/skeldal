@@ -1612,11 +1612,9 @@ void hide_inv_info_box() {
 	info_box_drawed = 0;
 
 	if (info_box_below != NULL) {
-		schovej_mysku();
 		renderer->blit(*info_box_below, INV_INFO_X - 12, INV_INFO_Y - 12, info_box_below->palette());
 		delete info_box_below;
 		info_box_below = NULL;
-		ukaz_mysku();
 		showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2 * VEL_RAMEC + 2, INV_INFO_YC + 2 * VEL_RAMEC + 2);
 	}
 }
@@ -1704,7 +1702,6 @@ void write_pocet_sipu() {
 
 void redraw_inventory() {
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 16, 30, 16 + 360);
 	bar(620, 16, 640, 16 + 360);
@@ -1725,7 +1722,6 @@ void redraw_inventory() {
 	info_box_below = NULL;
 	ms_last_event.event_type = 0x1;
 	send_message(E_MOUSE, &ms_last_event);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 }
 
@@ -1820,13 +1816,11 @@ char vls_click(int id, int xa, int ya, int xr, int yr) {
 			i = advance_vls(id);
 
 			if (i > 0) {
-				schovej_mysku();
 				renderer->setFont(font, 1, butt_plus);
 				renderer->setFontColor(1, butt_plus[3][0], butt_plus[3][1], butt_plus[3][2]);
 				renderer->setFontColor(3, butt_plus[1][0], butt_plus[1][1], butt_plus[1][2]);
 
 				renderer->drawText(xr, yr, "+");
-				ukaz_mysku();
 				showview(xr, yr, xs, ys);
 			}
 
@@ -1861,9 +1855,7 @@ void inv_item_info_box(EVENT_MSG *msg, void **data) {
 			if (ms->y > 378 && info_box_drawed) {
 				hide_inv_info_box();
 			} else if (ms->y <= 378 && !info_box_drawed) {
-				schovej_mysku();
 				inv_informuj();
-				ukaz_mysku();
 				showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
 			}
 
@@ -1894,10 +1886,8 @@ void inv_item_info_box(EVENT_MSG *msg, void **data) {
 				int i = human_selected->inv[pos];
 				if (i) {
 					char s[80];
-					schovej_mysku();
 					inv_info_box(glob_items[i-1].jmeno, glob_items[i-1].popis, get_item_req(s,i), !muze_nosit(i));
 					showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
-					ukaz_mysku();
 				} else if (info_box_drawed) {
 					hide_inv_info_box();
 				}
@@ -2703,10 +2693,8 @@ static void shop_mouse_event(EVENT_MSG *msg, void **unused) {
 				int cena = cur_shop->list[shp_item_pos[i]].cena;
 
 				j--;
-				schovej_mysku();
 				sprintf(c, "%s (%d)", glob_items[j].jmeno, cena + cur_shop->koef * cena / 100);
 				inv_info_box(c, glob_items[j].popis, get_item_req(s, j + 1), !muze_nosit(j + 1));
-				ukaz_mysku();
 				showview(INV_INFO_X - VEL_RAMEC, INV_INFO_Y - VEL_RAMEC, INV_INFO_XS + 2*VEL_RAMEC + 2, INV_INFO_YC + 2*VEL_RAMEC + 2);
 				last_pos = i;
 				cc = 0;
@@ -2899,7 +2887,6 @@ static void display_keepers_items() {
 
 static void redraw_shop() {
 	update_mysky();
-	schovej_mysku();
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	display_items_in_inv(human_selected);
 	display_keepers_items();
@@ -2914,7 +2901,6 @@ static void redraw_shop() {
 	info_box_below = NULL;
 	ms_last_event.event_type = 0x1;
 	send_message(E_MOUSE, &ms_last_event);
-	ukaz_mysku();
 	showview(0, 0, 0, 0);
 }
 
@@ -2952,113 +2938,116 @@ static void block_back()
 static void redraw_keepers_items() {
 	const Texture *tex;
 
-	schovej_mysku();
 	tex = dynamic_cast<const Texture*>(ablock(H_SHOP_PIC));
 	display_keepers_items();
-	ukaz_mysku();
 	showview(BUYBOX_X, BUYBOX_Y, tex->width(), tex->height());
 }
 
-static char shop_keeper_click(int id, int xa, int ya,int xr,int yr)
-  {
-  id;xa;ya;
-  if (picked_item==NULL)
-     {
-     int i,j;
-     xr=(xa-BUYBOX_X-SHP_ICPLCX);
-     yr=(ya-BUYBOX_Y-SHP_ICPLCY);
-     if (xr<0 || yr<0) return 0;
-     xr/=SHP_ICSIZX;
-     yr/=SHP_ICSIZY;
-     i=yr*4+xr;
-     if (i<8 && i>=0 && (j=shp_item_map[i])!=0)
-        {
-        picked_item=NewArr(short,2);
-        picked_item[0]=shp_item_map[i];
-        picked_item[1]=0;
-        shp_item_map[i]=0;
-        cur_owner=-1;
-        schovej_mysku();
-        pick_set_cursor();
-        redraw_keepers_items();
-        ukaz_mysku();
-        update_mysky();
-		if (get_control_state() && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item)<=money)
-		  {
-          play_sample_at_channel(H_SND_OBCHOD,1,100);
-	      money-=get_sell_price(*picked_item);
-	      sell_item(*picked_item);
-		  if (put_item_to_inv(human_selected,picked_item))
-			{
-			picked_item=NULL;
-			pick_set_cursor();
-			}
-		  rebuild_keepers_items();
-		  cur_owner=picked_item!=NULL;
-		  redraw_shop();
-		  }
-        return 1;
-        }
-     }
-  else
-     if (cur_owner==-1)
-        {
-        free(picked_item);
-        picked_item=NULL;
-        rebuild_keepers_items();
-        schovej_mysku();
-        pick_set_cursor();
-        redraw_keepers_items();
-        ukaz_mysku();
-        update_mysky();
-        cur_owner=0;
-        return 1;
-        }
-     if (cur_owner!=-1 && picked_item!=NULL)
-        {
-        int price,z;
-        char c[200];
-        mouse_set_cursor(H_MS_DEFAULT);
-        if (picked_item[1]!=0)
-           {
-           message(1,0,0,"",texty[100],texty[80]);
-           wire_shop();
-           }
-        else
-           {
-           price=make_offer(z=picked_item[0]);
-           if (!price)
-              {
-              sprintf(c,texty[103],glob_items[z-1].jmeno);
-              message(1,0,0,"",c,texty[80]);
-              wire_shop();
-              }
-           else
-              {
-              int p;TPRODUCT *pp;
+static char shop_keeper_click(int id, int xa, int ya,int xr,int yr) {
+	if (picked_item == NULL) {
+		int i, j;
 
-              pp=find_sell_product(z);
-              sprintf(c,texty[102],price);
-              p=message(3,0,1,texty[118],c,texty[77],texty[230],texty[78]);
-              if (p==2) price=-1;
-              if (p==1) price=smlouvat(price,pp->cena,pp->pocet,money,0);
-              if (price>=0)
-                 {
-                 play_sample_at_channel(H_SND_OBCHOD,1,100);
-                 buy_item(z);
-                 free(picked_item);picked_item=NULL;
-                 money+=price;
-                 rebuild_keepers_items();
-                 }
-              wire_shop();
-              }
-           }
-        pick_set_cursor();
-        update_mysky();
-        return 1;
-        }
-  return 0;
-  }
+		xr = (xa - BUYBOX_X - SHP_ICPLCX);
+		yr = (ya - BUYBOX_Y - SHP_ICPLCY);
+
+		if (xr < 0 || yr < 0) {
+			return 0;
+		}
+
+		xr /= SHP_ICSIZX;
+		yr /= SHP_ICSIZY;
+		i = yr * 4 + xr;
+
+		if (i < 8 && i >= 0 && (j = shp_item_map[i]) != 0) {
+			picked_item = NewArr(short, 2);
+			picked_item[0] = shp_item_map[i];
+			picked_item[1] = 0;
+			shp_item_map[i] = 0;
+			cur_owner = -1;
+			pick_set_cursor();
+			redraw_keepers_items();
+			update_mysky();
+
+			if (get_control_state() && (game_extras & EX_FAST_TRADE) && get_sell_price(*picked_item) <= money) {
+				play_sample_at_channel(H_SND_OBCHOD, 1, 100);
+				money -= get_sell_price(*picked_item);
+				sell_item(*picked_item);
+
+				if (put_item_to_inv(human_selected, picked_item)) {
+					picked_item = NULL;
+					pick_set_cursor();
+				}
+
+				rebuild_keepers_items();
+				cur_owner = picked_item != NULL;
+				redraw_shop();
+			}
+
+			return 1;
+		}
+	} else if (cur_owner == -1) {
+		free(picked_item);
+		picked_item = NULL;
+		rebuild_keepers_items();
+		pick_set_cursor();
+		redraw_keepers_items();
+		update_mysky();
+		cur_owner = 0;
+		return 1;
+	}
+
+	if (cur_owner != -1 && picked_item != NULL) {
+		int price, z;
+		char c[200];
+
+		mouse_set_cursor(H_MS_DEFAULT);
+
+		if (picked_item[1] != 0) {
+			message(1, 0, 0, "", texty[100], texty[80]);
+			wire_shop();
+		} else {
+			price = make_offer(z = picked_item[0]);
+
+			if (!price) {
+				sprintf(c, texty[103], glob_items[z-1].jmeno);
+				message(1, 0, 0, "", c, texty[80]);
+				wire_shop();
+			} else {
+				int p;
+				TPRODUCT *pp;
+
+				pp = find_sell_product(z);
+				sprintf(c, texty[102], price);
+				p = message(3, 0, 1, texty[118], c, texty[77], texty[230], texty[78]);
+
+				if (p == 2) {
+					price = -1;
+				}
+
+				if (p == 1) {
+					price = smlouvat(price, pp->cena, pp->pocet, money, 0);
+				}
+
+				if (price >= 0) {
+					play_sample_at_channel(H_SND_OBCHOD, 1, 100);
+					buy_item(z);
+					free(picked_item);
+					picked_item = NULL;
+					money += price;
+					rebuild_keepers_items();
+				}
+
+				wire_shop();
+			}
+		}
+
+		pick_set_cursor();
+		update_mysky();
+		return 1;
+	}
+
+	return 0;
+}
 
 
 static char shop_bag_click(int id,int xa,int ya,int xr,int yr)
@@ -3152,7 +3141,6 @@ void wire_shop() {
 	old_inv_view_mode = inv_view_mode;
 	inv_view_mode = 0;
 	inv_redraw = redraw_shop;
-	schovej_mysku();
 
 	if (last_shop != cur_shop) {
 		SeekableReadStream *stream;
@@ -3161,7 +3149,6 @@ void wire_shop() {
 		stream = afile(cur_shop->picture, SR_DIALOGS);
 		tex = new TextureHi(*stream);
 		delete stream;
-
 		last_shop = cur_shop;
 	}
 
@@ -3179,7 +3166,6 @@ void wire_shop() {
 		_exit_shop(0, 0, 0, 0, 0);
 	}
 
-	ukaz_mysku();
 	update_mysky();
 }
 
