@@ -659,7 +659,6 @@ void save_dump();
 void bott_disp_text(const char *);
 void bott_text_forever();
 char chod_s_postavama(char sekupit);
-void hide_ms_at(int line); //schova mysku ktera je nad line
 int cislovka(int i);
 void wire_kniha();
 void purge_temps(char z); //z=1 vymaze i swapsoubor

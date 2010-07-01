@@ -2856,15 +2856,6 @@ void shift_zoom(const Texture &prev, const Texture &next, char smer) {
 	hold_timer(TM_BACK_MUSIC,0);
 }
 
-void hide_ms_at(int line)
-  {
-  if (ms_last_event.y<line)
-     {
-     update_mysky();
-     schovej_mysku();
-     }
-  }
-
 void real_krok(EVENT_MSG *msg,void **data)
   {
   if (msg->msg==E_INIT || msg->msg==E_DONE) return;
@@ -3145,7 +3136,6 @@ void step_zoom(char smer) {
 	norefresh=1;
 	anim_sipky(H_SIPKY_S+smer,1);
 	anim_sipky(0,255);
-	hide_ms_at(385);
 
 	if (set_halucination) do_halucinace();
 	if (loadlevel.name[0]) {
@@ -3248,7 +3238,6 @@ void turn_zoom(int smer) {
 	renderer = &backrend;
 	render_scene(viewsector, viewdir);
 	renderer = tmp;
-	hide_ms_at(387);
 
 	if (smer == 1) {
 		anim_sipky(H_SIPKY_SV, 1);

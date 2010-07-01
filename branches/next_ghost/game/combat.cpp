@@ -2116,7 +2116,6 @@ void souboje_turn(char smer) {
 	renderer = &backrend;
 	render_scene(viewsector, viewdir);
 	renderer = tmp;
-	hide_ms_at(387);
 
 	if (smer == 1) {
 		turn_left_right(front, backrend, 0);
