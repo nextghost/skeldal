@@ -167,7 +167,7 @@ typedef struct tkouzlo {
 
 class SpellList {
 private:
-	static const int _size = 5 * 7 * 3;
+	static const int _size = 512;
 	TKOUZLO _spells[_size];
 	MemoryReadStream *_spellData;
 
