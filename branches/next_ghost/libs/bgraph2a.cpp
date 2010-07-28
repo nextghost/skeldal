@@ -71,7 +71,7 @@ void ver_line_xor(int x1, int y1, int y2) {
 		y1 = 0;
 	}
 
-	renderer->bar(x1, y1, 1, y2 - y1 + 1, curcolor[0], curcolor[1], curcolor[3], 3);
+	renderer->bar(x1, y1, 1, y2 - y1 + 1, curcolor[0], curcolor[1], curcolor[2], 3);
 }
 
 void trans_bar(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b) {

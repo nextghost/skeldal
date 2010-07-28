@@ -517,7 +517,7 @@ void InputLine::event(EVENT_MSG *msg) {
 				redraw_object(this);
 			}
 
-			xor_rectangle(_locx + xpos, _locy, 1, _y + _height);
+			xor_rectangle(_locx + xpos, _locy, 1, _height);
 		}
 		break;
 
