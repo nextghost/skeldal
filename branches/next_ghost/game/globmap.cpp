@@ -702,7 +702,7 @@ EVENT_PROC(global_map_point) {
 				renderer->drawText(x + 2, y + 2, fly_text);
 			}
 
-			send_message(E_MOUSE, msg); // WTF?!
+//			send_message(E_MOUSE, msg); // WTF?!
 			showview(fly_x, fly_y, fly_xs + 1, fly_ys);
 			showview(fly_x = x, fly_y = y, (fly_xs = xs) + 1, fly_ys = ys);
 			aunlock(usemap);
