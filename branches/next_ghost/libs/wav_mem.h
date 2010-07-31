@@ -24,24 +24,32 @@
 #define _WAV_H
 
 #include <inttypes.h>
-
-#pragma pack(1)
+#include "libs/memman.h"
 
 #define WAV_RIFF "RIFF"
 #define WAV_WAVE "WAVE"
 #define WAV_FMT  "fmt "
 #define WAV_DATA "data"
 
-typedef struct t_wave
-  {
-  uint16_t wav_mode,chans;
-  int32_t freq,bps;
-  }T_WAVE;
+class SoundSample : public DataBlock {
+private:
+	unsigned _mode, _channels, _length;
+	int _freq, _bps;
+	unsigned char *_data;
 
-const char *find_chunk(const char *wav, const char *name);
-int get_chunk_size(const char *wav);
-int read_chunk(const char *wav,void *mem);
+	// do not implement
+	SoundSample(const SoundSample &src);
+	const SoundSample &operator=(const SoundSample &src);
+public:
+	SoundSample(SeekableReadStream &stream);
+	~SoundSample(void);
 
-#pragma option align=reset
+	unsigned mode(void) const { return _mode; }
+	unsigned channels(void) const { return _channels; }
+	unsigned length(void) const { return _length; }
+	int freq(void) const { return _freq; }
+	int bps(void) const { return _bps; }
+	const void *data(void) const { return _data; }
+};
 
 #endif

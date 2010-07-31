@@ -21,39 +21,48 @@
  *  Last commit made by: $Id$
  */
 #include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <cassert>
 #include "wav_mem.h"
 
-const char *find_chunk(const char *wav, const char *name) {
-	int32_t next;
+SoundSample::SoundSample(SeekableReadStream &stream) : _mode(0), _channels(0),
+	_length(0), _freq(0), _bps(0), _data(NULL) {
 
-	wav += 12;
+	char buf[5] = "";
+	unsigned size;
 
-	do {
-		if (!strncmp(name, wav, 4)) {
-			return wav + 4;
+	stream.read(buf, 4);
+	assert(!strncmp(buf, WAV_RIFF, 4) && "File not in RIFF format");
+	stream.readUint32LE();	// file size, ignore
+	stream.read(buf, 4);
+	assert(!strncmp(buf, WAV_WAVE, 4) && "File does not contain WAVE data");
+	stream.read(buf, 4);
+
+	while (!stream.eos()) {
+		if (!strncmp(buf, WAV_FMT, 4)) {
+			size = stream.readUint32LE();
+			assert(size >= 12 && "Chunk size assumption failed");
+			_mode = stream.readUint16LE();
+			_channels = stream.readUint16LE();
+			_freq = stream.readUint32LE();
+			_bps = stream.readUint32LE();
+			// ignore any remaining format data
+			stream.seek(size - 12, SEEK_CUR);
+		} else if (!strncmp(buf, WAV_DATA, 4)) {
+			assert(!_data && "Error: Multiple data chunks in file");
+			_length = stream.readUint32LE();
+			_data = new unsigned char[_length];
+			stream.read(_data, _length);
+		} else {
+			size = stream.readUint32LE();
+			stream.seek(size, SEEK_CUR);
 		}
 
-		wav += 4;
-		memcpy(&next, wav, sizeof(int32_t));
-		wav += next + 4;
-	} while (1);
+		stream.read(buf, 4);
+	}
+
+	assert(_data && _freq && "Error: Key chunks not found");
 }
 
-int get_chunk_size(const char *wav) {
-	int32_t size;
-
-	memcpy(&size, wav, sizeof(int32_t));
-	return size;
+SoundSample::~SoundSample(void) {
+	delete[] _data;
 }
-
-int read_chunk(const char *wav,void *mem)
-  {
-
-  wav+=4;
-  memcpy(mem,wav,get_chunk_size(wav-4));
-  return 0;
-  }
-
-

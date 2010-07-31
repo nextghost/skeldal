@@ -219,33 +219,7 @@ int calcul_volume(int chan,int x,int y,int side,int volume)
   }
 
 DataBlock *wav_load(SeekableReadStream &stream) {
-	const char *sr;
-	long *d;
-	char *c, *data;
-	char *tg;
-	void *tgr;
-	size_t siz;
-	struct t_wave x[3];
-	RawData *ret = new RawData;
-
-	data = new char[stream.size()];
-	stream.read(data, stream.size());
-	sr = data;
-	sr = find_chunk(sr, WAV_FMT);
-	read_chunk(sr, &x);
-	sr = data;
-	sr = find_chunk(sr, WAV_DATA);
-	siz = get_chunk_size(sr);
-	tgr = tg = (char*)getmem(siz + sizeof(struct t_wave) + 4);
-	memcpy(tgr, x, sizeof(struct t_wave));
-	tg += sizeof(struct t_wave);
-	*(int *)tg = siz;
-	tg += 4;
-	read_chunk(sr, tg);
-	delete[] data;
-	ret->data = tgr;
-	ret->size = siz;
-	return ret;
+	return new SoundSample(stream);
 /*  if (x[0].freq!=x[0].bps)
      {
      char s;
@@ -275,7 +249,7 @@ void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p
 	int32_t blockid;
 	SND_INFO *track;
 	THANDLE_DATA *z;
-	char *s;
+	const SoundSample *s;
 
 	if (!sound_enabled) {
 		return;
@@ -321,9 +295,8 @@ void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p
 	}
 
 	alock(blockid);
-	s = (char*)(dynamic_cast<const RawData*>(ablock(blockid))->data);
-	s += p->offset + sizeof(struct t_wave) + 4;
-	Sound_PlaySample(chan, s, p->end_loop - p->offset, p->start_loop - p->offset, p->freq, 1 + (p->bit16 & 1));
+	s = dynamic_cast<const SoundSample*>(ablock(blockid));
+	Sound_PlaySample(chan, s->data(), p->end_loop - p->offset, p->start_loop - p->offset, p->freq, 1 + (p->bit16 & 1));
 	playings[chan].data = p;
 	playings[chan].xpos = xd;
 	playings[chan].ypos = yd;
@@ -530,10 +503,8 @@ void purge_playlist()
 
 void play_sample_at_sector(int sample, int sector1, int sector2, int track, char loop) {
 	int x, y, xd, yd, chan;
-	char *s;
-	struct t_wave *p;
-	int siz;
 	int oldtrack;
+	const SoundSample *s;
 
 	if (!sound_enabled) {
 		return;
@@ -560,12 +531,8 @@ void play_sample_at_sector(int sample, int sector1, int sector2, int track, char
 
 	if (!track || oldtrack == -1) {
 		alock(sample);
-		s = (char*)(dynamic_cast<const RawData*>(ablock(sample))->data);
-		p = (struct t_wave *)s;
-		s += sizeof(struct t_wave);
-		siz = *(int *)s;
-		s += 4;
-		Sound_PlaySample(chan, s, siz, loop ? 0 : siz, p->freq, (p->freq != p->bps ? 2 : 1));
+		s = dynamic_cast<const SoundSample*>(ablock(sample));
+		Sound_PlaySample(chan, s->data(), s->length(), loop ? 0 : s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
 		playings[chan].data = NULL;
 	}
 
@@ -579,9 +546,7 @@ void play_sample_at_sector(int sample, int sector1, int sector2, int track, char
 }
 
 void play_sample_at_channel(int sample, int channel, int vol) {
-	char *s;
-	struct t_wave *p;
-	int siz;
+	const SoundSample *s;
 
 	if (!sound_enabled) {
 		return;
@@ -597,12 +562,8 @@ void play_sample_at_channel(int sample, int channel, int vol) {
 
 	alock(sample);
 	locks[channel] = sample;
-	s = (char*)(dynamic_cast<const RawData*>(ablock(sample))->data);
-	p = (struct t_wave *)s;
-	s += sizeof(struct t_wave);
-	siz = *(int *)s;
-	s += 4;
-	Sound_PlaySample(channel, s, siz, siz, p->freq, (p->freq != p->bps ? 2 : 1));
+	s = dynamic_cast<const SoundSample*>(ablock(sample));
+	Sound_PlaySample(channel, s->data(), s->length(), s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
 }
 
 void create_sound_table_old() {
@@ -667,47 +628,49 @@ char test_playing(int track)
 
 static int flute_canal=30;
 
-void start_play_flute(char note)
-  {
-  void *q;
-  char *w;
-  float realfrq;
-  int vol=50;
+void start_play_flute(char note) {
+	void *q;
+	char *w;
+	float realfrq;
+	int vol = 50;
 
-  realfrq=16000*pow(2,note/12.0);
-  if (Sound_CheckEffect(SND_GFX))
-     {
-     q=ablock(H_FLETNA);
-     w = (char*)q;
-     w+=sizeof(struct t_wave)+4;
-     vol*=SND_EFF_MAXVOL/100;
-     Sound_SetVolume(flute_canal,vol,vol);
-     Sound_PlaySample(flute_canal,w,0x1665,0xADE,(int)(realfrq+0.5),1);
-     }
-  else
-     {
-     //sound((unsigned short)(realfrq/30.53));
-     }
-  }
+	fprintf(stderr, "Flute sound not yet supported\n");
+	return;
 
-void stop_play_flute()
-  {
-  void *q;
-  char *w;
+	realfrq = 16000 * pow(2, note / 12.0);
 
-  if (Sound_CheckEffect(SND_GFX))
-     {
-     q=ablock(H_FLETNA);
-     w = (char*)q;
-     w+=sizeof(struct t_wave);
-     Sound_BreakExt(flute_canal,w+4,*(int *)w);
-     flute_canal^=1;
-     }
-  else
-     {
-     //nosound();
-     }
-  }
+	if (Sound_CheckEffect(SND_GFX)) {
+		// FIXME: implement flute sound resampling and loops with lead-in
+/*
+		q = ablock(H_FLETNA);
+		w = (char*)q;
+		w += sizeof(struct t_wave) + 4;
+		vol *= SND_EFF_MAXVOL / 100;
+		Sound_SetVolume(flute_canal, vol, vol);
+		Sound_PlaySample(flute_canal, w, 0x1665, 0xADE, (int)(realfrq + 0.5), 1);
+*/
+	} else {
+		//sound((unsigned short)(realfrq/30.53));
+	}
+}
+
+void stop_play_flute() {
+	void *q;
+	char *w;
+
+	if (Sound_CheckEffect(SND_GFX)) {
+		// FIXME: implement flute sound
+/*
+		q = ablock(H_FLETNA);
+		w = (char*)q;
+		w += sizeof(struct t_wave);
+		Sound_BreakExt(flute_canal, w + 4, *(int *)w);
+		flute_canal ^= 1;
+*/
+	} else {
+		//nosound();
+	}
+}
 
 char enable_sound(char enbl)
   {

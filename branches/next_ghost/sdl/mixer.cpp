@@ -107,7 +107,7 @@ void Sound_StopMixing(void) {
 }
 
 // FIXME: resample when loading the sound file
-void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sfreq, int type) {
+void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long sfreq, int type) {
 	assert(active && "Sound system not initialized");
 	assert(channel >= 0 && channel < CHANNELS && "Invalid channel");
 	assert(((lstart == 0) || (lstart == size)) && "Lead-in not supported");
@@ -115,7 +115,7 @@ void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sf
 	// clean up resampled buffers
 	Sound_Mute(channel);
 
-	if (!SDL_BuildAudioCVT(&chans[channel].cvt, type == 1 ? AUDIO_U8 : AUDIO_S16SYS, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
+	if (!SDL_BuildAudioCVT(&chans[channel].cvt, type == 1 ? AUDIO_U8 : AUDIO_S16LSB, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
 		fprintf(stderr, "Resample from %ldHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
 		return;
 	}
