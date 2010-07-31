@@ -116,7 +116,7 @@ void Sound_PlaySample(int channel, void *sample, long size, long lstart, long sf
 	Sound_Mute(channel);
 
 	if (!SDL_BuildAudioCVT(&chans[channel].cvt, type == 1 ? AUDIO_U8 : AUDIO_S16SYS, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
-		fprintf(stderr, "Resample from %dHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
+		fprintf(stderr, "Resample from %ldHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
 		return;
 	}
 

@@ -38,7 +38,6 @@
 #include "libs/basicobj.h"
 #include <ctime>
 #include "libs/mgfplay.h"
-#include "libs/wav.h"
 #include <fcntl.h>
 #include <errno.h>
 #include "game/globals.h"
