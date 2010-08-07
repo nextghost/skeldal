@@ -36,4 +36,5 @@ AC_CHECK_FUNCS([atexit floor getcwd memmove memset mkdir munmap pow setenv sqrt 
 AC_C_BIGENDIAN()
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([tools/Makefile])
 AC_OUTPUT
