@@ -1754,6 +1754,8 @@ int main(int argc, char *argv[]) {
 
 		if (ptr) {
 			ptr[1] = '\0';
+		} else {
+			tmp[0] = '\0';
 		}
 
 		Sys_SetPath(SR_DEFAULT, tmp);

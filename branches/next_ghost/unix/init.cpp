@@ -47,7 +47,7 @@ void Sys_SetPath(unsigned idx, const char *path) {
 
 	if (!*path) {
 		pathtable[idx] = (char*)malloc(sizeof(char));
-		pathtable[idx] = '\0';
+		pathtable[idx][0] = '\0';
 		return;
 	}
 
@@ -63,6 +63,7 @@ void Sys_SetPath(unsigned idx, const char *path) {
 
 char *Sys_FullPath(unsigned idx, const char *file) {
 	static char ret[PATH_MAX];
+	assert(idx < PATHTABLE_SIZE);
 
 	strcpy(ret, pathtable[idx]);
 	strncat(ret, file, PATH_MAX - strlen(ret) - 1);
@@ -72,6 +73,7 @@ char *Sys_FullPath(unsigned idx, const char *file) {
 char *Sys_DOSPath(unsigned defdir, const char *path) {
 	static char ret[PATH_MAX];
 	int i, length;
+	assert(defdir < PATHTABLE_SIZE);
 
 	strcpy(ret, pathtable[defdir]);
 	length = strlen(ret);
