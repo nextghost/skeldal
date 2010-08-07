@@ -33,9 +33,9 @@
 // TODO: set this from configure script
 #define DATA_PATH "/usr/local/games/skeldal/"
 
-#define PATHTABLE_SIZE 18
+#define PATHTABLE_SIZE 20
 
-static char *pathtable[18] = {0};
+static char *pathtable[PATHTABLE_SIZE] = {0};
 
 void Sys_SetPath(unsigned idx, const char *path) {
 	int len = strlen(path);
@@ -45,7 +45,13 @@ void Sys_SetPath(unsigned idx, const char *path) {
 		free(pathtable[idx]);
 	}
 
-	if (path[len-1] != '/') {
+	if (!*path) {
+		pathtable[idx] = (char*)malloc(sizeof(char));
+		pathtable[idx] = '\0';
+		return;
+	}
+
+	if (path[len - 1] != '/') {
 		len++;
 	}
 
@@ -59,7 +65,25 @@ char *Sys_FullPath(unsigned idx, const char *file) {
 	static char ret[PATH_MAX];
 
 	strcpy(ret, pathtable[idx]);
-	strcat(ret, file);
+	strncat(ret, file, PATH_MAX - strlen(ret) - 1);
+	return ret;
+}
+
+char *Sys_DOSPath(unsigned defdir, const char *path) {
+	static char ret[PATH_MAX];
+	int i, length;
+
+	strcpy(ret, pathtable[defdir]);
+	length = strlen(ret);
+	strncat(ret + length, path, PATH_MAX - length - 1);
+	strupr(ret + length);
+
+	for (i = length; ret[i]; i++) {
+		if (ret[i] == '\\') {
+			ret[i] = '/';
+		}
+	}
+
 	return ret;
 }
 
@@ -93,11 +117,46 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_CD, DATA_PATH);
 	Sys_SetPath(SR_MAP2, DATA_PATH);
 	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "MUSIC/");
+	Sys_SetPath(SR_DEFAULT, "");
+	Sys_SetPath(SR_HOME, home);
 }
 
-// FIXME: implement properly
+void Sys_MkDir(const char *path) {
+	char buf[PATH_MAX], *ptr, *endptr;
+	int length;
+	struct stat tmp;
+
+	strncpy(buf, path, PATH_MAX);
+	buf[PATH_MAX] = '\0';
+
+	for (length = strlen(buf); length > 1 && buf[length - 1] == '/'; length--);
+
+	ptr = endptr = buf + length;
+	*endptr = '\0';
+
+	while (stat(buf, &tmp)) {
+		ptr = strrchr(buf, '/');
+
+		if (ptr) {
+			*ptr = '\0';
+		} else {
+			return;
+		}
+	}
+
+	while (ptr != endptr) {
+		*ptr = '/';
+		ptr += strlen(ptr);
+
+		if (mkdir(buf, 0755)) {
+			fprintf(stderr, "Could not create directory %s\n", buf);
+			assert(0);
+		}
+	}
+}
+
 void Sys_PreparePaths(void) {
-	mkdir(pathtable[SR_WORK], 0755);
-	mkdir(pathtable[SR_TEMP], 0755);
-	mkdir(pathtable[SR_SAVES], 0755);
+	Sys_MkDir(pathtable[SR_WORK]);
+	Sys_MkDir(pathtable[SR_TEMP]);
+	Sys_MkDir(pathtable[SR_SAVES]);
 }

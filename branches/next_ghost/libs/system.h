@@ -77,6 +77,7 @@ void Sys_PurgeTemps(char z);
 int Sys_PackStatus(WriteStream &stream);
 void Sys_SetPath(unsigned idx, const char *path);
 char *Sys_FullPath(unsigned idx, const char *file);
+char *Sys_DOSPath(unsigned defdir, const char *path);
 int Sys_FileExists(const char *file);
 void Sys_PreparePaths(void);
 void Sys_ProcessEvents(void);

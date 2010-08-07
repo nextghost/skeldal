@@ -203,7 +203,6 @@ char OtevriUvodniOkno() {
 }
 
 char SelectAdventure() {
-	assert(0);
 	return 0;
 }
 

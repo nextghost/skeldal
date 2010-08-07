@@ -837,11 +837,9 @@ char device_error(int chyba,char disk,char info)
 static void patch_error(int err) {
 	uint8_t fontPal[FONT_COLORS][3];
 
-	assert(0 && "Rewrite me");
-
 	memset(curcolor, 0, 3 * sizeof(uint8_t));
 	bar(0, 460, 640, 479);
-	memset(fontPal, 255, sizeof(fontPal));
+	memcpy(fontPal, flat_color(255, 255, 255), sizeof(fontPal));
 	renderer->setFont(boldcz, 1, fontPal);
 
 	switch(err) {
@@ -1085,57 +1083,142 @@ void enter_game()
  parm[ebx] value [eax]
 */
 
-static int do_config_skeldal(int num,int numdata,char *txt)
-  {
-  switch (num)
-     {
-     case 0:vmode=numdata;break;
-     case 1:zoom_speed(numdata);break;
-     case 2:turn_speed(numdata);break;
-     case 3:init_music_vol=numdata;break;
-     case 4:init_gfx_vol=numdata;break;
-     case 5:sscanf(txt,"%d %x %d %d",&snd_devnum,&snd_parm1,&snd_parm2,&snd_parm3);
-            sound_detection=0;
-            break;
-     case 6:snd_mixing=numdata;break;
-     case 7:strncpy(default_map,txt,20);default_map[19]='\0';SEND_LOG("(GAME) Start map sets as '%s'",default_map,0);break;
-     case 8:gamespeed=numdata;break;
-     case 9:level_preload=numdata;break;
-//     case 10:system(txt);break;
-     case 11:mman_patch=numdata;break;
-     case 12:skip_intro=numdata;break;
-     case 13:autosave_enabled=numdata;break;
-     case 14: debug_enabled=numdata;break;
-     case 15:full_video=numdata;break;
-		 case 16:patch_file = (char*)getmem(strlen(txt)+1);
-						 strcpy(patch_file,txt);
-						 txt=strchr(patch_file,'\n');if (txt!=NULL) txt[0]=0;
-						 break;
-     case 17:titles_on=numdata;break;
-     case 18:charmin=numdata;break;
-     case 19:charmax=numdata;break;
-	 case 20:game_extras=numdata;break;
-	 case 21:windowed=numdata;break;
-	 case 22:gamespeedbattle=numdata;break;
-	 case 23:windowedzoom=numdata;
-     case 24:monitor=numdata;
-     case 25:if (VERSIONNUM<numdata)
-               Sys_InfoBox("Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne");
-//               MessageBox(NULL,"Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne","Chybna verze hry",MB_OK);
-            break;
-     case 26:refresh=numdata;
-     default:num-=CESTY_POS;
-		Sys_SetPath(num, txt);
-/*
-             mman_pathlist[num]=(char *)getmem(strlen(txt)+1);
-             strcpy(mman_pathlist[num],txt);
-*/
-             SEND_LOG("(GAME) Directory '%s' has been assigned to group nb. %d",txt,num);
-             break;
+static int do_config_skeldal(int num, int numdata, char *txt) {
+	int defdir;
 
-     }
- return 0;
-  }
+	switch (num) {
+	case 0:
+		vmode = numdata;
+		break;
+
+	case 1:
+		zoom_speed(numdata);
+		break;
+
+	case 2:
+		turn_speed(numdata);
+		break;
+
+	case 3:
+		init_music_vol = numdata;
+		break;
+
+	case 4:
+		init_gfx_vol = numdata;
+		break;
+
+	case 5:
+		sscanf(txt, "%d %x %d %d", &snd_devnum, &snd_parm1, &snd_parm2, &snd_parm3);
+		sound_detection = 0;
+		break;
+
+	case 6:
+		snd_mixing = numdata;
+		break;
+
+	case 7:
+		strncpy(default_map, txt, 20);
+		default_map[19] = '\0';
+		SEND_LOG("(GAME) Start map sets as '%s'", default_map, 0);
+		break;
+
+	case 8:
+		gamespeed = numdata;
+		break;
+
+	case 9:
+		level_preload = numdata;
+		break;
+
+//     case 10:system(txt);break;
+	case 11:
+		mman_patch = numdata;
+		break;
+
+	case 12:
+		skip_intro = numdata;
+		break;
+
+	case 13:
+		autosave_enabled = numdata;
+		break;
+
+	case 14:
+		debug_enabled = numdata;
+		break;
+
+	case 15:
+		full_video = numdata;
+		break;
+
+	case 16:
+		txt = Sys_DOSPath(SR_DEFAULT, txt);
+		patch_file = (char*)getmem(strlen(txt) + 1);
+		strcpy(patch_file, txt);
+		txt = strchr(patch_file, '\n');
+
+		if (txt != NULL) {
+			txt[0] = 0;
+		}
+		break;
+
+	case 17:
+		titles_on = numdata;
+		break;
+
+	case 18:
+		charmin = numdata;
+		break;
+
+	case 19:
+		charmax = numdata;
+		break;
+
+	case 20:
+		game_extras = numdata;
+		break;
+
+	case 21:
+		windowed = numdata;
+		break;
+
+	case 22:
+		gamespeedbattle = numdata;
+		break;
+
+	case 23:
+		windowedzoom = numdata;
+		break;
+
+	case 24:
+		monitor = numdata;
+		break;
+
+	case 25:
+		if (VERSIONNUM < numdata) {
+			Sys_InfoBox("Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne");
+//               MessageBox(NULL,"Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne","Chybna verze hry",MB_OK);
+		}
+		break;
+
+	case 26:
+		refresh = numdata;
+		break;
+
+	default:
+		num -= CESTY_POS;
+		defdir = num == SR_SAVES || num == SR_TEMP || num == SR_WORK ? SR_HOME : SR_DEFAULT;
+		Sys_SetPath(num, Sys_DOSPath(defdir, txt));
+/*
+          mman_pathlist[num]=(char *)getmem(strlen(txt)+1);
+          strcpy(mman_pathlist[num],txt);
+*/
+		SEND_LOG("(GAME) Directory '%s' has been assigned to group nb. %d",txt,num);
+		break;
+	}
+
+	return 0;
+}
 
 
 static void config_skeldal(const char *line)
@@ -1175,21 +1258,22 @@ static void config_skeldal(const char *line)
      }
   }
 
-static void configure(char *filename)
-  {
-  SEND_LOG("(GAME) Reading config. file '%s'",filename,NULL);
-  if (!read_config(cur_config, filename)) {
-     char s[256];
+static void configure(StringList &lines, char *filename) {
+	SEND_LOG("(GAME) Reading config. file '%s'", filename, NULL);
 
-     sprintf(s,"\nNemohu precist konfiguracni soubor \"%s\".\n",filename);
-     SEND_LOG("(ERROR) %s",s,NULL);
-     puts(s);
+	if (!read_config(lines, filename)) {
+		char s[256];
+
+		sprintf(s,"\nNemohu precist konfiguracni soubor \"%s\".\n",filename);
+		SEND_LOG("(ERROR) %s",s,NULL);
+		puts(s);
 //     exit(1);
-     }
-  SEND_LOG("(GAME) Configuring game...",0,0);
-  process_ini(cur_config,config_skeldal);
-  SEND_LOG("(GAME) Done config.",0,0);
-  }
+	}
+
+	SEND_LOG("(GAME) Configuring game...", 0, 0);
+	process_ini(lines, config_skeldal);
+	SEND_LOG("(GAME) Done config.", 0, 0);
+}
 
 static void update_config()
   {
@@ -1602,20 +1686,27 @@ void disable_intro()
 
 //#include "crashdump.h"
 
-int main(int argc,char *argv[])
-  {
-  char *c,rm;
-  
-  Sys_Init();
-//  InitCrashDump();
-  
-  if (argc>=3) rm=!strcmp(argv[1],"12345678");else rm=0;
-  if (!rm) if (OtevriUvodniOkno()==0) return 0;
+int main(int argc, char *argv[]) {
+	char *c, rm;
 
-  //OPEN_LOG("syslog");
-  OPEN_LOG("con");
-  SEND_LOG("START --------------------------",0,0);
-  argv;
+	Sys_Init();
+//  InitCrashDump();
+
+	if (argc >= 3) {
+		rm = !strcmp(argv[1], "12345678");
+	} else {
+		rm = 0;
+	}
+
+	if (!rm) {
+		if (OtevriUvodniOkno() == 0) {
+			return 0;
+		}
+	}
+
+	//OPEN_LOG("syslog");
+	OPEN_LOG("con");
+	SEND_LOG("START --------------------------", 0, 0);
 //  c=getcwd(NULL,_MAX_PATH+1);
 /*
   c=getcwd(NULL,PATH_MAX+1);
@@ -1627,11 +1718,11 @@ int main(int argc,char *argv[])
 */
 //  set_verify(0);
 //  mman_pathlist=pathtable;
-  zoom_speed(1);
-  turn_speed(1);
-  Sys_SetEnv("BSVER",VERSION);
+	zoom_speed(1);
+	turn_speed(1);
+	Sys_SetEnv("BSVER", VERSION);
 //  configure(CONFIG_NAME);
-	configure(Sys_FullPath(SR_WORK, CONFIG_NAME));
+	configure(cur_config, Sys_FullPath(SR_WORK, CONFIG_NAME));
 
 // FIXME: implement game launcher
 /*
@@ -1652,6 +1743,25 @@ int main(int argc,char *argv[])
     cur_config=config;
     }
 */
+	if ((argc >= 2 || SelectAdventure()) && !rm) {
+		char *adventure, *ptr, *tmp;
+		StringList conf;
+
+		adventure = argc >= 2 ? argv[1] : GetSelectedAdventure();
+		tmp = new char[strlen(adventure) + 1];
+		strcpy(tmp, adventure);
+		ptr = strrchr(tmp, '/');
+
+		if (ptr) {
+			ptr[1] = '\0';
+		}
+
+		Sys_SetPath(SR_DEFAULT, tmp);
+		delete[] tmp;
+		Sys_SetPath(SR_ORGMUSIC, Sys_FullPath(SR_MUSIC, ""));
+		SEND_LOG("(GAME) Starting new adventure: %s", adventure, 0);
+		configure(conf, adventure);
+	}
 
 #ifdef LOGFILE
      {
@@ -1661,15 +1771,15 @@ int main(int argc,char *argv[])
      }
 #endif
 	Sys_PreparePaths();
-  start_check();
-  Sys_PurgeTemps(1);
+	start_check();
+	Sys_PurgeTemps(1);
 //  textmode_effekt();
-  clrscr();
-  SEND_LOG("\n(GAME) Init----------------",0,0);
-  init_skeldal();
+	clrscr();
+	SEND_LOG("\n(GAME) Init----------------", 0, 0);
+	init_skeldal();
 
-  //Task_Add(32768,check_number_1phase,argv[0]);
-  SEND_LOG("(INIT) Starting game thread.",0,0);
+	//Task_Add(32768,check_number_1phase,argv[0]);
+	SEND_LOG("(INIT) Starting game thread.", 0, 0);
 /*
   if (argc>=3 && rm)
      {
@@ -1679,16 +1789,16 @@ int main(int argc,char *argv[])
      Task_Add(65536,start);
 */
 	start();
-  SEND_LOG("(INIT) Main thread goes to sleep.",0,0);
+	SEND_LOG("(INIT) Main thread goes to sleep.", 0, 0);
 /*  position(200,200);
   set_font(H_FBIG,RGB(200,200,200));
   outtext("Ahoj lidi");
   showview(0,0,0,0);*/  
 //  escape();
-  update_config();
-  closemode();
-  return 0;
-  }
+	update_config();
+	closemode();
+	return 0;
+}
 
 #ifdef WIN32
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)

@@ -28,31 +28,49 @@
 #include "libs/inicfg.h"
 #include "libs/system.h"
 
-int read_config(StringList &ls, const char *filename)
-  {
-  FILE *f;
-  char buff[256];
+int read_config(StringList &ls, const char *filename) {
+	FILE *f;
+	char buff[256];
 
-  f=fopen(filename,"r");
-  if (f==NULL) return 0;
-  ls.clear();
-  while (!feof(f))
-     {
-     char *c;
-     buff[0]=0;
-     if (fgets(buff,256,f)==NULL) break;
-     c=strchr(buff,'\n');if (c!=NULL) *c=0;
-     if (ferror(f))
-        {
-        ls.clear();
-        fclose(f);
-        return 0;
-        }
-     ls.insert(buff);
-     }
-  fclose(f);
-  return 1;
-  }
+	f = fopen(filename, "r");
+
+	if (f == NULL) {
+		return 0;
+	}
+
+	ls.clear();
+
+	while (!feof(f)) {
+		char *c;
+
+		buff[0] = 0;
+
+		if (fgets(buff, 256, f) == NULL) {
+			break;
+		}
+
+		c = strchr(buff, '\r');
+
+		if (!c) {
+			c = strchr(buff, '\n');
+		}
+
+		if (c != NULL) {
+			*c = 0;
+		}
+
+		if (ferror(f)) {
+			ls.clear();
+			fclose(f);
+			return 0;
+		}
+
+		ls.insert(buff);
+	}
+
+	fclose(f);
+	return 1;
+}
 
 /* never used
 TSTR_LIST merge_configs(TSTR_LIST target, TSTR_LIST source)
