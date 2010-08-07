@@ -14,7 +14,6 @@ struct MusFileHeader {
 
 int main(int argc, char **argv) {
 	struct MusFileHeader h;
-//	FILE *fr;
 	int i, j, k, val;
 	long packed, unpacked, psize = 0, usize = 0;
 	unsigned char *src = NULL;
@@ -22,9 +21,7 @@ int main(int argc, char **argv) {
 	File fr;
 
 	for (i = 1; i < argc; i++) {
-//		fr = fopen(argv[i], "r");
 		fr.open(argv[i]);
-//		fread(&h, sizeof(struct MusFileHeader), 1, fr);
 		h.channels = fr.readSint16LE();
 		h.freq = fr.readSint32LE();
 		h.ssize = fr.readSint32LE();
@@ -38,28 +35,21 @@ int main(int argc, char **argv) {
 
 		for (j = 0; j < h.blocks; j++) {
 			short accum[2] = {0, 0};
-//			fread(&packed, sizeof(long), 1, fr);
-//			fread(&unpacked, sizeof(long), 1, fr);
 			packed = fr.readSint32LE();
 			unpacked = fr.readSint32LE();
 
 			if (psize < packed) {
-//				free(src);
-//				src = malloc(packed);
 				delete[] src;
 				src = new unsigned char[packed];
 				psize = packed;
 			}
 
 			if (usize < unpacked) {
-//				free(dst);
-//				dst = malloc(unpacked);
 				delete[] dst;
 				dst = new int16_t[packed];
 				usize = unpacked;
 			}
 
-//			fread(src, psize, 1, fr);
 			fr.read(src, packed);
 
 			for (k = 0; k < packed; k++) {
@@ -75,7 +65,6 @@ int main(int argc, char **argv) {
 			fwrite(dst, unpacked, 1, stdout);
 		}
 
-//		fclose(fr);
 		fr.close();
 	}
 
