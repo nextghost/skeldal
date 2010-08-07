@@ -3280,32 +3280,45 @@ char _exit_shop(int id, int xa, int ya,int xr,int yr)
   }
 
 
-static void reroll_shop(TSHOP *p)
-  {
-  int i,j,r;
-  int poc_spec=0;
-  TPRODUCT *pr;
+static void reroll_shop(TSHOP *p) {
+	int i, j, r;
+	int poc_spec = 1;
+	TPRODUCT *pr;
 
-  SEND_LOG("(SHOP) Shops reroll: '%s' ",p->keeper,0);
-  pr=p->list;
-  for(i=0;i<p->list_size;i++,pr++)
-     {
-     if (pr->trade_flags & SHP_AUTOADD && pr->pocet<pr->max_pocet) pr->pocet++;
-     if (pr->trade_flags & SHP_SPECIAL)
-        {
-        poc_spec++;if (pr->pocet>0)  pr->pocet=0;
-        }
-     }
-  pr=p->list;
-  for(i=0;i<p->spec_max;i++)
-     {
-     int i=0;
-     r=rnd(poc_spec)+1;
-     for(j=0;i<r;j++) if (pr[j].trade_flags & SHP_SPECIAL) i++;
-     j--;
-     pr[j].pocet=pr[j].max_pocet ? rnd(pr[j].max_pocet)+1 : 1;
-     }
-  }
+	SEND_LOG("(SHOP) Shops reroll: '%s' ", p->keeper, 0);
+	pr = p->list;
+
+	for (i = 0; i < p->list_size; i++, pr++) {
+		if (pr->trade_flags & SHP_AUTOADD && pr->pocet < pr->max_pocet) {
+			pr->pocet++;
+		}
+
+		if (pr->trade_flags & SHP_SPECIAL) {
+			poc_spec++;
+
+			if (pr->pocet > 0) {
+				pr->pocet = 0;
+			}
+		}
+	}
+
+	pr = p->list;
+
+	for (i = 0; i < p->spec_max; i++) {
+		int i = 0;
+
+		r = rnd(poc_spec) + 1;
+
+		for (j = 0; i < r; j++) {
+			if (pr[j].trade_flags & SHP_SPECIAL) {
+				i++;
+			}
+		}
+
+		j--;
+		pr[j].pocet = pr[j].max_pocet ? rnd(pr[j].max_pocet) + 1 : 1;
+	}
+}
 
 void reroll_all_shops() {
 	int i;
