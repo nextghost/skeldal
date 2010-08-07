@@ -23,5 +23,23 @@ Tasks for the next milestone:
 9) Shopping (75% done, needs proper testing)
 10) Storytelling (90% done, needs testing)
 
+Adventures Howto
+================
+If you want to play external adventure, here's a short howto.
+- First, unpack the adventure anywhere.
+- Use demus.sh in tools directory to recode any MUS files to MP3. You'll need
+  Lame MP3 encoder. Then you can delete the MUS files.
+- Run "skeldal path/to/adventure/config/file.adv" and have fun
+- Optional: If the adventure contains additional saved games, you can copy
+  those to ~/.skeldal/ADV/<adventure dir>/SAVEGAME/ or whatever other directory
+  the adventure keeps its savegames in. The relative path is preserved but
+  the basedir is moved to ~/.skeldal/. If you start Skeldal with the adventure
+  before copying the savegames, it will create the directory tree for you.
+
+Note: all relative paths and filenames in the adventure have to be upper case
+on Unix. That includes savegame files in ~/.skeldal/. If you had any savegames
+saved before adventure support was added, you'll have to rename them because
+slot names were originally lowercase.
+
 If you have any questions or patches to share, feel free to write me to
 next_ghost()users.sourceforge.net

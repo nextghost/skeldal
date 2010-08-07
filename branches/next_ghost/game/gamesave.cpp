@@ -40,7 +40,7 @@
 
 #define _GAME_ST "_GAME.TMP"
 #define _GLOBAL_ST "_GLOBEV.TMP"
-#define _SLOT_SAV "slot%02d.SAV"
+#define _SLOT_SAV "SLOT%02d.SAV"
 #define SLOTS_MAX 10
 
 #define GM_MAPENABLE 0x1
