@@ -38,8 +38,6 @@
 
 #undef malloc
 
-void bonz_table();
-
 #define NON_GETMEM_RESERVED (4*1024)
 //char **mman_pathlist=NULL;
 static char swap_status=0;
@@ -55,6 +53,7 @@ static int max_handle=0;
 void (*mman_action)(int action)=NULL;
 
 long last_load_size;
+Logger *syslog = new Logger;
 /*
 void get_mem_info(MEMORYSTATUS *mem)
   {
@@ -80,9 +79,6 @@ void load_error(char *filename)
   {
   char buff[256];
   SEND_LOG("(ERROR) Load error detected, system can't load file: %s",filename,0);
-  #ifdef LOGFILE
- //   bonz_table();
-  #endif
   Sys_Shutdown();
 //  DXCloseMode();
   sprintf(buff,"Load error while loading file: %s", filename);
@@ -698,20 +694,23 @@ DataBlock *preloadStream(SeekableReadStream &stream) {
 	return stream.readStream(stream.size());
 }
 
-#ifdef LOGFILE
-/*
-static void bonz_table()
-  {
-  int i;
-//  if (bmf==-1) return;
-  if (!bmf) return;
-  for(i=0;i<nmtab_size;i++)
-    {
-    fprintf(stderr,"%-12.12s %12d\n",nametable[i].name,nametable[i].seek);
-    }
-  }
-*/
-#endif
+Logger::~Logger(void) {
+	flush();
+}
+
+void StdLogger::write(const char *format, ...) {
+	va_list args;
+
+	va_start(args, format);
+	fprintf(stderr, "%s ", get_time_str());
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+}
+
+void StdLogger::flush(void) {
+	fflush(stderr);
+}
 
 static int test_file_exist_DOS(int group, const char *filename)
   {
@@ -1469,35 +1468,6 @@ char add_patch_file(char *filename) {
 	return 0;
 }
 
-#ifdef LOGFILE
-/*
-void free(void *c)
-  {
-  if (c==NULL) return;
-  SEND_LOG("(ALLOC) Dealloc: %p size %d",c,*((long *)c-1));
-  free(c);
-  }
-*/
-/*
-int get_time_macro();
-#pragma aux get_time_macro parm[]=\
-  "mov  ah,02"\
-  "int  1ah"\
-  "mov  al,dh"\
-  "shl  eax,16"\
-  "mov  ax,cx"\
-  modify[eax ecx edx ebx esi edi]
-
-char get_bcd(char bcd);
-#pragma aux get_bcd parm[al]=\
-  "mov  bl,al"\
-  "shr  al,4"\
-  "mov  ah,10"\
-  "mul  ah"\
-  "and  bl,0fh"\
-  "add  al,bl"\
-  value[al] modify [eax ebx]
-*/
 char *get_time_str()
   {
   time_t long_time;
@@ -1511,9 +1481,6 @@ char *get_time_str()
   sprintf(text,"%02d:%02d:%02d",newtime->tm_hour,newtime->tm_min,newtime->tm_sec);
   return text;
   }
-
-
-#endif
 
 long get_handle_size(int handle) {
 	THANDLE_DATA *h;

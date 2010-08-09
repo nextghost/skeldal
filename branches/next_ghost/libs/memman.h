@@ -225,6 +225,26 @@ struct RawData : public DataBlock {
 
 DataBlock *preloadStream(SeekableReadStream &stream);
 
+class Logger {
+private:
+	// Do not implement
+	Logger(const Logger &src);
+	const Logger &operator=(const Logger &src);
+
+public:
+	Logger(void) { }
+	virtual ~Logger(void);
+
+	virtual void write(const char *format, ...) { }
+	virtual void flush(void) { }
+};
+
+class StdLogger : public Logger {
+public:
+	void write(const char *format, ...);
+	void flush(void);
+};
+
 #pragma pack(1)
 
 #define freemem(size) free(size);
@@ -330,21 +350,9 @@ FILE *afiletemp(char *filename, int group);
 extern void (*mman_action)(int action);  //udalost volajici se pri akci mmanagera.
 
 void display_status();    //zobrazi na display status memmanageru
-
-#ifdef LOGFILE
 char *get_time_str();
-int q_current_task();
-//#define OPEN_LOG(log) memcpy(stderr,fopen(log,"w"),sizeof(FILE));
-//#define SEND_LOG(format,parm1,parm2) fprintf(stderr,"%-2d %s "format"\n",q_current_task(),get_time_str(),parm1,parm2),fflush(stderr)
-//#define CLOSE_LOG() fclose(logfile);
-#define OPEN_LOG(log)
-#define SEND_LOG(format,parm1,parm2) fprintf(stderr,"%s "format"\n",get_time_str(),parm1,parm2),fflush(stderr)
-#define CLOSE_LOG()
-#else
-#define OPEN_LOG(log)
-#define SEND_LOG(format,parm1,parm2)
-#define CLOSE_LOG()
-#endif
+extern Logger *syslog;
+#define SEND_LOG(format, ...) syslog->write(format, __VA_ARGS__)
 
 #pragma option align=reset
 

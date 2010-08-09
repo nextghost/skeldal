@@ -1941,9 +1941,7 @@ void show_loading_picture(const char *filename) {
 	delete stream;
 	renderer->blit(tex, 0, 0, tex.palette());
 	showview(0, 0, 0, 0);
-	#ifdef LOGFILE
 	display_ver(639, 0, HALIGN_RIGHT, VALIGN_TOP);
-	#endif
 	cancel_pass = 1;
 }
 

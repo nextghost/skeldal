@@ -368,6 +368,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define SR_WORK 13
 #define SR_CD 14
 #define SR_MAP2 15
+#define SR_PLUGIN 16
 #define SR_ORGMUSIC 17
 #define SR_DEFAULT 18
 #define SR_HOME 19

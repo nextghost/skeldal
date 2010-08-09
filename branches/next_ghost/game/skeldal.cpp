@@ -490,13 +490,13 @@ void *timming(EVENT_MSG *msg,void **data) {
 					if (--q->calls<1) {
 						for(p = &timer_tree; p->next != q; p = p->next);
 						p->next = q->next;
-						#ifdef LOGFILE
+
 						if (q->next == NULL) {
-							SEND_LOG("(TIMER) Self remove for timer id: %d, next-><NULL>",q->id,0);
+							SEND_LOG("(TIMER) Self remove for timer id: %d, next-><NULL>", q->id, 0);
 						} else {
-							SEND_LOG("(TIMER) Self remove for timer id: %d, next->%d",q->id,q->next->id);
+							SEND_LOG("(TIMER) Self remove for timer id: %d, next->%d", q->id, q->next->id);
 						}
-						#endif
+
 						free(q);
 						q = p;
 					}
@@ -537,12 +537,11 @@ void delete_from_timer(int id)
               {
               if (q->zavora)
                  {
-                 #ifdef LOGFILE
                  if (q->next==NULL)
                     SEND_LOG("(TIMER) Removing timer id: %d, next-><NULL>",id,0);
                  else
                     SEND_LOG("(TIMER) Removing timer id: %d, next->%d",id,q->next->id);
-                 #endif
+
                  p->next=q->next;
                  free(q);
                  q=p;
@@ -637,20 +636,20 @@ void do_timer()
   user_timer(&msg,NULL);
   }
 
-void done_skeldal(void)
-  {
-
-  SEND_LOG("(GAME) Video returned to textmode",0,0);
-  close_manager();
-  close_story_file();
-  Sys_PurgeTemps(1);
-  Sound_StopMixing();
+void done_skeldal(void) {
+	SEND_LOG("(GAME) Video returned to textmode", 0, 0);
+	close_manager();
+	close_story_file();
+	Sys_PurgeTemps(1);
+	Sound_StopMixing();
 //  deinstall_mouse_handler();
-  texty.clear();
-  cur_config.clear();
-  kill_timer();
-  SEND_LOG("NORMAL TERMINATING--------------------------",0,0);
-  }
+	texty.clear();
+	cur_config.clear();
+	kill_timer();
+	SEND_LOG("NORMAL TERMINATING--------------------------", 0, 0);
+	delete syslog;
+	syslog = NULL;
+}
 
 
 int cislovka(int i)
@@ -1688,6 +1687,7 @@ void disable_intro()
 
 int main(int argc, char *argv[]) {
 	char *c, rm;
+	int i;
 
 	Sys_Init();
 //  InitCrashDump();
@@ -1704,8 +1704,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	//OPEN_LOG("syslog");
-	OPEN_LOG("con");
+	// Uncoment to enable logging
+//	delete syslog;
+//	syslog = new StdLogger;
 	SEND_LOG("START --------------------------", 0, 0);
 //  c=getcwd(NULL,_MAX_PATH+1);
 /*
@@ -1765,13 +1766,10 @@ int main(int argc, char *argv[]) {
 		configure(conf, adventure);
 	}
 
-#ifdef LOGFILE
-     {
-     int i;
-// FIXME: rewrite?
-//     for(i=0;i<(sizeof(pathtable)/4);i++) SEND_LOG("(GAME) LOG: Using directory '%s' as '%s'",pathtable[i],sinit[i+CESTY_POS].heslo);
-     }
-#endif
+	for (i = 0; i <= SR_ORGMUSIC; i++) {
+		SEND_LOG("(GAME) LOG: Using directory '%s' as '%s'", Sys_FullPath(i, ""), sinit[i+CESTY_POS].heslo);
+	}
+
 	Sys_PreparePaths();
 	start_check();
 	Sys_PurgeTemps(1);

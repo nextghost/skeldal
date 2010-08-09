@@ -118,6 +118,7 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_SAVES, Sys_FullPath(SR_WORK, "save/"));
 	Sys_SetPath(SR_CD, DATA_PATH);
 	Sys_SetPath(SR_MAP2, DATA_PATH);
+	Sys_SetPath(SR_PLUGIN, DATA_PATH);
 	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "MUSIC/");
 	Sys_SetPath(SR_DEFAULT, "");
 	Sys_SetPath(SR_HOME, home);
