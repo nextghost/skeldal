@@ -3282,7 +3282,7 @@ char _exit_shop(int id, int xa, int ya,int xr,int yr)
 
 static void reroll_shop(TSHOP *p) {
 	int i, j, r;
-	int poc_spec = 1;
+	int poc_spec = 0;
 	TPRODUCT *pr;
 
 	SEND_LOG("(SHOP) Shops reroll: '%s' ", p->keeper, 0);
@@ -3302,6 +3302,10 @@ static void reroll_shop(TSHOP *p) {
 		}
 	}
 
+	if (!poc_spec) {
+		return;
+	}
+
 	pr = p->list;
 
 	for (i = 0; i < p->spec_max; i++) {
@@ -3309,7 +3313,7 @@ static void reroll_shop(TSHOP *p) {
 
 		r = rnd(poc_spec) + 1;
 
-		for (j = 0; j < r; j++) {
+		for (j = 0; i < r; j++) {
 			if (pr[j].trade_flags & SHP_SPECIAL) {
 				i++;
 			}
