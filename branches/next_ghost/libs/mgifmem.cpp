@@ -94,35 +94,6 @@ void done_lzw_compressor()
   compress_dic=NULL;
   }
 
-void mgif_install_proc(MGIF_PROC proc) {
-	show_proc = proc;
-}
-
-//vraci ukazatel na prvni frame
-int open_mgif(const mgif_header &mgh) {
-	if (strncmp(mgh.sign, MGIF, 4)) {
-		return 0;
-	}
-
-	mgif_frames = mgh.frames;
-	cur_frame = 0;
-	init_lzw_compressor(8);
-
-	if (!lzw_buffer) {
-		lzw_buffer = new unsigned char[LZW_BUFFER];
-	}
-
-	return 1;
-}
-
-//dealokuje buffery pro prehravani
-void close_mgif() {
-	done_lzw_compressor();
-	delete[] (unsigned char *)lzw_buffer;
-	lzw_buffer = NULL;
-}
-
-
 unsigned input_code(uint8_t *source,long *bitepos,int bitsize,int mask) {
 	unsigned ret = *(unsigned *)(source + (*bitepos >> 3));
 	ret >>= *bitepos & 0x7;

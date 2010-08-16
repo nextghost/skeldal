@@ -197,77 +197,9 @@ char twins;
 
 static short rand_value;
 
-//static uint16_t *paleta;
-
-void show_full_lfb12e(void *target,void *buff,void *paleta);
-//#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
-void show_delta_lfb12e(void *target,void *buff,void *paleta);
-//#pragma aux show_delta_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 char mob_check_next_sector(int sect,int dir,char alone,char passable);
-
 void call_spell(int i);
 static int calculatePhaseDoor(int sector, int dir, int um);
-
-
-/*
-static void animace_kouzla(int act,void *data, int ssize)
-  {
-  switch (act)
-     {
-     case MGIF_LZW:
-     case MGIF_COPY:show_full_lfb12e(anim_render_buffer,data,paleta);break;
-     case MGIF_DELTA:show_delta_lfb12e(anim_render_buffer,data,paleta);break;
-     case MGIF_PAL:paleta=data;*paleta|=0x8000;break;
-     }
-  }
-
-
-
-static void play_anim(va_list args) //tasked animation
-//#pragma aux play_anim parm []
-  {
-  int block=va_arg(args,int);
-#define ANIM_SIZE (320*180*2)
-  void *anm;
-  long *l,c;
-
-  if (running_anm)
-     {
-     SEND_LOG("(ERROR)(ANIM) Animation's mutex is already in use!",0,0);
-     return;
-     }
-  SEND_LOG("(ANIM) Running animation number %xh",block,0);
-  anim_render_buffer=getmem(ANIM_SIZE);
-  mgif_install_proc(animace_kouzla);
-  running_anm=1;
-  l=(void *)anim_render_buffer;
-  c=ANIM_SIZE/4;do *l++=0x80008000; while (--c);
-  alock(block);
-  anm=open_mgif(ablock(block));
-  c=0;
-  SEND_LOG("(ANIM) Buffer is now ready...",0,0);
-  while (anm!=NULL)
-     {
-     Task_WaitEvent(E_KOUZLO_ANM);
-     c++;
-     SEND_LOG("(ANIM) Rendering frame %d in animation %xh",c,block);
-     anm=mgif_play(anm);
-     neco_v_pohybu=1;
-     }
-  Task_WaitEvent(E_KOUZLO_ANM);
-  close_mgif();
-  running_anm=0;
-  free(anim_render_buffer);
-  SEND_LOG("(ANIM) Closing animation %xh",block,0);
-  aunlock(block);
-  }
-
-void play_big_mgif_animation(int block)
-  {
-  Task_Add(2048,play_anim,block);
-  Task_Sleep(NULL);
-  }
-*/
 
 SpellList::~SpellList(void) {
 	delete _spellData;

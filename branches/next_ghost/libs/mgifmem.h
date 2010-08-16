@@ -81,14 +81,8 @@ public:
 	unsigned getAudioSize(void) const { return _audioLength; }
 };
 
-void mgif_install_proc(MGIF_PROC proc);
-int open_mgif(const mgif_header &mgh);
 int mgif_play(ReadStream &stream);
-void close_mgif();           //dealokuje buffery pro prehravani
 void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream);
-
-void show_full_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
-void show_delta_lfb12e(uint16_t *target, ReadStream &stream, uint16_t *paleta);
 
 #pragma option align=reset
 #endif
