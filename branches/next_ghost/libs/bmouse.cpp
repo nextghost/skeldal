@@ -124,8 +124,6 @@ void *mouse()
 short init_mysky()
   {
 
-//  i=install_mouse_handler();
-//  hranice_mysky(0,0,639,479);
   visible=1;
   send_message(E_INIT,mouse);
   return 0;
@@ -134,7 +132,6 @@ short init_mysky()
 short done_mysky()
   {
 
-//  i=deinstall_mouse_handler();
   send_message(E_DONE,E_WATCH,ms_idle_event);
   send_message(E_DONE,E_MOUSE,ms_draw_event);
   return 0;

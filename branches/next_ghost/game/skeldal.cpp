@@ -642,7 +642,6 @@ void done_skeldal(void) {
 	close_story_file();
 	Sys_PurgeTemps(1);
 	Sound_StopMixing();
-//  deinstall_mouse_handler();
 	texty.clear();
 	cur_config.clear();
 	kill_timer();
@@ -945,7 +944,6 @@ SEND_LOG("(INIT) Mouse interrupt handler.",0,0);
      exit(0);
      }
 SEND_LOG("(INIT) Mouse initialized.",0,0);
-//  hranice_mysky(0,0,639,479);
 SEND_LOG("(INIT) Loading mouse cursor.",0,0);
   mouse_set_default(H_MS_DEFAULT);
   ukaz_mysku();

@@ -26,7 +26,6 @@
 #include "libs/system.h"
 #include <ctime>
 
-TMS_BASIC_INFO ms_basic_info={0};
 static char ms_keys;
 
 char cz_table_1[]=" 1!3457­908+,-./‚+ˆ¨‡©‘˜ ¡\"–?=:_2ABCDEFGHIJKLMNOPQRSTUVWXYZ£\\)6=;abcdefghijklmnopqrstuvwxyz/|(; ";

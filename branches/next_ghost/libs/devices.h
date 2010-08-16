@@ -27,17 +27,6 @@
 #include "libs/event.h"
 
 #pragma pack(1)
-typedef struct tms_basic_info
-  {
-        int32_t mouse_event;
-        uint16_t mouse_code;
-        uint16_t mouse_bx;
-        uint16_t mouse_cx;
-        uint16_t mouse_dx;
-        int16_t mouse_si;
-        int16_t mouse_di;
-  }TMS_BASIC_INFO;
-
 typedef struct ms_event
   {
    int8_t event;
@@ -46,13 +35,8 @@ typedef struct ms_event
    uint16_t event_type;
   }MS_EVENT;
 
-extern TMS_BASIC_INFO ms_basic_info;
 extern char ms_fake_mode;
 
-//int install_mouse_handler();
-//int deinstall_mouse_handler();
-//void hranice_mysky(int x1,int y1,int x2,int y2);
-//void get_ms_event(MS_EVENT *event);
 int lock_region (void *address, unsigned length);
 void keyboard(EVENT_MSG *msg,void *user_data);
 char ms_get_keycount();
