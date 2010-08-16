@@ -852,7 +852,7 @@ void heap_error(size_t size) {
 				for (j = 0; j < BK_MINOR_HANDLES; j++) {
 					THANDLE_DATA *h;
 
-					h = ((THANDLE_DATA*)_handles[i] + j);
+					h = (*_handles[i] + j);
 					c = bk_global_counter - h->counter;
 
 					if (h->status == BK_PRESENT && ~h->flags & BK_LOCKED) {
@@ -1006,7 +1006,7 @@ int find_same(const char *name,DataBlock *(*decomp)(SeekableReadStream&))
   for(i=0;i<BK_MAJOR_HANDLES;i++)
      if (_handles[i]!=NULL)
      {     
-     p=(THANDLE_DATA *)(_handles[i]);
+     p=*_handles[i];
      for(j=0;j<BK_MINOR_HANDLES;j++)
         if ((!strncmp(p[j].src_file,name,12))&& (p[j].loadproc==decomp)) return i*BK_MINOR_HANDLES+j;
      }
