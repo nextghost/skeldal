@@ -810,20 +810,23 @@ int swap_block(THANDLE_DATA *h) {
 	return -1;
 }
 
-THANDLE_DATA *get_handle(int handle)
-  {
-  int group,list;
+THANDLE_DATA *get_handle(int handle) {
+	int group, list;
 
-  group=handle/BK_MINOR_HANDLES;
-  list=handle % BK_MINOR_HANDLES;
-  if (_handles[group]==NULL)
-     {
-     _handles[group]=(handle_list *)getmem(sizeof(handle_list));
-     memset(_handles[group],0,sizeof(handle_list));
-     }
-  if (handle>max_handle) max_handle=handle;
-  return ((THANDLE_DATA *)_handles[group])+list;
-  }
+	group = handle / BK_MINOR_HANDLES;
+	list = handle % BK_MINOR_HANDLES;
+
+	if (_handles[group] == NULL) {
+		_handles[group] = (handle_list *)getmem(sizeof(handle_list));
+		memset(_handles[group], 0, sizeof(handle_list));
+	}
+
+	if (handle > max_handle) {
+		max_handle = handle;
+	}
+
+	return *_handles[group] + list;
+}
 
 //heap system
 void heap_error(size_t size) {
