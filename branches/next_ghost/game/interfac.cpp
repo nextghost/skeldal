@@ -1306,7 +1306,7 @@ int load_string_list_ex(StringList &list, const char *filename) {
 		do {
 			do {
 				j = f->readUint8();
-			} while ((unsigned)j <= ' ');
+			} while (!f->eos() && (unsigned)j <= ' ');
 
 			if (j == ';') {
 				while ((j = f->readUint8()) != '\n' && !f->eos());
@@ -1318,13 +1318,13 @@ int load_string_list_ex(StringList &list, const char *filename) {
 		} while (j == '\n');
 
 		c[0] = j;
-		for (i = 0; (c[i] >= '0' && c[i] <= '9') || (i == 0 && c[0] == '-');) {
+		for (i = 0; !f->eos() && ((c[i] >= '0' && c[i] <= '9') || (i == 0 && c[0] == '-'));) {
 			c[++i] = (char)f->readUint8();
 		}
 		c[i] = '\0';
 		j = sscanf(c, "%d", &i);
 
-		if (f->eos()) {
+		if (!i && f->eos()) {
 			delete f;
 			return -2;
 		}

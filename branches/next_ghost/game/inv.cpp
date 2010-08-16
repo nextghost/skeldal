@@ -3309,7 +3309,7 @@ static void reroll_shop(TSHOP *p) {
 
 		r = rnd(poc_spec) + 1;
 
-		for (j = 0; i < r; j++) {
+		for (j = 0; j < r; j++) {
 			if (pr[j].trade_flags & SHP_SPECIAL) {
 				i++;
 			}
