@@ -67,10 +67,10 @@ am_skeldal_OBJECTS = cztable.$(OBJEXT) game/automap.$(OBJEXT) \
 	libs/inicfg.$(OBJEXT) libs/memman.$(OBJEXT) \
 	libs/mgifmapmem.$(OBJEXT) libs/mgifmem.$(OBJEXT) \
 	libs/pcx.$(OBJEXT) libs/strlite.$(OBJEXT) \
-	libs/swaper.$(OBJEXT) libs/wav_mem.$(OBJEXT) \
-	libs/sound.$(OBJEXT) sdl/input.$(OBJEXT) sdl/mixer.$(OBJEXT) \
-	sdl/screen.$(OBJEXT) sdl/sound.$(OBJEXT) sdl/timer.$(OBJEXT) \
-	unix/init.$(OBJEXT) unix/system.$(OBJEXT) unix/task.$(OBJEXT)
+	libs/wav_mem.$(OBJEXT) libs/sound.$(OBJEXT) \
+	sdl/input.$(OBJEXT) sdl/mixer.$(OBJEXT) sdl/screen.$(OBJEXT) \
+	sdl/sound.$(OBJEXT) sdl/timer.$(OBJEXT) unix/init.$(OBJEXT) \
+	unix/system.$(OBJEXT) unix/task.$(OBJEXT)
 skeldal_OBJECTS = $(am_skeldal_OBJECTS)
 skeldal_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -198,7 +198,7 @@ skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	libs/bgraph2.cpp libs/bmouse.cpp libs/devices.cpp libs/event.cpp \
 	libs/gui.cpp libs/inicfg.cpp libs/memman.cpp libs/mgifmapmem.cpp \
 	libs/mgifmem.cpp libs/pcx.cpp libs/strlite.cpp \
-	libs/swaper.cpp libs/wav_mem.cpp libs/sound.cpp sdl/input.cpp \
+	libs/wav_mem.cpp libs/sound.cpp sdl/input.cpp \
 	sdl/mixer.cpp sdl/screen.cpp sdl/sound.cpp sdl/timer.cpp \
 	unix/init.cpp unix/system.cpp unix/task.cpp game/extras.h \
 	game/specproc.h game/globals.h game/engine1.h game/wizard.h \
@@ -383,8 +383,6 @@ libs/pcx.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
 libs/strlite.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/swaper.$(OBJEXT): libs/$(am__dirstamp) \
-	libs/$(DEPDIR)/$(am__dirstamp)
 libs/wav_mem.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
 libs/sound.$(OBJEXT): libs/$(am__dirstamp) \
@@ -455,7 +453,6 @@ mostlyclean-compile:
 	-rm -f libs/pcx.$(OBJEXT)
 	-rm -f libs/sound.$(OBJEXT)
 	-rm -f libs/strlite.$(OBJEXT)
-	-rm -f libs/swaper.$(OBJEXT)
 	-rm -f libs/wav_mem.$(OBJEXT)
 	-rm -f sdl/input.$(OBJEXT)
 	-rm -f sdl/mixer.$(OBJEXT)
@@ -506,7 +503,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/pcx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/sound.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/strlite.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/swaper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/wav_mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/mixer.Po@am__quote@

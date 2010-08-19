@@ -9,7 +9,7 @@ skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	libs/bgraph2.cpp libs/bmouse.cpp libs/devices.cpp libs/event.cpp \
 	libs/gui.cpp libs/inicfg.cpp libs/memman.cpp libs/mgifmapmem.cpp \
 	libs/mgifmem.cpp libs/pcx.cpp libs/strlite.cpp \
-	libs/swaper.cpp libs/wav_mem.cpp libs/sound.cpp sdl/input.cpp \
+	libs/wav_mem.cpp libs/sound.cpp sdl/input.cpp \
 	sdl/mixer.cpp sdl/screen.cpp sdl/sound.cpp sdl/timer.cpp \
 	unix/init.cpp unix/system.cpp unix/task.cpp game/extras.h \
 	game/specproc.h game/globals.h game/engine1.h game/wizard.h \

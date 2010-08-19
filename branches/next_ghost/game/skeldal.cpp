@@ -781,21 +781,6 @@ void error_exception(EVENT_MSG *msg,void **unused)
      }
   }
 
-void swap_error_exception()
-  {
-  closemode();
-  SEND_LOG("(ERROR) Disk is full ...",0,0);
-  puts("Program jiz nema kam odkladat, protoze disk s odkladacim souborem byl \n"
-       "zaplnen. Uvolnete prosim nejake misto na odkladacim disku, nebo zmente \n"
-       "adresar odkladani na jednotku, kde je vice mista");
-  puts("Vase pozice bude ulozena pod nazvem AUTOSAVE\n"
-       "Pokud vsak mate pozice na stejn‚m disku jako odkladaci soubor (coz je\n"
-       "zakladni nastaveni) bude ulozeni z 90% bohuzel neuspesne...");
-  autosave_enabled=1;
-  autosave();
-  exit(0);
-  }
-
 Font *boldcz;
 
 #define ERR_WINX 320
@@ -895,7 +880,6 @@ SEND_LOG("(INIT) Initializing engine.",0,0);
   atexit(done_skeldal);
 /*SEND_LOG("(INIT) Loading DOS error handler.",0,0);
   install_dos_error(device_error,(char *)getmem(4096)+4096);*/
-  swap_error=swap_error_exception;
 //  sprintf(c,"%s%s",SWAPPATH,TEMP_FILE);
 //  sprintf(d,"%s%s",pathtable[SR_DATA],"skeldal.ddl");
 	d = Sys_FullPath(SR_TEMP, TEMP_FILE);

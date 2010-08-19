@@ -40,10 +40,7 @@
 
 #define NON_GETMEM_RESERVED (4*1024)
 //char **mman_pathlist=NULL;
-static char swap_status=0;
 
-//static int swap;
-static FILE *swap;
 char mman_patch=0;
 
 int memman_handle;
@@ -87,50 +84,15 @@ void load_error(char *filename)
   exit(1);
   }
 
-void standard_swap_error()
-  {
-  char buff[256];
-  Sys_Shutdown();
-//  DXCloseMode();
-  sprintf(buff,"Swap error. Maybe disk is full");
-  Sys_ErrorBox(buff);
-//  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
-  exit(1);
-  }
-
-
-void (*mem_error)(size_t)=standard_mem_error;
-void (*swap_error)()=standard_swap_error;
-
-void *getmem(long size)
-  {
-// TODO: I think it's time to get rid of this crap
-/*
-  void *p,*res;
-
-  if (!size) return NULL;
-  do
-     {
-     res=malloc(NON_GETMEM_RESERVED);
-     if (res!=NULL)
-        {
-        p=(void *)malloc(size);
-        free(res);
-        }
-     else p=NULL;
-     if (p==NULL) mem_error(size);
-     }
-  while (p==NULL);
-//  SEND_LOG("(ALLOC) **** Alloc: %p size %d",p,*((long *)p-1));
-  return p;
-*/
+void *getmem(long size) {
 	void *ret = malloc(size);
+
 	if (!ret) {
 		standard_mem_error(size);
 	}
 
 	return ret;
-  }
+}
 
 // FIXME: get rid of this function
 void *load_file(char *filename) {
@@ -758,58 +720,6 @@ int get_file_entry(int group,char *name) {
 	return datafile.getOffset(i);
 }
 
-void swap_init(void);
-int swap_add_block(long size);
-void swap_free_block(long seek, long size);
-
-int swap_block(THANDLE_DATA *h) {
-	long wsize, pos;
-
-	assert(0 && "Tried to swap block");
-
-	if (mman_action != NULL) {
-		mman_action(MMA_SWAP);
-	}
-
-//  if (swap==-1) return -1;
-	if (!swap) {
-		return -1;
-	}
-
-	if (h->flags & BK_HSWAP) {
-		pos = h->seekpos;
-	} else {
-		pos = swap_add_block(h->size);
-	}
-
-	wsize = fseek(swap, 0, SEEK_END);
-//  lseek(swap,0,SEEK_END);
-//  wsize=tell(swap);
-//  if (wsize<pos) write(swap,NULL,pos-wsize);
-	fseek(swap, pos, SEEK_SET);
-	SEND_LOG("(SWAP) Swaping block '%-.12s'", h->src_file, 0);
-//  wsize=write(swap,h->blockdata,h->size);
-	wsize = fwrite(h->blockdata, h->size, 1, swap);
-	swap_status = 1;
-
-	if ((unsigned)wsize == h->size) {
-		h->seekpos = pos;
-
-		if (h->flags & BK_PRELOAD) {
-			h->flags &= ~BK_SWAPABLE;
-		}
-
-		h->flags |= BK_HSWAP;
-		return 0;
-	} else {
-		SEND_LOG("(SWAP) Swap failed!", 0, 0);
-		swap_error();
-	}
-
-	swap_free_block(pos, h->size);
-	return -1;
-}
-
 THANDLE_DATA *get_handle(int handle) {
 	int group, list;
 
@@ -826,94 +736,6 @@ THANDLE_DATA *get_handle(int handle) {
 	}
 
 	return *_handles[group] + list;
-}
-
-//heap system
-void heap_error(size_t size) {
-	int i, j;
-	char swaped = 0;
-	unsigned long maxcounter = 0;
-	THANDLE_DATA *sh;
-	char repeat = 0, did = 0;
-	THANDLE_DATA *lastblock = NULL;
-	char *last_free = NULL;
-	int num;
-
-	do {
-		maxcounter = 0;
-		sh = NULL;
-		repeat = 0;
-		did = 0;
-
-		for (i = 0; i < BK_MAJOR_HANDLES; i++) {
-			if (_handles[i] != NULL) {
-				unsigned long c, max = 0xffffffff, d;
-
-				for (j = 0; j < BK_MINOR_HANDLES; j++) {
-					THANDLE_DATA *h;
-
-					h = (*_handles[i] + j);
-					c = bk_global_counter - h->counter;
-
-					if (h->status == BK_PRESENT && ~h->flags & BK_LOCKED) {
-						if (last_free != NULL) {
-							d = (char *)h->blockdata - last_free;
-							if (d < max) {
-								sh = h;
-								max = d;
-								did = 1;
-								num = i * BK_MINOR_HANDLES + j;
-							}
-						} else if (c>maxcounter) {
-							maxcounter = c;
-							sh = h;
-							did = 1;
-							num = i * BK_MINOR_HANDLES + j;
-						}
-					}
-				}
-			}
-		}
-
-		if (lastblock == sh) {
-			did = 0;
-			repeat = 0;
-		}
-
-		if (did) {
-			size -= sh->size;
-			last_free = (char*)sh->blockdata;
-
-			if (sh->flags & BK_SWAPABLE) {
-				//pri neuspechu o ulozeni je nalezen blok jiny
-				if (swap_block(sh)) {
-					sh->counter = bk_global_counter;
-					repeat = 1;
-				} else {
-					delete sh->blockdata;
-					sh->status = BK_SWAPED;
-					swaped = 1;
-				}
-			} else {
-				if (sh->flags & BK_PRELOAD) {
-					sh->status = BK_SWAPED;
-				} else {
-					sh->status = BK_NOT_LOADED;
-				}
-
-				delete sh->blockdata;
-
-				if (mman_action != NULL) {
-					mman_action(MMA_FREE);
-				}
-			}
-		} else {
-			standard_mem_error(size);
-		}
-
-		lastblock = sh;
-	} while (repeat || size > 0);
-//  if (swaped) _dos_commit(swap);
 }
 
 THANDLE_DATA *kill_block(int handle) {
@@ -940,12 +762,7 @@ THANDLE_DATA *kill_block(int handle) {
 		delete h->blockdata;
 	}
 
-	if (h->flags & BK_HSWAP) {
-		swap_free_block(h->seekpos,h->size);
-	}
-
 	h->status = BK_NOT_LOADED;
-	h->flags &= ~BK_HSWAP;
 	return h;
 }
 
@@ -960,41 +777,15 @@ THANDLE_DATA *zneplatnit_block(int handle)
   return h;
   }
 
-void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru nebo NULL pak
-                                  // se pouzije DOS
-                                            // swp je cesta do TEMP adresare
-  {
-  memset(_handles,0,sizeof(_handles));
+// filename= Jmeno datoveho souboru nebo NULL pak se pouzije DOS
+// swp je cesta do TEMP adresare
+void init_manager(char *filename, char *swp) {
+	memset(_handles, 0, sizeof(_handles));
 
 	if (filename) {
 		datafile.open(filename);
 	}
-  mem_error=heap_error;
-  if (swp!=NULL)
-     {
-//  O_BINARY and _S_IREAD/_S_IWRITE are Windows-specific flags
-//     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
-     swap=fopen(swp, "wb+");
-     swap_init();
-     }
-  else
-     swap=NULL;
-  }
-
-void *load_swaped_block(THANDLE_DATA *h)
-  {
-  void *i;
-
-  if (mman_action!=NULL) mman_action(MMA_SWAP_READ);
-  i=getmem(h->size);
-  SEND_LOG("(LOAD)(SWAP) Loading block from swap named '%-.12s'",h->src_file,0);
-  fseek(swap,h->seekpos,SEEK_SET);
-//  read(swap,i,h->size);
-  fread(i,1,h->size,swap);
-  h->status=BK_PRESENT;
-  return i;
-  }
-
+}
 
 int find_same(const char *name,DataBlock *(*decomp)(SeekableReadStream&))
   {
@@ -1286,34 +1077,38 @@ static int apreload_sort(const void *val1,const void *val2)
   return (vl1>vl2)-(vl1<vl2);
   }
 
-void apreload_start(void (*percent)(int cur,int max))
-  {
-  uint16_t *p;
-  int i;
-  int c,z;
+void apreload_start(void (*percent)(int cur, int max)) {
+	uint16_t *p;
+	int i;
+	int c, z;
 
-  swap_status=0;
-  p=NewArr(uint16_t,max_sign);
-  for(i=0;i<max_sign;i++) p[i]=i;
-  qsort(p,max_sign,sizeof(uint16_t),apreload_sort);
-  for(i=0,c=0;i<max_sign;i++) if (apr_sign[p[i]]==0x7f7f7f7f)p[i]=0xffff;else c++;
-  for(i=0,z=0;i<max_sign;i++) if (p[i]!=0xffff)
-     {
-     apreload(p[i]);
-     percent(z++,swap_status?c+max_sign*2:c);
-     }
-  if (swap_status)
-     for(i=0;i<max_sign;i++)
-        {
-        THANDLE_DATA *h=get_handle(p[i]);
-        if (h->status==BK_PRESENT) swap_block(h);
-        percent(c+i,c+max_sign);
-        }
-//  _dos_commit(swap);
-  free(apr_sign);
-  free(p);
-  apr_sign=NULL;
-  }
+	p = NewArr(uint16_t, max_sign);
+
+	for (i = 0; i < max_sign; i++) {
+		p[i] = i;
+	}
+
+	qsort(p, max_sign, sizeof(uint16_t), apreload_sort);
+
+	for (i = 0, c = 0; i < max_sign; i++) {
+		if (apr_sign[p[i]] == 0x7f7f7f7f) {
+			p[i] = 0xffff;
+		} else {
+			c++;
+		}
+	}
+
+	for (i = 0, z = 0; i < max_sign; i++) {
+		if (p[i] != 0xffff) {
+			apreload(p[i]);
+			percent(z++, c);
+		}
+	}
+
+	free(apr_sign);
+	free(p);
+	apr_sign=NULL;
+}
 
 void undef_handle(int handle)
   {
@@ -1340,8 +1135,6 @@ void close_manager()
      for(j=0;j<BK_MINOR_HANDLES;j ++) undef_handle(i*BK_MINOR_HANDLES+j);
      free(_handles[i]);
      }
-//  if (swap!=-1) close(swap);
-  if (swap) fclose(swap);
 //  fclose(log);
   max_handle=0;
   }
