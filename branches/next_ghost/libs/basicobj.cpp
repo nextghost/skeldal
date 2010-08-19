@@ -43,9 +43,9 @@
 //FC_TABLE f_bila={0xffff,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 
 void highlight(CTL3D *c, uint8_t r, uint8_t g, uint8_t b) {
-	c->light[0] = r > 128 ? 255 : 2 * r;
-	c->light[1] = g > 128 ? 255 : 2 * g;
-	c->light[2] = b > 128 ? 255 : 2 * b;
+	c->light[0] = r >= 128 ? 255 : 2 * r;
+	c->light[1] = g >= 128 ? 255 : 2 * g;
+	c->light[2] = b >= 128 ? 255 : 2 * b;
 	c->shadow[0] = r / 2;
 	c->shadow[1] = g / 2;
 	c->shadow[2] = b / 2;
