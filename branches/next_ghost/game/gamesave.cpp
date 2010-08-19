@@ -537,9 +537,6 @@ static void loadHuman(THUMAN &human, ReadStream &stream) {
 	human.demon_save = stream.readUint32LE() ? &human : NULL;
 }
 
-// FIXME: move this function here
-void loadItem(TITEM &item, ReadStream &stream);
-
 int load_basic_info() {
 	char *c, level_name[13];
 	int i, size, items_added, game_flags;

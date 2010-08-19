@@ -41,7 +41,6 @@ static char backgrnd_mode=0;
 
 static int lclip,rclip;
 
-ZOOMINFO zoom;
 char zooming_xtable[ZOOM_PHASES][VIEW_SIZE_X];
 short zooming_ytable[ZOOM_PHASES][VIEW_SIZE_Y];
 short zooming_points[ZOOM_PHASES][4]
@@ -557,35 +556,6 @@ void zooming_forward_backward(const Texture &tex, int back) {
 		do_events();
 	} while (curtime < maxtime);
 }
-
-/*
-  
-  int i;
-  if (!zooming_step) return;
-  for (i=0;i<ZOOM_PHASES;i+=zooming_step)
-     {
-     zoom.xtable=(long *)&zooming_xtable[i];
-     zoom.ytable=(short *)&zooming_ytable[i];
-     zoom.texture_line=0;
-     do_events();
-     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*Screen_GetXSize()+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
-     }*/
-/*void zooming_backward(uint16_t *background)
-  {
-  int i;
-
-  if (!zooming_step) return;
-  for (i=ZOOM_PHASES-1;i>=0;i-=zooming_step)
-     {
-     zoom.xtable=(long *)&zooming_xtable[i];
-     zoom.ytable=(short *)&zooming_ytable[i];
-     zoom.texture_line=0;
-     do_events();
-     zooming(Screen_GetAddr()+zooming_points[i][2]+zooming_points[i][3]*Screen_GetXSize()+SCREEN_OFFSET,SCREEN_OFFSET,background,xlatmem,(360<<16)+320);
-     }
-  }
-
-*/
 
 void turn_left_right(const Texture &ltex, const Texture &rtex, int right) {
 	if (!rot_phases) {

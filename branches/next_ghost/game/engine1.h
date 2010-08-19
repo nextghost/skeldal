@@ -53,8 +53,6 @@
 #define SHADE_STEPS 5
 #define SHADE_PAL (SHADE_STEPS*512*2)
 
-#pragma pack(1)
-
 void general_engine_init(void);
 void draw_floor_ceil(int celx, int cely, char f_c, int dark, const Texture *txtr);
 void show_cel2(int celx, int cely, const Texture &tex, int xofs, int yofs, char rev);
@@ -72,18 +70,6 @@ void draw_item2(int celx, int cely, int xpos, int ypos, const Texture *tex, int 
 
 
 void clear_buff(const Texture *tex, uint8_t r, uint8_t g, uint8_t b, int lines);
-
-typedef struct zoominfo
-  {
-     void *startptr, *texture;
-     int32_t texture_line,line_len;
-     int32_t *xtable;
-     int16_t *ytable;
-     uint16_t *palette;
-     uint16_t ycount;
-     uint16_t xmax;
-  }ZOOMINFO;
-
 
 typedef struct t_info_y
   {
@@ -182,7 +168,5 @@ int get_item_top(int celx, int cely, int posx, int posy, const Texture *tex, int
 
 void play_big_mgif_animation(int block);
 void play_big_mgif_frame(void);
-
-#pragma option align=reset
 
 #endif

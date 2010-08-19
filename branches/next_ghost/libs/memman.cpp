@@ -980,12 +980,6 @@ sem:
 		}
 	}
 
-	//tato cast programu bude jeste dodelana - else ....
-	if (h->status == BK_SWAPED) {
-//		return h->blockdata = load_swaped_block(h);
-		assert(0 && "Trying to unswap block");
-	}
-
 	return NULL;
 }
 

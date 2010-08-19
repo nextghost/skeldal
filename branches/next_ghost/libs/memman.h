@@ -245,8 +245,6 @@ public:
 	void flush(void);
 };
 
-#pragma pack(1)
-
 #define freemem(size) free(size);
 //#define malloc(size) getmem(size)
 #define New(typ) (typ *)getmem(sizeof(typ))
@@ -351,7 +349,5 @@ void display_status();    //zobrazi na display status memmanageru
 char *get_time_str();
 extern Logger *syslog;
 #define SEND_LOG(format, ...) syslog->write(format, __VA_ARGS__)
-
-#pragma option align=reset
 
 #endif

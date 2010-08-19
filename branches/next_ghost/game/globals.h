@@ -37,8 +37,6 @@
 #define POCET_POSTAV 6
 #define HODINA 360
 
-#pragma pack(1)
-
 #define A_SIDEMAP 0x8001
 #define A_SECTMAP 0x8002
 #define A_STRMAIN 0x8003 //stena main
@@ -1804,8 +1802,6 @@ static __inline char TimerEvents(int sector, int side, long time)
 }
 
 #define STATE_CUR_VER 1
-
-#pragma option align=reset
 
 //extras
 #include "game/extras.h"

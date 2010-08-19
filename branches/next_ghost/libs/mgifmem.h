@@ -27,7 +27,6 @@
 #include <inttypes.h>
 #include "libs/pcx.h"
 
-#pragma pack(1)
 typedef void (*MGIF_PROC)(int, SeekableReadStream &); //prvni cislo akce, druhy data akce
 
 #define MGIF "MGIF"
@@ -84,5 +83,4 @@ public:
 int mgif_play(ReadStream &stream);
 void loadMgifHeader(MGIF_HEADER_T &header, ReadStream &stream);
 
-#pragma option align=reset
 #endif

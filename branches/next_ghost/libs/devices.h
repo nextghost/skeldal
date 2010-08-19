@@ -26,7 +26,6 @@
 #include <inttypes.h>
 #include "libs/event.h"
 
-#pragma pack(1)
 typedef struct ms_event
   {
    int8_t event;
@@ -40,5 +39,4 @@ extern char ms_fake_mode;
 int lock_region (void *address, unsigned length);
 void keyboard(EVENT_MSG *msg,void *user_data);
 char ms_get_keycount();
-#pragma option align=reset
 #endif

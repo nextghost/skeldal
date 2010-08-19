@@ -30,8 +30,6 @@
 // Tato knihovna definuje zakladni systemove konstanty
 // pro system hlaseni a udalosti
 
-#pragma pack(1)
-
 // zakladni
 
 #define E_INIT 1      //inicializace udalost (interni)
@@ -171,8 +169,6 @@ void timer(EVENT_MSG *msg);
 #define EVENT_HALT -1
 #define EVENT_DONE -2
 #define EVENT_HALT_DONE -3
-
-#pragma option align=reset
 
 #endif
 

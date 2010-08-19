@@ -107,8 +107,6 @@ public:
 	const uint8_t *palette(unsigned fade = 0) const { return _pal; }
 };
 
-#pragma pack(1)
-
 #define A_8BIT 8
 #define A_16BIT 16
 #define A_FADE_PAL (256+8)
@@ -135,7 +133,5 @@ Texture *load_pcx(SeekableReadStream &stream, int conv_type, uint8_t tr = 0, uin
 Texture *open_pcx(const char *filename, int type, uint8_t tr = 0, uint8_t tg = 0, uint8_t tb = 0);
 void palette_shadow(pal_t *pal, int tr, int tg, int tb);
 //extern void *get_palette_ptr;
-
-#pragma option align=reset
 
 #endif

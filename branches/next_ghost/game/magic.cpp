@@ -148,7 +148,6 @@ typedef struct tteleportlocation
 
 static TTELEPLOCATION TelepLocation;
 
-#pragma pack(1)
 typedef struct tkouzlo {
 	uint16_t num, um, mge;
 	uint16_t pc;
@@ -163,7 +162,6 @@ typedef struct tkouzlo {
 	char spellname[28];
 	uint16_t teleport_target;
 } TKOUZLO;
-#pragma option align=reset
 
 class SpellList {
 private:
@@ -1334,7 +1332,6 @@ static void spell_open_teleport(int cil, int owner) {
 		}
 
 		if (allowed) {
-			TSTENA *st, *stt;
 			int templateSect = 0;
 			int i, j;
 

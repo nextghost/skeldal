@@ -29,8 +29,6 @@
 #include "libs/devices.h"
 #include "libs/bgraph.h"
 
-#pragma pack(1)
-
 #define E_MS_CLICK 50
 #define E_MS_MOVE 51
 #define E_GET_FOCUS 52
@@ -201,7 +199,5 @@ void run_background(void (*p)());
 void disable_bar(int x, int y, int xs, int ys, uint8_t r, uint8_t g, uint8_t b);
 void movesize_win(WINDOW *w, int newx,int newy, int newxs, int newys);
 void goto_control(int obj_id);
-
-#pragma option align=reset
 
 #endif
