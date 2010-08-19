@@ -29,9 +29,8 @@
 
 static int wait_used[MAX_WAITS] = {0};
 static long wait_target[MAX_WAITS] = {0};
-static EVENT_MSG wait_ret[MAX_WAITS];
 
-void *Task_WaitEvent(long event) {
+void Task_WaitEvent(long event) {
 	int counter;
 
 	// find empty wait slot
@@ -48,7 +47,6 @@ void *Task_WaitEvent(long event) {
 	} while (wait_target[counter]);
 
 	wait_used[counter] = 0;
-	return wait_ret[counter].data;	// luckily, this game is not threaded
 }
 
 void Task_Wakeup(EVENT_MSG *msg) {
@@ -56,7 +54,6 @@ void Task_Wakeup(EVENT_MSG *msg) {
 
 	for (i = 0; i < MAX_WAITS; i++) {
 		if (wait_target[i] == msg->msg) {
-			wait_ret[i] = *msg;
 			wait_target[i] = 0;
 		}
 	}

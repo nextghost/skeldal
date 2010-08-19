@@ -106,7 +106,7 @@ void Sound_SetMixer(int dev, int freq, ...);
 
 int Task_Add(int stack, TaskerFunctionName func, ...);
 void *Task_Sleep(void *data);
-void *Task_WaitEvent(long event);
+void Task_WaitEvent(long event);
 char Task_IsMaster(void);
 int Task_Count(void);
 void Task_Wakeup(EVENT_MSG *msg);
