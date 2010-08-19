@@ -387,7 +387,7 @@ EVENT_PROC(message_keyboard) {
 
 int message(int butts, char def, char canc, const char *keys, ...) {
 	int id;
-	void *clksav;
+	T_CLK_MAP *clksav;
 	int clksav2;
 	va_list args;
 
@@ -395,7 +395,7 @@ int message(int butts, char def, char canc, const char *keys, ...) {
 	cancel_action = canc;
 	mute_all_tracks(0);
 	unwire_proc();
-	save_click_map(&clksav, &clksav2);
+	save_click_map(clksav, clksav2);
 	change_click_map(NULL, 0);
 	va_start(args, keys);
 	open_message_win(butts + 1, args);

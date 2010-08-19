@@ -868,8 +868,8 @@ extern T_CLK_MAP clk_main_view[];        //clickovaci mapa pro hlavni vyhled
 
 void change_click_map(T_CLK_MAP *map,int mapsize);
 void ms_clicker(EVENT_MSG *msg,void **usr);
-void restore_click_map(void *map,int mapsize);
-void save_click_map(void **map,int *mapsize);
+void restore_click_map(T_CLK_MAP *map, int mapsize);
+void save_click_map(T_CLK_MAP *&map, int &mapsize);
 void set_game_click_map(void);
 void change_global_click_map(T_CLK_MAP *map,int mapsize);
 char empty_clk(int id,int xa,int ya,int xr,int yr); //tato udalost slouzi ke zruseni nekterych mist v globalni mape

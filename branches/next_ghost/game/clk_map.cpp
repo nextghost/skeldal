@@ -621,19 +621,15 @@ void change_click_map(T_CLK_MAP *map,int mapsize)
   click_map_size=mapsize;
   }
 
-void save_click_map(void **map,int *mapsize)
-  {
-  *map=click_map;
-  *mapsize=click_map_size;
-  }
+void save_click_map(T_CLK_MAP *&map, int &mapsize) {
+	map = click_map;
+	mapsize = click_map_size;
+}
 
-void restore_click_map(void *map,int mapsize)
-  {
-  click_map=(T_CLK_MAP *)map;
-  click_map_size=mapsize;
-  }
-
-
+void restore_click_map(T_CLK_MAP *map, int mapsize) {
+	click_map = map;
+	click_map_size = mapsize;
+}
 
 void change_global_click_map(T_CLK_MAP *map,int mapsize)
   {
