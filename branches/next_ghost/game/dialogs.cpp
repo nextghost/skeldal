@@ -1106,15 +1106,18 @@ char join_character(int i)
 
 static int selected_player;
 
-char drop_character()
-{
-  int selected_player=sn_nums[0];
-  if (selected_player<0 || selected_player>=POCET_POSTAV) return 1;
-  memcpy(postavy+selected_player,postavy+selected_player+1,sizeof(*postavy)*(POCET_POSTAV-selected_player));
-  postavy[POCET_POSTAV-1].used=0;
-  reg_grafiku_postav();
-  bott_draw(1);
-  return 0;
+char drop_character() {
+	int selected_player = sn_nums[0];
+
+	if (selected_player < 0 || selected_player >= POCET_POSTAV) {
+		return 1;
+	}
+
+	memmove(postavy + selected_player, postavy + selected_player + 1, sizeof(*postavy) * (POCET_POSTAV - selected_player));
+	postavy[POCET_POSTAV - 1].used = 0;
+	reg_grafiku_postav();
+	bott_draw(1);
+	return 0;
 }
 
 
