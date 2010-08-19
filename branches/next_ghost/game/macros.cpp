@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 #include <inttypes.h>
 #include "libs/event.h"
 #include "libs/memman.h"
@@ -59,6 +60,151 @@ char save_load_trigger(short load)
   if (load>=0) trig_group=(char)load;
   return trig_group;
   }
+
+void loadMacro(MacroEntry &entry, SeekableReadStream &stream) {
+	unsigned i, size = 0, pos = stream.pos();
+	MemoryReadStream *tmp;
+
+	while (i = stream.readUint32LE()) {
+		stream.seek(i, SEEK_CUR);
+		size++;
+	}
+
+	stream.seek(pos, SEEK_SET);
+	entry.size = size;
+	entry.data = new TMULTI_ACTION[size];
+
+	for (i = 0; size = stream.readUint32LE(); i++) {
+		tmp = stream.readStream(size);
+		pos = tmp->readUint8();
+		entry.data[i].general.action = pos & 0x3f;
+		entry.data[i].general.cancel = (pos >> 6) & 1;
+		entry.data[i].general.once = (pos >> 7) & 1;
+		entry.data[i].general.flags = tmp->readUint16LE();
+
+		switch (entry.data[i].general.action) {
+		case MA_GEN:
+		case MA_DESTI:
+		case MA_ENDGM:
+			break;
+
+		case MA_SOUND:
+			entry.data[i].sound.bit16 = tmp->readSint8();
+			entry.data[i].sound.volume = tmp->readSint8();
+			entry.data[i].sound.soundid = tmp->readSint8();
+			entry.data[i].sound.freq = tmp->readUint16LE();
+			entry.data[i].sound.start_loop = tmp->readUint32LE();
+			entry.data[i].sound.end_loop = tmp->readUint32LE();
+			entry.data[i].sound.offset = tmp->readUint32LE();
+			tmp->read(entry.data[i].sound.filename, 12);
+			break;
+
+		case MA_TEXTG:
+		case MA_TEXTL:
+		case MA_DIALG:
+		case MA_SSHOP:
+		case MA_STORY:
+		case MA_MUSIC:
+			entry.data[i].text.pflags = tmp->readSint8();
+			entry.data[i].text.textindex = tmp->readSint32LE();
+			break;
+
+		case MA_SENDA:
+			entry.data[i].send_a.change_bits = tmp->readSint8();
+			entry.data[i].send_a.sector = tmp->readUint16LE();
+			entry.data[i].send_a.side = tmp->readUint16LE();
+			entry.data[i].send_a.s_action = tmp->readUint16LE();
+			entry.data[i].send_a.delay = tmp->readSint8();
+			break;
+
+		case MA_FIREB:
+			entry.data[i].fireball.xpos = tmp->readSint16LE();
+			entry.data[i].fireball.ypos = tmp->readSint16LE();
+			entry.data[i].fireball.zpos = tmp->readSint16LE();
+			entry.data[i].fireball.speed = tmp->readSint16LE();
+			entry.data[i].fireball.item = tmp->readSint16LE();
+			break;
+
+		case MA_LOADL:
+		case MA_PLAYA:
+		case MA_WBOOK:
+			entry.data[i].loadlev.start_pos = tmp->readSint16LE();
+			entry.data[i].loadlev.dir = tmp->readSint8();
+			tmp->read(entry.data[i].loadlev.name, 13);
+			break;
+
+		case MA_DROPI:
+		case MA_CREAT:
+			entry.data[i].dropi.item = tmp->readSint16LE();
+			break;
+
+		case MA_CLOCK:
+			entry.data[i].clock.znak = tmp->readSint8();
+			tmp->read(entry.data[i].clock.string, 8);
+			entry.data[i].clock.codenum = tmp->readSint8();
+			break;
+
+		case MA_CACTN:
+			entry.data[i].cactn.pflags = tmp->readSint8();
+			entry.data[i].cactn.sector = tmp->readSint16LE();
+			entry.data[i].cactn.dir = tmp->readSint16LE();
+			break;
+
+		case MA_LOCK:
+			entry.data[i].lock.key_id = tmp->readSint16LE();
+			entry.data[i].lock.thieflevel = tmp->readSint16LE();
+			break;
+
+		case MA_SWAPS:
+			entry.data[i].swaps.pflags = tmp->readSint8();
+			entry.data[i].swaps.sector1 = tmp->readSint16LE();
+			entry.data[i].swaps.sector2 = tmp->readSint16LE();
+			break;
+
+		case MA_WOUND:
+			entry.data[i].wound.pflags = tmp->readSint8();
+			entry.data[i].wound.minor = tmp->readSint16LE();
+			entry.data[i].wound.major = tmp->readSint16LE();
+			break;
+
+		case MA_IFJMP:
+		case MA_HAVIT:
+		case MA_SNDEX:
+		case MA_IFACT:
+		case MA_CALLS:
+		case MA_MOVEG:
+		case MA_ISFLG:
+		case MA_CHFLG:
+		case MA_MONEY:
+		case MA_PICKI:
+		case MA_RANDJ:
+		case MA_GOMOB:
+		case MA_SHRMA:
+			entry.data[i].twop.parm1 = tmp->readSint16LE();
+			entry.data[i].twop.parm2 = tmp->readSint16LE();
+			break;
+
+		case MA_CUNIQ:
+		case MA_GUNIQ:
+			loadItem(entry.data[i].uniq.item, *tmp);
+			break;
+
+		case MA_GLOBE:
+			entry.data[i].globe.event = tmp->readSint8();
+			entry.data[i].globe.sector = tmp->readUint16LE();
+			entry.data[i].globe.side = tmp->readUint8();
+			entry.data[i].globe.cancel = tmp->readUint8();
+			entry.data[i].globe.param = tmp->readUint32LE();
+			break;
+
+		default:
+			assert(0 && "Unknown macro action");
+			break;
+		}
+
+		delete tmp;
+	}
+}
 
 void load_macros(void) {
 	memset(codelock_memory, 0, sizeof(codelock_memory));
@@ -390,28 +536,14 @@ static void hit_player(TMA_WOUND *w,int sector)
   }
 
 static TMULTI_ACTION *go_macro(int side, int abs_pos) {
-	const int *r;
-	int mcsiz;
+	const MacroEntry &entry = gameMap.macro(side);
 
-	program_counter = abs_pos;
-	r = (const int*)gameMap.macros()[side];
-
-	if (r == NULL) {
+	if (!entry.data) {
 		return NULL;
 	}
 
-	mcsiz = *r++;
-
-	while (abs_pos--) {
-		r = (int *)((char *)r + mcsiz);
-		mcsiz = *r++;
-
-		if (!mcsiz) {
-			return NULL;
-		}
-	}
-
-	return (TMULTI_ACTION *)r;
+	assert(abs_pos < entry.size && "Macro index out of range");
+	return entry.data + abs_pos;
 }
 
 static char monster_in_game(void)
@@ -695,9 +827,7 @@ void call_macro(int side,int flags)
 
 void call_macro_ex(int side, int flags, int runatside) {
 	TMULTI_ACTION *z, *p;
-	const int *r;
-	int mcsiz;
-	int c;
+	int i, c;
 	short saved_trigger;
 	short ls=last_send_action;
 	short save_rand;
@@ -712,10 +842,10 @@ void call_macro_ex(int side, int flags, int runatside) {
 
 	save_rand = rand_value;
 	rand_value = -1;
-	r = (const int*)gameMap.macros()[runatside];
+	const MacroEntry &entry = gameMap.macro(runatside);
 	program_counter = 0;
 
-	if (r == NULL) {
+	if (!entry.data) {
 		return;
 	}
 
@@ -728,11 +858,9 @@ void call_macro_ex(int side, int flags, int runatside) {
 		build_trig_group(TRIG_SECTOR, side);
 	}
 
-	while ((mcsiz = *r) != 0) {
-		r++;
-
+	for (i = 0; i < entry.size; i++) {
 zde:
-		z = (TMULTI_ACTION *)r;
+		z = entry.data + i;
 
 		if (z->general.flags & flags) {
 			c = -1;
@@ -906,9 +1034,8 @@ zde:
 			}
 
 			if (p != NULL) {
-				r = (int *)p;
+				i = p - entry.data;
 				program_counter = c;
-				mcsiz=r[-1];
 				goto zde;
 			}
 
@@ -927,7 +1054,6 @@ zde:
 			}
 		}
 
-		r = (int *)((char *)r + mcsiz);
 		program_counter++;
 	}
 

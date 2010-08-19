@@ -336,6 +336,11 @@ int Map::partialLoad(const char *filename) {
 	return 0;
 }
 
+const MacroEntry &Map::macro(unsigned idx) const {
+	assert(idx < _coordCount * 4 && "Macro entry index out of range");
+	return _macros[idx];
+}
+
 int Map::load(const char *filename) {
 	char blockHeader[BLOCK_HEADER_SIZE], *path = find_map_path(filename);
 	const char *ptr;
@@ -521,22 +526,11 @@ int Map::load(const char *filename) {
 
 		case A_MAPMACR:
 			SEND_LOG("(GAME) Loading multiactions...", 0, 0);
-			_macros = new unsigned char*[_coordCount * 4];
-			memset(_macros, 0, _coordCount * 4 * sizeof(unsigned char*));
+			_macros = new MacroEntry[_coordCount * 4];
+			memset(_macros, 0, _coordCount * 4 * sizeof(MacroEntry));
 
 			while (sector = stream->readUint32LE()) {
-				pos = stream->pos();
-				size = 0;
-
-				do {
-					i = stream->readUint32LE();
-					stream->seek(i, SEEK_CUR);
-					size += 4 + i;
-				} while (i);
-
-				stream->seek(pos, SEEK_SET);
-				_macros[sector] = new unsigned char[size];
-				stream->read(_macros[sector], size);
+				loadMacro(_macros[sector], *stream);
 			}
 
 			load_macros();
@@ -596,7 +590,7 @@ void Map::close(void) {
 		}
 
 		if (_macros) {
-			delete[] _macros[i];
+			delete[] _macros[i].data;
 		}
 	}
 

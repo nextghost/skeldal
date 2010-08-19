@@ -707,6 +707,11 @@ struct MapText {
 	char *text;
 };
 
+struct MacroEntry {
+	unsigned size;
+	union tmulti_action *data;
+};
+
 #define MAX_SPECTXTRS 64
 typedef SPECTXTR SPECTXT_ARR[MAX_SPECTXTRS];
 
@@ -723,7 +728,7 @@ private:
 	uint8_t *_flagMap;
 	short **_items;
 	SPECTXT_ARR _spectxtr;
-	unsigned char **_macros;
+	MacroEntry *_macros;
 	MapText *_mapNotes;
 
 	static const int _floorPanels[8];
@@ -743,7 +748,7 @@ public:
 	const uint8_t *flags(void) const { return _flagMap; }
 	const SPECTXTR *spectxtr(void) const { return _spectxtr; }
 	short * const *items(void) const { return _items; }
-	unsigned char * const *macros(void) const { return _macros; }
+	const MacroEntry &macro(unsigned idx) const;
 	const MapText *notes(void) const { return _mapNotes; }
 
 	int coordCount(void) const { return _coordCount; }
@@ -898,6 +903,7 @@ extern int it_count_orgn; //puvodni pocet predmetu ve hre (pri loadmap)
 extern short water_breath;       //vec pro dychani pod vodou
 extern short flute_item;
 
+void loadItem(struct titem &item, ReadStream &stream);
 void load_items(void);
 void load_item_map(void *p,long s);
 void draw_placed_items_normal(int celx,int cely,int sect,int side);
@@ -1233,154 +1239,125 @@ char load_saved_shops();
 #define MC_VYKEVENT 0x4000
 #define MC_WALLATTACK 0x8000
 
-typedef struct tma_gen
- {
- unsigned action : 6;
- unsigned cancel : 1;
- unsigned once   : 1;
- unsigned flags  : 16;
- }TMA_GEN;
+typedef struct tma_gen {
+	uint8_t action, cancel, once;
+	uint16_t flags;
+} TMA_GEN;
 
-typedef struct tma_sound
-  {
-  int8_t action,flags,eflags; //3
-  int8_t bit16;
-  int8_t volume;             //5
-  int8_t soundid;            //6
-  uint16_t freq;     //8
-  uint32_t start_loop,end_loop,offset;//20
-  char filename[12];       //32
-  }TMA_SOUND;
+typedef struct tma_sound {
+	TMA_GEN general;
+	int8_t bit16;
+	int8_t volume;             //5
+	int8_t soundid;            //6
+	uint16_t freq;     //8
+	uint32_t start_loop, end_loop, offset;//20
+	char filename[12];       //32
+} TMA_SOUND;
 
+typedef struct tma_text {
+	TMA_GEN general;
+	int8_t pflags;
+	int32_t textindex;
+} TMA_TEXT;
 
-typedef struct tma_text
-  {
-  int8_t action,flags,eflags,pflags;
-  int32_t textindex;
-  }TMA_TEXT;
+typedef struct tma_send_action {
+	TMA_GEN general;
+	int8_t change_bits;
+	uint16_t sector, side, s_action;
+	int8_t delay;
+} TMA_SEND_ACTION;
 
-typedef struct tma_send_action
-  {
-  int8_t action,flags,eflags,change_bits;
-  uint16_t sector,side,s_action;
-  int8_t delay;
-  }TMA_SEND_ACTION;
+typedef struct tma_fireball {
+	TMA_GEN general;
+	int16_t xpos, ypos, zpos, speed, item;
+} TMA_FIREBALL;
 
-typedef struct tma_fireball
-  {
-  int8_t action,flags,eflags;
-  int16_t xpos,ypos,zpos,speed,item;
-  }TMA_FIREBALL;
+typedef struct tma_loadlev {
+	TMA_GEN general;
+	int16_t start_pos;
+	int8_t dir;
+	char name[13];
+} TMA_LOADLEV;
 
-typedef struct tma_loadlev
-  {
-  int8_t action,flags,eflags;
-  int16_t start_pos;
-  int8_t dir;
-  char name[13];
-  }TMA_LOADLEV;
+typedef struct tma_dropitm {
+	TMA_GEN general;
+	int16_t item;
+} TMA_DROPITM;
 
+typedef struct tma_codelock {
+	TMA_GEN general;
+	char znak;
+	char string[8];
+	int8_t codenum;
+} TMA_CODELOCK;
 
+typedef struct tma_cancelaction {
+	TMA_GEN general;
+	int8_t pflags;
+	int16_t sector, dir;
+} TMA_ACTN;
 
-typedef struct tma_dropitm
-  {
-  int8_t action,flags,eflags;
-  int16_t item;
-  }TMA_DROPITM;
+typedef struct tma_swapsectors {
+	TMA_GEN general;
+	int8_t pflags;
+	int16_t sector1, sector2;
+} TMA_SWAPS;
 
-typedef struct tma_codelock
-  {
-  int8_t action,flags,eflags;
-  char znak;
-  char string[8];
-  int8_t codenum;
-  }TMA_CODELOCK;
+typedef struct tma_wound {
+	TMA_GEN general;
+	int8_t pflags;
+	int16_t minor, major;
+} TMA_WOUND;
 
-typedef struct tma_cancelaction
-  {
-  int8_t action,flags,eflags,pflags;
-  int16_t sector,dir;
-  }TMA_ACTN;
+typedef struct tma_lock {
+	TMA_GEN general;
+	int16_t key_id;
+	int16_t thieflevel;
+} TMA_LOCK;
 
-typedef struct tma_swapsectors
-  {
-  int8_t action,flags,eflags,pflags;
-  int16_t sector1,sector2;
-  }TMA_SWAPS;
+typedef struct tma_two_parms {
+	TMA_GEN general;
+	int16_t parm1, parm2;
+} TMA_TWOP;
 
-typedef struct tma_wound
-  {
-  int8_t action,flags,eflags,pflags;
-  int16_t minor,major;
-  }TMA_WOUND;
+typedef struct tma_create_unique {
+	TMA_GEN general;
+	TITEM item;
+} TMA_UNIQUE;
 
-
-
-typedef struct tma_lock
-  {
-  int8_t action,flags,eflags;
-  int16_t key_id;
-  int16_t thieflevel;
-  }TMA_LOCK;
-
-typedef struct tma_two_parms
-  {
-  int8_t action,flags,eflags;
-  int16_t parm1,parm2;
-  }TMA_TWOP;
-
-typedef struct tma_create_unique
-  {
-  int8_t action,flags,eflags;
-  TITEM item;
-  }TMA_UNIQUE;
-
-typedef struct tma_globe
-  { 
-  int8_t action,flags,eflags,event; //event - MAGLOB_XXXX
-  uint16_t sector;	  //sektor of action target, when event occured
-  uint8_t side;		  //side of action target, when event occured
-  uint8_t cancel;		  //1 - cancel event
-  uint32_t param;		  //event depend param - zero is default
-  }TMA_GLOBE;
-
-
-typedef struct tma_ifsec
-{
-  int8_t action,flags,eflags;
-  uint8_t side;		  //side of action target, when event occured
-  uint16_t sector;	  //sektor of action target, when event occured
-  int16_t line;		  //jump line
-  int8_t invert;				  //invert condition
-}TMA_IFSEC;
-
-
+typedef struct tma_globe {
+	TMA_GEN general;
+	int8_t event; //event - MAGLOB_XXXX
+	uint16_t sector;	  //sektor of action target, when event occured
+	uint8_t side;		  //side of action target, when event occured
+	uint8_t cancel;		  //1 - cancel event
+	uint32_t param;		  //event depend param - zero is default
+} TMA_GLOBE;
 
 extern TMA_LOADLEV loadlevel;
 
-typedef union tmulti_action
-  {
-  struct tma_gen general;
-  struct tma_sound sound;
-  struct tma_text text;
-  struct tma_send_action send_a;
-  struct tma_fireball fireball;
-  struct tma_loadlev loadlev;
-  struct tma_dropitm dropi;
-  struct tma_codelock clock;
-  struct tma_cancelaction cactn;
-  struct tma_lock lock;
-  struct tma_swapsectors swaps;
-  struct tma_wound wound;
-  struct tma_two_parms twop;
-  struct tma_create_unique uniq;
-  struct tma_globe globe;
-  struct tma_ifsec ifsec;
-  }TMULTI_ACTION;
+typedef union tmulti_action {
+	struct tma_gen general;
+	struct tma_sound sound;
+	struct tma_text text;
+	struct tma_send_action send_a;
+	struct tma_fireball fireball;
+	struct tma_loadlev loadlev;
+	struct tma_dropitm dropi;
+	struct tma_codelock clock;
+	struct tma_cancelaction cactn;
+	struct tma_lock lock;
+	struct tma_swapsectors swaps;
+	struct tma_wound wound;
+	struct tma_two_parms twop;
+	struct tma_create_unique uniq;
+	struct tma_globe globe;
+} TMULTI_ACTION;
 
 extern void *macro_block;          //alokovany blok maker (pri unloadu free!)
 extern int macro_block_size;       //velikost bloku;
 
+void loadMacro(MacroEntry &entry, SeekableReadStream &stream);
 void load_macros(void);
 void call_macro(int side,int flags);
 void call_macro_ex(int side,int flags, int runatsect);

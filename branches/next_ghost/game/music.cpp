@@ -326,25 +326,14 @@ void restore_sound_name(TMA_SOUND *p)
   }
 
 void restore_sound_names() {
-	int i;
+	int i, j;
 
 	for (i = 0; i < gameMap.coordCount() * 4; i++) {
-		if (gameMap.macros()[i] != NULL) {
-			int mcsiz;
-			const int *r;
-			TMULTI_ACTION *z;
+		const MacroEntry &entry = gameMap.macro(i);
 
-			r = (const int*)gameMap.macros()[i];
-
-			while ((mcsiz = *r) != 0) {
-				r++;
-				z = (TMULTI_ACTION *)r;
-
-				if (z->general.action == MA_SOUND) {
-					restore_sound_name(&z->sound);
-				}
-
-				r = (int *)((char *)r + mcsiz);
+		for (j = 0; entry.data && j < entry.size; j++) {
+			if (entry.data[j].general.action == MA_SOUND) {
+				restore_sound_name(&entry.data[j].sound);
 			}
 		}
 	}
