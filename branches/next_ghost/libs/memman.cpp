@@ -497,6 +497,33 @@ size_t WriteFile::write(const void *buf, size_t size) {
 	return fwrite(buf, 1, size, _file);
 }
 
+MemoryWriteStream::MemoryWriteStream(unsigned alloc) :
+	_data(new unsigned char[alloc]), _size(alloc), _pos(0) {
+
+	memset(_data, 0, _size * sizeof(unsigned char));
+}
+
+MemoryWriteStream::~MemoryWriteStream(void) {
+	delete[] _data;
+}
+
+size_t MemoryWriteStream::write(const void *buf, size_t size) {
+	if (_pos + size >= _size) {
+		unsigned char *tmp;
+
+		_size = _pos + size > 2 * _size ? _pos + size : 2 * _size;
+		tmp = new unsigned char[_size];
+		memcpy(tmp, _data, _pos);
+		memset(tmp + _pos + size, 0, _size - _pos - size);
+		delete[] _data;
+		_data = tmp;
+	}
+
+	memcpy(_data + _pos, buf, size);
+	_pos += size;
+	return size;
+}
+
 BitStream::BitStream(ReadStream &stream) : _stream(stream), _lastByte(0),
 	_bitsLeft(0) {
 

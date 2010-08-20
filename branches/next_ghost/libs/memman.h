@@ -146,8 +146,8 @@ private:
 	char *_name;
 
 	// Do not implement
-	WriteFile(const File &src);
-	const WriteFile &operator=(const File &src);
+	WriteFile(const WriteFile &src);
+	const WriteFile &operator=(const WriteFile &src);
 
 public:
 	WriteFile(void);
@@ -160,6 +160,23 @@ public:
 	inline bool isOpen(void) const { return _file; }
 
 	size_t write(const void *buf, size_t size);
+};
+
+class MemoryWriteStream : public WriteStream {
+private:
+	unsigned char *_data;
+	unsigned _size, _pos;
+
+	// Do not implement
+	MemoryWriteStream(const MemoryWriteStream &src);
+	const MemoryWriteStream &operator=(const MemoryWriteStream &src);
+public:
+	MemoryWriteStream(unsigned alloc = 32);
+	~MemoryWriteStream(void);
+
+	size_t write(const void *buf, size_t size);
+	void *getData(void) const { return _data; }
+	unsigned getDataLength(void) const { return _pos; }
 };
 
 class BitStream {
