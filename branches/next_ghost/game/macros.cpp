@@ -206,6 +206,169 @@ void loadMacro(MacroEntry &entry, SeekableReadStream &stream) {
 	}
 }
 
+void saveMacros(WriteStream &stream, const MacroEntry *macros, unsigned size) {
+	unsigned i, j, cnt;
+
+	for (i = 0; i < size; i++) {
+		cnt = 0;
+
+		for (j = 0; macros[i].data && j < macros[i].size; j++) {
+			// MA_GEN is no-op, skip
+			if (macros[i].data[j].general.action != MA_GEN) {
+				cnt = 1;
+				break;
+			}
+		}
+
+		if (!cnt) {
+			continue;
+		}
+
+		stream.writeUint32LE(i);
+
+		for (j = 0; j < macros[i].size; j++) {
+			// MA_GEN is no-op, skip
+			if (macros[i].data[j].general.action == MA_GEN) {
+				continue;
+			}
+
+			MemoryWriteStream tmp;
+			TMULTI_ACTION *act = macros[i].data + j;
+
+			tmp.writeUint8(act->general.action | ((act->general.cancel != 0) << 6) | ((act->general.once != 0) << 7));
+			tmp.writeUint16LE(act->general.flags);
+
+			switch (act->general.action) {
+			case MA_DESTI:
+			case MA_ENDGM:
+				break;
+
+			case MA_SOUND:
+				tmp.writeSint8(act->sound.bit16);
+				tmp.writeSint8(act->sound.volume);
+				tmp.writeSint8(act->sound.soundid);
+				tmp.writeUint16LE(act->sound.freq);
+				tmp.writeUint32LE(act->sound.start_loop);
+				tmp.writeUint32LE(act->sound.end_loop);
+				tmp.writeUint32LE(act->sound.offset);
+				tmp.write(act->sound.filename, 12);
+				break;
+
+			case MA_TEXTG:
+			case MA_TEXTL:
+			case MA_DIALG:
+			case MA_SSHOP:
+			case MA_STORY:
+			case MA_MUSIC:
+				tmp.writeSint8(act->text.pflags);
+				tmp.writeSint32LE(act->text.textindex);
+				break;
+
+			case MA_SENDA:
+				tmp.writeSint8(act->send_a.change_bits);
+				tmp.writeUint16LE(act->send_a.sector);
+				tmp.writeUint16LE(act->send_a.side);
+				tmp.writeUint16LE(act->send_a.s_action);
+				tmp.writeSint8(act->send_a.delay);
+				break;
+
+			case MA_FIREB:
+				tmp.writeSint16LE(act->fireball.xpos);
+				tmp.writeSint16LE(act->fireball.ypos);
+				tmp.writeSint16LE(act->fireball.zpos);
+				tmp.writeSint16LE(act->fireball.speed);
+				tmp.writeSint16LE(act->fireball.item);
+				break;
+
+			case MA_LOADL:
+			case MA_PLAYA:
+			case MA_WBOOK:
+				tmp.writeSint16LE(act->loadlev.start_pos);
+				tmp.writeSint8(act->loadlev.dir);
+				tmp.write(act->loadlev.name, 13);
+				break;
+
+			case MA_DROPI:
+			case MA_CREAT:
+				tmp.writeSint16LE(act->dropi.item);
+				break;
+
+			case MA_CLOCK:
+				tmp.writeSint8(act->clock.znak);
+				tmp.write(act->clock.string, 8);
+				tmp.writeSint8(act->clock.codenum);
+				break;
+
+			case MA_CACTN:
+				tmp.writeSint8(act->cactn.pflags);
+				tmp.writeSint16LE(act->cactn.sector);
+				tmp.writeSint16LE(act->cactn.dir);
+				break;
+
+			case MA_LOCK:
+				tmp.writeSint16LE(act->lock.key_id);
+				tmp.writeSint16LE(act->lock.thieflevel);
+				break;
+
+			case MA_SWAPS:
+				tmp.writeSint8(act->swaps.pflags);
+				tmp.writeSint16LE(act->swaps.sector1);
+				tmp.writeSint16LE(act->swaps.sector2);
+				break;
+
+			case MA_WOUND:
+				tmp.writeSint8(act->wound.pflags);
+				tmp.writeSint16LE(act->wound.minor);
+				tmp.writeSint16LE(act->wound.major);
+				break;
+
+			case MA_IFJMP:
+			case MA_HAVIT:
+			case MA_SNDEX:
+			case MA_IFACT:
+			case MA_CALLS:
+			case MA_MOVEG:
+			case MA_ISFLG:
+			case MA_CHFLG:
+			case MA_MONEY:
+			case MA_PICKI:
+			case MA_RANDJ:
+			case MA_GOMOB:
+			case MA_SHRMA:
+				tmp.writeSint16LE(act->twop.parm1);
+				tmp.writeSint16LE(act->twop.parm2);
+				break;
+
+			case MA_CUNIQ:
+			case MA_GUNIQ:
+				saveItem(tmp, act->uniq.item);
+				break;
+
+			case MA_GLOBE:
+				tmp.writeSint8(act->globe.event);
+				tmp.writeUint16LE(act->globe.sector);
+				tmp.writeUint8(act->globe.side);
+				tmp.writeUint8(act->globe.cancel);
+				tmp.writeUint32LE(act->globe.param);
+				break;
+
+			default:
+				assert(0 && "Unknown macro action");
+				break;
+			}
+
+			stream.writeUint32LE(tmp.getDataLength());
+			stream.write(tmp.getData(), tmp.getDataLength());
+		}
+
+		// End macro list for current side
+		stream.writeUint32LE(0);
+	}
+
+	// End map macro list
+	stream.writeUint32LE(0);
+}
+
 void load_macros(void) {
 	memset(codelock_memory, 0, sizeof(codelock_memory));
 }

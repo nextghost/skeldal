@@ -207,6 +207,56 @@ void loadItem(TITEM &item, ReadStream &stream) {
 	}
 }
 
+void saveItem(WriteStream &stream, const TITEM &item) {
+	unsigned i;
+
+	stream.write(item.jmeno, 32);
+	stream.write(item.popis, 32);
+
+	for (i = 0; i < 24; i++) {
+		stream.writeSint16LE(item.zmeny[i]);
+	}
+
+	stream.writeSint16LE(item.podminky[0]);
+	stream.writeSint16LE(item.podminky[1]);
+	stream.writeSint16LE(item.podminky[2]);
+	stream.writeSint16LE(item.podminky[3]);
+	stream.writeSint16LE(item.hmotnost);
+	stream.writeSint16LE(item.nosnost);
+	stream.writeSint16LE(item.druh);
+	stream.writeSint16LE(item.umisteni);
+	stream.writeUint16LE(item.flags);
+	stream.writeSint16LE(item.spell);
+	stream.writeSint16LE(item.magie);
+	stream.writeSint16LE(item.sound_handle);
+	stream.writeSint16LE(item.use_event);
+	stream.writeUint16LE(item.ikona);
+	stream.writeUint16LE(item.vzhled);
+	stream.writeSint16LE(item.user_value);
+	stream.writeSint16LE(item.keynum);
+	stream.writeSint16LE(item.polohy[0][0]);
+	stream.writeSint16LE(item.polohy[0][1]);
+	stream.writeSint16LE(item.polohy[1][0]);
+	stream.writeSint16LE(item.polohy[1][1]);
+	stream.writeSint8(item.typ_zbrane);
+	stream.writeSint8(item.unused);
+	stream.writeSint16LE(item.sound);
+
+	for (i = 0; i < 16; i++) {
+		stream.writeSint16LE(item.v_letu[i]);
+	}
+
+	stream.writeSint32LE(item.cena);
+	stream.writeSint8(item.weapon_attack);
+	stream.writeSint8(item.hitpos);
+	stream.writeUint8(item.shiftup);
+	stream.writeSint8(item.byteres);
+
+	for (i = 0; i < 12; i++) {
+		stream.writeSint16LE(item.rezerva[i]);
+	}
+}
+
 #define BLOCK_HEADER_SIZE 8
 
 void load_items() {

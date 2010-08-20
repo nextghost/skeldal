@@ -902,6 +902,7 @@ extern short water_breath;       //vec pro dychani pod vodou
 extern short flute_item;
 
 void loadItem(struct titem &item, ReadStream &stream);
+void saveItem(WriteStream &stream, const struct titem &item);
 void load_items(void);
 void load_item_map(void *p,long s);
 void draw_placed_items_normal(int celx,int cely,int sect,int side);
@@ -1356,6 +1357,7 @@ extern void *macro_block;          //alokovany blok maker (pri unloadu free!)
 extern int macro_block_size;       //velikost bloku;
 
 void loadMacro(MacroEntry &entry, SeekableReadStream &stream);
+void saveMacros(WriteStream &stream, const MacroEntry *macros, unsigned size);
 void load_macros(void);
 void call_macro(int side,int flags);
 void call_macro_ex(int side,int flags, int runatsect);

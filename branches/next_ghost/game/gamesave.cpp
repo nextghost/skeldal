@@ -407,51 +407,7 @@ int save_basic_info() {
 	}
 
 	for (i = it_count_orgn; i < item_count; i++) {
-		file.write(glob_items[i].jmeno, 32);
-		file.write(glob_items[i].popis, 32);
-
-		for (j = 0; j < 24; j++) {
-			file.writeSint16LE(glob_items[i].zmeny[j]);
-		}
-
-		file.writeSint16LE(glob_items[i].podminky[0]);
-		file.writeSint16LE(glob_items[i].podminky[1]);
-		file.writeSint16LE(glob_items[i].podminky[2]);
-		file.writeSint16LE(glob_items[i].podminky[3]);
-		file.writeSint16LE(glob_items[i].hmotnost);
-		file.writeSint16LE(glob_items[i].nosnost);
-		file.writeSint16LE(glob_items[i].druh);
-		file.writeSint16LE(glob_items[i].umisteni);
-		file.writeUint16LE(glob_items[i].flags);
-		file.writeSint16LE(glob_items[i].spell);
-		file.writeSint16LE(glob_items[i].magie);
-		file.writeSint16LE(glob_items[i].sound_handle);
-		file.writeSint16LE(glob_items[i].use_event);
-		file.writeUint16LE(glob_items[i].ikona);
-		file.writeUint16LE(glob_items[i].vzhled);
-		file.writeSint16LE(glob_items[i].user_value);
-		file.writeSint16LE(glob_items[i].keynum);
-		file.writeSint16LE(glob_items[i].polohy[0][0]);
-		file.writeSint16LE(glob_items[i].polohy[0][1]);
-		file.writeSint16LE(glob_items[i].polohy[1][0]);
-		file.writeSint16LE(glob_items[i].polohy[1][1]);
-		file.writeSint8(glob_items[i].typ_zbrane);
-		file.writeSint8(glob_items[i].unused);
-		file.writeSint16LE(glob_items[i].sound);
-
-		for (j = 0; j < 16; j++) {
-			file.writeSint16LE(glob_items[i].v_letu[j]);
-		}
-
-		file.writeSint32LE(glob_items[i].cena);
-		file.writeSint8(glob_items[i].weapon_attack);
-		file.writeSint8(glob_items[i].hitpos);
-		file.writeUint8(glob_items[i].shiftup);
-		file.writeSint8(glob_items[i].byteres);
-
-		for (j = 0; j < 12; j++) {
-			file.writeSint16LE(glob_items[i].rezerva[j]);
-		}
+		saveItem(file, glob_items[i]);
 	}
 
 	res |= save_spells(file);

@@ -911,6 +911,7 @@ int Map::save(void) const {
 	LETICI_VEC *f;
 	WriteFile file;
 	Map hack;
+	MemoryWriteStream stream;
 
 	strcpy(buf, _fileName);
 	expand_map_file_name(buf);
@@ -1096,7 +1097,9 @@ int Map::save(void) const {
 	}
 
 	save_daction(file, 0, d_action);
-	file.writeUint32LE(0);	// macro_block_size, never used
+	saveMacros(stream, _macros, 4 * _coordCount);
+	file.writeUint32LE(stream.getDataLength());
+	file.write(stream.getData(), stream.getDataLength());
 
 	if (save_codelocks(file)) {
 		return -1;
@@ -1185,6 +1188,7 @@ int Map::restore(void) {
 	unsigned size;
 	uint8_t tmp;
 	File file;
+	MemoryReadStream *stream;
 
 	strcpy(buf, _fileName);
 	expand_map_file_name(buf);
@@ -1316,8 +1320,21 @@ int Map::restore(void) {
 	}
 
 	load_daction(file);
-	i = file.readUint32LE();
-	file.seek(i, SEEK_CUR);	// macro_block is never actually used
+	size = file.readUint32LE();
+	stream = file.readStream(size);
+
+	for (i = 0; i < _coordCount * 4; i++) {
+		delete[] _macros[i].data;
+		_macros[i].data = NULL;
+		_macros[i].size = 0;
+	}
+
+	while ((i = stream->readUint32LE()) && !stream->eos()) {
+		loadMacro(_macros[i], *stream);
+	}
+
+	load_macros();
+	delete stream;
 
 	if (load_codelocks(file)) {
 		return -2;
