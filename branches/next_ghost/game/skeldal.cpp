@@ -175,7 +175,7 @@ TDREGISTERS registred[]=
     {H_FKNIHA,"kniha.fon",loadFont,SR_FONT},
     {H_FBIG,"timese.fon",loadFont,SR_FONT},
     {H_IOBLOUK,"ioblouk.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_LODKA,"lodka.pcx",pcx_15bit_decomp,SR_BGRAFIKA},
+    {H_LODKA,"lodka.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_IDESKA,"ideska.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_IMRIZ1,"imriz1.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_RAMECEK,"ramecek.pcx",pcx_8bit_decomp,SR_BGRAFIKA},

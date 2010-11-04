@@ -224,11 +224,11 @@ void SoftRenderer::rotBlit(const Texture &tex, int x, int y, float angle, const 
 		pal = tex.palette();
 	}
 
-	for (i = basey; i < tex.height(); i++) {
+	for (i = basey; i + y < height(); i++) {
 		ty = i - tex.height() / 2;
 		dst = _pixels + 3 * (x + 2 * basex + (i + y) * width());
 
-		for (j = basex; j < tex.width(); j++) {
+		for (j = basex; j + x + 2 * basex < width(); j++) {
 			tx = j - tex.width() / 2;
 			sx = tx * cosine - ty * sine + tex.width() / 2;
 			sy = tx * sine + ty * cosine + tex.height() / 2;
@@ -409,6 +409,10 @@ void SoftRenderer::wallBlit(const Texture &tex, int x, int y, int32_t *xtable, u
 	for (i = 0, ty = 0; y - i >= 0 && i < ylen; ty += ytable[i++]) {
 		if (ty >= tex.height()) {
 			break;
+		}
+
+		if (y - i >= height()) {
+			continue;
 		}
 
 		for (j = 0, tx = 0; j < xlen; tx += xtable[j++] + 1) {
@@ -719,8 +723,8 @@ void SoftRenderer::drawChar(int x, int y, unsigned char c) {
 	const uint8_t *ptr = glyph.data;
 	uint8_t tmp = 0;
 
-	for (i = 0; i < glyph.width && x + i <= width(); i++) {
-		for (j = 0; j < glyph.height && y + j <= height(); j++) {
+	for (i = 0; i < glyph.width && x + i < width(); i++) {
+		for (j = 0; j < glyph.height && y + j < height(); j++) {
 			if (tmp--) {
 				continue;
 			}
