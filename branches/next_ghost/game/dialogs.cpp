@@ -1334,14 +1334,11 @@ static char isall()
   return 1;
   }
 
-static void spat(int hodin)
-  {
-  sleep_ticks=hodin*HODINA;
+static void spat(int hodin) {
+	sleep_ticks = hodin * HODINA;
 //  Task_Add(16384,sleep_players);
-  sleep_players();
-  insleep=1;
-  while (insleep) do_events();
-  }
+	sleep_players();
+}
 
 static char test_volby_select(int balance,int value)
   {
