@@ -46,6 +46,9 @@ static int swapped = 0;
 static int play_music = 0, active = 0;
 static Mix_Music *cur_music = NULL, *next_music = NULL;
 
+// empty string terminated
+static const char *music_ext[] = {".ogg", ".mp3", ""};
+
 void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
 }
@@ -238,16 +241,20 @@ static Mix_Music *Sound_LoadFile(const char *file) {
 	buf = (char*)malloc((strlen(file) + 5) * sizeof(char));
 	strcpy(buf, file);
 	tmp = strrchr(buf, '.');
+	tmp = tmp ? tmp : buf + strlen(buf);
 
-	if (tmp) {
-		strcpy(tmp, ".mp3");
-	} else {
-		strcat(buf, ".mp3");
+	// try to load all possible music formats until success or failure
+	for (int i = 0; music_ext[i][0]; i++) {
+		strcpy(tmp, music_ext[i]);
+		ret = Mix_LoadMUS(buf);
+
+		if (ret) {
+			break;
+		}
 	}
 
-	ret = Mix_LoadMUS(buf);
-
 	if (!ret) {
+		tmp[0] = '\0';
 		fprintf(stderr, "Could not load music file %s...\n", buf);
 	}
 

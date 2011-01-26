@@ -11,6 +11,7 @@ for i in "$@"; do
 	if [ -f "$i" ]; then
 		echo "demus $i"
 		$DEMUS "$i" | lame `$MUSINFO "$i"` -V 4 - ${i/%.MUS/.mp3}
+		$DEMUS "$i" | oggenc `$MUSINFO -o "$i"` -q 3 - -o ${i/%.MUS/.ogg}
 	else
 		echo "File $i not found"
 	fi
