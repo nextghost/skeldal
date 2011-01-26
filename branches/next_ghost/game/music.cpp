@@ -296,7 +296,7 @@ void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p
 
 	alock(blockid);
 	s = dynamic_cast<const SoundSample*>(ablock(blockid));
-	Sound_PlaySample(chan, s->data(), p->end_loop - p->offset, p->start_loop - p->offset, p->freq, 1 + (p->bit16 & 1));
+	Sound_PlaySample(chan, s->data(), s->length(), p->start_loop - p->offset, p->end_loop - p->offset, p->freq, 1 + (p->bit16 & 1));
 	playings[chan].data = p;
 	playings[chan].xpos = xd;
 	playings[chan].ypos = yd;
@@ -521,7 +521,7 @@ void play_sample_at_sector(int sample, int sector1, int sector2, int track, char
 	if (!track || oldtrack == -1) {
 		alock(sample);
 		s = dynamic_cast<const SoundSample*>(ablock(sample));
-		Sound_PlaySample(chan, s->data(), s->length(), loop ? 0 : s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
+		Sound_PlaySample(chan, s->data(), s->length(), loop ? 0 : s->length(), s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
 		playings[chan].data = NULL;
 	}
 
@@ -552,7 +552,7 @@ void play_sample_at_channel(int sample, int channel, int vol) {
 	alock(sample);
 	locks[channel] = sample;
 	s = dynamic_cast<const SoundSample*>(ablock(sample));
-	Sound_PlaySample(channel, s->data(), s->length(), s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
+	Sound_PlaySample(channel, s->data(), s->length(), s->length(), s->length(), s->freq(), (s->freq() != s->bps() ? 2 : 1));
 }
 
 void create_sound_table_old() {

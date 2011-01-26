@@ -34,9 +34,10 @@
 #define MUSIC_MAXVOL 255
 
 typedef struct {
-	int lvolume, rvolume, looping, leadout;
-	SDL_AudioCVT cvt;
-	Mix_Chunk current, next;
+	int lvolume, rvolume, loopstart, loopend;
+	Uint8 *data;
+	unsigned size;
+	Mix_Chunk chunk;
 } channel_t;
 
 static int freq = 22050;
@@ -49,33 +50,12 @@ void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
 }
 
-static void Channel_Callback(int channel) {
-	// start next loop of current sample
-	if (chans[channel].looping) {
-		Mix_PlayChannel(channel, &chans[channel].current, 0);
-	// start leadout if present
-	} else if (chans[channel].leadout) {
-		chans[channel].leadout = 0;
-		free(chans[channel].current.abuf);
-		chans[channel].current.abuf = NULL;
-		chans[channel].current.allocated = 0;
-
-		chans[channel].current = chans[channel].next;
-		chans[channel].next.abuf = NULL;
-		chans[channel].next.allocated = 0;
-
-		Mix_PlayChannel(channel, &chans[channel].current, 0);
-	}
-}
-
 void Sound_StartMixing(void) {
 	if (Mix_OpenAudio(freq, AUDIO_S16SYS, 2, 1024) < 0) {
 		assert(0 && "Failed to start mixer");
 	}
 
 	Mix_AllocateChannels(CHANNELS);
-	Mix_ChannelFinished(Channel_Callback);
-
 	active = 1;
 }
 
@@ -107,102 +87,64 @@ void Sound_StopMixing(void) {
 }
 
 // FIXME: resample when loading the sound file
-void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long sfreq, int type) {
+void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long lend, long sfreq, int type) {
+	double coef;
+	SDL_AudioCVT cvt;
+
 	assert(active && "Sound system not initialized");
 	assert(channel >= 0 && channel < CHANNELS && "Invalid channel");
-	assert(((lstart == 0) || (lstart == size)) && "Lead-in not supported");
 
 	// clean up resampled buffers
 	Sound_Mute(channel);
 
-	if (!SDL_BuildAudioCVT(&chans[channel].cvt, type == 1 ? AUDIO_U8 : AUDIO_S16LSB, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
+	if (!SDL_BuildAudioCVT(&cvt, type == 1 ? AUDIO_U8 : AUDIO_S16LSB, 1, sfreq, AUDIO_S16SYS, 2, freq)) {
 		fprintf(stderr, "Resample from %ldHz/%d bits to %dHz/16 bits failed\n", sfreq, type == 1 ? 8 : 16, freq);
 		return;
 	}
 
-	chans[channel].cvt.buf = (Uint8*)malloc(size * chans[channel].cvt.len_mult);
-	chans[channel].cvt.len = size;
-	memcpy(chans[channel].cvt.buf, sample, size);
+	cvt.buf = (Uint8*)malloc(size * cvt.len_mult);
+	cvt.len = size;
+	memcpy(cvt.buf, sample, size);
 
-	SDL_ConvertAudio(&chans[channel].cvt);
+	SDL_ConvertAudio(&cvt);
 
-	chans[channel].current.allocated = 1;
-	chans[channel].current.abuf = chans[channel].cvt.buf;
-	chans[channel].current.alen = chans[channel].cvt.len_cvt;
-	chans[channel].current.volume = 128;
-	chans[channel].looping = lstart == 0;
-	chans[channel].leadout = 0;
+	chans[channel].data = cvt.buf;
+	chans[channel].size = cvt.len_cvt;
+	coef = (double)chans[channel].size / size;
+	chans[channel].loopstart = lstart * coef;
+	chans[channel].loopend = lend * coef;
 
-	Mix_PlayChannel(channel, &chans[channel].current, 0);
+	chans[channel].chunk.allocated = 1;
+	chans[channel].chunk.abuf = chans[channel].data;
+	chans[channel].chunk.alen = chans[channel].loopend;
+	chans[channel].chunk.volume = 128;
+
+	Mix_PlayChannel(channel, &chans[channel].chunk, 0);
 }
 
 // stop channel and free resampled buffers
 void Sound_Mute(int channel) {
-	// kill the callback for this channel
-	chans[channel].looping = 0;
-	chans[channel].leadout = 0;
-
 	// stop the channel
 	Mix_HaltChannel(channel);
 
-	// free resampled buffers
-	if (chans[channel].current.abuf && chans[channel].current.allocated) {
-		free(chans[channel].current.abuf);
-		chans[channel].current.abuf = NULL;
-		chans[channel].current.allocated = 0;
+	// free resampled buffer
+	if (chans[channel].data) {
+		free(chans[channel].data);
+		chans[channel].data = NULL;
 	}
-
-	if (chans[channel].next.abuf && chans[channel].next.allocated) {
-		free(chans[channel].next.abuf);
-		chans[channel].next.abuf = NULL;
-		chans[channel].next.allocated = 0;
-	}
-
 }
 
-void Sound_BreakExt(int channel, void *sample, long size) {
-	// check if the channel has valid resampling info
-	if (!Mix_Playing(channel)) {
-		return;
-	}
-
-	// warn about possible race condition with channel stopping callback
-	if (!chans[channel].looping) {
-		fprintf(stderr, "Warning: Sound_BreakExt() called on non-looping channel\n");
-	}
-
-	// free any resampled buffers
-	if (chans[channel].next.abuf && chans[channel].next.allocated) {
-		free(chans[channel].next.abuf);
-		chans[channel].next.abuf = NULL;
-		chans[channel].next.allocated = 0;
-	}
-
-	// resample lead-out
-	chans[channel].cvt.buf = (Uint8*)malloc(size * chans[channel].cvt.len_mult);
-	chans[channel].cvt.len = size;
-	memcpy(chans[channel].cvt.buf, sample, size);
-
-	SDL_ConvertAudio(&chans[channel].cvt);
-
-	// load it in
-	chans[channel].next.allocated = 1;
-	chans[channel].next.abuf = chans[channel].cvt.buf;
-	chans[channel].next.alen = chans[channel].cvt.len_cvt;
-	chans[channel].next.volume = 128;
-
-	// break the loop
-	chans[channel].leadout = 1;
-	chans[channel].looping = 0;
+void Sound_BreakExt(int channel) {
+	chans[channel].loopstart = chans[channel].loopend;
 }
 
 void Sound_BreakLoop(int channel) {
-	chans[channel].looping = 0;
-	chans[channel].leadout = 0;
+	chans[channel].loopstart = chans[channel].size;
+	chans[channel].loopend = chans[channel].size;
 }
 
 char Sound_GetChannelState(int channel) {
-	return Mix_Playing(channel) != 0;
+	return chans[channel].data != NULL;
 }
 
 void Sound_SetVolume(int channel, int left, int right) {
@@ -333,6 +275,29 @@ void Sound_ChangeMusic(const char *file) {
 // start next music when the last one finished
 int Sound_MixBack(int sync) {
 	char *buf;
+	unsigned i;
+
+	for (i = 0; i < CHANNELS; i++) {
+		if (!chans[i].data || Mix_Playing(i)) {
+			continue;
+		}
+
+		if (chans[i].loopstart < chans[i].loopend) {
+			// channel is looping
+			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
+			chans[i].chunk.alen = chans[i].loopend - chans[i].loopstart;
+			Mix_PlayChannel(i, &chans[i].chunk, 0);
+		} else if (chans[i].loopstart < chans[i].size) {
+			// loop leadout
+			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
+			chans[i].chunk.alen = chans[i].size - chans[i].loopstart;
+			Mix_PlayChannel(i, &chans[i].chunk, 0);
+			chans[i].loopstart = chans[i].loopend = chans[i].size;
+		} else {
+			// loop leadout ended, clear the channel
+			Sound_Mute(i);
+		}
+	}
 
 	if (!active || !play_music || Mix_PlayingMusic()) {
 		return 0;

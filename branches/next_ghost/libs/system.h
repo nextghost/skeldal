@@ -95,7 +95,7 @@ void Sound_SetVolume(int channel, int left, int right);
 void Sound_GetVolume(int channel, int *left, int *right);
 char Sound_GetChannelState(int channel);
 int Sound_MixBack(int synchro);
-void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long sfreq, int type);
+void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long lend, long sfreq, int type);
 void Sound_ChangeMusic(const char *file);
 void Sound_BreakLoop(int channel);
 void Sound_BreakExt(int channel, void *sample, long size);
