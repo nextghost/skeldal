@@ -1338,7 +1338,7 @@ int load_string_list_ex(StringList &list, const char *filename) {
 			break;
 		}
 
-		while ((unsigned)(j = f->readUint8()) <= ' ' && !f->eos());
+		while ((unsigned)(j = f->readUint8()) <= ' ' && j != '\n' && !f->eos());
 
 		if (!f->eos()) {
 			f->seek(-1, SEEK_CUR);
