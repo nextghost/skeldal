@@ -633,7 +633,7 @@ void start_play_flute(char note) {
 		lend = ptr->length() * 0.664157f;
 		lend -= lend % btr;
 		Sound_SetVolume(flute_canal, vol, vol);
-		Sound_PlaySample(flute_canal, ptr->data(), ptr->length(), lstart, lend, ptr->freq(), btr);
+		Sound_PlaySample(flute_canal, ptr->data(), ptr->length(), lstart, lend, ptr->freq(), btr, 1);
 	}
 }
 

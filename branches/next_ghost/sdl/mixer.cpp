@@ -34,7 +34,7 @@
 #define MUSIC_MAXVOL 255
 
 typedef struct {
-	int lvolume, rvolume, loopstart, loopend;
+	int lvolume, rvolume, loopstart, loopend, continuous;
 	Uint8 *data;
 	unsigned size;
 	Mix_Chunk chunk;
@@ -54,7 +54,7 @@ void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 }
 
 void Sound_Callback(int channel) {
-	if (!chans[channel].data) {
+	if (!chans[channel].data || !chans[channel].continuous) {
 		return;
 	}
 
@@ -111,7 +111,7 @@ void Sound_StopMixing(void) {
 }
 
 // FIXME: resample when loading the sound file
-void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long lend, long sfreq, int type) {
+void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long lend, long sfreq, int type, int continuous) {
 	double coef;
 	SDL_AudioCVT cvt;
 
@@ -132,11 +132,13 @@ void Sound_PlaySample(int channel, const void *sample, long size, long lstart, l
 
 	SDL_ConvertAudio(&cvt);
 
+	SDL_LockAudio();
 	chans[channel].data = cvt.buf;
 	chans[channel].size = cvt.len_cvt;
 	coef = (double)chans[channel].size / size;
 	chans[channel].loopstart = lstart * coef;
 	chans[channel].loopend = lend * coef;
+	chans[channel].continuous = continuous;
 
 	chans[channel].chunk.allocated = 1;
 	chans[channel].chunk.abuf = chans[channel].data;
@@ -144,6 +146,7 @@ void Sound_PlaySample(int channel, const void *sample, long size, long lstart, l
 	chans[channel].chunk.volume = 128;
 
 	Mix_PlayChannel(channel, &chans[channel].chunk, 0);
+	SDL_UnlockAudio();
 }
 
 // stop channel and free resampled buffers
@@ -318,6 +321,23 @@ int Sound_MixBack(int sync) {
 			continue;
 		}
 
+		// handled by callback, skip
+		if (chans[i].loopstart < chans[i].size && chans[i].continuous) {
+			continue;
+		}
+
+		if (chans[i].loopstart < chans[i].loopend) {
+			// channel is looping
+			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
+			chans[i].chunk.alen = chans[i].loopend - chans[i].loopstart;
+			Mix_PlayChannel(i, &chans[i].chunk, 0);
+		} else if (chans[i].loopstart < chans[i].size) {
+			// loop leadout
+			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
+			chans[i].chunk.alen = chans[i].size - chans[i].loopstart;
+			chans[i].loopstart = chans[i].loopend = chans[i].size;
+			Mix_PlayChannel(i, &chans[i].chunk, 0);
+		}
 		// loop leadout ended, clear the channel
 		if (chans[i].loopstart >= chans[i].size) {
 			Sound_Mute(i);
