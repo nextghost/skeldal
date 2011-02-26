@@ -793,6 +793,8 @@ public:
 	void moveBoat(unsigned from, unsigned to);
 	void addNote(int x, int y, int depth, const char *str);
 	void removeNote(unsigned idx);
+
+	unsigned memsize(void) const;
 };
 
 extern Map gameMap;
@@ -1684,6 +1686,7 @@ public:
 	~PalBlock(void);
 
 	const pal_t *getPal(unsigned pal) const;
+	unsigned memsize(void) const { return _size * 2 * SHADE_STEPS * PAL_SIZE * sizeof(uint8_t) + sizeof(*this); }
 };
 
 void add_window(int x,int y,int xs,int ys,int texture,int border,int txtx,int txty);

@@ -32,6 +32,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "libs/pcx.h"
+#include "libs/wav_mem.h"
 
 #define DPMI_INT 0x31
 #define LOAD_BUFFER 4096
@@ -1160,6 +1162,58 @@ void close_manager()
   max_handle=0;
   }
 
+void memstats(void) {
+	unsigned i, major, minor, tmp;
+	unsigned total, fadetex, paltex, fulltex, sound;
+	unsigned totalcnt, fadetexcnt, paltexcnt, fulltexcnt, soundcnt;
+	DataBlock *block;
+	Texture *tex;
+
+	total = fadetex = paltex = fulltex = sound = 0;
+	totalcnt = fadetexcnt = paltexcnt = fulltexcnt = soundcnt = 0;
+
+	for (i = 0; i <= max_handle; i++) {
+		major = i / BK_MINOR_HANDLES;
+		minor = i % BK_MINOR_HANDLES;
+
+		if (!_handles[major]) {
+			i += BK_MINOR_HANDLES - minor - 1;
+			continue;
+		}
+
+		if (_handles[major][0][minor].status != BK_PRESENT) {
+			continue;
+		}
+
+		block = _handles[major][0][minor].blockdata;
+		tmp = block->memsize();
+		total += tmp;
+		totalcnt++;
+
+		if (dynamic_cast<TextureFade*>(block)) {
+				fadetex += tmp;
+				fadetexcnt++;
+		} else if ((tex = dynamic_cast<Texture*>(block))) {
+			if (tex->palette()) {
+				paltex += tmp;
+				paltexcnt++;
+			} else {
+				fulltex += tmp;
+				fulltexcnt++;
+			}
+		} else if (dynamic_cast<SoundSample*>(block)) {
+			sound += tmp;
+			soundcnt++;
+		}
+	}
+
+	fprintf(stderr, "Total memory used by data: %u items, %u bytes\n", totalcnt, total);
+	fprintf(stderr, "Fade textures: %u items, %u bytes\n", fadetexcnt, fadetex);
+	fprintf(stderr, "Palette textures: %u items, %u bytes\n", paltexcnt, paltex);
+	fprintf(stderr, "Full color textures: %u items, %u bytes\n", fulltexcnt, fulltex);
+	fprintf(stderr, "Sound samples: %u items, %u bytes\n", soundcnt, sound);
+	fprintf(stderr, "Other: %u items, %u bytes\n", totalcnt - fadetexcnt - paltexcnt - fulltexcnt - soundcnt, total - fadetex - paltex - fulltex - sound);
+}
 
 //------------------------------------------------------------
 /*static void block()

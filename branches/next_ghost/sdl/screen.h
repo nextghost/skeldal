@@ -41,4 +41,6 @@ public:
 	void showMouse(void);
 	void hideMouse(void);
 	void moveMouse(int x, int y);
+
+	unsigned memsize(void) const;
 };

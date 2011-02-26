@@ -74,6 +74,7 @@ public:
 	const Glyph &glyph(unsigned idx) const;
 	unsigned textWidth(const char *text) const;
 	unsigned textHeight(const char *text) const;
+	unsigned memsize(void) const;
 };
 
 class SoftRenderer : public Texture {
@@ -129,6 +130,8 @@ public:
 	virtual void showMouse(void) { }
 	virtual void hideMouse(void) { }
 	virtual void moveMouse(int x, int y) { }
+
+	unsigned memsize(void) const { return Texture::memsize() + sizeof(*this) - sizeof(Texture); }
 };
 
 class FadeRenderer : public TextureFade {
@@ -150,6 +153,7 @@ public:
 
 	const TexturePal &operator[](unsigned idx) const;
 	unsigned size(void) const { return _count; }
+	unsigned memsize(void) const;
 };
 
 // TODO: write a complete video backend instead

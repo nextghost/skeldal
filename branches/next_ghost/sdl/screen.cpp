@@ -171,6 +171,22 @@ void SDLRenderer::moveMouse(int x, int y) {
 	}
 }
 
+unsigned SDLRenderer::memsize(void) const {
+	unsigned ret;
+
+	ret = sizeof(SDL_Surface) + _screen->h * _screen->pitch;
+	ret += sizeof(SDL_Surface) + _remap->h * _remap->pitch;
+	ret += _screen->format ? sizeof(SDL_PixelFormat) : 0;
+	ret += _remap->format ? sizeof(SDL_PixelFormat) : 0;
+
+	if (_mouse) {
+		ret += sizeof(SDL_Surface) + _mouse->h * _mouse->pitch;
+		ret += _mouse->format ? sizeof(SDL_PixelFormat) : 0;
+	}
+
+	return ret + sizeof(*this);
+}
+
 char Screen_Init(char windowed, int zoom, int monitor, int refresh) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
 		return 0;

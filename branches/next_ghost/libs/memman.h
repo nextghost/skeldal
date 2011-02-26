@@ -34,6 +34,8 @@ class DataBlock {
 public:
 	DataBlock(void) {}
 	virtual ~DataBlock(void) = 0;
+
+	virtual unsigned memsize(void) const = 0;
 };
 
 class ReadStream {
@@ -90,6 +92,7 @@ public:
 	void seek(long offset, int whence);
 	long pos(void) const { return _pos; }
 	long size(void) const { return _length; }
+	unsigned memsize(void) const { return _length + sizeof(*this); }
 };
 
 class File : public SeekableReadStream {
@@ -238,6 +241,8 @@ struct RawData : public DataBlock {
 
 	RawData(void) : DataBlock(), data(NULL), size(0) {}
 	~RawData(void);
+
+	unsigned memsize(void) const { return size + sizeof(*this); }
 };
 
 DataBlock *preloadStream(SeekableReadStream &stream);
@@ -350,6 +355,7 @@ char *read_next_entry(char mode);     //cte adresar DDL souboru a vraci jmeno, n
 int read_group(int index);
 char add_patch_file(char *filename);  //pripojuje zaplatu
 FILE *afiletemp(char *filename, int group);
+void memstats(void);
 
 
 #define MMA_READ 1

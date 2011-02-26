@@ -1846,6 +1846,31 @@ void Map::removeNote(unsigned idx) {
 	}
 }
 
+unsigned Map::memsize(void) const {
+	unsigned ret, i;
+
+	ret = _coordCount * 4 * sizeof(TSTENA);
+	ret += _coordCount * sizeof(TSECTOR);
+	ret += _vykCount * sizeof(TVYKLENEK);
+	ret += _coordCount * sizeof(TMAP_EDIT_INFO);
+	ret += _coordCount * 4 * sizeof(uint8_t);
+	ret += _coordCount * 4 * sizeof(short*);
+	ret += _coordCount * 4 * sizeof(MacroEntry);
+
+	for (i = 0; i < _coordCount * 4; i++) {
+		ret += _macros[i].size * sizeof(TMULTI_ACTION);
+		ret += (count_items_total(_items[i]) + 1) * sizeof(short);
+	}
+
+	ret += _notesCount * sizeof(MapText);
+
+	for (i = 0; i < _notesCount; i++) {
+		ret += strlen(_mapNotes[i].text) + 1;
+	}
+
+	return ret + sizeof(*this);
+}
+
 void prepare_graphics(int *ofs, MemoryReadStream *names, DataBlock *(*decomp)(SeekableReadStream&), int cls) {
 	const char *ptr;
 

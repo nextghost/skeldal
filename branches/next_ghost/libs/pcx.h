@@ -56,6 +56,7 @@ public:
 	unsigned width(void) const { return _width; }
 	unsigned height(void) const { return _height; }
 	unsigned depth(void) const { return _depth; }
+	unsigned memsize(void) const { return _width * _height * _depth * sizeof(uint8_t) + sizeof(*this); }
 };
 
 class TextureHi : public Texture {
@@ -67,6 +68,7 @@ public:
 	// load raw RGB555 from file
 	explicit TextureHi(ReadStream &stream);
 	~TextureHi(void);
+	unsigned memsize(void) const { return Texture::memsize() + sizeof(*this) - sizeof(Texture); }
 };
 
 class TexturePal : public Texture {
@@ -79,6 +81,7 @@ public:
 	~TexturePal(void);
 
 	const uint8_t *palette(unsigned fade = 0) const { return _pal; }
+	unsigned memsize(void) const { return Texture::memsize() + sizeof(*this) - sizeof(Texture) + _pal ? PAL_SIZE * sizeof(uint8_t) : 0; }
 };
 
 class TextureFade : public Texture {
@@ -93,6 +96,7 @@ public:
 
 	const uint8_t *palette(unsigned fade = 0) const;
 	const pal_t *fadePal(void) const { return _pal; }
+	unsigned memsize(void) const { return Texture::memsize() + sizeof(*this) - sizeof(Texture); }
 };
 
 // Subimage of another texture, does NOT support fade palette
@@ -105,6 +109,7 @@ public:
 	~SubTexture(void);
 
 	const uint8_t *palette(unsigned fade = 0) const { return _pal; }
+	unsigned memsize(void) const { return Texture::memsize() + sizeof(*this) - sizeof(Texture) + _pal ? PAL_SIZE * sizeof(uint8_t) : 0; }
 };
 
 #define A_8BIT 8

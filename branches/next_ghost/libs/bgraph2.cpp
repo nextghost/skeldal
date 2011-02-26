@@ -134,6 +134,20 @@ unsigned Font::textHeight(const char *text) const {
 	return max;
 }
 
+unsigned Font::memsize(void) const {
+	unsigned i, ret;
+
+	for (i = 0, ret = 0; i < GLYPH_COUNT; i++) {
+		if (_glyphs[i].width * _glyphs[i].height) {
+			ret += _glyphs[i].width * _glyphs[i].height;
+		} else {
+			ret += 1;
+		}
+	}
+
+	return ret + sizeof(*this);
+}
+
 SoftRenderer::SoftRenderer(unsigned xs, unsigned ys) :
 	Texture(new uint8_t[xs * ys * 3], xs, ys, 3), _font(NULL) {
 
@@ -849,6 +863,16 @@ IconLib::~IconLib(void) {
 const TexturePal &IconLib::operator[](unsigned idx) const {
 	assert(idx < _count && "Index out of bounds");
 	return *_icons[idx];
+}
+
+unsigned IconLib::memsize() const {
+	unsigned i, ret;
+
+	for (i = 0, ret = 0; i < _count; i++) {
+		ret += _icons[i]->memsize();
+	}
+
+	return ret + sizeof(*this);
 }
 
 DataBlock *loadFont(SeekableReadStream &stream) {
