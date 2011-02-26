@@ -25,6 +25,7 @@
 #include <climits>
 #include <cstring>
 #include <inttypes.h>
+#include <cassert>
 #include "libs/memman.h"
 #include "libs/sound.h"
 #include "libs/wav_mem.h"
@@ -618,46 +619,27 @@ char test_playing(int track)
 static int flute_canal=30;
 
 void start_play_flute(char note) {
-	void *q;
-	char *w;
-	float realfrq;
-	int vol = 50;
+	int vol = 50, btr, lstart, lend;
 
-	fprintf(stderr, "Flute sound not yet supported\n");
-	return;
-
-	realfrq = 16000 * pow(2, note / 12.0);
+	assert(note >= 0 && note < H_FLETNA_CNT && "Flute note out of range");
 
 	if (Sound_CheckEffect(SND_GFX)) {
-		// FIXME: implement flute sound resampling and loops with lead-in
-/*
-		q = ablock(H_FLETNA);
-		w = (char*)q;
-		w += sizeof(struct t_wave) + 4;
+		const SoundSample *ptr = dynamic_cast<const SoundSample*>(ablock(H_FLETNA + note));
 		vol *= SND_EFF_MAXVOL / 100;
+		btr = ptr->bps() / ptr->freq();
+		btr = btr < 1 ? 1 : btr;
+		lstart = ptr->length() * 0.32229f;
+		lstart -= lstart % btr;
+		lend = ptr->length() * 0.664157f;
+		lend -= lend % btr;
 		Sound_SetVolume(flute_canal, vol, vol);
-		Sound_PlaySample(flute_canal, w, 0x1665, 0xADE, (int)(realfrq + 0.5), 1);
-*/
-	} else {
-		//sound((unsigned short)(realfrq/30.53));
+		Sound_PlaySample(flute_canal, ptr->data(), ptr->length(), lstart, lend, ptr->freq(), btr);
 	}
 }
 
 void stop_play_flute() {
-	void *q;
-	char *w;
-
 	if (Sound_CheckEffect(SND_GFX)) {
-		// FIXME: implement flute sound
-/*
-		q = ablock(H_FLETNA);
-		w = (char*)q;
-		w += sizeof(struct t_wave);
-		Sound_BreakExt(flute_canal, w + 4, *(int *)w);
-		flute_canal ^= 1;
-*/
-	} else {
-		//nosound();
+		Sound_BreakExt(flute_canal);
 	}
 }
 

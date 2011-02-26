@@ -268,7 +268,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define H_LODKA5   164
 #define H_LODKA6   165
 #define H_LODKA7   166
-#define H_FLETNA   167
+//#define H_FLETNA   167
 #define H_FLETNA_BAR 168
 #define H_FLETNA_MASK 169
 #define H_SND_SEVER 170
@@ -289,6 +289,8 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
 #define H_KREVMAX 185
 #define H_ARMAGED 186
 #define H_ARMA_CNT 13
+#define H_FLETNA 199
+#define H_FLETNA_CNT 12
 #define H_FIRST_FREE 225
 #define H_MENUS_FREE 32768
 

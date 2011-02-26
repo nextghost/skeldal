@@ -53,12 +53,32 @@ void Sound_SetMixer(int mix_dev, int mix_freq, ...) {
 	freq = mix_freq;
 }
 
+void Sound_Callback(int channel) {
+	if (!chans[channel].data) {
+		return;
+	}
+
+	if (chans[channel].loopstart < chans[channel].loopend) {
+		// channel is looping
+		chans[channel].chunk.abuf = chans[channel].data + chans[channel].loopstart;
+		chans[channel].chunk.alen = chans[channel].loopend - chans[channel].loopstart;
+		Mix_PlayChannel(channel, &chans[channel].chunk, 0);
+	} else if (chans[channel].loopstart < chans[channel].size) {
+		// loop leadout
+		chans[channel].chunk.abuf = chans[channel].data + chans[channel].loopstart;
+		chans[channel].chunk.alen = chans[channel].size - chans[channel].loopstart;
+		chans[channel].loopstart = chans[channel].loopend = chans[channel].size;
+		Mix_PlayChannel(channel, &chans[channel].chunk, 0);
+	}
+}
+
 void Sound_StartMixing(void) {
 	if (Mix_OpenAudio(freq, AUDIO_S16SYS, 2, 1024) < 0) {
 		assert(0 && "Failed to start mixer");
 	}
 
 	Mix_AllocateChannels(CHANNELS);
+	Mix_ChannelFinished(Sound_Callback);
 	active = 1;
 }
 
@@ -86,6 +106,7 @@ void Sound_StopMixing(void) {
 	}
 
 	// shut down subsystem
+	Mix_ChannelFinished(NULL);
 	Mix_CloseAudio();
 }
 
@@ -128,6 +149,8 @@ void Sound_PlaySample(int channel, const void *sample, long size, long lstart, l
 // stop channel and free resampled buffers
 void Sound_Mute(int channel) {
 	// stop the channel
+	SDL_LockAudio();
+	chans[channel].loopstart = chans[channel].size;
 	Mix_HaltChannel(channel);
 
 	// free resampled buffer
@@ -135,15 +158,21 @@ void Sound_Mute(int channel) {
 		free(chans[channel].data);
 		chans[channel].data = NULL;
 	}
+
+	SDL_UnlockAudio();
 }
 
 void Sound_BreakExt(int channel) {
+	SDL_LockAudio();
 	chans[channel].loopstart = chans[channel].loopend;
+	SDL_UnlockAudio();
 }
 
 void Sound_BreakLoop(int channel) {
+	SDL_LockAudio();
 	chans[channel].loopstart = chans[channel].size;
 	chans[channel].loopend = chans[channel].size;
+	SDL_UnlockAudio();
 }
 
 char Sound_GetChannelState(int channel) {
@@ -289,19 +318,8 @@ int Sound_MixBack(int sync) {
 			continue;
 		}
 
-		if (chans[i].loopstart < chans[i].loopend) {
-			// channel is looping
-			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
-			chans[i].chunk.alen = chans[i].loopend - chans[i].loopstart;
-			Mix_PlayChannel(i, &chans[i].chunk, 0);
-		} else if (chans[i].loopstart < chans[i].size) {
-			// loop leadout
-			chans[i].chunk.abuf = chans[i].data + chans[i].loopstart;
-			chans[i].chunk.alen = chans[i].size - chans[i].loopstart;
-			Mix_PlayChannel(i, &chans[i].chunk, 0);
-			chans[i].loopstart = chans[i].loopend = chans[i].size;
-		} else {
-			// loop leadout ended, clear the channel
+		// loop leadout ended, clear the channel
+		if (chans[i].loopstart >= chans[i].size) {
 			Sound_Mute(i);
 		}
 	}

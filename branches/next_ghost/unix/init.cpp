@@ -104,7 +104,7 @@ void Sys_Init(void) {
 
 	Sys_SetPath(SR_DATA, DATA_PATH);
 	Sys_SetPath(SR_GRAFIKA, DATA_PATH "graphics/");
-	Sys_SetPath(SR_ZVUKY, DATA_PATH "samples/");
+	Sys_SetPath(SR_ZVUKY, DATA_PATH "SAMPLES/");
 	Sys_SetPath(SR_FONT, DATA_PATH "font/");
 	Sys_SetPath(SR_MAP, DATA_PATH "MAPS/");
 	Sys_SetPath(SR_MUSIC, DATA_PATH "MUSIC/");

@@ -98,7 +98,7 @@ int Sound_MixBack(int synchro);
 void Sound_PlaySample(int channel, const void *sample, long size, long lstart, long lend, long sfreq, int type);
 void Sound_ChangeMusic(const char *file);
 void Sound_BreakLoop(int channel);
-void Sound_BreakExt(int channel, void *sample, long size);
+void Sound_BreakExt(int channel);
 void Sound_Mute(int channel);
 void Sound_StopMixing(void);
 void Sound_StartMixing(void);

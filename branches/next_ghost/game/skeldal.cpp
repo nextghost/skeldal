@@ -240,7 +240,7 @@ TDREGISTERS registred[]=
     {H_LODKA5,"lesda26a.pcx",pcx_fade_decomp,SR_GRAFIKA},
     {H_LODKA6,"lesda27a.pcx",pcx_fade_decomp,SR_GRAFIKA},
     {H_LODKA7,"lesda28a.pcx",pcx_fade_decomp,SR_GRAFIKA},
-    {H_FLETNA,"fletna.wav",wav_load,SR_ZVUKY},
+//    {H_FLETNA,"fletna.wav",wav_load,SR_ZVUKY},
     {H_FLETNA_BAR,"stupnice.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_FLETNA_MASK,"stupni_m.pcx",pcx_8bit_nopal,SR_BGRAFIKA},
     {H_SND_SEVER,"sever.wav",wav_load,SR_ZVUKY},
@@ -658,32 +658,40 @@ int cislovka(int i)
   return 2;
   }
 
-void register_basic_data()
-  {
-  int i,s;
-  TDREGISTERS *p;
-  char xname[16];
+void register_basic_data() {
+	int i, s;
+	TDREGISTERS *p;
+	char xname[16];
 
-  s=sizeof(registred)/sizeof(TDREGISTERS);
-  p=registred;
-  for(i=0;i<s;i++,p++) def_handle(p->h_num,p->name,p->proc,p->path);
-  def_handle(H_BOTTBAR,"",bott_draw_proc,0);
-  for(i=0;i<H_TELEP_CNT;i++)
-     {
-     sprintf(xname,"TELEP%02d.PCX",i);
-     def_handle(H_TELEP_PCX+i,xname,pcx_fade_decomp,SR_BGRAFIKA);
-     }
-  for(i=0;i<H_ARMA_CNT;i++)
-     {
-     sprintf(xname,"ARMA%02d.PCX",i);
-     def_handle(H_ARMAGED+i,xname,pcx_fade_decomp,SR_BGRAFIKA);
-     }
-  for(i=0;i<H_KILL_MAX;i++)
-     {
-     sprintf(xname,"KILL%02d.PCX",i);
-     def_handle(H_KILL+i,xname,pcx_fade_decomp,SR_BGRAFIKA);
-     }
-  }
+	s = sizeof(registred) / sizeof(TDREGISTERS);
+	p = registred;
+
+	for (i = 0; i < s; i++, p++) {
+		def_handle(p->h_num, p->name, p->proc, p->path);
+	}
+
+	def_handle(H_BOTTBAR, "", bott_draw_proc, 0);
+
+	for (i = 0; i < H_TELEP_CNT; i++) {
+		sprintf(xname, "TELEP%02d.PCX", i);
+		def_handle(H_TELEP_PCX + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
+	}
+
+	for (i = 0; i < H_ARMA_CNT; i++) {
+		sprintf(xname, "ARMA%02d.PCX", i);
+		def_handle(H_ARMAGED + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
+	}
+
+	for (i = 0; i < H_KILL_MAX; i++) {
+		sprintf(xname, "KILL%02d.PCX", i);
+		def_handle(H_KILL + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
+	}
+
+	for (i = 0; i < H_FLETNA_CNT; i++) {
+		sprintf(xname, "FLETNA%02d.WAV", i);
+		def_handle(H_FLETNA + i, xname, wav_load, SR_ZVUKY);
+	}
+}
 
 void reg_grafiku_postav()
   {
