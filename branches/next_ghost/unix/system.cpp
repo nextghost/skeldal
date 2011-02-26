@@ -75,11 +75,6 @@ void Sys_SetEnv(const char *name, const char *value) {
 	setenv(name, value, 1);
 }
 
-void Sys_Mkdir(const char *path) {
-	assert(0);
-
-}
-
 int Sys_LatestFile(const char *mask, int offset) {
 	assert(0);
 	return 0;

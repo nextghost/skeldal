@@ -124,7 +124,7 @@ void Sys_Init(void) {
 	Sys_SetPath(SR_HOME, home);
 }
 
-void Sys_MkDir(const char *path) {
+void Sys_Mkdir(const char *path) {
 	char buf[PATH_MAX], *ptr, *endptr;
 	int length;
 	struct stat tmp;
@@ -159,7 +159,7 @@ void Sys_MkDir(const char *path) {
 }
 
 void Sys_PreparePaths(void) {
-	Sys_MkDir(pathtable[SR_WORK]);
-	Sys_MkDir(pathtable[SR_TEMP]);
-	Sys_MkDir(pathtable[SR_SAVES]);
+	Sys_Mkdir(pathtable[SR_WORK]);
+	Sys_Mkdir(pathtable[SR_TEMP]);
+	Sys_Mkdir(pathtable[SR_SAVES]);
 }
