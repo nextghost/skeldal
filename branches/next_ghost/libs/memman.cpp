@@ -1207,12 +1207,12 @@ void memstats(void) {
 		}
 	}
 
-	fprintf(stderr, "Total memory used by data: %u items, %z bytes\n", totalcnt, total);
-	fprintf(stderr, "Fade textures: %u items, %z bytes\n", fadetexcnt, fadetex);
-	fprintf(stderr, "Palette textures: %u items, %z bytes\n", paltexcnt, paltex);
-	fprintf(stderr, "Full color textures: %u items, %z bytes\n", fulltexcnt, fulltex);
-	fprintf(stderr, "Sound samples: %u items, %z bytes\n", soundcnt, sound);
-	fprintf(stderr, "Other: %u items, %z bytes\n", totalcnt - fadetexcnt - paltexcnt - fulltexcnt - soundcnt, total - fadetex - paltex - fulltex - sound);
+	fprintf(stderr, "Total memory used by data: %u items, %zu bytes\n", totalcnt, total);
+	fprintf(stderr, "Fade textures: %u items, %zu bytes\n", fadetexcnt, fadetex);
+	fprintf(stderr, "Palette textures: %u items, %zu bytes\n", paltexcnt, paltex);
+	fprintf(stderr, "Full color textures: %u items, %zu bytes\n", fulltexcnt, fulltex);
+	fprintf(stderr, "Sound samples: %u items, %zu bytes\n", soundcnt, sound);
+	fprintf(stderr, "Other: %u items, %zu bytes\n", totalcnt - fadetexcnt - paltexcnt - fulltexcnt - soundcnt, total - fadetex - paltex - fulltex - sound);
 }
 
 //------------------------------------------------------------
