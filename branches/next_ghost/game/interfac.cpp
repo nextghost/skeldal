@@ -1291,9 +1291,17 @@ SeekableReadStream *enc_open(const char *filename) {
 }
 
 int load_string_list_ex(StringList &list, const char *filename) {
-	char c[1024], *p;
-	int i, j, lin = 0;
+	int i, j, state = 0, pos = 0, size = 1024, linecount = 1, line;
+	char *buf;
 	SeekableReadStream *f;
+
+	#define S_START 0
+	#define S_LINENUM 1
+	#define S_NUMSEP 2
+	#define S_LINE 3
+	#define S_CRLF 4
+	#define S_ERR 5
+	#define S_END 6
 
 	f = enc_open(filename);
 
@@ -1301,69 +1309,133 @@ int load_string_list_ex(StringList &list, const char *filename) {
 		return -1;
 	}
 
-	do {
-		lin++;
-		do {
-			do {
-				j = f->readUint8();
-			} while (!f->eos() && (unsigned)j <= ' ');
+	buf = new char[size];
 
-			if (j == ';') {
-				while ((j = f->readUint8()) != '\n' && !f->eos());
+	for (i = 0, buf[i] = f->readUint8(); !f->eos(); buf[i] = f->readUint8()) {
+		switch (state) {
+		// skip whitespace at the beginning of line
+		case S_START:
+			if (buf[i] == '\n') {
+				linecount++;
+			// comment, skip the line
+			} else if (buf[i] == ';') {
+				while (!f->eos() && f->readUint8() != '\n');
+				linecount++;
+			} else if (buf[i] == '-' || isdigit(buf[i])) {
+				buf[0] = buf[i];
+				i = 1;
+				state = S_LINENUM;
+			} else if (!isspace(buf[i])) {
+				state = S_ERR;
+			}
+			break;
+
+		// parse line number
+		case S_LINENUM:
+			if (isdigit(buf[i])) {
+				i++;
+			} else if (isspace(buf[i]) || buf[i] == '\x1a') {
+				buf[i + 1] = '\0';
+				j = sscanf(buf, "%d", &line);
+
+				if (!j) {
+					state = S_ERR;
+				} else if (line < 0) {
+					state = S_END;
+				} else if (buf[i] == '\n') {
+					linecount++;
+					list.replace(line, "");
+					state = S_START;
+				} else {
+					state = S_NUMSEP;
+				}
+
+				i = 0;
+			} else {
+				state = S_ERR;
+			}
+			break;
+
+		// skip whitespace between line number and line text
+		case S_NUMSEP:
+			if (buf[i] == '\n') {
+				linecount++;
+				list.replace(line, "");
+				i = 0;
+				state = S_START;
+			} else if (!isspace(buf[i])) {
+				buf[0] = buf[i];
+				i = 1;
+				state = S_LINE;
+			}
+			break;
+
+		// fix DOS newlines
+		case S_CRLF:
+			if (buf[i] == '\n') {
+				buf[i - 1] = buf[i];
+				i--;
+			}
+			/* fall through */
+
+		// read line text
+		case S_LINE:
+			if (buf[i] == '|') {
+				buf[i] = '\n';
+			} else if (buf[i] == '\r') {
+				state = S_CRLF;
+			} else if (buf[i] == '\n') {
+				linecount++;
+				buf[i] = '\0';
+				list.replace(line, buf);
+				i = -1;
+				state = S_START;
 			}
 
-			if (j == '\n') {
-				lin++;
-			}
-		} while (j == '\n');
-
-		c[0] = j;
-		for (i = 0; !f->eos() && ((c[i] >= '0' && c[i] <= '9') || (i == 0 && c[0] == '-'));) {
-			c[++i] = (char)f->readUint8();
-		}
-		c[i] = '\0';
-		j = sscanf(c, "%d", &i);
-
-		if (!i && f->eos()) {
-			delete f;
-			return -2;
-		}
-
-		if (j != 1) {
-			delete f;
-			return lin;
-		}
-
-		if (i == -1) {
+			i++;
 			break;
 		}
 
-		while ((unsigned)(j = f->readUint8()) <= ' ' && j != '\n' && !f->eos());
-
-		if (!f->eos()) {
-			f->seek(-1, SEEK_CUR);
+		if (state == S_ERR || state == S_END) {
+			break;
+		// resize line buffer if needed
+		} else if (i + 1 >= size) {
+			char *tmp = new char[size * 2];
+			memcpy(tmp, buf, size * sizeof(char));
+			size *= 2;
+			delete[] buf;
+			buf = tmp;
 		}
+	}
 
-		if (f->readLine(c, 1022) == NULL) {
-			delete f;
-			return lin;
+	// fix file end while parsing line number
+	if (state == S_LINENUM) {
+		buf[i + 1] = '\0';
+		j = sscanf(buf, "%d", &line);
+
+		if (j >= 1 && line < 0) {
+			state = S_END;
 		}
-
-		p = strchr(c, '\n');
-
-		if (p) {
-			*p=0;
-		}
-
-		for(p = c; *p; p++) {
-			*p = *p == '|' ? '\n' : *p;
-		}
-
-		list.replace(i, c);
-	} while (1);
+	}
 
 	delete f;
-	return 0;
+	delete[] buf;
+
+	if (state == S_ERR) {
+		return linecount;
+	} else if (state == S_END) {
+		return 0;
+	} else {
+		return -2;
+	}
+
+	#undef S_START
+	#undef S_LINENUM
+	#undef S_NUMSEP
+	#undef S_LINE
+	#undef S_CRLF
+	#undef S_ERR
+	#undef S_END
 }
 
 //------------------------------------------------------------
