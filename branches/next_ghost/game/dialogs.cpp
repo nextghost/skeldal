@@ -75,7 +75,7 @@ public:
 	unsigned find(unsigned num) const;
 	int findNum(unsigned pos) const;
 	MemoryReadStream *data(void) const { return _data; }
-	unsigned memsize(void) const { return _data->memsize() + sizeof(*this); }
+	size_t memsize(void) const { return _data->memsize() + sizeof(*this); }
 };
 
 #define STR_BUFF_SIZ 4096

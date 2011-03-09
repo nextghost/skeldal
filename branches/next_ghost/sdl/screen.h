@@ -42,5 +42,5 @@ public:
 	void hideMouse(void);
 	void moveMouse(int x, int y);
 
-	unsigned memsize(void) const;
+	size_t memsize(void) const;
 };

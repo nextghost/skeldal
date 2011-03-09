@@ -50,7 +50,7 @@ public:
 	int freq(void) const { return _freq; }
 	int bps(void) const { return _bps; }
 	const void *data(void) const { return _data; }
-	unsigned memsize(void) const { return _length * sizeof(unsigned char) + sizeof(*this); }
+	size_t memsize(void) const { return _length * sizeof(unsigned char) + sizeof(*this); }
 };
 
 #endif

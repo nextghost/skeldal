@@ -114,9 +114,9 @@ static char cti_int_num(int *readed)
   return !fscanf(glbm,"%d",readed);
   }
 
-static int find_symbol(const char **symbolmap,int list_len,int offset,char *symbol)
+static int find_symbol(const char **symbolmap,size_t list_len,int offset,char *symbol)
   {
-  int start_pos;
+  size_t start_pos;
   char chr=0;
 
   start_pos=0;

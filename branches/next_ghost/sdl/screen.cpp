@@ -171,8 +171,8 @@ void SDLRenderer::moveMouse(int x, int y) {
 	}
 }
 
-unsigned SDLRenderer::memsize(void) const {
-	unsigned ret;
+size_t SDLRenderer::memsize(void) const {
+	size_t ret;
 
 	ret = sizeof(SDL_Surface) + _screen->h * _screen->pitch;
 	ret += sizeof(SDL_Surface) + _remap->h * _remap->pitch;

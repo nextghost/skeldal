@@ -76,7 +76,7 @@ static char prepare=1;
 
 static void PrepareTabs()
   {
-  int i;
+  size_t i;
   for (i=0;i<256;i++) {xlatkm2win[i]=i;xlatwin2km[i]=i;}
   for (i=0;i<sizeof(czxlattab)/sizeof(czxlattab[0]);i++)
 	{

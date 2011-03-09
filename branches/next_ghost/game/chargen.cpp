@@ -612,7 +612,7 @@ static void stop_edit_name()
 static void def_entries()
   {
   int i;
-  int s;
+  size_t s;
   TDREGISTERS *p;
 
   s=sizeof(char_gen_reg)/sizeof(TDREGISTERS);

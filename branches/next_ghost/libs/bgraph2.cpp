@@ -134,7 +134,7 @@ unsigned Font::textHeight(const char *text) const {
 	return max;
 }
 
-unsigned Font::memsize(void) const {
+size_t Font::memsize(void) const {
 	unsigned i, ret;
 
 	for (i = 0, ret = 0; i < GLYPH_COUNT; i++) {
@@ -905,8 +905,9 @@ const TexturePal &IconLib::operator[](unsigned idx) const {
 	return *_icons[idx];
 }
 
-unsigned IconLib::memsize() const {
-	unsigned i, ret;
+size_t IconLib::memsize() const {
+	unsigned i;
+	size_t ret;
 
 	for (i = 0, ret = 0; i < _count; i++) {
 		ret += _icons[i]->memsize();

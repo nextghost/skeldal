@@ -659,7 +659,7 @@ int cislovka(int i)
   }
 
 void register_basic_data() {
-	int i, s;
+	size_t i, s;
 	TDREGISTERS *p;
 	char xname[16];
 
@@ -1212,7 +1212,8 @@ static int do_config_skeldal(int num, int numdata, char *txt) {
 
 static void config_skeldal(const char *line)
   {
-  int ndata=0,i,maxi;
+  int ndata=0;
+  size_t i,maxi;
 
   char *data=0;
   const char *c;
@@ -1228,7 +1229,7 @@ static void config_skeldal(const char *line)
   if (i==maxi)
      {
      char s[256];
-     i=data-line;
+     i = c - line - 1;
 
      strcpy(s,"Chyba v INI souboru: Neznama promenna - ");
      strncat(s,line,i);

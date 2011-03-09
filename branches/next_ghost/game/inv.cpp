@@ -1567,7 +1567,7 @@ static int calc_value(int parm,int lenght)
 
 void inv_display_vlastnosti() {
 	char b;
-	int i;
+	size_t i;
 	const Texture *tex = dynamic_cast<const Texture*>(ablock(H_SVITEK));
 	const Font *font = dynamic_cast<const Font*>(ablock(H_FONT7));
 

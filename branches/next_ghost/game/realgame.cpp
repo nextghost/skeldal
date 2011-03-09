@@ -1846,8 +1846,8 @@ void Map::removeNote(unsigned idx) {
 	}
 }
 
-unsigned Map::memsize(void) const {
-	unsigned ret, i;
+size_t Map::memsize(void) const {
+	size_t ret, i;
 
 	ret = _coordCount * 4 * sizeof(TSTENA);
 	ret += _coordCount * sizeof(TSECTOR);

@@ -35,7 +35,7 @@ public:
 	DataBlock(void) {}
 	virtual ~DataBlock(void) = 0;
 
-	virtual unsigned memsize(void) const = 0;
+	virtual size_t memsize(void) const = 0;
 };
 
 class ReadStream {
@@ -92,7 +92,7 @@ public:
 	void seek(long offset, int whence);
 	long pos(void) const { return _pos; }
 	long size(void) const { return _length; }
-	unsigned memsize(void) const { return _length + sizeof(*this); }
+	size_t memsize(void) const { return _length + sizeof(*this); }
 };
 
 class File : public SeekableReadStream {
@@ -242,7 +242,7 @@ struct RawData : public DataBlock {
 	RawData(void) : DataBlock(), data(NULL), size(0) {}
 	~RawData(void);
 
-	unsigned memsize(void) const { return size + sizeof(*this); }
+	size_t memsize(void) const { return size + sizeof(*this); }
 };
 
 DataBlock *preloadStream(SeekableReadStream &stream);

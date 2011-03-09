@@ -1163,8 +1163,8 @@ void close_manager()
   }
 
 void memstats(void) {
-	unsigned i, major, minor, tmp;
-	unsigned total, fadetex, paltex, fulltex, sound;
+	unsigned i, major, minor;
+	size_t tmp, total, fadetex, paltex, fulltex, sound;
 	unsigned totalcnt, fadetexcnt, paltexcnt, fulltexcnt, soundcnt;
 	DataBlock *block;
 	Texture *tex;
@@ -1207,12 +1207,12 @@ void memstats(void) {
 		}
 	}
 
-	fprintf(stderr, "Total memory used by data: %u items, %u bytes\n", totalcnt, total);
-	fprintf(stderr, "Fade textures: %u items, %u bytes\n", fadetexcnt, fadetex);
-	fprintf(stderr, "Palette textures: %u items, %u bytes\n", paltexcnt, paltex);
-	fprintf(stderr, "Full color textures: %u items, %u bytes\n", fulltexcnt, fulltex);
-	fprintf(stderr, "Sound samples: %u items, %u bytes\n", soundcnt, sound);
-	fprintf(stderr, "Other: %u items, %u bytes\n", totalcnt - fadetexcnt - paltexcnt - fulltexcnt - soundcnt, total - fadetex - paltex - fulltex - sound);
+	fprintf(stderr, "Total memory used by data: %u items, %z bytes\n", totalcnt, total);
+	fprintf(stderr, "Fade textures: %u items, %z bytes\n", fadetexcnt, fadetex);
+	fprintf(stderr, "Palette textures: %u items, %z bytes\n", paltexcnt, paltex);
+	fprintf(stderr, "Full color textures: %u items, %z bytes\n", fulltexcnt, fulltex);
+	fprintf(stderr, "Sound samples: %u items, %z bytes\n", soundcnt, sound);
+	fprintf(stderr, "Other: %u items, %z bytes\n", totalcnt - fadetexcnt - paltexcnt - fulltexcnt - soundcnt, total - fadetex - paltex - fulltex - sound);
 }
 
 //------------------------------------------------------------

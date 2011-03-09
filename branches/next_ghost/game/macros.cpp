@@ -1232,7 +1232,7 @@ static unsigned char lock_empty = 254;
 
 char save_codelocks(WriteStream &stream) {
 	char *c;
-	int i;
+	size_t i;
 
 	c = (char *)&codelock_memory;
 	i = sizeof(codelock_memory);
