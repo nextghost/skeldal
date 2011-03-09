@@ -208,6 +208,7 @@ skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	libs/mgifmapmem.h libs/bgraph.h libs/strlists.h libs/inicfg.h \
 	libs/memman.h sdl/screen.h unix/system.h lzwc.h cztable.h
 
+AM_CPPFLAGS = -DDATADIR='"$(pkgdatadir)"'
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

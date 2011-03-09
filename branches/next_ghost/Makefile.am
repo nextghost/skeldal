@@ -18,3 +18,4 @@ skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	libs/event.h libs/bmouse.h libs/basicobj.h libs/system.h \
 	libs/mgifmapmem.h libs/bgraph.h libs/strlists.h libs/inicfg.h \
 	libs/memman.h sdl/screen.h unix/system.h lzwc.h cztable.h
+AM_CPPFLAGS = -DDATADIR='"$(pkgdatadir)"'

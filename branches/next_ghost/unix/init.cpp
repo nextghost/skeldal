@@ -30,9 +30,6 @@
 #include "libs/system.h"
 #include "game/globals.h"
 
-// TODO: set this from configure script
-#define DATA_PATH "/usr/local/games/skeldal/"
-
 #define PATHTABLE_SIZE 20
 
 static char *pathtable[PATHTABLE_SIZE] = {0};
@@ -102,25 +99,25 @@ void Sys_Init(void) {
 
 	strcpy(home + len, ".skeldal/");
 
-	Sys_SetPath(SR_DATA, DATA_PATH);
-	Sys_SetPath(SR_GRAFIKA, DATA_PATH "graphics/");
-	Sys_SetPath(SR_ZVUKY, DATA_PATH "SAMPLES/");
-	Sys_SetPath(SR_FONT, DATA_PATH "font/");
-	Sys_SetPath(SR_MAP, DATA_PATH "MAPS/");
-	Sys_SetPath(SR_MUSIC, DATA_PATH "MUSIC/");
+	Sys_SetPath(SR_DATA, DATADIR "/");
+	Sys_SetPath(SR_GRAFIKA, DATADIR "/GRAPHICS/");
+	Sys_SetPath(SR_ZVUKY, DATADIR "/SAMPLES/");
+	Sys_SetPath(SR_FONT, DATADIR "/FONT/");
+	Sys_SetPath(SR_MAP, DATADIR "/MAPS/");
+	Sys_SetPath(SR_MUSIC, DATADIR "/MUSIC/");
 	Sys_SetPath(SR_WORK, home);
 	Sys_SetPath(SR_TEMP, Sys_FullPath(SR_WORK, "temp/"));
-	Sys_SetPath(SR_BGRAFIKA, DATA_PATH "graphics/basic/");
-	Sys_SetPath(SR_ITEMS, DATA_PATH "graphics/items/");
-	Sys_SetPath(SR_ENEMIES, DATA_PATH "graphics/enemies/");
-	Sys_SetPath(SR_VIDEO, DATA_PATH "VIDEO/");
-	Sys_SetPath(SR_DIALOGS, DATA_PATH "graphics/dialogs/");
+	Sys_SetPath(SR_BGRAFIKA, DATADIR "/GRAPHICS/BASIC/");
+	Sys_SetPath(SR_ITEMS, DATADIR "/GRAPHICS/ITEMS/");
+	Sys_SetPath(SR_ENEMIES, DATADIR "/GRAPHICS/ENEMIES/");
+	Sys_SetPath(SR_VIDEO, DATADIR "/VIDEO/");
+	Sys_SetPath(SR_DIALOGS, DATADIR "/GRAPHICS/DIALOGS/");
 	Sys_SetPath(SR_SAVES, Sys_FullPath(SR_WORK, "save/"));
-	Sys_SetPath(SR_CD, DATA_PATH);
-	Sys_SetPath(SR_MAP2, DATA_PATH);
-	Sys_SetPath(SR_PLUGIN, DATA_PATH);
-	Sys_SetPath(SR_ORGMUSIC, DATA_PATH "MUSIC/");
-	Sys_SetPath(SR_DEFAULT, "");
+	Sys_SetPath(SR_CD, DATADIR "/");
+	Sys_SetPath(SR_MAP2, DATADIR "/");
+	Sys_SetPath(SR_PLUGIN, DATADIR "/");
+	Sys_SetPath(SR_ORGMUSIC, DATADIR "/MUSIC/");
+	Sys_SetPath(SR_DEFAULT, DATADIR "/");
 	Sys_SetPath(SR_HOME, home);
 }
 
