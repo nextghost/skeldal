@@ -165,9 +165,11 @@ SoftRenderer::~SoftRenderer(void) {
 }
 
 void SoftRenderer::blit(const Texture &tex, int x, int y, const uint8_t *pal, unsigned scale, int mirror) {
-	int i, j, tx, ty, basex = 0, basey = 0;
+	int i, j, tx, ty, basex = 0, basey = 0, tdepth = tex.depth();
+	int twidth = tex.width();
 	uint8_t *dst;
-	const uint8_t *src;
+	const uint8_t *src, *basesrc;
+	int *transtab;
 
 	if (x < 0) {
 		basex = -x;
@@ -177,11 +179,17 @@ void SoftRenderer::blit(const Texture &tex, int x, int y, const uint8_t *pal, un
 		basey = -y;
 	}
 
-	if (tex.depth() != 3 && !pal) {
+	if (tdepth != 3 && !pal) {
 		pal = tex.palette();
 	}
 
-	assert(tex.depth() == 3 || tex.depth() == 4 || (tex.depth() == 1 && pal));
+	assert(tdepth == 3 || tdepth == 4 || (tdepth == 1 && pal));
+
+	transtab = new int[width() + basex];
+
+	for (i = 0; i < width() + basex; i++) {
+		transtab[i] = i * 320 / scale;
+	}
 
 	for (i = basey; i + y < height(); i++) {
 		ty = i *  320 / scale;
@@ -190,39 +198,51 @@ void SoftRenderer::blit(const Texture &tex, int x, int y, const uint8_t *pal, un
 			break;
 		}
 
-		for (j = basex; j + x < width(); j++) {
-			tx = j * 320 / scale;
+		dst = _pixels + 3 * (basex + x + (i + y) * width());
 
-			if (tx >= tex.width()) {
+		if (tdepth == 3) {
+			basesrc = tex.pixels() + 3 * ty * twidth;
+		} else if (tdepth == 4) {
+			basesrc = tex.pixels() + 4 * ty * twidth + 1;
+		} else {
+			basesrc = tex.pixels() + ty * twidth;
+		}
+
+		for (j = basex; j + x < width(); j++) {
+			tx = transtab[j];
+
+			if (tx >= twidth) {
 				break;
 			}
 
 			if (mirror) {
-				tx = tex.width() - tx;
+				tx = twidth - tx;
 			}
 
-			dst = _pixels + 3 * (j + x + (i + y) * width());
-
-			if (tex.depth() == 3) {
-				src = tex.pixels() + 3 * (tx + ty * tex.width());
-			} else if (tex.depth() == 4) {
-				src = tex.pixels() + 4 * (tx + ty * tex.width()) + 1;
+			if (tdepth == 3) {
+				src = basesrc + 3 * tx;
+			} else if (tdepth == 4) {
+				src = basesrc + 4 * tx;
 
 				// alpha channel > 0 => transparent
 				if (src[-1]) {
+					dst += 3;
 					continue;
 				}
-			} else if (!tex.pixels()[tx + ty * tex.width()]) {
+			} else if (!basesrc[tx]) {
+				dst += 3;
 				continue;
 			} else {
-				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				src = pal + 3 * basesrc[tx];
 			}
 
-			dst[0] = src[0];
-			dst[1] = src[1];
-			dst[2] = src[2];
+			*dst++ = src[0];
+			*dst++ = src[1];
+			*dst++ = src[2];
 		}
 	}
+
+	delete[] transtab;
 }
 
 void SoftRenderer::rotBlit(const Texture &tex, int x, int y, float angle, const uint8_t *pal) {
@@ -335,10 +355,11 @@ void SoftRenderer::enemyBlit(const Texture &tex, int x, int y, const uint8_t *pa
 }
 
 void SoftRenderer::transparentBlit(const Texture &tex, int x, int y, const uint8_t *pal, unsigned scale, int mirror) {
-	int i, j, tx, ty, basey = 0, tmp;
+	int i, j, tx, ty, basey = 0, tmp, tdepth = tex.depth();
 	unsigned xs = tex.width() * scale / 320;
-	uint8_t *dst;
-	const uint8_t *src;
+	uint8_t *dst, *basedst;
+	const uint8_t *src, *basesrc;
+	int *transtab;
 
 	y -= tex.height() * scale / 320;
 
@@ -350,11 +371,17 @@ void SoftRenderer::transparentBlit(const Texture &tex, int x, int y, const uint8
 		xs--;
 	}
 
-	if (tex.depth() != 3 && !pal) {
+	if (tdepth != 3 && !pal) {
 		pal = tex.palette();
 	}
 
-	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+	assert(tdepth == 3 || (tdepth == 1 && pal));
+
+	transtab = new int[xs + 2];
+
+	for (i = 0; i < xs + 2; i++) {
+		transtab[i] = i * 320 / scale;
+	}
 
 	for (i = basey; i + y < height(); i++) {
 		ty = i *  320 / scale;
@@ -363,12 +390,16 @@ void SoftRenderer::transparentBlit(const Texture &tex, int x, int y, const uint8
 			break;
 		}
 
-		for (j = 0; ; j++) {
-			tx = j * 320 / scale;
+		basedst = _pixels + 3 * (x + (i + y) * width());
 
-			if (tx >= tex.width()) {
-				break;
-			}
+		if (tdepth == 3) {
+			basesrc = tex.pixels() + 3 * ty * tex.width();
+		} else {
+			basesrc = tex.pixels() + ty * tex.width();
+		}
+
+		for (j = 0; j <= xs; j++) {
+			tx = transtab[j];
 
 			tmp = mirror ? xs - j : j;
 
@@ -376,45 +407,49 @@ void SoftRenderer::transparentBlit(const Texture &tex, int x, int y, const uint8
 				continue;
 			}
 
-			dst = _pixels + 3 * (tmp + x + (i + y) * width());
+			dst = basedst + 3 * tmp;
 
-			if (tex.depth() == 3) {
-				src = tex.pixels() + 3 * (tx + ty * tex.width());
-				dst[0] = src[0];
-				dst[1] = src[1];
-				dst[2] = src[2];
-			} else if (tex.pixels()[tx + ty * tex.width()] == 0) {
+			if (tdepth == 3) {
+				src = basesrc + 3 * tx;
+				*dst++ = src[0];
+				*dst++ = src[1];
+				*dst++ = src[2];
+			} else if (basesrc[tx] == 0) {
 				continue;
-			} else if (tex.pixels()[tx + ty * tex.width()] & 0x80) {
-				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+			} else if (basesrc[tx] & 0x80) {
+				src = pal + 3 * basesrc[tx];
 				// explicit cast is needed
 				dst[0] = (src[0] + (unsigned)dst[0]) / 2;
 				dst[1] = (src[1] + (unsigned)dst[1]) / 2;
 				dst[2] = (src[2] + (unsigned)dst[2]) / 2;
+				dst += 3;
 			} else {
-				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
-				dst[0] = src[0];
-				dst[1] = src[1];
-				dst[2] = src[2];
+				src = pal + 3 * basesrc[tx];
+				*dst++ = src[0];
+				*dst++ = src[1];
+				*dst++ = src[2];
 			}
 		}
 	}
+
+	delete[] transtab;
 }
 
 void SoftRenderer::wallBlit(const Texture &tex, int x, int y, int32_t *xtable, unsigned xlen, int16_t *ytable, unsigned ylen, const uint8_t *pal, int mirror) {
-	int i, j, tx, ty, basey = 0, tmp;
-	uint8_t *dst;
-	const uint8_t *src;
+	int i, j, tx, ty, basey = 0, tmp, tdepth = tex.depth();
+	int twidth = tex.width();
+	uint8_t *dst, *basedst;
+	const uint8_t *src, *basesrc;
 
 	if (y < 0) {
 		return;
 	}
 
-	if (tex.depth() != 3 && !pal) {
+	if (tdepth != 3 && !pal) {
 		pal = tex.palette();
 	}
 
-	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+	assert(tdepth == 3 || (tdepth == 1 && pal));
 
 	if (mirror) {
 		x = width() - x - 1;
@@ -429,8 +464,16 @@ void SoftRenderer::wallBlit(const Texture &tex, int x, int y, int32_t *xtable, u
 			continue;
 		}
 
+		basedst = _pixels + 3 * (y - i) * width();
+
+		if (tdepth == 3) {
+			basesrc = tex.pixels() + 3 * ty * twidth;
+		} else {
+			basesrc = tex.pixels() + ty * twidth;
+		}
+
 		for (j = 0, tx = 0; j < xlen; tx += xtable[j++] + 1) {
-			if (tx >= tex.width()) {
+			if (tx >= twidth) {
 				break;
 			}
 
@@ -440,19 +483,19 @@ void SoftRenderer::wallBlit(const Texture &tex, int x, int y, int32_t *xtable, u
 				continue;
 			}
 
-			dst = _pixels + 3 * (tmp + (y - i) * width());
+			dst = basedst + 3 * tmp;
 
-			if (tex.depth() == 3) {
-				src = tex.pixels() + 3 * (tx + ty * tex.width());
+			if (tdepth == 3) {
+				src = basesrc + 3 * tx;
 				dst[0] = src[0];
 				dst[1] = src[1];
 				dst[2] = src[2];
-			} else if (tex.pixels()[tx + ty * tex.width()] == 0) {
+			} else if (basesrc[tx] == 0) {
 				continue;
-			} else if (tex.pixels()[tx + ty * tex.width()] == 1) {
+			} else if (basesrc[tx] == 1) {
 				break;
 			} else {
-				src = pal + 3 * tex.pixels()[tx + ty * tex.width()];
+				src = pal + 3 * basesrc[tx];
 				dst[0] = src[0];
 				dst[1] = src[1];
 				dst[2] = src[2];
@@ -642,62 +685,59 @@ void SoftRenderer::bar(unsigned x, unsigned y, unsigned w, unsigned h, uint8_t r
 	int i, j;
 	uint8_t *dst;
 
+	assert(action >= 0 && action < 4 && "Action not supported");
+
 	for (i = 0; i < h && i + y < height(); i++) {
 		dst = _pixels + 3 * ((i + y) * width() + x);
 
 		for (j = 0; j < w && j + x < width(); j++) {
-			switch (action) {
-			case 0:
+			if (action == 0) {
 				*dst++ = r;
 				*dst++ = g;
 				*dst++ = b;
-				break;
-
-			case 1:
+			} else if (action == 1) {
 				dst[0] = (dst[0] + (unsigned)r) / 2;
 				dst[1] = (dst[1] + (unsigned)g) / 2;
 				dst[2] = (dst[2] + (unsigned)b) / 2;
 				dst += 3;
-				break;
-
-			case 2:
+			} else if (action == 2) {
 				dst[0] -= dst[0] / r;
 				dst[1] -= dst[1] / g;
 				dst[2] -= dst[2] / b;
 				dst += 3;
-				break;
-
-			case 3:
+			} else if (action == 3) {
 				*dst++ ^= r;
 				*dst++ ^= g;
 				*dst++ ^= b;
-				break;
-
-			default:
-				assert(0 && "Action not supported");
 			}
 		}
 	}
 }
 
 void SoftRenderer::fcBlit(const Texture &tex, unsigned y, const T_FLOOR_MAP *celmask, const uint8_t *fog, const uint8_t *pal) {
-	int i;
+	int i, tdepth = tex.depth();
 	float factor;
-	const uint8_t *src;
+	const uint8_t *src, *basesrc;
 	uint8_t *dst;
 
 	assert(celmask && "celmask not set");
-	assert(tex.depth() == 3 || (tex.depth() == 1 && pal));
+	assert(tdepth == 3 || (tdepth == 1 && pal));
 
 	do {
 		dst = _pixels + depth() * ((y + celmask->dsty) * width() + celmask->x);
 		factor = (float)celmask->srcy / (tex.height() - 1);
 
+		if (tdepth == 3) {
+			basesrc = tex.pixels() + 3 * (celmask->srcy * tex.width() + celmask->x);
+		} else {
+			basesrc = tex.pixels() + celmask->srcy * tex.width() + celmask->x;
+		}
+
 		for (i = 0; i < celmask->linewidth; i++) {
-			if (tex.depth() == 3) {
-				src = tex.pixels() + 3 * (celmask->srcy * tex.width() + celmask->x + i);
+			if (tdepth == 3) {
+				src = basesrc + 3 * i;
 			} else {
-				src = pal + 3 * tex.pixels()[celmask->srcy * tex.width() + celmask->x + i];
+				src = pal + 3 * basesrc[i];
 			}
 
 			if (fog) {
