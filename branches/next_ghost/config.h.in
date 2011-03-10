@@ -60,12 +60,6 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `SDL' library (-lSDL). */
-#undef HAVE_LIBSDL
-
-/* Define to 1 if you have the `SDL_mixer' library (-lSDL_mixer). */
-#undef HAVE_LIBSDL_MIXER
-
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
 #undef HAVE_MALLOC

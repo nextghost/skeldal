@@ -1,4 +1,6 @@
 bin_PROGRAMS = skeldal
+skeldal_LDADD = $(SDL_LIBS)
+skeldal_CXXFLAGS = $(SDL_CFLAGS)
 skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	game/clk_map.cpp game/dialogs.cpp game/dump.cpp game/enemy.cpp \
 	game/engine1.cpp game/gamesave.cpp game/globmap.cpp \

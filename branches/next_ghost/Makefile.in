@@ -50,29 +50,36 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_skeldal_OBJECTS = cztable.$(OBJEXT) game/automap.$(OBJEXT) \
-	game/builder.$(OBJEXT) game/clk_map.$(OBJEXT) \
-	game/dialogs.$(OBJEXT) game/dump.$(OBJEXT) \
-	game/enemy.$(OBJEXT) game/engine1.$(OBJEXT) \
-	game/gamesave.$(OBJEXT) game/globmap.$(OBJEXT) \
-	game/chargen.$(OBJEXT) game/interfac.$(OBJEXT) \
-	game/inv.$(OBJEXT) game/book.$(OBJEXT) game/magic.$(OBJEXT) \
-	game/macros.$(OBJEXT) game/menu.$(OBJEXT) \
-	game/realgame.$(OBJEXT) game/setup.$(OBJEXT) \
-	game/skeldal.$(OBJEXT) game/music.$(OBJEXT) \
-	game/combat.$(OBJEXT) game/specproc.$(OBJEXT) \
-	libs/basicobj.$(OBJEXT) libs/bgraph2a.$(OBJEXT) \
-	libs/bgraph2.$(OBJEXT) libs/bmouse.$(OBJEXT) \
-	libs/devices.$(OBJEXT) libs/event.$(OBJEXT) libs/gui.$(OBJEXT) \
-	libs/inicfg.$(OBJEXT) libs/memman.$(OBJEXT) \
-	libs/mgifmapmem.$(OBJEXT) libs/mgifmem.$(OBJEXT) \
-	libs/pcx.$(OBJEXT) libs/strlite.$(OBJEXT) \
-	libs/wav_mem.$(OBJEXT) libs/sound.$(OBJEXT) \
-	sdl/input.$(OBJEXT) sdl/mixer.$(OBJEXT) sdl/screen.$(OBJEXT) \
-	sdl/sound.$(OBJEXT) sdl/timer.$(OBJEXT) unix/init.$(OBJEXT) \
-	unix/system.$(OBJEXT) unix/task.$(OBJEXT)
+am_skeldal_OBJECTS = skeldal-cztable.$(OBJEXT) \
+	game/skeldal-automap.$(OBJEXT) game/skeldal-builder.$(OBJEXT) \
+	game/skeldal-clk_map.$(OBJEXT) game/skeldal-dialogs.$(OBJEXT) \
+	game/skeldal-dump.$(OBJEXT) game/skeldal-enemy.$(OBJEXT) \
+	game/skeldal-engine1.$(OBJEXT) game/skeldal-gamesave.$(OBJEXT) \
+	game/skeldal-globmap.$(OBJEXT) game/skeldal-chargen.$(OBJEXT) \
+	game/skeldal-interfac.$(OBJEXT) game/skeldal-inv.$(OBJEXT) \
+	game/skeldal-book.$(OBJEXT) game/skeldal-magic.$(OBJEXT) \
+	game/skeldal-macros.$(OBJEXT) game/skeldal-menu.$(OBJEXT) \
+	game/skeldal-realgame.$(OBJEXT) game/skeldal-setup.$(OBJEXT) \
+	game/skeldal-skeldal.$(OBJEXT) game/skeldal-music.$(OBJEXT) \
+	game/skeldal-combat.$(OBJEXT) game/skeldal-specproc.$(OBJEXT) \
+	libs/skeldal-basicobj.$(OBJEXT) \
+	libs/skeldal-bgraph2a.$(OBJEXT) libs/skeldal-bgraph2.$(OBJEXT) \
+	libs/skeldal-bmouse.$(OBJEXT) libs/skeldal-devices.$(OBJEXT) \
+	libs/skeldal-event.$(OBJEXT) libs/skeldal-gui.$(OBJEXT) \
+	libs/skeldal-inicfg.$(OBJEXT) libs/skeldal-memman.$(OBJEXT) \
+	libs/skeldal-mgifmapmem.$(OBJEXT) \
+	libs/skeldal-mgifmem.$(OBJEXT) libs/skeldal-pcx.$(OBJEXT) \
+	libs/skeldal-strlite.$(OBJEXT) libs/skeldal-wav_mem.$(OBJEXT) \
+	libs/skeldal-sound.$(OBJEXT) sdl/skeldal-input.$(OBJEXT) \
+	sdl/skeldal-mixer.$(OBJEXT) sdl/skeldal-screen.$(OBJEXT) \
+	sdl/skeldal-sound.$(OBJEXT) sdl/skeldal-timer.$(OBJEXT) \
+	unix/skeldal-init.$(OBJEXT) unix/skeldal-system.$(OBJEXT) \
+	unix/skeldal-task.$(OBJEXT)
 skeldal_OBJECTS = $(am_skeldal_OBJECTS)
-skeldal_LDADD = $(LDADD)
+am__DEPENDENCIES_1 =
+skeldal_DEPENDENCIES = $(am__DEPENDENCIES_1)
+skeldal_LINK = $(CXXLD) $(skeldal_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -142,6 +149,11 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
+SDL_CFLAGS = @SDL_CFLAGS@
+SDL_LIBS = @SDL_LIBS@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -188,6 +200,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+skeldal_LDADD = $(SDL_LIBS)
+skeldal_CXXFLAGS = $(SDL_CFLAGS)
 skeldal_SOURCES = cztable.cpp game/automap.cpp game/builder.cpp \
 	game/clk_map.cpp game/dialogs.cpp game/dump.cpp game/enemy.cpp \
 	game/engine1.cpp game/gamesave.cpp game/globmap.cpp \
@@ -308,49 +322,49 @@ game/$(am__dirstamp):
 game/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) game/$(DEPDIR)
 	@: > game/$(DEPDIR)/$(am__dirstamp)
-game/automap.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-automap.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/builder.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-builder.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/clk_map.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-clk_map.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/dialogs.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-dialogs.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/dump.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-dump.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/enemy.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-enemy.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/engine1.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-engine1.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/gamesave.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-gamesave.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/globmap.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-globmap.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/chargen.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-chargen.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/interfac.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-interfac.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/inv.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-inv.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/book.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-book.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/magic.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-magic.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/macros.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-macros.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/menu.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-menu.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/realgame.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-realgame.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/setup.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-setup.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/skeldal.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-skeldal.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/music.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-music.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/combat.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-combat.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
-game/specproc.$(OBJEXT): game/$(am__dirstamp) \
+game/skeldal-specproc.$(OBJEXT): game/$(am__dirstamp) \
 	game/$(DEPDIR)/$(am__dirstamp)
 libs/$(am__dirstamp):
 	@$(MKDIR_P) libs
@@ -358,35 +372,35 @@ libs/$(am__dirstamp):
 libs/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) libs/$(DEPDIR)
 	@: > libs/$(DEPDIR)/$(am__dirstamp)
-libs/basicobj.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-basicobj.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/bgraph2a.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-bgraph2a.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/bgraph2.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-bgraph2.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/bmouse.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-bmouse.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/devices.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-devices.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/event.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-event.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/gui.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-gui.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/inicfg.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-inicfg.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/memman.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-memman.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/mgifmapmem.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-mgifmapmem.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/mgifmem.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-mgifmem.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/pcx.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-pcx.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/strlite.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-strlite.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/wav_mem.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-wav_mem.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
-libs/sound.$(OBJEXT): libs/$(am__dirstamp) \
+libs/skeldal-sound.$(OBJEXT): libs/$(am__dirstamp) \
 	libs/$(DEPDIR)/$(am__dirstamp)
 sdl/$(am__dirstamp):
 	@$(MKDIR_P) sdl
@@ -394,125 +408,129 @@ sdl/$(am__dirstamp):
 sdl/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) sdl/$(DEPDIR)
 	@: > sdl/$(DEPDIR)/$(am__dirstamp)
-sdl/input.$(OBJEXT): sdl/$(am__dirstamp) sdl/$(DEPDIR)/$(am__dirstamp)
-sdl/mixer.$(OBJEXT): sdl/$(am__dirstamp) sdl/$(DEPDIR)/$(am__dirstamp)
-sdl/screen.$(OBJEXT): sdl/$(am__dirstamp) \
+sdl/skeldal-input.$(OBJEXT): sdl/$(am__dirstamp) \
 	sdl/$(DEPDIR)/$(am__dirstamp)
-sdl/sound.$(OBJEXT): sdl/$(am__dirstamp) sdl/$(DEPDIR)/$(am__dirstamp)
-sdl/timer.$(OBJEXT): sdl/$(am__dirstamp) sdl/$(DEPDIR)/$(am__dirstamp)
+sdl/skeldal-mixer.$(OBJEXT): sdl/$(am__dirstamp) \
+	sdl/$(DEPDIR)/$(am__dirstamp)
+sdl/skeldal-screen.$(OBJEXT): sdl/$(am__dirstamp) \
+	sdl/$(DEPDIR)/$(am__dirstamp)
+sdl/skeldal-sound.$(OBJEXT): sdl/$(am__dirstamp) \
+	sdl/$(DEPDIR)/$(am__dirstamp)
+sdl/skeldal-timer.$(OBJEXT): sdl/$(am__dirstamp) \
+	sdl/$(DEPDIR)/$(am__dirstamp)
 unix/$(am__dirstamp):
 	@$(MKDIR_P) unix
 	@: > unix/$(am__dirstamp)
 unix/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) unix/$(DEPDIR)
 	@: > unix/$(DEPDIR)/$(am__dirstamp)
-unix/init.$(OBJEXT): unix/$(am__dirstamp) \
+unix/skeldal-init.$(OBJEXT): unix/$(am__dirstamp) \
 	unix/$(DEPDIR)/$(am__dirstamp)
-unix/system.$(OBJEXT): unix/$(am__dirstamp) \
+unix/skeldal-system.$(OBJEXT): unix/$(am__dirstamp) \
 	unix/$(DEPDIR)/$(am__dirstamp)
-unix/task.$(OBJEXT): unix/$(am__dirstamp) \
+unix/skeldal-task.$(OBJEXT): unix/$(am__dirstamp) \
 	unix/$(DEPDIR)/$(am__dirstamp)
 skeldal$(EXEEXT): $(skeldal_OBJECTS) $(skeldal_DEPENDENCIES) 
 	@rm -f skeldal$(EXEEXT)
-	$(CXXLINK) $(skeldal_OBJECTS) $(skeldal_LDADD) $(LIBS)
+	$(skeldal_LINK) $(skeldal_OBJECTS) $(skeldal_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f game/automap.$(OBJEXT)
-	-rm -f game/book.$(OBJEXT)
-	-rm -f game/builder.$(OBJEXT)
-	-rm -f game/chargen.$(OBJEXT)
-	-rm -f game/clk_map.$(OBJEXT)
-	-rm -f game/combat.$(OBJEXT)
-	-rm -f game/dialogs.$(OBJEXT)
-	-rm -f game/dump.$(OBJEXT)
-	-rm -f game/enemy.$(OBJEXT)
-	-rm -f game/engine1.$(OBJEXT)
-	-rm -f game/gamesave.$(OBJEXT)
-	-rm -f game/globmap.$(OBJEXT)
-	-rm -f game/interfac.$(OBJEXT)
-	-rm -f game/inv.$(OBJEXT)
-	-rm -f game/macros.$(OBJEXT)
-	-rm -f game/magic.$(OBJEXT)
-	-rm -f game/menu.$(OBJEXT)
-	-rm -f game/music.$(OBJEXT)
-	-rm -f game/realgame.$(OBJEXT)
-	-rm -f game/setup.$(OBJEXT)
-	-rm -f game/skeldal.$(OBJEXT)
-	-rm -f game/specproc.$(OBJEXT)
-	-rm -f libs/basicobj.$(OBJEXT)
-	-rm -f libs/bgraph2.$(OBJEXT)
-	-rm -f libs/bgraph2a.$(OBJEXT)
-	-rm -f libs/bmouse.$(OBJEXT)
-	-rm -f libs/devices.$(OBJEXT)
-	-rm -f libs/event.$(OBJEXT)
-	-rm -f libs/gui.$(OBJEXT)
-	-rm -f libs/inicfg.$(OBJEXT)
-	-rm -f libs/memman.$(OBJEXT)
-	-rm -f libs/mgifmapmem.$(OBJEXT)
-	-rm -f libs/mgifmem.$(OBJEXT)
-	-rm -f libs/pcx.$(OBJEXT)
-	-rm -f libs/sound.$(OBJEXT)
-	-rm -f libs/strlite.$(OBJEXT)
-	-rm -f libs/wav_mem.$(OBJEXT)
-	-rm -f sdl/input.$(OBJEXT)
-	-rm -f sdl/mixer.$(OBJEXT)
-	-rm -f sdl/screen.$(OBJEXT)
-	-rm -f sdl/sound.$(OBJEXT)
-	-rm -f sdl/timer.$(OBJEXT)
-	-rm -f unix/init.$(OBJEXT)
-	-rm -f unix/system.$(OBJEXT)
-	-rm -f unix/task.$(OBJEXT)
+	-rm -f game/skeldal-automap.$(OBJEXT)
+	-rm -f game/skeldal-book.$(OBJEXT)
+	-rm -f game/skeldal-builder.$(OBJEXT)
+	-rm -f game/skeldal-chargen.$(OBJEXT)
+	-rm -f game/skeldal-clk_map.$(OBJEXT)
+	-rm -f game/skeldal-combat.$(OBJEXT)
+	-rm -f game/skeldal-dialogs.$(OBJEXT)
+	-rm -f game/skeldal-dump.$(OBJEXT)
+	-rm -f game/skeldal-enemy.$(OBJEXT)
+	-rm -f game/skeldal-engine1.$(OBJEXT)
+	-rm -f game/skeldal-gamesave.$(OBJEXT)
+	-rm -f game/skeldal-globmap.$(OBJEXT)
+	-rm -f game/skeldal-interfac.$(OBJEXT)
+	-rm -f game/skeldal-inv.$(OBJEXT)
+	-rm -f game/skeldal-macros.$(OBJEXT)
+	-rm -f game/skeldal-magic.$(OBJEXT)
+	-rm -f game/skeldal-menu.$(OBJEXT)
+	-rm -f game/skeldal-music.$(OBJEXT)
+	-rm -f game/skeldal-realgame.$(OBJEXT)
+	-rm -f game/skeldal-setup.$(OBJEXT)
+	-rm -f game/skeldal-skeldal.$(OBJEXT)
+	-rm -f game/skeldal-specproc.$(OBJEXT)
+	-rm -f libs/skeldal-basicobj.$(OBJEXT)
+	-rm -f libs/skeldal-bgraph2.$(OBJEXT)
+	-rm -f libs/skeldal-bgraph2a.$(OBJEXT)
+	-rm -f libs/skeldal-bmouse.$(OBJEXT)
+	-rm -f libs/skeldal-devices.$(OBJEXT)
+	-rm -f libs/skeldal-event.$(OBJEXT)
+	-rm -f libs/skeldal-gui.$(OBJEXT)
+	-rm -f libs/skeldal-inicfg.$(OBJEXT)
+	-rm -f libs/skeldal-memman.$(OBJEXT)
+	-rm -f libs/skeldal-mgifmapmem.$(OBJEXT)
+	-rm -f libs/skeldal-mgifmem.$(OBJEXT)
+	-rm -f libs/skeldal-pcx.$(OBJEXT)
+	-rm -f libs/skeldal-sound.$(OBJEXT)
+	-rm -f libs/skeldal-strlite.$(OBJEXT)
+	-rm -f libs/skeldal-wav_mem.$(OBJEXT)
+	-rm -f sdl/skeldal-input.$(OBJEXT)
+	-rm -f sdl/skeldal-mixer.$(OBJEXT)
+	-rm -f sdl/skeldal-screen.$(OBJEXT)
+	-rm -f sdl/skeldal-sound.$(OBJEXT)
+	-rm -f sdl/skeldal-timer.$(OBJEXT)
+	-rm -f unix/skeldal-init.$(OBJEXT)
+	-rm -f unix/skeldal-system.$(OBJEXT)
+	-rm -f unix/skeldal-task.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cztable.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/automap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/book.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/builder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/chargen.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/clk_map.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/combat.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/dialogs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/dump.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/enemy.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/engine1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/gamesave.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/globmap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/interfac.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/inv.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/macros.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/magic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/menu.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/music.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/realgame.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/setup.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/specproc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/basicobj.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/bgraph2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/bgraph2a.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/bmouse.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/devices.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/event.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/gui.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/inicfg.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/memman.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/mgifmapmem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/mgifmem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/pcx.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/sound.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/strlite.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/wav_mem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/input.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/mixer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/screen.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/sound.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/timer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/init.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/system.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/task.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skeldal-cztable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-automap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-book.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-builder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-chargen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-clk_map.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-combat.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-dialogs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-dump.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-enemy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-engine1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-gamesave.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-globmap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-interfac.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-inv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-macros.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-magic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-menu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-music.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-realgame.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-setup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-skeldal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@game/$(DEPDIR)/skeldal-specproc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-basicobj.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-bgraph2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-bgraph2a.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-bmouse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-devices.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-event.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-gui.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-inicfg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-memman.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-mgifmapmem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-mgifmem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-pcx.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-sound.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-strlite.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libs/$(DEPDIR)/skeldal-wav_mem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/skeldal-input.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/skeldal-mixer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/skeldal-screen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/skeldal-sound.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/skeldal-timer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/skeldal-init.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/skeldal-system.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/skeldal-task.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -529,6 +547,650 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+skeldal-cztable.o: cztable.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT skeldal-cztable.o -MD -MP -MF $(DEPDIR)/skeldal-cztable.Tpo -c -o skeldal-cztable.o `test -f 'cztable.cpp' || echo '$(srcdir)/'`cztable.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/skeldal-cztable.Tpo $(DEPDIR)/skeldal-cztable.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='cztable.cpp' object='skeldal-cztable.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o skeldal-cztable.o `test -f 'cztable.cpp' || echo '$(srcdir)/'`cztable.cpp
+
+skeldal-cztable.obj: cztable.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT skeldal-cztable.obj -MD -MP -MF $(DEPDIR)/skeldal-cztable.Tpo -c -o skeldal-cztable.obj `if test -f 'cztable.cpp'; then $(CYGPATH_W) 'cztable.cpp'; else $(CYGPATH_W) '$(srcdir)/cztable.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/skeldal-cztable.Tpo $(DEPDIR)/skeldal-cztable.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='cztable.cpp' object='skeldal-cztable.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o skeldal-cztable.obj `if test -f 'cztable.cpp'; then $(CYGPATH_W) 'cztable.cpp'; else $(CYGPATH_W) '$(srcdir)/cztable.cpp'; fi`
+
+game/skeldal-automap.o: game/automap.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-automap.o -MD -MP -MF game/$(DEPDIR)/skeldal-automap.Tpo -c -o game/skeldal-automap.o `test -f 'game/automap.cpp' || echo '$(srcdir)/'`game/automap.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-automap.Tpo game/$(DEPDIR)/skeldal-automap.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/automap.cpp' object='game/skeldal-automap.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-automap.o `test -f 'game/automap.cpp' || echo '$(srcdir)/'`game/automap.cpp
+
+game/skeldal-automap.obj: game/automap.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-automap.obj -MD -MP -MF game/$(DEPDIR)/skeldal-automap.Tpo -c -o game/skeldal-automap.obj `if test -f 'game/automap.cpp'; then $(CYGPATH_W) 'game/automap.cpp'; else $(CYGPATH_W) '$(srcdir)/game/automap.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-automap.Tpo game/$(DEPDIR)/skeldal-automap.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/automap.cpp' object='game/skeldal-automap.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-automap.obj `if test -f 'game/automap.cpp'; then $(CYGPATH_W) 'game/automap.cpp'; else $(CYGPATH_W) '$(srcdir)/game/automap.cpp'; fi`
+
+game/skeldal-builder.o: game/builder.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-builder.o -MD -MP -MF game/$(DEPDIR)/skeldal-builder.Tpo -c -o game/skeldal-builder.o `test -f 'game/builder.cpp' || echo '$(srcdir)/'`game/builder.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-builder.Tpo game/$(DEPDIR)/skeldal-builder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/builder.cpp' object='game/skeldal-builder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-builder.o `test -f 'game/builder.cpp' || echo '$(srcdir)/'`game/builder.cpp
+
+game/skeldal-builder.obj: game/builder.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-builder.obj -MD -MP -MF game/$(DEPDIR)/skeldal-builder.Tpo -c -o game/skeldal-builder.obj `if test -f 'game/builder.cpp'; then $(CYGPATH_W) 'game/builder.cpp'; else $(CYGPATH_W) '$(srcdir)/game/builder.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-builder.Tpo game/$(DEPDIR)/skeldal-builder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/builder.cpp' object='game/skeldal-builder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-builder.obj `if test -f 'game/builder.cpp'; then $(CYGPATH_W) 'game/builder.cpp'; else $(CYGPATH_W) '$(srcdir)/game/builder.cpp'; fi`
+
+game/skeldal-clk_map.o: game/clk_map.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-clk_map.o -MD -MP -MF game/$(DEPDIR)/skeldal-clk_map.Tpo -c -o game/skeldal-clk_map.o `test -f 'game/clk_map.cpp' || echo '$(srcdir)/'`game/clk_map.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-clk_map.Tpo game/$(DEPDIR)/skeldal-clk_map.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/clk_map.cpp' object='game/skeldal-clk_map.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-clk_map.o `test -f 'game/clk_map.cpp' || echo '$(srcdir)/'`game/clk_map.cpp
+
+game/skeldal-clk_map.obj: game/clk_map.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-clk_map.obj -MD -MP -MF game/$(DEPDIR)/skeldal-clk_map.Tpo -c -o game/skeldal-clk_map.obj `if test -f 'game/clk_map.cpp'; then $(CYGPATH_W) 'game/clk_map.cpp'; else $(CYGPATH_W) '$(srcdir)/game/clk_map.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-clk_map.Tpo game/$(DEPDIR)/skeldal-clk_map.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/clk_map.cpp' object='game/skeldal-clk_map.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-clk_map.obj `if test -f 'game/clk_map.cpp'; then $(CYGPATH_W) 'game/clk_map.cpp'; else $(CYGPATH_W) '$(srcdir)/game/clk_map.cpp'; fi`
+
+game/skeldal-dialogs.o: game/dialogs.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-dialogs.o -MD -MP -MF game/$(DEPDIR)/skeldal-dialogs.Tpo -c -o game/skeldal-dialogs.o `test -f 'game/dialogs.cpp' || echo '$(srcdir)/'`game/dialogs.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-dialogs.Tpo game/$(DEPDIR)/skeldal-dialogs.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/dialogs.cpp' object='game/skeldal-dialogs.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-dialogs.o `test -f 'game/dialogs.cpp' || echo '$(srcdir)/'`game/dialogs.cpp
+
+game/skeldal-dialogs.obj: game/dialogs.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-dialogs.obj -MD -MP -MF game/$(DEPDIR)/skeldal-dialogs.Tpo -c -o game/skeldal-dialogs.obj `if test -f 'game/dialogs.cpp'; then $(CYGPATH_W) 'game/dialogs.cpp'; else $(CYGPATH_W) '$(srcdir)/game/dialogs.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-dialogs.Tpo game/$(DEPDIR)/skeldal-dialogs.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/dialogs.cpp' object='game/skeldal-dialogs.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-dialogs.obj `if test -f 'game/dialogs.cpp'; then $(CYGPATH_W) 'game/dialogs.cpp'; else $(CYGPATH_W) '$(srcdir)/game/dialogs.cpp'; fi`
+
+game/skeldal-dump.o: game/dump.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-dump.o -MD -MP -MF game/$(DEPDIR)/skeldal-dump.Tpo -c -o game/skeldal-dump.o `test -f 'game/dump.cpp' || echo '$(srcdir)/'`game/dump.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-dump.Tpo game/$(DEPDIR)/skeldal-dump.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/dump.cpp' object='game/skeldal-dump.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-dump.o `test -f 'game/dump.cpp' || echo '$(srcdir)/'`game/dump.cpp
+
+game/skeldal-dump.obj: game/dump.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-dump.obj -MD -MP -MF game/$(DEPDIR)/skeldal-dump.Tpo -c -o game/skeldal-dump.obj `if test -f 'game/dump.cpp'; then $(CYGPATH_W) 'game/dump.cpp'; else $(CYGPATH_W) '$(srcdir)/game/dump.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-dump.Tpo game/$(DEPDIR)/skeldal-dump.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/dump.cpp' object='game/skeldal-dump.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-dump.obj `if test -f 'game/dump.cpp'; then $(CYGPATH_W) 'game/dump.cpp'; else $(CYGPATH_W) '$(srcdir)/game/dump.cpp'; fi`
+
+game/skeldal-enemy.o: game/enemy.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-enemy.o -MD -MP -MF game/$(DEPDIR)/skeldal-enemy.Tpo -c -o game/skeldal-enemy.o `test -f 'game/enemy.cpp' || echo '$(srcdir)/'`game/enemy.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-enemy.Tpo game/$(DEPDIR)/skeldal-enemy.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/enemy.cpp' object='game/skeldal-enemy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-enemy.o `test -f 'game/enemy.cpp' || echo '$(srcdir)/'`game/enemy.cpp
+
+game/skeldal-enemy.obj: game/enemy.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-enemy.obj -MD -MP -MF game/$(DEPDIR)/skeldal-enemy.Tpo -c -o game/skeldal-enemy.obj `if test -f 'game/enemy.cpp'; then $(CYGPATH_W) 'game/enemy.cpp'; else $(CYGPATH_W) '$(srcdir)/game/enemy.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-enemy.Tpo game/$(DEPDIR)/skeldal-enemy.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/enemy.cpp' object='game/skeldal-enemy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-enemy.obj `if test -f 'game/enemy.cpp'; then $(CYGPATH_W) 'game/enemy.cpp'; else $(CYGPATH_W) '$(srcdir)/game/enemy.cpp'; fi`
+
+game/skeldal-engine1.o: game/engine1.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-engine1.o -MD -MP -MF game/$(DEPDIR)/skeldal-engine1.Tpo -c -o game/skeldal-engine1.o `test -f 'game/engine1.cpp' || echo '$(srcdir)/'`game/engine1.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-engine1.Tpo game/$(DEPDIR)/skeldal-engine1.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/engine1.cpp' object='game/skeldal-engine1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-engine1.o `test -f 'game/engine1.cpp' || echo '$(srcdir)/'`game/engine1.cpp
+
+game/skeldal-engine1.obj: game/engine1.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-engine1.obj -MD -MP -MF game/$(DEPDIR)/skeldal-engine1.Tpo -c -o game/skeldal-engine1.obj `if test -f 'game/engine1.cpp'; then $(CYGPATH_W) 'game/engine1.cpp'; else $(CYGPATH_W) '$(srcdir)/game/engine1.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-engine1.Tpo game/$(DEPDIR)/skeldal-engine1.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/engine1.cpp' object='game/skeldal-engine1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-engine1.obj `if test -f 'game/engine1.cpp'; then $(CYGPATH_W) 'game/engine1.cpp'; else $(CYGPATH_W) '$(srcdir)/game/engine1.cpp'; fi`
+
+game/skeldal-gamesave.o: game/gamesave.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-gamesave.o -MD -MP -MF game/$(DEPDIR)/skeldal-gamesave.Tpo -c -o game/skeldal-gamesave.o `test -f 'game/gamesave.cpp' || echo '$(srcdir)/'`game/gamesave.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-gamesave.Tpo game/$(DEPDIR)/skeldal-gamesave.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/gamesave.cpp' object='game/skeldal-gamesave.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-gamesave.o `test -f 'game/gamesave.cpp' || echo '$(srcdir)/'`game/gamesave.cpp
+
+game/skeldal-gamesave.obj: game/gamesave.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-gamesave.obj -MD -MP -MF game/$(DEPDIR)/skeldal-gamesave.Tpo -c -o game/skeldal-gamesave.obj `if test -f 'game/gamesave.cpp'; then $(CYGPATH_W) 'game/gamesave.cpp'; else $(CYGPATH_W) '$(srcdir)/game/gamesave.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-gamesave.Tpo game/$(DEPDIR)/skeldal-gamesave.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/gamesave.cpp' object='game/skeldal-gamesave.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-gamesave.obj `if test -f 'game/gamesave.cpp'; then $(CYGPATH_W) 'game/gamesave.cpp'; else $(CYGPATH_W) '$(srcdir)/game/gamesave.cpp'; fi`
+
+game/skeldal-globmap.o: game/globmap.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-globmap.o -MD -MP -MF game/$(DEPDIR)/skeldal-globmap.Tpo -c -o game/skeldal-globmap.o `test -f 'game/globmap.cpp' || echo '$(srcdir)/'`game/globmap.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-globmap.Tpo game/$(DEPDIR)/skeldal-globmap.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/globmap.cpp' object='game/skeldal-globmap.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-globmap.o `test -f 'game/globmap.cpp' || echo '$(srcdir)/'`game/globmap.cpp
+
+game/skeldal-globmap.obj: game/globmap.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-globmap.obj -MD -MP -MF game/$(DEPDIR)/skeldal-globmap.Tpo -c -o game/skeldal-globmap.obj `if test -f 'game/globmap.cpp'; then $(CYGPATH_W) 'game/globmap.cpp'; else $(CYGPATH_W) '$(srcdir)/game/globmap.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-globmap.Tpo game/$(DEPDIR)/skeldal-globmap.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/globmap.cpp' object='game/skeldal-globmap.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-globmap.obj `if test -f 'game/globmap.cpp'; then $(CYGPATH_W) 'game/globmap.cpp'; else $(CYGPATH_W) '$(srcdir)/game/globmap.cpp'; fi`
+
+game/skeldal-chargen.o: game/chargen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-chargen.o -MD -MP -MF game/$(DEPDIR)/skeldal-chargen.Tpo -c -o game/skeldal-chargen.o `test -f 'game/chargen.cpp' || echo '$(srcdir)/'`game/chargen.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-chargen.Tpo game/$(DEPDIR)/skeldal-chargen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/chargen.cpp' object='game/skeldal-chargen.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-chargen.o `test -f 'game/chargen.cpp' || echo '$(srcdir)/'`game/chargen.cpp
+
+game/skeldal-chargen.obj: game/chargen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-chargen.obj -MD -MP -MF game/$(DEPDIR)/skeldal-chargen.Tpo -c -o game/skeldal-chargen.obj `if test -f 'game/chargen.cpp'; then $(CYGPATH_W) 'game/chargen.cpp'; else $(CYGPATH_W) '$(srcdir)/game/chargen.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-chargen.Tpo game/$(DEPDIR)/skeldal-chargen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/chargen.cpp' object='game/skeldal-chargen.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-chargen.obj `if test -f 'game/chargen.cpp'; then $(CYGPATH_W) 'game/chargen.cpp'; else $(CYGPATH_W) '$(srcdir)/game/chargen.cpp'; fi`
+
+game/skeldal-interfac.o: game/interfac.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-interfac.o -MD -MP -MF game/$(DEPDIR)/skeldal-interfac.Tpo -c -o game/skeldal-interfac.o `test -f 'game/interfac.cpp' || echo '$(srcdir)/'`game/interfac.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-interfac.Tpo game/$(DEPDIR)/skeldal-interfac.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/interfac.cpp' object='game/skeldal-interfac.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-interfac.o `test -f 'game/interfac.cpp' || echo '$(srcdir)/'`game/interfac.cpp
+
+game/skeldal-interfac.obj: game/interfac.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-interfac.obj -MD -MP -MF game/$(DEPDIR)/skeldal-interfac.Tpo -c -o game/skeldal-interfac.obj `if test -f 'game/interfac.cpp'; then $(CYGPATH_W) 'game/interfac.cpp'; else $(CYGPATH_W) '$(srcdir)/game/interfac.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-interfac.Tpo game/$(DEPDIR)/skeldal-interfac.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/interfac.cpp' object='game/skeldal-interfac.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-interfac.obj `if test -f 'game/interfac.cpp'; then $(CYGPATH_W) 'game/interfac.cpp'; else $(CYGPATH_W) '$(srcdir)/game/interfac.cpp'; fi`
+
+game/skeldal-inv.o: game/inv.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-inv.o -MD -MP -MF game/$(DEPDIR)/skeldal-inv.Tpo -c -o game/skeldal-inv.o `test -f 'game/inv.cpp' || echo '$(srcdir)/'`game/inv.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-inv.Tpo game/$(DEPDIR)/skeldal-inv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/inv.cpp' object='game/skeldal-inv.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-inv.o `test -f 'game/inv.cpp' || echo '$(srcdir)/'`game/inv.cpp
+
+game/skeldal-inv.obj: game/inv.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-inv.obj -MD -MP -MF game/$(DEPDIR)/skeldal-inv.Tpo -c -o game/skeldal-inv.obj `if test -f 'game/inv.cpp'; then $(CYGPATH_W) 'game/inv.cpp'; else $(CYGPATH_W) '$(srcdir)/game/inv.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-inv.Tpo game/$(DEPDIR)/skeldal-inv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/inv.cpp' object='game/skeldal-inv.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-inv.obj `if test -f 'game/inv.cpp'; then $(CYGPATH_W) 'game/inv.cpp'; else $(CYGPATH_W) '$(srcdir)/game/inv.cpp'; fi`
+
+game/skeldal-book.o: game/book.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-book.o -MD -MP -MF game/$(DEPDIR)/skeldal-book.Tpo -c -o game/skeldal-book.o `test -f 'game/book.cpp' || echo '$(srcdir)/'`game/book.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-book.Tpo game/$(DEPDIR)/skeldal-book.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/book.cpp' object='game/skeldal-book.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-book.o `test -f 'game/book.cpp' || echo '$(srcdir)/'`game/book.cpp
+
+game/skeldal-book.obj: game/book.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-book.obj -MD -MP -MF game/$(DEPDIR)/skeldal-book.Tpo -c -o game/skeldal-book.obj `if test -f 'game/book.cpp'; then $(CYGPATH_W) 'game/book.cpp'; else $(CYGPATH_W) '$(srcdir)/game/book.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-book.Tpo game/$(DEPDIR)/skeldal-book.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/book.cpp' object='game/skeldal-book.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-book.obj `if test -f 'game/book.cpp'; then $(CYGPATH_W) 'game/book.cpp'; else $(CYGPATH_W) '$(srcdir)/game/book.cpp'; fi`
+
+game/skeldal-magic.o: game/magic.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-magic.o -MD -MP -MF game/$(DEPDIR)/skeldal-magic.Tpo -c -o game/skeldal-magic.o `test -f 'game/magic.cpp' || echo '$(srcdir)/'`game/magic.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-magic.Tpo game/$(DEPDIR)/skeldal-magic.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/magic.cpp' object='game/skeldal-magic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-magic.o `test -f 'game/magic.cpp' || echo '$(srcdir)/'`game/magic.cpp
+
+game/skeldal-magic.obj: game/magic.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-magic.obj -MD -MP -MF game/$(DEPDIR)/skeldal-magic.Tpo -c -o game/skeldal-magic.obj `if test -f 'game/magic.cpp'; then $(CYGPATH_W) 'game/magic.cpp'; else $(CYGPATH_W) '$(srcdir)/game/magic.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-magic.Tpo game/$(DEPDIR)/skeldal-magic.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/magic.cpp' object='game/skeldal-magic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-magic.obj `if test -f 'game/magic.cpp'; then $(CYGPATH_W) 'game/magic.cpp'; else $(CYGPATH_W) '$(srcdir)/game/magic.cpp'; fi`
+
+game/skeldal-macros.o: game/macros.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-macros.o -MD -MP -MF game/$(DEPDIR)/skeldal-macros.Tpo -c -o game/skeldal-macros.o `test -f 'game/macros.cpp' || echo '$(srcdir)/'`game/macros.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-macros.Tpo game/$(DEPDIR)/skeldal-macros.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/macros.cpp' object='game/skeldal-macros.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-macros.o `test -f 'game/macros.cpp' || echo '$(srcdir)/'`game/macros.cpp
+
+game/skeldal-macros.obj: game/macros.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-macros.obj -MD -MP -MF game/$(DEPDIR)/skeldal-macros.Tpo -c -o game/skeldal-macros.obj `if test -f 'game/macros.cpp'; then $(CYGPATH_W) 'game/macros.cpp'; else $(CYGPATH_W) '$(srcdir)/game/macros.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-macros.Tpo game/$(DEPDIR)/skeldal-macros.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/macros.cpp' object='game/skeldal-macros.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-macros.obj `if test -f 'game/macros.cpp'; then $(CYGPATH_W) 'game/macros.cpp'; else $(CYGPATH_W) '$(srcdir)/game/macros.cpp'; fi`
+
+game/skeldal-menu.o: game/menu.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-menu.o -MD -MP -MF game/$(DEPDIR)/skeldal-menu.Tpo -c -o game/skeldal-menu.o `test -f 'game/menu.cpp' || echo '$(srcdir)/'`game/menu.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-menu.Tpo game/$(DEPDIR)/skeldal-menu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/menu.cpp' object='game/skeldal-menu.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-menu.o `test -f 'game/menu.cpp' || echo '$(srcdir)/'`game/menu.cpp
+
+game/skeldal-menu.obj: game/menu.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-menu.obj -MD -MP -MF game/$(DEPDIR)/skeldal-menu.Tpo -c -o game/skeldal-menu.obj `if test -f 'game/menu.cpp'; then $(CYGPATH_W) 'game/menu.cpp'; else $(CYGPATH_W) '$(srcdir)/game/menu.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-menu.Tpo game/$(DEPDIR)/skeldal-menu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/menu.cpp' object='game/skeldal-menu.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-menu.obj `if test -f 'game/menu.cpp'; then $(CYGPATH_W) 'game/menu.cpp'; else $(CYGPATH_W) '$(srcdir)/game/menu.cpp'; fi`
+
+game/skeldal-realgame.o: game/realgame.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-realgame.o -MD -MP -MF game/$(DEPDIR)/skeldal-realgame.Tpo -c -o game/skeldal-realgame.o `test -f 'game/realgame.cpp' || echo '$(srcdir)/'`game/realgame.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-realgame.Tpo game/$(DEPDIR)/skeldal-realgame.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/realgame.cpp' object='game/skeldal-realgame.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-realgame.o `test -f 'game/realgame.cpp' || echo '$(srcdir)/'`game/realgame.cpp
+
+game/skeldal-realgame.obj: game/realgame.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-realgame.obj -MD -MP -MF game/$(DEPDIR)/skeldal-realgame.Tpo -c -o game/skeldal-realgame.obj `if test -f 'game/realgame.cpp'; then $(CYGPATH_W) 'game/realgame.cpp'; else $(CYGPATH_W) '$(srcdir)/game/realgame.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-realgame.Tpo game/$(DEPDIR)/skeldal-realgame.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/realgame.cpp' object='game/skeldal-realgame.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-realgame.obj `if test -f 'game/realgame.cpp'; then $(CYGPATH_W) 'game/realgame.cpp'; else $(CYGPATH_W) '$(srcdir)/game/realgame.cpp'; fi`
+
+game/skeldal-setup.o: game/setup.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-setup.o -MD -MP -MF game/$(DEPDIR)/skeldal-setup.Tpo -c -o game/skeldal-setup.o `test -f 'game/setup.cpp' || echo '$(srcdir)/'`game/setup.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-setup.Tpo game/$(DEPDIR)/skeldal-setup.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/setup.cpp' object='game/skeldal-setup.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-setup.o `test -f 'game/setup.cpp' || echo '$(srcdir)/'`game/setup.cpp
+
+game/skeldal-setup.obj: game/setup.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-setup.obj -MD -MP -MF game/$(DEPDIR)/skeldal-setup.Tpo -c -o game/skeldal-setup.obj `if test -f 'game/setup.cpp'; then $(CYGPATH_W) 'game/setup.cpp'; else $(CYGPATH_W) '$(srcdir)/game/setup.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-setup.Tpo game/$(DEPDIR)/skeldal-setup.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/setup.cpp' object='game/skeldal-setup.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-setup.obj `if test -f 'game/setup.cpp'; then $(CYGPATH_W) 'game/setup.cpp'; else $(CYGPATH_W) '$(srcdir)/game/setup.cpp'; fi`
+
+game/skeldal-skeldal.o: game/skeldal.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-skeldal.o -MD -MP -MF game/$(DEPDIR)/skeldal-skeldal.Tpo -c -o game/skeldal-skeldal.o `test -f 'game/skeldal.cpp' || echo '$(srcdir)/'`game/skeldal.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-skeldal.Tpo game/$(DEPDIR)/skeldal-skeldal.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/skeldal.cpp' object='game/skeldal-skeldal.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-skeldal.o `test -f 'game/skeldal.cpp' || echo '$(srcdir)/'`game/skeldal.cpp
+
+game/skeldal-skeldal.obj: game/skeldal.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-skeldal.obj -MD -MP -MF game/$(DEPDIR)/skeldal-skeldal.Tpo -c -o game/skeldal-skeldal.obj `if test -f 'game/skeldal.cpp'; then $(CYGPATH_W) 'game/skeldal.cpp'; else $(CYGPATH_W) '$(srcdir)/game/skeldal.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-skeldal.Tpo game/$(DEPDIR)/skeldal-skeldal.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/skeldal.cpp' object='game/skeldal-skeldal.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-skeldal.obj `if test -f 'game/skeldal.cpp'; then $(CYGPATH_W) 'game/skeldal.cpp'; else $(CYGPATH_W) '$(srcdir)/game/skeldal.cpp'; fi`
+
+game/skeldal-music.o: game/music.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-music.o -MD -MP -MF game/$(DEPDIR)/skeldal-music.Tpo -c -o game/skeldal-music.o `test -f 'game/music.cpp' || echo '$(srcdir)/'`game/music.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-music.Tpo game/$(DEPDIR)/skeldal-music.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/music.cpp' object='game/skeldal-music.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-music.o `test -f 'game/music.cpp' || echo '$(srcdir)/'`game/music.cpp
+
+game/skeldal-music.obj: game/music.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-music.obj -MD -MP -MF game/$(DEPDIR)/skeldal-music.Tpo -c -o game/skeldal-music.obj `if test -f 'game/music.cpp'; then $(CYGPATH_W) 'game/music.cpp'; else $(CYGPATH_W) '$(srcdir)/game/music.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-music.Tpo game/$(DEPDIR)/skeldal-music.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/music.cpp' object='game/skeldal-music.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-music.obj `if test -f 'game/music.cpp'; then $(CYGPATH_W) 'game/music.cpp'; else $(CYGPATH_W) '$(srcdir)/game/music.cpp'; fi`
+
+game/skeldal-combat.o: game/combat.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-combat.o -MD -MP -MF game/$(DEPDIR)/skeldal-combat.Tpo -c -o game/skeldal-combat.o `test -f 'game/combat.cpp' || echo '$(srcdir)/'`game/combat.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-combat.Tpo game/$(DEPDIR)/skeldal-combat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/combat.cpp' object='game/skeldal-combat.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-combat.o `test -f 'game/combat.cpp' || echo '$(srcdir)/'`game/combat.cpp
+
+game/skeldal-combat.obj: game/combat.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-combat.obj -MD -MP -MF game/$(DEPDIR)/skeldal-combat.Tpo -c -o game/skeldal-combat.obj `if test -f 'game/combat.cpp'; then $(CYGPATH_W) 'game/combat.cpp'; else $(CYGPATH_W) '$(srcdir)/game/combat.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-combat.Tpo game/$(DEPDIR)/skeldal-combat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/combat.cpp' object='game/skeldal-combat.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-combat.obj `if test -f 'game/combat.cpp'; then $(CYGPATH_W) 'game/combat.cpp'; else $(CYGPATH_W) '$(srcdir)/game/combat.cpp'; fi`
+
+game/skeldal-specproc.o: game/specproc.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-specproc.o -MD -MP -MF game/$(DEPDIR)/skeldal-specproc.Tpo -c -o game/skeldal-specproc.o `test -f 'game/specproc.cpp' || echo '$(srcdir)/'`game/specproc.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-specproc.Tpo game/$(DEPDIR)/skeldal-specproc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/specproc.cpp' object='game/skeldal-specproc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-specproc.o `test -f 'game/specproc.cpp' || echo '$(srcdir)/'`game/specproc.cpp
+
+game/skeldal-specproc.obj: game/specproc.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT game/skeldal-specproc.obj -MD -MP -MF game/$(DEPDIR)/skeldal-specproc.Tpo -c -o game/skeldal-specproc.obj `if test -f 'game/specproc.cpp'; then $(CYGPATH_W) 'game/specproc.cpp'; else $(CYGPATH_W) '$(srcdir)/game/specproc.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) game/$(DEPDIR)/skeldal-specproc.Tpo game/$(DEPDIR)/skeldal-specproc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='game/specproc.cpp' object='game/skeldal-specproc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o game/skeldal-specproc.obj `if test -f 'game/specproc.cpp'; then $(CYGPATH_W) 'game/specproc.cpp'; else $(CYGPATH_W) '$(srcdir)/game/specproc.cpp'; fi`
+
+libs/skeldal-basicobj.o: libs/basicobj.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-basicobj.o -MD -MP -MF libs/$(DEPDIR)/skeldal-basicobj.Tpo -c -o libs/skeldal-basicobj.o `test -f 'libs/basicobj.cpp' || echo '$(srcdir)/'`libs/basicobj.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-basicobj.Tpo libs/$(DEPDIR)/skeldal-basicobj.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/basicobj.cpp' object='libs/skeldal-basicobj.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-basicobj.o `test -f 'libs/basicobj.cpp' || echo '$(srcdir)/'`libs/basicobj.cpp
+
+libs/skeldal-basicobj.obj: libs/basicobj.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-basicobj.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-basicobj.Tpo -c -o libs/skeldal-basicobj.obj `if test -f 'libs/basicobj.cpp'; then $(CYGPATH_W) 'libs/basicobj.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/basicobj.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-basicobj.Tpo libs/$(DEPDIR)/skeldal-basicobj.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/basicobj.cpp' object='libs/skeldal-basicobj.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-basicobj.obj `if test -f 'libs/basicobj.cpp'; then $(CYGPATH_W) 'libs/basicobj.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/basicobj.cpp'; fi`
+
+libs/skeldal-bgraph2a.o: libs/bgraph2a.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bgraph2a.o -MD -MP -MF libs/$(DEPDIR)/skeldal-bgraph2a.Tpo -c -o libs/skeldal-bgraph2a.o `test -f 'libs/bgraph2a.cpp' || echo '$(srcdir)/'`libs/bgraph2a.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bgraph2a.Tpo libs/$(DEPDIR)/skeldal-bgraph2a.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bgraph2a.cpp' object='libs/skeldal-bgraph2a.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bgraph2a.o `test -f 'libs/bgraph2a.cpp' || echo '$(srcdir)/'`libs/bgraph2a.cpp
+
+libs/skeldal-bgraph2a.obj: libs/bgraph2a.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bgraph2a.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-bgraph2a.Tpo -c -o libs/skeldal-bgraph2a.obj `if test -f 'libs/bgraph2a.cpp'; then $(CYGPATH_W) 'libs/bgraph2a.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bgraph2a.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bgraph2a.Tpo libs/$(DEPDIR)/skeldal-bgraph2a.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bgraph2a.cpp' object='libs/skeldal-bgraph2a.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bgraph2a.obj `if test -f 'libs/bgraph2a.cpp'; then $(CYGPATH_W) 'libs/bgraph2a.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bgraph2a.cpp'; fi`
+
+libs/skeldal-bgraph2.o: libs/bgraph2.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bgraph2.o -MD -MP -MF libs/$(DEPDIR)/skeldal-bgraph2.Tpo -c -o libs/skeldal-bgraph2.o `test -f 'libs/bgraph2.cpp' || echo '$(srcdir)/'`libs/bgraph2.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bgraph2.Tpo libs/$(DEPDIR)/skeldal-bgraph2.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bgraph2.cpp' object='libs/skeldal-bgraph2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bgraph2.o `test -f 'libs/bgraph2.cpp' || echo '$(srcdir)/'`libs/bgraph2.cpp
+
+libs/skeldal-bgraph2.obj: libs/bgraph2.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bgraph2.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-bgraph2.Tpo -c -o libs/skeldal-bgraph2.obj `if test -f 'libs/bgraph2.cpp'; then $(CYGPATH_W) 'libs/bgraph2.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bgraph2.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bgraph2.Tpo libs/$(DEPDIR)/skeldal-bgraph2.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bgraph2.cpp' object='libs/skeldal-bgraph2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bgraph2.obj `if test -f 'libs/bgraph2.cpp'; then $(CYGPATH_W) 'libs/bgraph2.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bgraph2.cpp'; fi`
+
+libs/skeldal-bmouse.o: libs/bmouse.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bmouse.o -MD -MP -MF libs/$(DEPDIR)/skeldal-bmouse.Tpo -c -o libs/skeldal-bmouse.o `test -f 'libs/bmouse.cpp' || echo '$(srcdir)/'`libs/bmouse.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bmouse.Tpo libs/$(DEPDIR)/skeldal-bmouse.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bmouse.cpp' object='libs/skeldal-bmouse.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bmouse.o `test -f 'libs/bmouse.cpp' || echo '$(srcdir)/'`libs/bmouse.cpp
+
+libs/skeldal-bmouse.obj: libs/bmouse.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-bmouse.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-bmouse.Tpo -c -o libs/skeldal-bmouse.obj `if test -f 'libs/bmouse.cpp'; then $(CYGPATH_W) 'libs/bmouse.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bmouse.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-bmouse.Tpo libs/$(DEPDIR)/skeldal-bmouse.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/bmouse.cpp' object='libs/skeldal-bmouse.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-bmouse.obj `if test -f 'libs/bmouse.cpp'; then $(CYGPATH_W) 'libs/bmouse.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/bmouse.cpp'; fi`
+
+libs/skeldal-devices.o: libs/devices.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-devices.o -MD -MP -MF libs/$(DEPDIR)/skeldal-devices.Tpo -c -o libs/skeldal-devices.o `test -f 'libs/devices.cpp' || echo '$(srcdir)/'`libs/devices.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-devices.Tpo libs/$(DEPDIR)/skeldal-devices.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/devices.cpp' object='libs/skeldal-devices.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-devices.o `test -f 'libs/devices.cpp' || echo '$(srcdir)/'`libs/devices.cpp
+
+libs/skeldal-devices.obj: libs/devices.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-devices.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-devices.Tpo -c -o libs/skeldal-devices.obj `if test -f 'libs/devices.cpp'; then $(CYGPATH_W) 'libs/devices.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/devices.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-devices.Tpo libs/$(DEPDIR)/skeldal-devices.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/devices.cpp' object='libs/skeldal-devices.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-devices.obj `if test -f 'libs/devices.cpp'; then $(CYGPATH_W) 'libs/devices.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/devices.cpp'; fi`
+
+libs/skeldal-event.o: libs/event.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-event.o -MD -MP -MF libs/$(DEPDIR)/skeldal-event.Tpo -c -o libs/skeldal-event.o `test -f 'libs/event.cpp' || echo '$(srcdir)/'`libs/event.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-event.Tpo libs/$(DEPDIR)/skeldal-event.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/event.cpp' object='libs/skeldal-event.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-event.o `test -f 'libs/event.cpp' || echo '$(srcdir)/'`libs/event.cpp
+
+libs/skeldal-event.obj: libs/event.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-event.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-event.Tpo -c -o libs/skeldal-event.obj `if test -f 'libs/event.cpp'; then $(CYGPATH_W) 'libs/event.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/event.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-event.Tpo libs/$(DEPDIR)/skeldal-event.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/event.cpp' object='libs/skeldal-event.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-event.obj `if test -f 'libs/event.cpp'; then $(CYGPATH_W) 'libs/event.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/event.cpp'; fi`
+
+libs/skeldal-gui.o: libs/gui.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-gui.o -MD -MP -MF libs/$(DEPDIR)/skeldal-gui.Tpo -c -o libs/skeldal-gui.o `test -f 'libs/gui.cpp' || echo '$(srcdir)/'`libs/gui.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-gui.Tpo libs/$(DEPDIR)/skeldal-gui.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/gui.cpp' object='libs/skeldal-gui.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-gui.o `test -f 'libs/gui.cpp' || echo '$(srcdir)/'`libs/gui.cpp
+
+libs/skeldal-gui.obj: libs/gui.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-gui.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-gui.Tpo -c -o libs/skeldal-gui.obj `if test -f 'libs/gui.cpp'; then $(CYGPATH_W) 'libs/gui.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/gui.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-gui.Tpo libs/$(DEPDIR)/skeldal-gui.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/gui.cpp' object='libs/skeldal-gui.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-gui.obj `if test -f 'libs/gui.cpp'; then $(CYGPATH_W) 'libs/gui.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/gui.cpp'; fi`
+
+libs/skeldal-inicfg.o: libs/inicfg.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-inicfg.o -MD -MP -MF libs/$(DEPDIR)/skeldal-inicfg.Tpo -c -o libs/skeldal-inicfg.o `test -f 'libs/inicfg.cpp' || echo '$(srcdir)/'`libs/inicfg.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-inicfg.Tpo libs/$(DEPDIR)/skeldal-inicfg.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/inicfg.cpp' object='libs/skeldal-inicfg.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-inicfg.o `test -f 'libs/inicfg.cpp' || echo '$(srcdir)/'`libs/inicfg.cpp
+
+libs/skeldal-inicfg.obj: libs/inicfg.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-inicfg.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-inicfg.Tpo -c -o libs/skeldal-inicfg.obj `if test -f 'libs/inicfg.cpp'; then $(CYGPATH_W) 'libs/inicfg.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/inicfg.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-inicfg.Tpo libs/$(DEPDIR)/skeldal-inicfg.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/inicfg.cpp' object='libs/skeldal-inicfg.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-inicfg.obj `if test -f 'libs/inicfg.cpp'; then $(CYGPATH_W) 'libs/inicfg.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/inicfg.cpp'; fi`
+
+libs/skeldal-memman.o: libs/memman.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-memman.o -MD -MP -MF libs/$(DEPDIR)/skeldal-memman.Tpo -c -o libs/skeldal-memman.o `test -f 'libs/memman.cpp' || echo '$(srcdir)/'`libs/memman.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-memman.Tpo libs/$(DEPDIR)/skeldal-memman.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/memman.cpp' object='libs/skeldal-memman.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-memman.o `test -f 'libs/memman.cpp' || echo '$(srcdir)/'`libs/memman.cpp
+
+libs/skeldal-memman.obj: libs/memman.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-memman.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-memman.Tpo -c -o libs/skeldal-memman.obj `if test -f 'libs/memman.cpp'; then $(CYGPATH_W) 'libs/memman.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/memman.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-memman.Tpo libs/$(DEPDIR)/skeldal-memman.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/memman.cpp' object='libs/skeldal-memman.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-memman.obj `if test -f 'libs/memman.cpp'; then $(CYGPATH_W) 'libs/memman.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/memman.cpp'; fi`
+
+libs/skeldal-mgifmapmem.o: libs/mgifmapmem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-mgifmapmem.o -MD -MP -MF libs/$(DEPDIR)/skeldal-mgifmapmem.Tpo -c -o libs/skeldal-mgifmapmem.o `test -f 'libs/mgifmapmem.cpp' || echo '$(srcdir)/'`libs/mgifmapmem.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-mgifmapmem.Tpo libs/$(DEPDIR)/skeldal-mgifmapmem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/mgifmapmem.cpp' object='libs/skeldal-mgifmapmem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-mgifmapmem.o `test -f 'libs/mgifmapmem.cpp' || echo '$(srcdir)/'`libs/mgifmapmem.cpp
+
+libs/skeldal-mgifmapmem.obj: libs/mgifmapmem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-mgifmapmem.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-mgifmapmem.Tpo -c -o libs/skeldal-mgifmapmem.obj `if test -f 'libs/mgifmapmem.cpp'; then $(CYGPATH_W) 'libs/mgifmapmem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/mgifmapmem.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-mgifmapmem.Tpo libs/$(DEPDIR)/skeldal-mgifmapmem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/mgifmapmem.cpp' object='libs/skeldal-mgifmapmem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-mgifmapmem.obj `if test -f 'libs/mgifmapmem.cpp'; then $(CYGPATH_W) 'libs/mgifmapmem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/mgifmapmem.cpp'; fi`
+
+libs/skeldal-mgifmem.o: libs/mgifmem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-mgifmem.o -MD -MP -MF libs/$(DEPDIR)/skeldal-mgifmem.Tpo -c -o libs/skeldal-mgifmem.o `test -f 'libs/mgifmem.cpp' || echo '$(srcdir)/'`libs/mgifmem.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-mgifmem.Tpo libs/$(DEPDIR)/skeldal-mgifmem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/mgifmem.cpp' object='libs/skeldal-mgifmem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-mgifmem.o `test -f 'libs/mgifmem.cpp' || echo '$(srcdir)/'`libs/mgifmem.cpp
+
+libs/skeldal-mgifmem.obj: libs/mgifmem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-mgifmem.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-mgifmem.Tpo -c -o libs/skeldal-mgifmem.obj `if test -f 'libs/mgifmem.cpp'; then $(CYGPATH_W) 'libs/mgifmem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/mgifmem.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-mgifmem.Tpo libs/$(DEPDIR)/skeldal-mgifmem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/mgifmem.cpp' object='libs/skeldal-mgifmem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-mgifmem.obj `if test -f 'libs/mgifmem.cpp'; then $(CYGPATH_W) 'libs/mgifmem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/mgifmem.cpp'; fi`
+
+libs/skeldal-pcx.o: libs/pcx.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-pcx.o -MD -MP -MF libs/$(DEPDIR)/skeldal-pcx.Tpo -c -o libs/skeldal-pcx.o `test -f 'libs/pcx.cpp' || echo '$(srcdir)/'`libs/pcx.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-pcx.Tpo libs/$(DEPDIR)/skeldal-pcx.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/pcx.cpp' object='libs/skeldal-pcx.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-pcx.o `test -f 'libs/pcx.cpp' || echo '$(srcdir)/'`libs/pcx.cpp
+
+libs/skeldal-pcx.obj: libs/pcx.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-pcx.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-pcx.Tpo -c -o libs/skeldal-pcx.obj `if test -f 'libs/pcx.cpp'; then $(CYGPATH_W) 'libs/pcx.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/pcx.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-pcx.Tpo libs/$(DEPDIR)/skeldal-pcx.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/pcx.cpp' object='libs/skeldal-pcx.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-pcx.obj `if test -f 'libs/pcx.cpp'; then $(CYGPATH_W) 'libs/pcx.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/pcx.cpp'; fi`
+
+libs/skeldal-strlite.o: libs/strlite.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-strlite.o -MD -MP -MF libs/$(DEPDIR)/skeldal-strlite.Tpo -c -o libs/skeldal-strlite.o `test -f 'libs/strlite.cpp' || echo '$(srcdir)/'`libs/strlite.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-strlite.Tpo libs/$(DEPDIR)/skeldal-strlite.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/strlite.cpp' object='libs/skeldal-strlite.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-strlite.o `test -f 'libs/strlite.cpp' || echo '$(srcdir)/'`libs/strlite.cpp
+
+libs/skeldal-strlite.obj: libs/strlite.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-strlite.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-strlite.Tpo -c -o libs/skeldal-strlite.obj `if test -f 'libs/strlite.cpp'; then $(CYGPATH_W) 'libs/strlite.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/strlite.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-strlite.Tpo libs/$(DEPDIR)/skeldal-strlite.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/strlite.cpp' object='libs/skeldal-strlite.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-strlite.obj `if test -f 'libs/strlite.cpp'; then $(CYGPATH_W) 'libs/strlite.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/strlite.cpp'; fi`
+
+libs/skeldal-wav_mem.o: libs/wav_mem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-wav_mem.o -MD -MP -MF libs/$(DEPDIR)/skeldal-wav_mem.Tpo -c -o libs/skeldal-wav_mem.o `test -f 'libs/wav_mem.cpp' || echo '$(srcdir)/'`libs/wav_mem.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-wav_mem.Tpo libs/$(DEPDIR)/skeldal-wav_mem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/wav_mem.cpp' object='libs/skeldal-wav_mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-wav_mem.o `test -f 'libs/wav_mem.cpp' || echo '$(srcdir)/'`libs/wav_mem.cpp
+
+libs/skeldal-wav_mem.obj: libs/wav_mem.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-wav_mem.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-wav_mem.Tpo -c -o libs/skeldal-wav_mem.obj `if test -f 'libs/wav_mem.cpp'; then $(CYGPATH_W) 'libs/wav_mem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/wav_mem.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-wav_mem.Tpo libs/$(DEPDIR)/skeldal-wav_mem.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/wav_mem.cpp' object='libs/skeldal-wav_mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-wav_mem.obj `if test -f 'libs/wav_mem.cpp'; then $(CYGPATH_W) 'libs/wav_mem.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/wav_mem.cpp'; fi`
+
+libs/skeldal-sound.o: libs/sound.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-sound.o -MD -MP -MF libs/$(DEPDIR)/skeldal-sound.Tpo -c -o libs/skeldal-sound.o `test -f 'libs/sound.cpp' || echo '$(srcdir)/'`libs/sound.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-sound.Tpo libs/$(DEPDIR)/skeldal-sound.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/sound.cpp' object='libs/skeldal-sound.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-sound.o `test -f 'libs/sound.cpp' || echo '$(srcdir)/'`libs/sound.cpp
+
+libs/skeldal-sound.obj: libs/sound.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT libs/skeldal-sound.obj -MD -MP -MF libs/$(DEPDIR)/skeldal-sound.Tpo -c -o libs/skeldal-sound.obj `if test -f 'libs/sound.cpp'; then $(CYGPATH_W) 'libs/sound.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/sound.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) libs/$(DEPDIR)/skeldal-sound.Tpo libs/$(DEPDIR)/skeldal-sound.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='libs/sound.cpp' object='libs/skeldal-sound.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o libs/skeldal-sound.obj `if test -f 'libs/sound.cpp'; then $(CYGPATH_W) 'libs/sound.cpp'; else $(CYGPATH_W) '$(srcdir)/libs/sound.cpp'; fi`
+
+sdl/skeldal-input.o: sdl/input.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-input.o -MD -MP -MF sdl/$(DEPDIR)/skeldal-input.Tpo -c -o sdl/skeldal-input.o `test -f 'sdl/input.cpp' || echo '$(srcdir)/'`sdl/input.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-input.Tpo sdl/$(DEPDIR)/skeldal-input.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/input.cpp' object='sdl/skeldal-input.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-input.o `test -f 'sdl/input.cpp' || echo '$(srcdir)/'`sdl/input.cpp
+
+sdl/skeldal-input.obj: sdl/input.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-input.obj -MD -MP -MF sdl/$(DEPDIR)/skeldal-input.Tpo -c -o sdl/skeldal-input.obj `if test -f 'sdl/input.cpp'; then $(CYGPATH_W) 'sdl/input.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/input.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-input.Tpo sdl/$(DEPDIR)/skeldal-input.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/input.cpp' object='sdl/skeldal-input.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-input.obj `if test -f 'sdl/input.cpp'; then $(CYGPATH_W) 'sdl/input.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/input.cpp'; fi`
+
+sdl/skeldal-mixer.o: sdl/mixer.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-mixer.o -MD -MP -MF sdl/$(DEPDIR)/skeldal-mixer.Tpo -c -o sdl/skeldal-mixer.o `test -f 'sdl/mixer.cpp' || echo '$(srcdir)/'`sdl/mixer.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-mixer.Tpo sdl/$(DEPDIR)/skeldal-mixer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/mixer.cpp' object='sdl/skeldal-mixer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-mixer.o `test -f 'sdl/mixer.cpp' || echo '$(srcdir)/'`sdl/mixer.cpp
+
+sdl/skeldal-mixer.obj: sdl/mixer.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-mixer.obj -MD -MP -MF sdl/$(DEPDIR)/skeldal-mixer.Tpo -c -o sdl/skeldal-mixer.obj `if test -f 'sdl/mixer.cpp'; then $(CYGPATH_W) 'sdl/mixer.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/mixer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-mixer.Tpo sdl/$(DEPDIR)/skeldal-mixer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/mixer.cpp' object='sdl/skeldal-mixer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-mixer.obj `if test -f 'sdl/mixer.cpp'; then $(CYGPATH_W) 'sdl/mixer.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/mixer.cpp'; fi`
+
+sdl/skeldal-screen.o: sdl/screen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-screen.o -MD -MP -MF sdl/$(DEPDIR)/skeldal-screen.Tpo -c -o sdl/skeldal-screen.o `test -f 'sdl/screen.cpp' || echo '$(srcdir)/'`sdl/screen.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-screen.Tpo sdl/$(DEPDIR)/skeldal-screen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/screen.cpp' object='sdl/skeldal-screen.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-screen.o `test -f 'sdl/screen.cpp' || echo '$(srcdir)/'`sdl/screen.cpp
+
+sdl/skeldal-screen.obj: sdl/screen.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-screen.obj -MD -MP -MF sdl/$(DEPDIR)/skeldal-screen.Tpo -c -o sdl/skeldal-screen.obj `if test -f 'sdl/screen.cpp'; then $(CYGPATH_W) 'sdl/screen.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/screen.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-screen.Tpo sdl/$(DEPDIR)/skeldal-screen.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/screen.cpp' object='sdl/skeldal-screen.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-screen.obj `if test -f 'sdl/screen.cpp'; then $(CYGPATH_W) 'sdl/screen.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/screen.cpp'; fi`
+
+sdl/skeldal-sound.o: sdl/sound.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-sound.o -MD -MP -MF sdl/$(DEPDIR)/skeldal-sound.Tpo -c -o sdl/skeldal-sound.o `test -f 'sdl/sound.cpp' || echo '$(srcdir)/'`sdl/sound.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-sound.Tpo sdl/$(DEPDIR)/skeldal-sound.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/sound.cpp' object='sdl/skeldal-sound.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-sound.o `test -f 'sdl/sound.cpp' || echo '$(srcdir)/'`sdl/sound.cpp
+
+sdl/skeldal-sound.obj: sdl/sound.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-sound.obj -MD -MP -MF sdl/$(DEPDIR)/skeldal-sound.Tpo -c -o sdl/skeldal-sound.obj `if test -f 'sdl/sound.cpp'; then $(CYGPATH_W) 'sdl/sound.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/sound.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-sound.Tpo sdl/$(DEPDIR)/skeldal-sound.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/sound.cpp' object='sdl/skeldal-sound.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-sound.obj `if test -f 'sdl/sound.cpp'; then $(CYGPATH_W) 'sdl/sound.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/sound.cpp'; fi`
+
+sdl/skeldal-timer.o: sdl/timer.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-timer.o -MD -MP -MF sdl/$(DEPDIR)/skeldal-timer.Tpo -c -o sdl/skeldal-timer.o `test -f 'sdl/timer.cpp' || echo '$(srcdir)/'`sdl/timer.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-timer.Tpo sdl/$(DEPDIR)/skeldal-timer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/timer.cpp' object='sdl/skeldal-timer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-timer.o `test -f 'sdl/timer.cpp' || echo '$(srcdir)/'`sdl/timer.cpp
+
+sdl/skeldal-timer.obj: sdl/timer.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT sdl/skeldal-timer.obj -MD -MP -MF sdl/$(DEPDIR)/skeldal-timer.Tpo -c -o sdl/skeldal-timer.obj `if test -f 'sdl/timer.cpp'; then $(CYGPATH_W) 'sdl/timer.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/timer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) sdl/$(DEPDIR)/skeldal-timer.Tpo sdl/$(DEPDIR)/skeldal-timer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='sdl/timer.cpp' object='sdl/skeldal-timer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o sdl/skeldal-timer.obj `if test -f 'sdl/timer.cpp'; then $(CYGPATH_W) 'sdl/timer.cpp'; else $(CYGPATH_W) '$(srcdir)/sdl/timer.cpp'; fi`
+
+unix/skeldal-init.o: unix/init.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-init.o -MD -MP -MF unix/$(DEPDIR)/skeldal-init.Tpo -c -o unix/skeldal-init.o `test -f 'unix/init.cpp' || echo '$(srcdir)/'`unix/init.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-init.Tpo unix/$(DEPDIR)/skeldal-init.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/init.cpp' object='unix/skeldal-init.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-init.o `test -f 'unix/init.cpp' || echo '$(srcdir)/'`unix/init.cpp
+
+unix/skeldal-init.obj: unix/init.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-init.obj -MD -MP -MF unix/$(DEPDIR)/skeldal-init.Tpo -c -o unix/skeldal-init.obj `if test -f 'unix/init.cpp'; then $(CYGPATH_W) 'unix/init.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/init.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-init.Tpo unix/$(DEPDIR)/skeldal-init.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/init.cpp' object='unix/skeldal-init.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-init.obj `if test -f 'unix/init.cpp'; then $(CYGPATH_W) 'unix/init.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/init.cpp'; fi`
+
+unix/skeldal-system.o: unix/system.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-system.o -MD -MP -MF unix/$(DEPDIR)/skeldal-system.Tpo -c -o unix/skeldal-system.o `test -f 'unix/system.cpp' || echo '$(srcdir)/'`unix/system.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-system.Tpo unix/$(DEPDIR)/skeldal-system.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/system.cpp' object='unix/skeldal-system.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-system.o `test -f 'unix/system.cpp' || echo '$(srcdir)/'`unix/system.cpp
+
+unix/skeldal-system.obj: unix/system.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-system.obj -MD -MP -MF unix/$(DEPDIR)/skeldal-system.Tpo -c -o unix/skeldal-system.obj `if test -f 'unix/system.cpp'; then $(CYGPATH_W) 'unix/system.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/system.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-system.Tpo unix/$(DEPDIR)/skeldal-system.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/system.cpp' object='unix/skeldal-system.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-system.obj `if test -f 'unix/system.cpp'; then $(CYGPATH_W) 'unix/system.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/system.cpp'; fi`
+
+unix/skeldal-task.o: unix/task.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-task.o -MD -MP -MF unix/$(DEPDIR)/skeldal-task.Tpo -c -o unix/skeldal-task.o `test -f 'unix/task.cpp' || echo '$(srcdir)/'`unix/task.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-task.Tpo unix/$(DEPDIR)/skeldal-task.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/task.cpp' object='unix/skeldal-task.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-task.o `test -f 'unix/task.cpp' || echo '$(srcdir)/'`unix/task.cpp
+
+unix/skeldal-task.obj: unix/task.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -MT unix/skeldal-task.obj -MD -MP -MF unix/$(DEPDIR)/skeldal-task.Tpo -c -o unix/skeldal-task.obj `if test -f 'unix/task.cpp'; then $(CYGPATH_W) 'unix/task.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/task.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) unix/$(DEPDIR)/skeldal-task.Tpo unix/$(DEPDIR)/skeldal-task.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='unix/task.cpp' object='unix/skeldal-task.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(skeldal_CXXFLAGS) $(CXXFLAGS) -c -o unix/skeldal-task.obj `if test -f 'unix/task.cpp'; then $(CYGPATH_W) 'unix/task.cpp'; else $(CYGPATH_W) '$(srcdir)/unix/task.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

@@ -10,11 +10,11 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CXX
 AC_LANG(C++)
+PKG_PROG_PKG_CONFIG([0.25])
 
 # Checks for libraries.
-AC_CHECK_LIB([SDL], [SDL_Init], [], AC_MSG_ERROR([libSDL library not found]))
-AC_CHECK_LIB([SDL_mixer], [Mix_OpenAudio], [], AC_MSG_ERROR([SDL_mixer library not found]))
 AC_CHECK_LIB([m], [sqrt])
+PKG_CHECK_MODULES([SDL], [sdl >= 1.2 SDL_mixer >= 1.2])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h climits cstddef cstdlib cstring unistd.h], [], AC_MSG_ERROR(Standard headers not found))
