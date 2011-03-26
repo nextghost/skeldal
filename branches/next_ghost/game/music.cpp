@@ -44,6 +44,7 @@
 
 #define SND_EFF_MAXVOL 32000
 #define SND_EFF_DESCENT 8000
+#define SND_DIST_COEF 32
 
 #define have_loop(x) ((x)->start_loop!=(x)->end_loop)
 
@@ -130,30 +131,40 @@ void pc_speak_play_sample(char *sample,int size,char step,int freq)
 
 */
 
-int find_free_channel(int stamp)
-  {
-  int i,j;
-  int minvol,left,right,mid;
-
-  j=0;
-  if (stamp) for(i=0;i<CHANNELS;i++) if (chan_state[i]==stamp) return i;
-  minvol=0xffff;
-  for(i=0;i<CHANNELS;i++)
-     {
-     if (!Sound_GetChannelState(i)) return i;
-     Sound_GetVolume(i,&left,&right);
-     mid=(left+right)/2;
-     if (playings[i].side<0) mid*=2;
-     if (mid<minvol)
-        {
-        minvol=mid;j=i;
-        }
-    }
-  return j;
-  }
+int find_free_channel(int stamp) {
+	int i, j;
+	int dist, vol, tdist, tvol;
 
 
+	if (stamp) {
+		for (i = 0; i < CHANNELS; i++) {
+			if (chan_state[i] == stamp) {
+				return i;
+			}
+		}
+	}
 
+	j = 0;
+	dist = Sound_GetDistance(j);
+	vol = Sound_GetVolume(j);
+
+	for (i = 0; i < CHANNELS; i++) {
+		if (!Sound_GetChannelState(i)) {
+			return i;
+		}
+
+		tdist = Sound_GetDistance(i);
+		tvol = Sound_GetVolume(i);
+
+		if ((tdist > dist) || (tdist == dist && tvol < vol)) {
+			j = i;
+			dist = tdist;
+			vol = tvol;
+		}
+	}
+
+	return j;
+}
 
 void release_channel(int channel)
   {
@@ -169,55 +180,39 @@ void release_channel(int channel)
      }
   }
 
-int calc_volume(int *x,int *y,int side)
-  {
-  int ds;
+int calcul_volume(int chan, int x, int y, int side, int volume) {
+	double dist, angle;
+	int ds, ang;
 
-  side&=3;*x=-(*x);*y=-(*y);
-  *x+=(side==1)*(*x>=0)-(side==3)*(*x<=0);
-  *y+=(side==2)*(*y>=0)-(side==0)*(*y<=0);
-  ds=abs(*x)+abs(*y);
-  ds=SND_EFF_MAXVOL-(SND_EFF_DESCENT*8*ds)/(8+ds);
-  return ds;
-  }
+	if (side == -1) {
+		side = viewdir;
+	}
 
-int calcul_volume(int chan,int x,int y,int side,int volume)
-  {
-  int lv,rv;
-  int ds,bal,i;
+	side %= 4;
+	dist = sqrt(x*x + y*y);
+	ds = SND_DIST_COEF * dist;
 
-  if (side==-1) side=viewdir;
-  side&=3;
-  ds=calc_volume(&x,&y,side);
-  if (ds<=0)
-     {
-     release_channel(chan);
-     return -1;
-     }
-  for(i=0;i<viewdir;i++)
-    {
-    bal=x;
-    x=y;
-    y=-bal;
-    }
-  y=abs(y);
-  if (abs(x)>y)
-    if (x>0) bal=100-y*50/x;else bal=-100-y*50/x;
-  else bal=50*x/y;
-  ds=ds*volume/100;
-  if (bal<0)
-     {
-     lv=ds*(100+bal)/100;rv=ds;
-     }
-  else
-     {
-     rv=ds*(100-bal)/100;lv=ds;
-     }
-  lv=(lv*sample_volume)>>8;
-  rv=(rv*sample_volume)>>8;
-  Sound_SetVolume(chan,lv,rv);
-  return 0;
-  }
+	if (ds >= 256) {
+		release_channel(chan);
+		return -1;
+	}
+
+	if (!x && !y) {
+		ang = 0;
+	} else {
+		angle = 180 * acos(y / dist) / M_PI;
+
+		if (x > 0) {
+			angle = 360 - angle;
+		}
+
+		ang = angle;
+		ang = (ang + 360 - side * 90) % 360;
+	}
+
+	Sound_SetVolume(chan, (volume * SND_EFF_MAXVOL) / 100, ang, ds);
+	return 0;
+}
 
 DataBlock *wav_load(SeekableReadStream &stream) {
 	return new SoundSample(stream);
@@ -268,11 +263,7 @@ void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p
 	if (p->bit16 & 0x8) {
 		int vol = SND_EFF_MAXVOL * p->volume / 100;
 
-		if (rnd(100) > 50) {
-			Sound_SetVolume(chan, rnd(vol), vol);
-		} else {
-			Sound_SetVolume(chan, vol, rnd(vol));
-		}
+		Sound_SetVolume(chan, vol, rnd(360), 0);
 	} else if (calcul_volume(chan, x - xd, y - yd, /*side-*/sided, p->volume)) {
 		return;
 	}
@@ -373,10 +364,8 @@ void recalc_volumes(int sector, int side) {
 				}
 			} else {
 				int x = newx - tracks[i].xpos, y = newy - tracks[i].ypos;
-				if (calc_volume(&x, &y, tracks[i].side) > 0) {
-					if (have_loop(tracks[i].data)) {
-						play_effekt(newx, newy, tracks[i].xpos, tracks[i].ypos, side, tracks[i].side, tracks[i].data);
-					}
+				if (have_loop(tracks[i].data)) {
+					play_effekt(newx, newy, tracks[i].xpos, tracks[i].ypos, side, tracks[i].side, tracks[i].data);
 				}
 			}
 		}
@@ -544,7 +533,7 @@ void play_sample_at_channel(int sample, int channel, int vol) {
 
 	channel += CHANNELS;
 	vol *= SND_EFF_MAXVOL / 100;
-	Sound_SetVolume(channel, vol, vol);
+	Sound_SetVolume(channel, vol, 0, 0);
 
 	if (locks[channel]) {
 		aunlock(locks[channel]);
@@ -632,7 +621,7 @@ void start_play_flute(char note) {
 		lstart -= lstart % btr;
 		lend = ptr->length() * 0.664157f;
 		lend -= lend % btr;
-		Sound_SetVolume(flute_canal, vol, vol);
+		Sound_SetVolume(flute_canal, vol, 0, 0);
 		Sound_PlaySample(flute_canal, ptr->data(), ptr->length(), lstart, lend, ptr->freq(), btr, 1);
 	}
 }

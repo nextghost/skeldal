@@ -34,7 +34,7 @@
 #define MUSIC_MAXVOL 255
 
 typedef struct {
-	int lvolume, rvolume, loopstart, loopend, continuous;
+	int distance, loopstart, loopend, continuous;
 	Uint8 *data;
 	unsigned size;
 	Mix_Chunk chunk;
@@ -182,18 +182,18 @@ char Sound_GetChannelState(int channel) {
 	return chans[channel].data != NULL;
 }
 
-void Sound_SetVolume(int channel, int left, int right) {
-	chans[channel].lvolume = left;
-	chans[channel].rvolume = right;
-
-	left = (left * 255) / SND_EFF_MAXVOL;
-	right = (right * 255) / SND_EFF_MAXVOL;
-	Mix_SetPanning(channel, left, right);
+void Sound_SetVolume(int channel, int volume, int angle, int distance) {
+	Mix_Volume(channel, (volume * 255) / SND_EFF_MAXVOL);
+	Mix_SetPosition(channel, angle, distance);
 }
 
-void Sound_GetVolume(int channel, int *left, int *right) {
-	*left = chans[channel].lvolume;
-	*right = chans[channel].rvolume;
+int Sound_GetVolume(int channel) {
+	return (Mix_Volume(channel, -1) * SND_EFF_MAXVOL) / 255;
+}
+
+int Sound_GetDistance(int channel) {
+	assert(channel < CHANNELS && "Invalid channel ID");
+	return chans[channel].distance;
 }
 
 char Sound_IsActive(void) {
