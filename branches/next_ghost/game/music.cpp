@@ -43,12 +43,10 @@
 #define TRACKS 512
 
 #define SND_EFF_MAXVOL 32000
-#define SND_EFF_DESCENT 8000
 #define SND_DIST_COEF 32
 
 #define have_loop(x) ((x)->start_loop!=(x)->end_loop)
 
-typedef unsigned short SND_FIND_TABLE[2];
 typedef struct snd_info
   {
   TMA_SOUND *data;              //4
@@ -58,11 +56,7 @@ typedef struct snd_info
 
 static short chan_state[CHANNELS];
 static short track_state[TRACKS];
-static short sample_volume=255;
 
-//static struct t_wave wav_last_head;
-//static int wav_last_size;
-static int mute_task=-1;
 static char sound_enabled=1;
 
 SND_INFO tracks[TRACKS];
@@ -84,52 +78,6 @@ void init_tracks()
   memset(track_state,0xff,sizeof(track_state));
   memset(locks,0,sizeof(locks));
   }
-
-static char last_beep_lev;
-
-/*void pcspeak_uroven(char value,int time);
-#pragma aux pcspeak_uroven parm[bh][ecx]=\
-        "mov ah,last_beep_lev"\
-    "lp2:add ah,bh"\
-        "mov al,48h"\
-        "jc lp1"\
-        "mov al,4ah"\
-    "lp1:out 61h,al"\
-        "loop lp2"\
-        "mov last_beep_lev,ah"\
-   modify [eax]
-
-
-static int get_pc_speed()
-  {
-  int ticks=0;
-  int timer=Timer_GetValue();
-  while (Timer_GetValue()-timer<50) pcspeak_uroven(127,1000),ticks+=1000;
-  return ticks;
-  }
-
-void pc_speak_play_sample(char *sample,int size,char step,int freq)
-  {
-  static speed=0;
-  int ticker;
-  if (!speed) speed=get_pc_speed();
-  _disable();
-  ticker=speed/freq;
-  sample+=step/2;
-  while (size>0)
-     {
-     if (step==2)
-        pcspeak_uroven(*sample ^ 0x80,ticker);
-     else
-        pcspeak_uroven(*sample,ticker);
-     sample+=step;
-     size-=step;
-     }
-  _enable();
-  nosound();
-  }
-
-*/
 
 int find_free_channel(int stamp) {
 	int i, j;
@@ -216,28 +164,6 @@ int calcul_volume(int chan, int x, int y, int side, int volume) {
 
 DataBlock *wav_load(SeekableReadStream &stream) {
 	return new SoundSample(stream);
-/*  if (x[0].freq!=x[0].bps)
-     {
-     char s;
-
-     siz>>=1;
-     s=siz & 1;
-     siz>>=1;
-     d=tg;
-     for(;siz--;d++) *d^=0x80008000;
-     if (s) {c=(char *)d;c[1]^=0x80;}
-     }
-  else
-     {
-     char s;
-
-     s=siz & 3;
-     siz>>=2;
-     d=(long *)tg;
-     for(;siz--;d++) *d^=0x80808080;
-     c=(char *)d;
-     for(;s--;c++) *c^=0x80;
-     }*/
 }
 
 void play_effekt(int x, int y, int xd, int yd, int side, int sided, TMA_SOUND *p) {
@@ -370,8 +296,6 @@ void recalc_volumes(int sector, int side) {
 			}
 		}
 	}
-
-	mute_task = -1;
 }
 
 void create_playlist(const char *playlist)
@@ -587,7 +511,6 @@ void mute_all_tracks(char all)
   int i;
   for(i=0;i<CHANNELS;i++)
      if (playings[i].side!=-1 || all) release_channel(i);
-  mute_task=-1;
   SEND_LOG("(SOUND) %s (%d)","MUTE Tracks",all);
   }
 
