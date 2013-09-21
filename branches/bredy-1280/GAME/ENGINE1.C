@@ -347,7 +347,7 @@ void create_tables(void)
      {
      int rozdil1,rozdil2;
 
-     if (x && points[x-1][0][y].x>TXT_SIZE_X) showtabs.z_table[x][y].used=0;
+     if (x && points[x-1][0][y].x>TXT_SIZE_X_ZOOMED) showtabs.z_table[x][y].used=0;
      else
        {
         showtabs.x_table[x][y].used=1;
@@ -365,21 +365,23 @@ void create_tables(void)
            showtabs.x_table[x][y].txtoffset=(TXT_SIZE_X*rozdil2/rozdil1);
            showtabs.x_table[x][y].max_x=MIDDLE_X-points[x-1][0][y+1].x;
            }
-        if (x!=0)showtabs.x_table[x][y].xpos2=VIEW_SIZE_X-(showtabs.x_table[x][y].xpos+rozdil1);
-                showtabs.x_table[x][y].point_total=rozdil1;
+        if (x!=0)
+			showtabs.x_table[x][y].xpos2=VIEW_SIZE_X-(showtabs.x_table[x][y].xpos+rozdil1);
+        showtabs.x_table[x][y].point_total=rozdil1;
         calc_x_buffer(showtabs.x_table[x][y].zoom_table,TXT_SIZE_X,rozdil1,VIEW_SIZE_X,rozdil1);
         }
 
      }
 
  for(x=0;x<CF_XMAP_SIZE;x++)
-   for(y=0;y<F_YMAP_SIZE;y++)
+   for(y=0;y<F_YMAP_SIZE_T;y++)
       {
       int xl,xr,y1,yp,strd;
 
       strd=CF_XMAP_SIZE>>1;
       y1=(VIEW_SIZE_Y-y)-MIDDLE_Y;
-      yp=1;while (points[0][0][yp].y>y1) yp++;
+      yp=1;
+	  while (points[0][0][yp].y>y1) yp++;
       if (x<strd)
         {
         xl=-points[strd-x][0][0].x;xr=-points[strd-x-1][0][0].x;
@@ -392,19 +394,21 @@ void create_tables(void)
         {
         xl=+points[x-strd-1][0][0].x;xr=+points[x-strd][0][0].x;
         }
-      y1=(VIEW_SIZE_Y-y)-MIDDLE_Y;
+//      y1=(VIEW_SIZE_Y-y)-MIDDLE_Y;
       xl=xl*(y1+1)/points[0][0][0].y+MIDDLE_X;
       xr=xr*(y1+1)/points[0][0][0].y+MIDDLE_X;
       if (xl<0) xl=0;if (xr<0) xr=0;
-      if (xl>639) xl=639;if (xr>639) xr=639;
+      if (xl>VIEW_SIZE_X-1) xl=VIEW_SIZE_X-1;
+	  if (xr>VIEW_SIZE_X-1) xr=VIEW_SIZE_X-1;
       showtabs.f_table[x][y].lineofs=(y1+MIDDLE_Y)*scr_linelen+xl*2;
       showtabs.f_table[x][y].linesize=xr-xl+(xl!=xr);
       showtabs.f_table[x][y].counter=(y1-points[0][0][yp].y);
-      showtabs.f_table[x][y].txtrofs=(y1+MIDDLE_Y-VIEW_SIZE_Y+F_YMAP_SIZE)*1280+xl*2;
+      showtabs.f_table[x][y].txtrofsln=((y1+MIDDLE_Y-VIEW_SIZE_Y)/2+F_YMAP_SIZE)*640;
+	  showtabs.f_table[x][y].txtrofs=xl;
       }
 
  for(x=0;x<CF_XMAP_SIZE;x++)
-   for(y=0;y<C_YMAP_SIZE;y++)
+   for(y=0;y<C_YMAP_SIZE_T;y++)
       {
       int xl,xr,y1,yp,strd;
 
@@ -426,11 +430,13 @@ void create_tables(void)
       xl=xl*(y1-2)/points[0][1][0].y+MIDDLE_X;
       xr=xr*(y1-2)/points[0][1][0].y+MIDDLE_X;
       if (xl<0) xl=0;if (xr<0) xr=0;
-      if (xl>639) xl=639;if (xr>639) xr=639;
+      if (xl>VIEW_SIZE_X-1) xl=VIEW_SIZE_X-1;
+	  if (xr>VIEW_SIZE_X-1) xr=VIEW_SIZE_X-1;
       showtabs.c_table[x][y].lineofs=(y1+MIDDLE_Y)*scr_linelen+xl*2;
       showtabs.c_table[x][y].linesize=xr-xl+(xl!=xr);
       showtabs.c_table[x][y].counter=points[0][1][yp].y-y1;
-      showtabs.c_table[x][y].txtrofs=(y1+MIDDLE_Y)*1280+xl*2;
+      showtabs.c_table[x][y].txtrofsln=((y1+MIDDLE_Y)/2)*640;
+	  showtabs.c_table[x][y].txtrofs=xl;
       }
 
 
@@ -458,9 +464,9 @@ void create_zooming(void)
 
   for (j=0;j<ZOOM_PHASES;j++)
      {
-     calc_zooming(zooming_xtable[j],320,zooming_points[j][0]);
-     calc_y_buffer(zooming_ytable[j],zooming_points[j][1],360,360);
-     for(i=0;i<360;i++) zooming_ytable[j][i]*=scr_linelen;
+     calc_zooming(zooming_xtable[j],VIEW_SIZE_X/2,zooming_points[j][0]);
+     calc_y_buffer(zooming_ytable[j],zooming_points[j][1],VIEW_SIZE_Y,VIEW_SIZE_Y);
+     for(i=0;i<VIEW_SIZE_Y;i++) zooming_ytable[j][i]*=scr_linelen;
      }
   }
 
@@ -601,7 +607,8 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   rev&=3;
   if (celx<=0) x3d=&showtabs.z_table[-celx][cely]; else  x3d=&showtabs.z_table[celx][cely];
   x0d=&showtabs.z_table[0][cely];
-  if (!x3d->used) return;
+  if (!x3d->used) 
+	  return;
   yd=&showtabs.y_table[cely];
   yp=&showtabs.y_table[cely+1];
   txtsx=*(word *)stena;
@@ -623,7 +630,8 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   else realsx=txtsx*x3d->point_total/TXT_SIZE_X_3D;
   realsy=txtsy*yd->vert_size/TXT_SIZE_Y-1;
   x=x3d->xpos+xofs;
-  if (-x>realsx) return;
+  if (-x>realsx) 
+	  return;
   p=stena;p+=SHADE_PAL+2*2+2;
   i=0;
   while (x<0)
@@ -631,21 +639,23 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      p+=x3d->zoom_table[i++]+1;
      realsx--;x++;
      }
-  if (x+realsx>640) realsx=640-x;
-  if (realsx<=0) return;
+  if (x+realsx>VIEW_SIZE_X) realsx=VIEW_SIZE_X-x;
+  if (realsx<=0) 
+	  return;
   yofs=yd->drawline-yofs;
   yofs+=(plac==1)?(-yp->vert_size+points[0][0][cely+1].y-points[0][0][cely].y):((plac==2)?(yd->vert_size):0);
-  if (yofs>360)
+  if (yofs>VIEW_SIZE_Y)
      {
-     int r=yofs-360,ui;
-     if (r>realsy) return;
+     int r=yofs-VIEW_SIZE_Y,ui;
+     if (r>realsy) 
+		 return;
      ui=(r*txtsy/realsy);
      p+=txtsx*ui;realsy-=r;
-     yofs=360;
+     yofs=VIEW_SIZE_Y;
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev)
-  zoom.startptr=GetBuffer2nd()+yofs*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=GetBuffer2nd()+yofs*scr_linelen2+(VIEW_SIZE_X-x-1)+SCREEN_OFFSET;
   else
   zoom.startptr=GetBuffer2nd()+yofs*scr_linelen2+x+SCREEN_OFFSET;
   zoom.texture=p;
@@ -656,13 +666,13 @@ void show_cel(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   zoom.ycount=realsy+1;
   zoom.xmax=realsx;
   zoom.line_len=scr_linelen;
-  __try
+//  __try
 	{
 	if (rev) sikma_zprava(); else sikma_zleva();
 	}
-  __finally
+/*  __finally
 	{
-	}
+	}*/
   }
 
 
@@ -680,7 +690,8 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
       x=celx;
   if (rev==2) celx=-celx;
   if (celx<=0) x3d=&showtabs.x_table[-celx][cely]; else  x3d=&showtabs.x_table[celx][cely];
-  if (!x3d->used) return;
+  if (!x3d->used) 
+	  return;
   yd=&showtabs.y_table[cely+1];
   txtsx=*(word *)stena;
   txtsy=*((word *)stena+1);
@@ -693,7 +704,8 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
   realsx=txtsx*x3d->point_total/TXT_SIZE_X;
   realsy=txtsy*yd->vert_size/TXT_SIZE_Y;
   if (celx<=0) x=x3d->xpos+xofs; else x=x3d->xpos2+xofs;
-  if (-x>realsx) return;
+  if (-x>realsx) 
+	  return;
   p=stena;p+=SHADE_PAL+2*2+2;
   i=0;
   while (x<0)
@@ -701,21 +713,23 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
      p+=x3d->zoom_table[i++]+1;
      realsx--;x++;
      }
-  if (x+realsx>640) realsx=640-x;
-  if (realsx<=0) return;
+  if (x+realsx>VIEW_SIZE_X) realsx=VIEW_SIZE_X-x;
+  if (realsx<=0)
+	  return;
   yofs=yd->drawline-yofs;
   yofs+=(plac==1)?(-yd->vert_size):((plac==2)?(yd->vert_size):0);
-  if (yofs>360)
+  if (yofs>VIEW_SIZE_Y)
      {
-     int r=yofs-360,ui;
-     if (r>realsy) return;
+     int r=yofs-VIEW_SIZE_Y,ui;
+     if (r>realsy)
+		 return;
      ui=(r*txtsy/realsy);realsy-=r;
      p+=txtsx*ui;
-     yofs=360;
+     yofs=VIEW_SIZE_Y;
      }
   if (yofs-realsy<0) realsy=yofs;
   if (rev==2)
-  zoom.startptr=GetBuffer2nd()+(yofs)*scr_linelen2+(639-x)+SCREEN_OFFSET;
+  zoom.startptr=GetBuffer2nd()+(yofs)*scr_linelen2+(VIEW_SIZE_X-x-1)+SCREEN_OFFSET;
   else
   zoom.startptr=GetBuffer2nd()+(yofs)*scr_linelen2+x+SCREEN_OFFSET;
   zoom.texture=p;
@@ -733,6 +747,7 @@ void show_cel2(int celx,int cely,void *stena,int xofs,int yofs,char rev)
 
 void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
   {
+
   int y;
 
   if (nofloors) return;
@@ -767,15 +782,15 @@ void draw_floor_ceil(int celx,int cely,char f_c,void *txtr)
 void OutBuffer2nd(void)
   {
   int i;
-  for (i=0;i<480;i++)
-	memcpy(GetScreenAdr()+i*scr_linelen2,GetBuffer2nd()+i*scr_linelen2,640*2);
+  for (i=0;i<DxGetResY();i++)
+	memcpy(GetScreenAdr()+i*scr_linelen2,GetBuffer2nd()+i*scr_linelen2,DxGetResX()*2);
   }
 
 void CopyBuffer2nd(void)
   {
   int i;
-  for (i=0;i<480;i++)
-	memcpy(GetBuffer2nd()+i*scr_linelen2,GetScreenAdr()+i*scr_linelen2,640*2);
+  for (i=0;i<DxGetResY();i++)
+	memcpy(GetBuffer2nd()+i*scr_linelen2,GetScreenAdr()+i*scr_linelen2,DxGetResX()*2);
   }
 
   /*void chozeni(void)
@@ -936,9 +951,9 @@ __inline void clear_color(void *start,int _size,word _color)
 void clear_buff(word *background,word backcolor,int lines)
 {  
   if (background!=NULL) put_picture(0,SCREEN_OFFLINE,background);else lines=0;
-  if (lines!=360) 
-	for (i=lines;i<360;i++)
-     clear_color(GetBuffer2nd()+SCREEN_OFFSET+scr_linelen2*i,640,backcolor);
+  if (lines!=VIEW_SIZE_Y) 
+	for (i=lines;i<VIEW_SIZE_Y;i++)
+     clear_color(GetBuffer2nd()+SCREEN_OFFSET+scr_linelen2*i,VIEW_SIZE_X,backcolor);
 
 }
 
@@ -1076,7 +1091,7 @@ void draw_item(int celx,int cely,int posx,int posy,short *txtr,int index)
      x=0;
      }
   else clipl=0;
-  clipr=640-x;
+  clipr=VIEW_SIZE_X-x;
   if (clipr>0)
   enemy_draw(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   }
@@ -1174,7 +1189,7 @@ void set_lclip_rclip(int celx,int cely,int lc,int rc)
   {
   int x,xs;
   lclip=0;
-  rclip=640;
+  rclip=VIEW_SIZE_X;
   if (celx>=0)
      {
      if (rc)
@@ -1182,7 +1197,7 @@ void set_lclip_rclip(int celx,int cely,int lc,int rc)
         x=points[celx][0][cely].x+MIDDLE_X;
         xs=points[celx][0][cely].x-points[celx][0][cely+1].x;
         rclip=x-rc*xs/TXT_SIZE_X_3D;
-        if (rclip>640) rclip=640;
+        if (rclip>VIEW_SIZE_X) rclip=VIEW_SIZE_X;
         }
      if (celx>0 && lc)
         {
@@ -1242,7 +1257,7 @@ void draw_enemy(DRW_ENEMY *drw)
   map_pos(drw->celx,drw->cely,posx,posy,0,&x,&y);
   xs=(short *)drw->txtr;
   xss=*xs*last_scale/320;
-  if (xss>640) return;
+  if (xss>VIEW_SIZE_X) return;
   ys=(short *)drw->txtr+1;
   yss=*ys*last_scale/320;
   lx=x;
@@ -1294,7 +1309,7 @@ void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char
      x=0;
      }
   else clipl=0;
-  clipr=640-x;
+  clipr=VIEW_SIZE_X-x;
   if (clipr>0)
   enemy_draw(txtr,GetBuffer2nd()+x+(yc+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
   if (show_names && name!=NULL)
@@ -1323,7 +1338,7 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
      x=0;
      }
   else clipl=0;
-  clipr=640-x;
+  clipr=VIEW_SIZE_X-x;
   if (clipr>0)
   enemy_draw_transp(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,(char *)txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
   }

@@ -182,13 +182,19 @@ void fcdraw(void *source,void *target, void *table)
 	word *src = (word *)source;
 	word *trg = (word *)target;
 	T_FLOOR_MAP *t = (T_FLOOR_MAP *)table;
-	unsigned long cc;
+	long cc;
 
 	do {
-		word *ss = t->txtrofs/2+src;
+		word *ss = t->txtrofsln+t->txtrofs/2+src;
 		word *tt = t->lineofs/2+trg;
 		cc = t->linesize;
-		memcpy(tt,ss,cc*2);
+		while (cc > 0) {
+			*tt++=ss[0];
+			*tt++=((ss[1] & 0xF7DE)+(ss[1] & 0xF7DE))>>1;
+			ss++;
+			cc-=2;
+		}
+//		memcpy(tt,ss,cc*2);
 		cc = t->counter;
 		t++;
 	} while (cc != 0);
@@ -592,8 +598,8 @@ void enemy_draw(void *src,void *trg,int shade,int scale,int maxspace,int clip)
 {
 	word *picinfo = (word *)src;
 	word *screen = (word *)trg;
-	int xtable[800];
-	int ytable[1200];
+	int xtable[VIEW_SIZE_X];
+	int ytable[VIEW_SIZE_Y*2];
 	int xcount;
 	int ycount;
 	word pcx = picinfo[0];
@@ -604,7 +610,7 @@ void enemy_draw(void *src,void *trg,int shade,int scale,int maxspace,int clip)
 	int clipr = clip >> 16;
 	int yiter;
 	
-	if (maxspace >= 470) return;
+	if (maxspace >= VIEW_SIZE_Y) return;
 
 	//prepare ytable;
 	{
@@ -779,8 +785,8 @@ void enemy_draw_transp(void *src,void *trg,void *shade,int scale,int maxspace,in
 
 	word *picinfo = (word *)src;
 	word *screen = (word *)trg;
-	int xtable[800];
-	int ytable[1200];
+	int xtable[VIEW_SIZE_X];
+	int ytable[VIEW_SIZE_Y*2];
 	int xcount;
 	int ycount;
 	word pcx = picinfo[0];
@@ -792,7 +798,7 @@ void enemy_draw_transp(void *src,void *trg,void *shade,int scale,int maxspace,in
 	int clipr = clip >> 16;
 	int yiter;
 
-	if (maxspace >= 470) return;
+	if (maxspace >= VIEW_SIZE_Y) return;
 
 	//prepare ytable;
 	{
@@ -969,8 +975,8 @@ void enemy_draw_mirror_transp(void *src,void *trg,void *shade,int scale,int maxs
 
 	word *picinfo = (word *)src;
 	word *screen = (word *)trg;
-	int xtable[800];
-	int ytable[1200];
+	int xtable[VIEW_SIZE_X];
+	int ytable[VIEW_SIZE_Y];
 	int xcount;
 	int ycount;
 	word pcx = picinfo[0];
@@ -982,7 +988,7 @@ void enemy_draw_mirror_transp(void *src,void *trg,void *shade,int scale,int maxs
 	int clipr = clip >> 16;
 	int yiter;
 
-	if (maxspace >= 470) return;
+	if (maxspace >= VIEW_SIZE_Y-10) return;
 
 	//prepare ytable;
 	{
@@ -1157,8 +1163,8 @@ void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int 
 {
 	word *picinfo = (word *)src;
 	word *screen = (word *)trg;
-	int xtable[800];
-	int ytable[1200];
+	int xtable[VIEW_SIZE_X];
+	int ytable[VIEW_SIZE_Y];
 	int xcount;
 	int ycount;
 	word pcx = picinfo[0];
@@ -1169,7 +1175,7 @@ void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int 
 	int clipr = clip >> 16;
 	int yiter;
 
-	if (maxspace >= 470) return;
+	if (maxspace >= VIEW_SIZE_Y-1) return;
 
 	//prepare ytable;
 	{

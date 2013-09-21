@@ -322,7 +322,8 @@ void switchvesabank(word bank)
 */
 int initmode_dx(char inwindow, char zoom, char monitor, int refresh)
   {
-  if (!DXInit64(inwindow,zoom,monitor,refresh)) return -1;
+  DxSetInitResolution(1280,960);
+  if (!DXInit64(inwindow,1,monitor,refresh)) return -1;
   showview=showview_dx;
   screenstate=1;
   scr_linelen2=scr_linelen/2;

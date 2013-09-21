@@ -229,8 +229,8 @@ void anim_sipky(int h,int mode)
        if (phase>4) i=8-phase; else i=phase;
        i=(i-2)*110;
        if (i>=0)
-       put_8bit_clipped(ablock(handle),GetScreenAdr()+378*scr_linelen2+498,i,142,102);
-       else put_picture(498,378,ablock(H_SIPKY_END));
+       put_8bit_clipped(ablock(handle),GetScreenAdr()+(SCREEN_OFFLINE+VIEW_SIZE_Y)*scr_linelen2+498,i,142,102);
+       else put_picture(498,(SCREEN_OFFLINE+VIEW_SIZE_Y),ablock(H_SIPKY_END));
        drw=1;
        if (mode!=-1)
         {
@@ -593,7 +593,7 @@ void draw_spell(int handle,int phase,int xicht)
 void other_draw()
   {
 //  if (cancel_render) return;
-  StripBlt(ablock(H_BOTTBAR),480-102,102);
+  StripBlt(ablock(H_BOTTBAR),VIEW_SIZE_Y+SCREEN_OFFLINE,102);
 //  memcpy(GetScreenAdr()+(480-102)*scr_linelen2,ablock(H_BOTTBAR),scr_linelen2*102*2);
   if (spell_handle)
      {
@@ -610,8 +610,8 @@ void other_draw()
   show_money();
   anim_sipky(0,-1);
   draw_fx();
-  memset(GetScreenAdr()+(SCREEN_OFFLINE-1)*scr_linelen2,0,1280);
-  memset(GetScreenAdr()+(SCREEN_OFFLINE+360)*scr_linelen2,0,1280);
+  memset(GetScreenAdr()+(SCREEN_OFFLINE-1)*scr_linelen2,0,VIEW_SIZE_X*2);
+  memset(GetScreenAdr()+(SCREEN_OFFLINE+VIEW_SIZE_Y)*scr_linelen2,0,VIEW_SIZE_X*2);
   }
 
 void display_spell_in_icone(int handle,int xicht)

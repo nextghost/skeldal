@@ -22,28 +22,33 @@
  */
 #ifndef __ENGINE1_H
 #define __ENGINE1_H
-#define VIEW_SIZE_X 640
-#define VIEW_SIZE_Y 360
+#define VIEW_SIZE_X 1280
+#define VIEW_SIZE_Y 720
 #define TAB_SIZE_X 640
-#define TAB_SIZE_Y 600
-#define MIDDLE_X 320
-#define MIDDLE_Y 112
+#define TAB_SIZE_Y 1200
+#define MIDDLE_X 640
+#define MIDDLE_Y 224
 #define TXT_SIZE_Y 320
 #define TXT_SIZE_X_3D 74
 #define TXT_SIZE_X 500
+#define TXT_SIZE_X_ZOOMED 1000
+
 #define VIEW3D_X 4
 #define VIEW3D_Z 5
-#define START_X1 357
-#define START_Y1 305
-#define START_X2 357
-#define START_Y2 -150
+#define START_X1 741
+#define START_Y1 610
+#define START_X2 741
+#define START_Y2 -300
 #define FACTOR_3D 3.33
 #define ZOOM_PHASES 9
-#define SCREEN_OFFLINE (17)
+#define SCREEN_OFFLINE (34)
 #define SCREEN_OFFSET (scr_linelen2*SCREEN_OFFLINE)
 #define C_YMAP_SIZE 90
 #define F_YMAP_SIZE 199
 #define CF_XMAP_SIZE 7
+#define F_YMAP_SIZE_T (F_YMAP_SIZE*2)
+#define C_YMAP_SIZE_T (C_YMAP_SIZE*2)
+
 
 #define SHADE_STEPS 5
 #define SHADE_PAL (SHADE_STEPS*512*2)
@@ -111,7 +116,7 @@ typedef struct t_info_x
 
 typedef struct t_floor_map
   {
-  long lineofs,linesize,counter,txtrofs;
+  long lineofs,linesize,counter,txtrofs,txtrofsln;
   }T_FLOOR_MAP;
 
 typedef struct all_view
@@ -119,8 +124,8 @@ typedef struct all_view
   T_INFO_Y y_table[VIEW3D_Z+1];
   T_INFO_X_3D z_table[VIEW3D_X][VIEW3D_Z];
   T_INFO_X x_table[VIEW3D_X][VIEW3D_Z+1];
-  T_FLOOR_MAP f_table[CF_XMAP_SIZE][F_YMAP_SIZE];
-  T_FLOOR_MAP c_table[CF_XMAP_SIZE][C_YMAP_SIZE];
+  T_FLOOR_MAP f_table[CF_XMAP_SIZE][F_YMAP_SIZE_T];
+  T_FLOOR_MAP c_table[CF_XMAP_SIZE][C_YMAP_SIZE_T];
 
   }ALL_VIEW;
 
