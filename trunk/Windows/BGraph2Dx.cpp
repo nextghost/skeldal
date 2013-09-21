@@ -26,6 +26,7 @@
 #define DWORD_PTR DWORD *
 #include <d3d9.h>
 #include <debug.h>
+#include <malloc.h>
 #include "Skeldal_win.h"
 #include "resource.h"
 
@@ -34,6 +35,7 @@
 #define INWINDOW runinwindow
 
 static int dxWindowZoom=1;
+static int screenXOffset=0;
 
 static HWND hMainWnd;
 static IDirect3D9 *DxHandle;
@@ -43,6 +45,7 @@ static D3DPRESENT_PARAMETERS pparm;
 
 static int initSizeX = 640;
 static int initSizeY = 480;
+static char fullscreenWide = 0;
 
 static unsigned short *mainBuffer=NULL;
 static unsigned short *secondBuffer=NULL;
@@ -63,6 +66,10 @@ void DXMouseTransform(unsigned short *x, unsigned short *y)
 {
   *x=*x*2/dxWindowZoom;
   *y=*y*2/dxWindowZoom;
+}
+
+void DxSetFullscreenWide(BOOL wide) {
+	fullscreenWide = wide;
 }
 
 static const char *GetDXResult(HRESULT res)
@@ -255,8 +262,17 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
     SetWindowPos(hMainWnd,NULL,moninfo.rcWork.left,moninfo.rcWork.top,0,0,SWP_NOZORDER|SWP_NOSIZE);    
   }
 
-  pparm.BackBufferWidth=initSizeX;
-  pparm. BackBufferHeight=initSizeY;
+  int w = initSizeX;
+  int h = initSizeY;
+
+  if (!INWINDOW && fullscreenWide) {
+	  w = 720;
+	  h = 480;
+	  screenXOffset = (720-640)/2;
+  }
+
+  pparm.BackBufferWidth=w;
+  pparm. BackBufferHeight=h;
   pparm.BackBufferFormat=D3DFMT_R5G6B5;
   pparm.BackBufferCount=1;
   pparm.MultiSampleType=D3DMULTISAMPLE_NONE;
@@ -286,6 +302,7 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
     CheckResult(res);
     return 0;
   }
+  
 
   res=DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);
   CheckResult(res);
@@ -300,7 +317,8 @@ char DXInit64(char inwindow, int zoom, int monitor, int refresh)
 
   main_linelen=dx_linelen=scr_linelen=lrc.Pitch;
   scr_linelen2=scr_linelen/2;
-  curBuffer=mainBuffer=(unsigned short *)lrc.pBits;
+  mainBuffer=(unsigned short *)lrc.pBits;  
+  curBuffer = mainBuffer;
 
   secondBuffer=(unsigned short *)malloc(lrc.Pitch*initSizeY);
 
@@ -330,6 +348,7 @@ void DXCloseMode()
 	}
   }
 
+void GlobalPresent(RECT *prc);
 
 static void HandleDeviceLost()
     {
@@ -348,7 +367,8 @@ static void HandleDeviceLost()
       }
     res=DxDevice->GetBackBuffer(0,0,D3DBACKBUFFER_TYPE_MONO,&DxBackBuffer);    
     CheckResult(res);
-    res=DxDevice->Present(NULL,NULL,hMainWnd,NULL);
+	RECT rc={0,0,640,480};
+    GlobalPresent(&rc);
     }
 
 static void GlobalPresent(RECT *prc)
@@ -376,11 +396,23 @@ static void GlobalPresent(RECT *prc)
 	winrc.right=winrc.right*dxWindowZoom/2;
 	winrc.bottom=winrc.bottom*dxWindowZoom/2;  
   }
+  winrc.left+=screenXOffset;
+  winrc.right+=screenXOffset;
   if (!dialogs)
 	{
-	LRESULT res=DxDevice->Present(&rc,&winrc,hMainWnd,NULL);
-	if (res==D3DERR_DEVICELOST) HandleDeviceLost();
-	}
+			HRGN reg = CreateRectRgn(rc.left,rc.top,rc.right,rc.bottom);
+		DWORD szneed=GetRegionData(reg,0,0);
+		RGNDATA *regdata = (RGNDATA *)alloca(szneed);
+		GetRegionData(reg,szneed,regdata);
+		LRESULT res=DxDevice->Present(&rc,&winrc,hMainWnd,regdata);
+		DeleteObject(reg);
+		if (res==D3DERR_DEVICELOST) HandleDeviceLost(); 
+		else if (res!=S_OK) {
+			DXCloseMode();
+			CheckResult(res);
+		}
+
+  }
 }
 
 
@@ -467,9 +499,9 @@ void DXCopyRects64zoom2(unsigned short x,unsigned short y,unsigned short xs,unsi
   rc.right=x+xs;
   rc.bottom=y+ys;
   RECT zoom;
-  zoom.left=x;
+  zoom.left=x+screenXOffset;
   zoom.top=y;
-  zoom.right=x+2*xs;
+  zoom.right=x+2*xs+screenXOffset;
   zoom.bottom=y+2*ys;
 
   res=DxDevice->Present(&rc,&zoom,hMainWnd,NULL);

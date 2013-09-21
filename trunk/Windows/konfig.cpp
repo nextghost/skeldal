@@ -248,6 +248,7 @@ static LRESULT SubDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		  EnableWindow(GetDlgItem(hDlg,IDC_ZOOM1),tmp);
 		  EnableWindow(GetDlgItem(hDlg,IDC_ZOOM2),tmp);
 		  EnableWindow(GetDlgItem(hDlg,IDC_ZOOM3),tmp);
+		  EnableWindow(GetDlgItem(hDlg,IDC_WIDESCREEN),!tmp);
 		  break;
 		case IDC_GAMESPEEDDEFAULT: 
 				SendDlgItemMessage(hDlg,IDC_GAMESPEED,TBM_SETPOS,1,20-6);
@@ -345,6 +346,7 @@ static void SetupDialog()
   SendDlgItemMessage(handles[CFGSOUND],IDC_SNDMUSIC,TBM_SETRANGE,1,MAKELONG(0,127)); 	
   SendDlgItemMessage(handles[CFGSOUND],IDC_SNDFX,TBM_SETRANGE,1,MAKELONG(0,255)); 	
   CheckDlgButton(handles[CFGGENERAL],IDC_WINDOWED,(get_num_field(lst,"WINDOWED",&num)==0 && num==1)?BST_CHECKED:BST_UNCHECKED);
+  CheckDlgButton(handles[CFGGENERAL],IDC_WIDESCREEN,(get_num_field(lst,"FULLSCREENWIDE",&num)==0 && num==1)?BST_CHECKED:BST_UNCHECKED);
   CheckDlgButton(handles[CFGGENERAL],IDC_PRELOAD,(get_num_field(lst,"PRELOAD",&num)==0 && num==1)?BST_CHECKED:BST_UNCHECKED);
   CheckDlgButton(handles[CFGGENERAL],IDC_AUTOSAVE,(get_num_field(lst,"AUTOSAVE",&num)==0 && num==1)?BST_CHECKED:BST_UNCHECKED);
   num=6;get_num_field(lst,"GAME_SPEED",&num);
@@ -405,6 +407,7 @@ static void SaveKonfig(HWND hDlg)
   {
   TSTR_LIST lst=read_config(SKELDALINI);
   add_field_num(&lst,"WINDOWED",IsDlgButtonChecked(handles[CFGGENERAL],IDC_WINDOWED)==BST_CHECKED);
+  add_field_num(&lst,"FULLSCREENWIDE",IsDlgButtonChecked(handles[CFGGENERAL],IDC_WIDESCREEN)==BST_CHECKED);
   add_field_num(&lst,"PRELOAD",IsDlgButtonChecked(handles[CFGGENERAL],IDC_PRELOAD)==BST_CHECKED);
   add_field_num(&lst,"AUTOSAVE",IsDlgButtonChecked(handles[CFGGENERAL],IDC_AUTOSAVE)==BST_CHECKED);
   add_field_num(&lst,"SKIP_INTRO",IsDlgButtonChecked(handles[CFGVIDEO],IDC_SKIPINTRO)==BST_CHECKED);

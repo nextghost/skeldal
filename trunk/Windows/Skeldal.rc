@@ -64,8 +64,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Ladicí okno"
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_OUTPUT,52,0,335,219,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL
+    EDITTEXT        IDC_OUTPUT,52,0,335,219,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL | WS_HSCROLL
     PUSHBUTTON      "&Nesmrtelnost",IDC_IMMORTAL,0,0,50,12
     PUSHBUTTON      "Ne&teènost",IDC_NETECNOST,0,13,50,12
     PUSHBUTTON      "Jít na &sektor",IDC_GOTO,0,26,50,12
@@ -97,14 +96,12 @@ BEGIN
 END
 
 IDD_CFGTABDIALOG DIALOG  0, 0, 243, 255
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Nastavení"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,7,229,224
-    LTEXT           "Tomuto zobrazení\nodpovídá žádná položka",
-                    IDC_CLIENTDESK,14,26,213,195
+    LTEXT           "Tomuto zobrazení\nodpovídá žádná položka",IDC_CLIENTDESK,14,26,213,195
     DEFPUSHBUTTON   "OK",IDOK,122,234,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,179,234,50,14
 END
@@ -113,34 +110,24 @@ IDD_CFGGENERAL DIALOGEX 0, 0, 200, 190
 STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    CONTROL         "Spouštìt hru v oknì",IDC_WINDOWED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,25,13,80,10
-    CONTROL         "640x480",IDC_ZOOM1,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,41,25,43,10
-    CONTROL         "960x720",IDC_ZOOM2,"Button",BS_AUTORADIOBUTTON,41,36,43,
-                    10
-    CONTROL         "1280x960",IDC_ZOOM3,"Button",BS_AUTORADIOBUTTON,41,47,
-                    47,10
-    CONTROL         "Výchozí monitor",IDC_MON1,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,119,25,66,10
-    CONTROL         "Druhý monitor",IDC_MON2,"Button",BS_AUTORADIOBUTTON,119,
-                    36,59,10
-    CONTROL         "Tøetí monitor",IDC_MON3,"Button",BS_AUTORADIOBUTTON,119,
-                    47,56,10
-    CONTROL         "Vždy naèíst celou úroveò do pamìti",IDC_PRELOAD,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,26,62,129,10
-    CONTROL         "Povolit automatické ukládání na poslední pozici",
-                    IDC_AUTOSAVE,"Button",BS_AUTOCHECKBOX | WS_GROUP | 
-                    WS_TABSTOP,25,74,166,10
+    CONTROL         "Spouštìt hru v oknì",IDC_WINDOWED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,13,80,10
+    CONTROL         "640x480",IDC_ZOOM1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,41,25,43,10
+    CONTROL         "960x720",IDC_ZOOM2,"Button",BS_AUTORADIOBUTTON,41,36,43,10
+    CONTROL         "1280x960",IDC_ZOOM3,"Button",BS_AUTORADIOBUTTON,41,47,47,10
+    CONTROL         "Výchozí monitor",IDC_MON1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,119,25,66,10
+    CONTROL         "Druhý monitor",IDC_MON2,"Button",BS_AUTORADIOBUTTON,119,36,59,10
+    CONTROL         "Tøetí monitor",IDC_MON3,"Button",BS_AUTORADIOBUTTON,119,47,56,10
+    CONTROL         "Širokoúhlý monitor",IDC_WIDESCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,59,73,10
+    CONTROL         "Vždy naèíst celou úroveò do pamìti",IDC_PRELOAD,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,26,71,129,10
+    CONTROL         "Povolit automatické ukládání na poslední pozici",IDC_AUTOSAVE,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,25,83,166,10
     LTEXT           "Rychlost hry:",IDC_STATIC,21,102,42,8
     CTEXT           "??",IDC_GAMESPEEDINFO,67,102,40,8
-    CONTROL         "Slider1",IDC_GAMESPEED,"msctls_trackbar32",
-                    TBS_AUTOTICKS | WS_TABSTOP,20,115,159,18
+    CONTROL         "Slider1",IDC_GAMESPEED,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,20,115,159,18
     LTEXT           "Pomalu",IDC_STATIC,18,133,24,8
     LTEXT           "Rychle",IDC_STATIC,162,133,23,8
     LTEXT           "Urychlit bitvy:",IDC_STATIC,20,146,43,18,SS_CENTERIMAGE
-    CONTROL         "Slider1",IDC_BATTLEACC,"msctls_trackbar32",
-                    TBS_AUTOTICKS | WS_TABSTOP,70,146,109,18
+    CONTROL         "Slider1",IDC_BATTLEACC,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,70,146,109,18
     PUSHBUTTON      "Výchozí",IDC_GAMESPEEDDEFAULT,143,168,50,14
 END
 
@@ -148,39 +135,28 @@ IDD_CFGSOUND DIALOGEX 0, 0, 214, 195
 STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "&Mixovací frekvence:",IDC_STATIC,20,15,66,12,
-                    SS_CENTERIMAGE
-    EDITTEXT        IDC_MIXFREQ,88,15,51,12,ES_CENTER | ES_AUTOHSCROLL | 
-                    ES_NUMBER
+    LTEXT           "&Mixovací frekvence:",IDC_STATIC,20,15,66,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_MIXFREQ,88,15,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Hz",IDC_STATIC,140,15,10,12,SS_CENTERIMAGE
     GROUPBOX        "",IDC_STATIC,7,30,200,72
-    LTEXT           "Pozor: Nastavení hlasitostí se ukládá do herních pozic. Nastavení mùže být zmìnìno, pøi naètení hry z pozice. Zmìnu nastavení pro pozici proveïte ve høe:",
-                    IDC_STATIC,19,38,173,27
+    LTEXT           "Pozor: Nastavení hlasitostí se ukládá do herních pozic. Nastavení mùže být zmìnìno, pøi naètení hry z pozice. Zmìnu nastavení pro pozici proveïte ve høe:",IDC_STATIC,19,38,173,27
     LTEXT           "&Hudba:",IDC_STATIC,19,67,29,15,SS_CENTERIMAGE
-    CONTROL         "Slider1",IDC_SNDMUSIC,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,55,67,130,15
+    CONTROL         "Slider1",IDC_SNDMUSIC,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,55,67,130,15
     LTEXT           "&Skøeky",IDC_STATIC,19,83,29,15,SS_CENTERIMAGE
-    CONTROL         "Slider1",IDC_SNDFX,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,55,83,130,15
+    CONTROL         "Slider1",IDC_SNDFX,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,55,83,130,15
     LTEXT           "Pluginy",IDC_STATIC,7,111,24,12,SS_CENTERIMAGE
-    PUSHBUTTON      "Cesta na pluginy",IDC_CESTANAPLUGINY,36,111,171,12,
-                    BS_FLAT
-    LISTBOX         IDC_PLUGLIST,7,130,200,45,LBS_SORT | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Cesta na pluginy",IDC_CESTANAPLUGINY,36,111,171,12,BS_FLAT
+    LISTBOX         IDC_PLUGLIST,7,130,200,45,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Vlastnosti",IDC_PLUGVLASTNOSTI,168,177,39,11
-/*    PUSHBUTTON      "Nápovìda",IDC_PLUGINYNAPOVEDA,168,177,39,11*/
-    LTEXT           "Pozor: Vyžaduje pluginy z WinAmp 2.95 !!!\r\nLze získat na http://skeldal.jinak.cz",
-                    IDC_STATIC,7,176,158,16
+    LTEXT           "Pozor: Vyžaduje pluginy z WinAmp 2.95 !!!\r\nLze získat na http://skeldal.jinak.cz",IDC_STATIC,7,176,158,16
 END
 
 IDD_CFGVIDEO DIALOG  0, 0, 152, 76
 STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Nepøehrávej intro pøi startu",IDC_SKIPINTRO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,25,100,10
-    CONTROL         "Nezobrazuj video prokládanì",IDC_FULLRESVIDEO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,44,108,10
+    CONTROL         "Nepøehrávej intro pøi startu",IDC_SKIPINTRO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,25,100,10
+    CONTROL         "Nezobrazuj video prokládanì",IDC_FULLRESVIDEO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,44,108,10
 END
 
 IDD_CFGEXTRAS DIALOG  0, 0, 203, 198
@@ -189,30 +165,23 @@ FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Náhodný backfire (pøi kouzlení)",IDC_EXRANDOMBACKFIRES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,115,10
-    CONTROL         "Recykluj nestvùry (zabité nestvùry se èasem obnoví)",
-                    IDC_EXRESPAWNMONSTERS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,20,189,10
-    CONTROL         "Alternativni bojový systém",IDC_EXALTERNATEFIGHT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,33,97,10
-    CONTROL         "Vracej do hry znièené nebo utopené pøedmìty",
-                    IDC_EXRECORVERITEMS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,46,161,10
-    CONTROL         "Vloží pøedmìty ze zemì do batohu pomocí CTRL",
-                    IDC_EXBAGEXTENDED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,59,189,10
+    CONTROL         "Recykluj nestvùry (zabité nestvùry se èasem obnoví)",IDC_EXRESPAWNMONSTERS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,20,189,10
+    CONTROL         "Alternativni bojový systém",IDC_EXALTERNATEFIGHT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,33,97,10
+    CONTROL         "Vracej do hry znièené nebo utopené pøedmìty",IDC_EXRECORVERITEMS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,46,161,10
+    CONTROL         "Vloží pøedmìty ze zemì do batohu pomocí CTRL",IDC_EXBAGEXTENDED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,59,189,10
     CONTROL         "Lepší výhody štítù pøi soubojích",IDC_EXSHIELDBLOCKING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,72,116,10
     CONTROL         "Rychlejší obchodování pøi použití CTRL",IDC_EXFASTTRADE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,85,142,10
     CONTROL         "Zobrazuj minimapu i mimo boj",IDC_EXALWAYSMINIMAP,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,98,107,10
-    CONTROL         "Hromadný útìk z boje",IDC_EXGROUPFLEE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,111,85,10
-    CONTROL         "Vždy otevøi knihu pøi jejího zmìnì obsahu",
-                    IDC_EXAUTOOPENBOOK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,124,147,10
-    CONTROL         "Vždy zobraz sebranou runu",IDC_EXAUTOSHOWRUNE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,137,101,10
+    CONTROL         "Hromadný útìk z boje",IDC_EXGROUPFLEE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,111,85,10
+    CONTROL         "Vždy otevøi knihu pøi jejího zmìnì obsahu",IDC_EXAUTOOPENBOOK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,124,147,10
+    CONTROL         "Vždy zobraz sebranou runu",IDC_EXAUTOSHOWRUNE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,137,101,10
     PUSHBUTTON      "Nápovìda",IDC_EXTRASHELP,129,177,67,14
     CONTROL         "Malé nestvùry chodí také diagonálnì",IDC_EXMOBDIAGONAL,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,150,133,10
@@ -222,14 +191,10 @@ IDD_CFGCHEATS DIALOG  0, 0, 169, 139
 STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Vypni hladovìní a žízeò",IDC_NOHUNGRY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,43,22,91,10
-    CONTROL         "Povol ladící okno",IDC_DEBUGCONSOLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,43,43,71,10
-    CTEXT           "Ladící okno funguje jen u map, které nejsou zabezpeèené heslem\n\nToto omezení lze zrušit zadáním univerzálního cheatovacího hesla",
-                    IDC_STATIC,7,70,155,43
-    EDITTEXT        IDC_CHEATPASSWORD,7,118,155,14,ES_CENTER | ES_PASSWORD | 
-                    ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Vypni hladovìní a žízeò",IDC_NOHUNGRY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,43,22,91,10
+    CONTROL         "Povol ladící okno",IDC_DEBUGCONSOLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,43,43,71,10
+    CTEXT           "Ladící okno funguje jen u map, které nejsou zabezpeèené heslem\n\nToto omezení lze zrušit zadáním univerzálního cheatovacího hesla",IDC_STATIC,7,70,155,43
+    EDITTEXT        IDC_CHEATPASSWORD,7,118,155,14,ES_CENTER | ES_PASSWORD | ES_AUTOHSCROLL | ES_NUMBER
 END
 
 IDD_RTFVIEWER DIALOG  0, 0, 311, 313
@@ -238,23 +203,18 @@ CAPTION "Brány Skeldalu "
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,254,292,50,14
-    CONTROL         "",IDC_RICHEDIT,"RichEdit20A",ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_BORDER | 
-                    WS_VSCROLL | WS_TABSTOP,7,7,297,276
+    CONTROL         "",IDC_RICHEDIT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,7,297,276
 END
 
 IDD_SELADV DIALOG  0, 0, 106, 149
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "SKELDAL - Vyber dobrodružství"
 FONT 10, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "START!",IDOK,3,120,47,14
     PUSHBUTTON      "Storno",IDCANCEL,56,120,47,14
-    LISTBOX         IDC_LIST,3,69,100,49,LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Vytvoøit zástupce na ploše",IDC_CREATELINK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,3,136,100,10
+    LISTBOX         IDC_LIST,3,69,100,49,LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Vytvoøit zástupce na ploše",IDC_CREATELINK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,136,100,10
     CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,3,3,100,60
 END
 
@@ -264,8 +224,7 @@ CAPTION "Vyber"
 FONT 8, "Courier", 400, 0, 0xEE
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,7,170,194,14
-    LISTBOX         IDC_LIST,7,7,194,146,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_LIST,7,7,194,146,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Hodnota",IDC_STATIC,7,154,31,12,SS_CENTERIMAGE
     EDITTEXT        IDC_HODNOTA,41,154,160,12,ES_AUTOHSCROLL | WS_DISABLED
 END
@@ -387,18 +346,16 @@ IDI_MAINICON            ICON                    "icon.ico"
 //
 
 IDR_EXTRAS              RTF                     "extras.rtf"
-IDR_WINAMPPLUGS         RTF                     "plugins.rtf"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
-#include "..\game\version.h"
-
 VS_VERSION_INFO VERSIONINFO
- VERSIONWINRES(FILEVERSION)
- VERSIONWINRES(PRODUCTVERSION)
+ FILEVERSION 1,2,0,19
+ PRODUCTVERSION 1,2,0,19
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L

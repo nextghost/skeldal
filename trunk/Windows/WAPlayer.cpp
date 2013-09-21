@@ -60,24 +60,27 @@ void WAPlayer::LoadPlugins(const char *path)
   ClearList();
   WIN32_FIND_DATA fnd;
   h=FindFirstFile(wildcards,&fnd);
-  if (h) do
-  {
-    _nPlugins++;
-  }while(FindNextFile(h,&fnd));
-  FindClose(h);
+  if (h != INVALID_HANDLE_VALUE) { do
+	  {
+		_nPlugins++;
+	  }while(FindNextFile(h,&fnd));
+	  FindClose(h);
+  }
 
   _pluginList=new WAInputPlugin[_nPlugins];
   int pos=0;
   h=FindFirstFile(wildcards,&fnd);
-  if (h) do
-  {
-    strcpy(fname,fnd.cFileName);
-    if (_pluginList[pos].LoadPlugin(pathname)!=WAInputPlugin::errOk)
-      _pluginList[pos].UnloadPlugin();
-    else
-      pos++;
+  if (h != INVALID_HANDLE_VALUE) {
+	  do
+	  {
+		strcpy(fname,fnd.cFileName);
+		if (_pluginList[pos].LoadPlugin(pathname)!=WAInputPlugin::errOk)
+		  _pluginList[pos].UnloadPlugin();
+		else
+		  pos++;
+	  }
+	  while (FindNextFile(h,&fnd));
   }
-  while (FindNextFile(h,&fnd));
   _nPlugins=pos;
   FindClose(h);
 }

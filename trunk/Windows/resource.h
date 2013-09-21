@@ -1,30 +1,11 @@
-/*
- *  This file is part of Skeldal project
- * 
- *  Skeldal is free software: you can redistribute 
- *  it and/or modify it under the terms of the GNU General Public 
- *  License as published by the Free Software Foundation, either 
- *  version 3 of the License, or (at your option) any later version.
- *
- *  OpenSkeldal is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Skeldal.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  --------------------
- *
- *  Project home: https://sourceforge.net/projects/skeldal/
- *  
- *  Last commit made by: $Id$
- */
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Skeldal.rc
+// Used by skeldal.rc
 //
 #define IDS_WINTITLE                    1
+#define VERSION_MAJOR                   1
+#define VERSION_MINOR                   2
+#define VERSION_BUILD                   19
 #define IDS_CFGGENERAL                  100
 #define IDR_BOLDCZ                      101
 #define IDS_CFGSOUND                    101
@@ -115,6 +96,7 @@
 #define IDC_BROWSEHDD2                  1032
 #define IDC_CHECK1                      1033
 #define IDC_CREATELINK                  1033
+#define IDC_WIDESCREEN                  1033
 #define IDC_INSTHLAVNI                  1035
 #define IDC_INSTALLMUSIC                1036
 #define IDC_CLIENTDESK                  1036

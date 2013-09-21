@@ -68,6 +68,7 @@ void DXMouseTransform(unsigned short *x, unsigned short *y);
 
 HWND GetGameWindow();
 void DxLockBuffers(BOOL lock);
+void DxSetFullscreenWide(BOOL wide);
 
 void StripBlt(void *data, unsigned int startline, unsigned long width);
 

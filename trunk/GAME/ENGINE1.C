@@ -912,7 +912,10 @@ void report_mode(int mode)
 
 __inline void clear_color(void *start,int _size,word _color)
   {
-  __asm
+	word *s = (word *)start;
+	int i;
+	for (i = 0; i < _size; i++) s[i] = _color;
+/*  __asm
     {
     mov  edi,start
     mov  ecx,_size
@@ -924,7 +927,7 @@ __inline void clear_color(void *start,int _size,word _color)
     rep  stosd
     rcl  ecx,1
     rep  stosw      
-    }
+    }*/
   }
     
     //parm [EDI][ECX][EAX] modify [EBX];
@@ -1323,54 +1326,6 @@ void draw_spectxtr(short *txtr,int celx,int cely,int xpos)
   clipr=640-x;
   if (clipr>0)
   enemy_draw_transp(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,(char *)txtr+6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale*2,y,(clipr<<16)+clipl);
-  }
-
-__inline void prumeruj(void *target,void *source1, void *source2)
-//#pragma aux prumeruj parm [edi][eax][edx]=
-  {
-  _asm
-    {
-    mov  edi,target
-    mov  eax,source1
-    mov  ebx,source2
-    mov  eax,[eax]
-    mov  edx,[edx]
-    and  eax,7bde7bdeh
-    and  edx,7bde7bdeh
-    add  eax,edx
-    shr  eax,1
-    stos
-    }
-  }
-
-void double_zoom_xicht(word x,word y,word *source)
-  {
-  word *xpal;
-  word *sline,*slline;
-  char *pline;
-  char *sr;
-  int xx,yy;
-
-  xpal=source+3;
-  sr=(char *)(xpal+256);
-  for(yy=0;yy<75;yy++)
-     {
-     sline=GetScreenAdr()+(y+(yy<<1))*scr_linelen2+x;
-     slline=sline;
-     pline=sr+yy*54;
-     for(xx=0;xx<54;xx++)
-        {
-        int zz=xx<<1;
-        sline[zz]=xpal[*pline++];
-        if (xx)
-           {
-           sline[zz-1]=((sline[zz] & RGB555(30,30,30))+(sline[zz-2] & RGB555(30,30,30)))>>1;
-           if (yy) prumeruj(sline-640+zz-1,sline+zz-1,sline-scr_linelen+zz-1);
-           }
-        else
-           if (yy) prumeruj(sline-640,sline,sline-scr_linelen);
-        }
-     }
   }
 
 

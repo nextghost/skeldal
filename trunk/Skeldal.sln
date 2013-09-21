@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapEdit", "mapedit\MapEdit.vcproj", "{F2CA5BB1-C021-4708-AED7-7290F7255537}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Skeldal", "Skeldal.vcproj", "{AE3E864A-642C-4280-93EC-77A551CF495C}"
@@ -39,30 +39,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 6
-		SccLocalPath0 = .
-		CanCheckoutShared = false
-		SolutionUniqueID = {C790E788-A700-4F37-96D2-B78B1B2C379C}
-		SccProjectUniqueName1 = Skeldal.vcproj
-		SccLocalPath1 = .
-		CanCheckoutShared = false
-		SccProjectUniqueName2 = mapedit\\CDialogy\\CDialogy.vcproj
-		SccLocalPath2 = .
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection2 = mapedit\\CDialogy\\
-		SccProjectUniqueName3 = mapedit\\CSpells\\CSpells.vcproj
-		SccLocalPath3 = .
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection3 = mapedit\\CSpells\\
-		SccProjectUniqueName4 = mapedit\\Lex_Lib\\Lex_Lib.vcproj
-		SccLocalPath4 = .
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection4 = mapedit\\Lex_Lib\\
-		SccProjectUniqueName5 = mapedit\\MapEdit.vcproj
-		SccLocalPath5 = .
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection5 = mapedit\\
 	EndGlobalSection
 EndGlobal

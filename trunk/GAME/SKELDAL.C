@@ -307,6 +307,7 @@ INIS sinit[]=
   {"MONITOR",INI_INT},
   {"VERSION",INI_INT},
   {"REFRESHRATE",INI_INT},
+  {"FULLSCREENWIDE",INI_INT},
   {"CESTA_DATA",INI_TEXT},
   {"CESTA_GRAFIKA",INI_TEXT},
   {"CESTA_ZVUKY",INI_TEXT},
@@ -328,7 +329,7 @@ INIS sinit[]=
   };
 
 
-#define CESTY_POS 27
+#define CESTY_POS 28
 int last_ms_cursor=-1;
 int vmode=2;
 
@@ -1256,7 +1257,8 @@ static int do_config_skeldal(int num,int numdata,char *txt)
      case 25:if (VERSIONNUM<numdata)
                MessageBox(NULL,"Pozor! Hra je starsi verze, nez vyzaduje dobrodruzstvi. Ve vlastnim zajmu si stahnete novou verzi, protoze toto dobrodruzstvi nemusi byt s aktualni verzi dohratelne","Chybna verze hry",MB_OK);
             break;
-     case 26:refresh=numdata;
+     case 26:refresh=numdata;break;
+	 case 27:DxSetFullscreenWide(numdata);break;
      default:num-=CESTY_POS;
              mman_pathlist[num]=(char *)getmem(strlen(txt)+1);
              strcpy(mman_pathlist[num],txt);
@@ -1539,7 +1541,7 @@ extern THUMAN postavy_2[];
 
 static void new_game(int argc, char *argv[])
   {
-  int sect,dir;
+  int sect=1,dir=0;
   char enforce=0;
 
   purge_temps(0);

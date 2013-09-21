@@ -136,9 +136,50 @@ void line_32(int x,int y,int xs,int ys)
 	}
   }
 
+
 void char_32(word *posit,word *font,char znak)
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
+
+	word *edi = posit;
+	unsigned char *esi = font;
+	int al = znak;
+	unsigned char dl,cl,ch,dh;
+	word *ebx;
+
+	word ax = esi[al*2]+256*esi[al*2+1];
+	if (ax == 0) goto chrend;
+	esi += ax;	
+	dl = 0;
+	cl = *esi++;
+	ch = *esi++;
+chr6:
+	ebx = edi;
+	dh = ch;
+chr5:
+	if (dl != 0) goto chr1;
+	al = *esi++;
+	if (al == 0) goto chr2;
+	if (al >= 8) goto chr3;
+	ax = charcolors[(al-1)];
+	if (ax == 0xffff) goto chr4;
+	*ebx = ax;
+	goto chr4;
+chr3:if (al == 255) goto chrend;
+	dl = al - 6;
+chr1: dl--;
+chr2:
+chr4: ebx+=scr_linelen2;
+	  dh--;
+      if (dh!=0) goto chr5;
+	  edi++;
+	  cl--;
+	  if (cl!=0) goto chr6;
+chrend:;
+
+	
+/*
+
   __asm
     {
         mov     edi,posit;
@@ -185,12 +226,16 @@ chr4:   add     ebx,scr_linelen;dalsi radka
         jnz     chr6    ;dokud neni nula
 chrend:                 ;konec
     }
-
+*/
   }
 void char2_32(word *posit,word *font,char znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
-  __asm
+
+	//nevim jestli se vola a kdy se vola, takze necham puvodni obsluhu
+	  char_32(posit,font,znak);
+
+	  /*__asm
     {
         mov edi,posit
         mov esi,font
@@ -242,11 +287,24 @@ chr24:  add     ebx,scr_linelen;dalsi radka
         jnz     chr26    ;dokud neni nula
 chr2end:              ;konec
     }
-
+*/
   }
 
 word charsize(word *font,char znak)
   {
+
+	  unsigned char *esi = font;
+	  int al = znak;
+	  unsigned char cl,ch;
+
+	  word ax = esi[al*2]+256*esi[al*2+1];
+	  if (ax == 0) return 0;
+	  esi += ax;	
+	  cl = *esi++;
+	  ch = *esi++;
+	  ax = (int)cl+256*(int)ch;
+	  return ax;
+/*
 //#pragma aux charsize parm [esi] [eax]
   __asm
     {
@@ -262,7 +320,7 @@ word charsize(word *font,char znak)
         add     esi,eax
         lodsw
 chsend: and     eax,0ffffh
-    }
+    }*/
   }
 
 void put_picture(word x,word y,void *p)
@@ -366,6 +424,22 @@ void get_picture(word x,word y,word xs,word ys,void *p)
 void put_image(word *image,word *target,int start_line,int sizex,int sizey)
 //#pragma aux put_image parm [ESI][EDI][EAX][EBX][EDX] modify [ECX]
   {
+
+	word *esi = image;
+	word *edi = target;
+	int eax = start_line;
+	int ebx = sizex;
+	int edx = sizey;
+	int ecx = esi[0];	
+	esi = esi + 3 + start_line * ecx;
+
+	while (edx) {
+		memcpy(edi,esi,ecx*2);	
+		esi += ecx;
+		edi += scr_linelen2;
+		edx--;
+	}
+/*
   __asm
     {
         mov     esi,image
@@ -398,14 +472,32 @@ puti_lp:mov     ecx,ebx
         add     edi,scr_linelen
         dec     edx
         jnz     puti_lp
-    }
+    }*/
   }
 
 void put_8bit_clipped(void *src,void *trg,int startline,int velx,int vely)
 //#pragma aux put_8bit_clipped parm [ESI][EDI][EAX][EBX][EDX] modify [ECX];
   {
-  if (src==NULL) return;
-  _asm
+	  if (src==NULL) return;
+	  {
+		  word *esi = src;
+		  word *edi = trg;
+		  word *paleta = esi+3;
+		  int cx = esi[0];	
+		  unsigned char *imgdata = (unsigned char *)(esi + 3 + 256)+ startline * cx;
+
+		  while (vely) {
+			  int i;
+			  for (i = 0; i < velx; i++)
+					if (imgdata[i]) edi[i] = paleta[imgdata[i]];
+			  imgdata += cx;
+			  edi += scr_linelen2;
+			  vely--;
+		  }
+	  }
+}
+  
+  /*_asm
     {
         mov     esi,src
         mov     edi,trg
@@ -452,12 +544,37 @@ put8_trns:
         add     edi,2
         jmp     put8nxt
 ende:
-    }
-  }
+    }*/
 
 void put_textured_bar_(void *src,void *trg,int xsiz,int ysiz,int xofs,int yofs)
 //#pragma aux put_textured_bar_ parm [EBX][EDI][EDX][ECX][ESI][EAX];
   {
+
+	word *imghdr = (word *)src;
+	word cx = imghdr[0];
+	word cy = imghdr[1];
+	word tp = imghdr[2];
+	word *paleta = imghdr+3;
+	word *target = (word *)trg;
+	unsigned char *imgdata = (unsigned char *)(paleta+256);
+	int y;
+
+	xofs = xofs % cx;
+	
+	if (tp != 8) return;
+
+	for (y = 0; y < ysiz; y++) {
+		int yf = (yofs + y) % cy;
+		unsigned char *row = imgdata +(yf * cx);
+		int x;
+		for (x = 0; x < xsiz; x++) {
+			unsigned char c = row[(x + xofs) % cx];
+			if (c) target[x] = paleta[c];			
+		}
+		target+=scr_linelen2;
+	}
+}
+/*
   __asm
     {
     mov    ebx,src
@@ -532,7 +649,7 @@ ptb_skip2:
         POP     EBP        
     }    
   }
-
+*/
 #define MIXTRANSP(a,b) ((((a) & 0xF7DE)+((b) & 0xF7DE))>>1)
 
 void trans_bar(int x,int y,int xs,int ys,int barva)
@@ -604,6 +721,28 @@ void wait_retrace()
 void put_picture2picture(word *source,word *target,int xp,int yp)
 //#pragma aux put_picture2picture parm [ESI][EDI][EAX][EDX] modify [ECX]
   {
+	
+   word *srchdr = (word *)source;
+   word *trghdr = (word *)target;
+   word src_cx = srchdr[0];
+   word trg_cx = trghdr[0];
+   word src_cy = srchdr[1];
+   word trg_cy = trghdr[1];
+   word y;
+   
+   unsigned char *srcimagedata = (unsigned char *)source+pic_start;
+   unsigned char *trgimagedata = (unsigned char *)target+pic_start;
+   trgimagedata+=trg_cx * yp + xp;
+   for (y = 0; y < src_cy; y++) {
+	   word x;
+	   for (x = 0; x < src_cx; x++) {
+		   if (srcimagedata[x]) trgimagedata[x] = srcimagedata[x];
+	   }
+	   trgimagedata+=trg_cx;
+	   srcimagedata+=src_cx;
+   }
+}/*
+
   __asm
     {
     mov   esi,source
@@ -637,5 +776,5 @@ ppp_trn:inc     edi                             ;dalsi bod
         sub     ecx,10000h                      ;opakuj pro y radku
         jnc     ppp_lp2
     }
-  }
+  }*/
 

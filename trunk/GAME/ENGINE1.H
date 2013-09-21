@@ -166,7 +166,6 @@ void enemy_draw_mirror(void *src,void *trg,int shade,int scale,int maxspace,int 
 
 void draw_enemy(DRW_ENEMY *drw);
 void draw_player(short *txtr,int celx,int cely,int posx,int posy,int adjust,char *name);
-void double_zoom_xicht(word x,word y,word *source);
 
 void set_lclip_rclip(int celx,int cely,int lc,int rc);
 void draw_spectxtr(short *txtr,int celx,int cely,int xpos);
