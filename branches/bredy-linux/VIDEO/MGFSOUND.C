@@ -97,7 +97,7 @@ int find_free_channel()
   {
   int i;
   for(i=0;i<256;i++) if (chaninfo[i].snd==NULL) return i;
-  printf("Nemohu pridat zvuk. Jiz je zaplneno vsech %d kanal–\n",CHANNELS);
+  printf("Nemohu pridat zvuk. Jiz je zaplneno vsech %d kanalï¿½\n",CHANNELS);
   return -1;
   }
 
@@ -216,7 +216,7 @@ void open_wav(char *wav)
   wavinf=(struct t_wave *)malloc(get_chunk_size(snd));
   if (wavinf==NULL)
      {
-     puts("Nedostatek pamˆti.");
+     puts("Nedostatek pamï¿½ti.");
      return;
      }
   read_chunk(snd,wavinf);
@@ -502,7 +502,7 @@ void call_script(char *script_name)
   else strcpy(c,SND_NAME);
   if (scr==NULL)
      {
-     printf("Nemohu otev©¡t script: %s\n",script_name);
+     printf("Nemohu otevï¿½ï¿½t script: %s\n",script_name);
      exit(1);
      }
   snf=fopen(snd_name,"r");
@@ -510,7 +510,7 @@ void call_script(char *script_name)
   open_files(name);
   if (i!=1)
      {
-     printf("Chyba ve script souboru: %s. Prvni mus¡ b˜t jm‚no c¡lov‚ho souboru.\n",scr);
+     printf("Chyba ve script souboru: %s. Prvni musï¿½ bï¿½t jmï¿½no cï¿½lovï¿½ho souboru.\n",scr);
      exit(1);
      }
   while ((i=fgetc(scr))!=EOF && i!='\n');

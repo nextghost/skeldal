@@ -1472,7 +1472,7 @@ void call_spell(int i)
      case S_location_y: TelepLocation.loc_y=GET_WORD(c);TelepLocation.map=0;break;
      default:
             {
-            char *d="Chyba v popisu kouzel: Program narazil na neznamou instrukci %d (%02X) pri zpracovani kouzla s cislem %d. Kouzlo bylo ukon‡eno";
+            char *d="Chyba v popisu kouzel: Program narazil na neznamou instrukci %d (%02X) pri zpracovani kouzla s cislem %d. Kouzlo bylo ukonï¿½eno";
             c=alloca(strlen(d)+20);
             sprintf(c,d,*(c-1),*(c-1),p->num);
             bott_disp_text(c);

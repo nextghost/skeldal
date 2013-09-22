@@ -114,7 +114,7 @@ typedef struct event_msg
   }EVENT_MSG;
 
 extern char exit_wait; // 1 - opousti aktivni cekaci event;
-extern char freeze_on_exit; //1 - po opusteni udalosti cela cesta uzamcena
+extern char freeze_gui_on_exit; //1 - po opusteni udalosti cela cesta uzamcena
 extern char *otevri_zavoru;
 //extern int curtask;
 //extern char *task_info;
@@ -138,7 +138,7 @@ void enter_event(T_EVENT_ROOT **tree,EVENT_MSG *msg);
 void do_events();
 void escape();
 
-#include <FCS_Tasker.h>
+#include <linux/tasker.h>
 /*
 void *task_sleep(void *param);
 //#pragma aux task_sleep parm [eax] value [eax]
@@ -160,14 +160,14 @@ void timer(EVENT_MSG *msg);
 #define WHEN_MSG(msg_num) if (msg->msg==msg_num)
 #define UNTIL_MSG(msg_num) if (msg->msg!=msg_num)
 #define GET_DATA(data_type) (*(data_type *)msg->data)
-#define GET_DATA_PTR(data_type) ((data_type *)msg->data);
+#define GET_DATA_PTR(data_type) ((data_type *)msg->data)
 #define GET_USER(data_type) (*(data_type *)user_ptr)
 #define SAVE_USER_PTR(p) (*user_ptr=p)
 #define GET_USER_PTR() user_ptr
 #define EVENT_RETURN(value) msg->msg=value
 #define GET_MSG_VAR() msg
 #define GET_MSG() msg->msg
-#define TASK_GET_TERMINATE() ((task_info[cur_task] & TASK_TERMINATING)!=0)
+#define TASK_GET_gui_terminate() ((task_info[cur_task] & TASK_TERMINATING)!=0)
 
 #define EVENT_HALT -1
 #define EVENT_DONE -2

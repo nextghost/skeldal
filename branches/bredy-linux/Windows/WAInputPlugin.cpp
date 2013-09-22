@@ -567,7 +567,7 @@ WAInputPlugin::PluginError WAInputPlugin::LoadPlugin(const char *name)
     }
     __except(EXCEPTION_EXECUTE_HANDLER)
     {
-      _mod=0; //Free library cannot be called, because plugin cannot be terminated... memory and resource leak
+      _mod=0; //Free library cannot be called, because plugin cannot be gui_terminated... memory and resource leak
     }
     _inPlugin=0;
     return errGPF;

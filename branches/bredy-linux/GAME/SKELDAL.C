@@ -947,13 +947,13 @@ void error_exception(EVENT_MSG *msg,void **unused)
      SEND_LOG("(ERROR) Log: Last 'memman' handle: %x",memman_handle,0);
      SEND_LOG("(ERROR) Log: Battle: %d Select_player %d",battle,select_player);
      closemode();
-     printf("Program zp–sobil bˆhovou chybu a bude ukon‡en\n"
-            "Posledn¡ zpracov van  data mˆla rukojeŸ ‡¡slo %xh\n",memman_handle);
+     printf("Program zpï¿½sobil bï¿½hovou chybu a bude ukonï¿½en\n"
+            "Poslednï¿½ zpracovï¿½vanï¿½ data mï¿½la rukojeï¿½ ï¿½ï¿½slo %xh\n",memman_handle);
      printf("Map: %s Sector %d Direction %d\n",level_fname==NULL?"<unknown>":level_fname,viewsector,viewdir);
-     printf("Nyn¡ se program pokus¡ ulo‘it hru...\n\n");
+     printf("Nynï¿½ se program pokusï¿½ uloï¿½it hru...\n\n");
      autosave_enabled=1;
      autosave();
-     printf("Hra byla £spˆ¨nˆ ulo‘ena pod n zvem AUTOSAVE\n");
+     printf("Hra byla ï¿½spï¿½ï¿½nï¿½ uloï¿½ena pod nï¿½zvem AUTOSAVE\n");
      exit(0);
      }
   }
@@ -966,7 +966,7 @@ void swap_error_exception()
        "zaplnen. Uvolnete prosim nejake misto na odkladacim disku, nebo zmente \n"
        "adresar odkladani na jednotku, kde je vice mista");
   puts("Vase pozice bude ulozena pod nazvem AUTOSAVE\n"
-       "Pokud vsak mate pozice na stejn‚m disku jako odkladaci soubor (coz je\n"
+       "Pokud vsak mate pozice na stejnï¿½m disku jako odkladaci soubor (coz je\n"
        "zakladni nastaveni) bude ulozeni z 90% bohuzel neuspesne...");
   autosave_enabled=1;
   autosave();

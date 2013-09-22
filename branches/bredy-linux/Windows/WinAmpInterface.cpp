@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// WinAmpInterface.cpp : Defines the entry point for the console application.
+// WinAmpInterface.cpp : gui_defines the entry point for the console application.
 //
 
 #include "stdafx.h"

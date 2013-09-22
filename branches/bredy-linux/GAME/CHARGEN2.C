@@ -42,7 +42,7 @@
 #include "globals.h"
 #include <stddef.h>
 
-//there is defined procedures from source "INV.C"
+//there is gui_defined procedures from source "INV.C"
 
 void display_items_wearing(THUMAN *h);
 

@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#if !defined(AFX_PALETTEEDITOR_H__45E6ACB6_CCFC_47F4_906C_BF0D2E76E2FE__INCLUDED_)
+#if !gui_defined(AFX_PALETTEEDITOR_H__45E6ACB6_CCFC_47F4_906C_BF0D2E76E2FE__INCLUDED_)
 #define AFX_PALETTEEDITOR_H__45E6ACB6_CCFC_47F4_906C_BF0D2E76E2FE__INCLUDED_
 
 #if _MSC_VER > 1000
@@ -80,4 +80,4 @@ protected:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_PALETTEEDITOR_H__45E6ACB6_CCFC_47F4_906C_BF0D2E76E2FE__INCLUDED_)
+#endif // !gui_defined(AFX_PALETTEEDITOR_H__45E6ACB6_CCFC_47F4_906C_BF0D2E76E2FE__INCLUDED_)

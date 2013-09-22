@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// ItemIcons.cpp : Defines the class behaviors for the application.
+// ItemIcons.cpp : gui_defines the class behaviors for the application.
 //
 
 #include "stdafx.h"

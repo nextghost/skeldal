@@ -23,7 +23,7 @@
 // ColEdit.h : main header file for the COLEDIT application
 //
 
-#if !defined(AFX_COLEDIT_H__4A70A254_5D3A_4703_9034_4EE5A90DFE73__INCLUDED_)
+#if !gui_defined(AFX_COLEDIT_H__4A70A254_5D3A_4703_9034_4EE5A90DFE73__INCLUDED_)
 #define AFX_COLEDIT_H__4A70A254_5D3A_4703_9034_4EE5A90DFE73__INCLUDED_
 
 #if _MSC_VER > 1000
@@ -68,4 +68,4 @@ public:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_COLEDIT_H__4A70A254_5D3A_4703_9034_4EE5A90DFE73__INCLUDED_)
+#endif // !gui_defined(AFX_COLEDIT_H__4A70A254_5D3A_4703_9034_4EE5A90DFE73__INCLUDED_)

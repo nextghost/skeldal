@@ -64,7 +64,7 @@ void *wait_ms_key(EVENT_MSG *msg)
   if (msg->msg==E_MOUSE)
      {
      ms=get_mouse(msg);
-     if (ms->event_type & 4) terminate();
+     if (ms->event_type & 4) gui_terminate();
      }
   return NULL;
   }
@@ -106,18 +106,18 @@ void init(void)
 /*
  w=create_window(100,100,400,200,0x6318,&x);
   id=desktop_add_window(w);
-  define(10,20,50,30,0,sample,"Test");
-  property(&x,NULL,flat_color(0x7000),0xffff);
-  define(10,20,70,30,3,button,"Tlacitko");
-  property(NULL,NULL,flat_color(0x000f),0x01c0);on_change(close_test);
+  gui_define(10,20,50,30,0,sample,"Test");
+  gui_property(&x,NULL,flat_color(0x7000),0xffff);
+  gui_define(10,20,70,30,3,button,"Tlacitko");
+  gui_property(NULL,NULL,flat_color(0x000f),0x01c0);gui_on_change(close_test);
   w=create_window(5,5,200,200,0x6318,&x);
   id=desktop_add_window(w);
-  define(50,50,70,30,3,button,"Tlacitko");
-  property(NULL,NULL,flat_color(0x7fff),0x000f);on_change(close_test);
+  gui_define(50,50,70,30,3,button,"Tlacitko");
+  gui_property(NULL,NULL,flat_color(0x7fff),0x000f);gui_on_change(close_test);
   w=create_window(300,150,300,200,0x6318,&x);
   id=desktop_add_window(w);
-  define(50,50,70,30,3,button,"Tlacitko");
-  property(NULL,NULL,flat_color(0x7fff),0x000f);on_change(close_test);
+  gui_define(50,50,70,30,3,button,"Tlacitko");
+  gui_property(NULL,NULL,flat_color(0x7fff),0x000f);gui_on_change(close_test);
  */
 
 void def_window(word xs,word ys,char *name)
@@ -139,11 +139,11 @@ void def_window(word xs,word ys,char *name)
   if (y+ys>MAX_Y-2) y=MAX_Y-2-ys;
      p=create_window(x,y,xs,ys,WINCOLOR,&ctl);
      desktop_add_window(p);
-  define(0,2,2,xs-25,14,0,win_label,name);
+  gui_define(0,2,2,xs-25,14,0,win_label,name);
      ctl.bsize=1;ctl.ctldef=1;
-     property(&ctl,default_font,flat_color(0x7fe0),LABELCOLOR);
-   define(1,xs-20,1,19,16,0,button,"\x1f");
-     property(NULL,icones,&icone_color,WINCOLOR);on_change(close_test);
+     gui_property(&ctl,default_font,flat_color(0x7fe0),LABELCOLOR);
+   gui_define(1,xs-20,1,19,16,0,button,"\x1f");
+     gui_property(NULL,icones,&icone_color,WINCOLOR);gui_on_change(close_test);
 
   }
 
@@ -151,7 +151,7 @@ void Simple_window(void);
 
 void open_next(void)
   {
-  def_window(300,200,"Dal¨¡ okno");
+  def_window(300,200,"Dalï¿½ï¿½ okno");
   Simple_window();
   redraw_window();
   }
@@ -162,20 +162,20 @@ void Simple_window(void)
   highlight(&ctl,WINCOLOR);
   ctl.bsize=2;ctl.ctldef=0;
 
-  define(10,30,30,80,20,0,button,"Nov‚ okno");
-     property(NULL,default_font,flat_color(0000),WINCOLOR);
-     on_change(open_next);
-  define(20,120,30,80,20,0,button,"Konec");
-     property(NULL,default_font,flat_color(0000),WINCOLOR);
-     on_change(terminate);
-  define(30,60,60,90,12,0,check_box,"Check box");
-     property(NULL,default_font,flat_color(0),WINCOLOR);c_default(0);
-  define(40,60,80,4*15,4*15,0,radio_butts,4,"Test 1","Test 2","Test 3","Test 4");
-     property(NULL,default_font,flat_color(0),WINCOLOR);c_default(1);
-  define(50,170,80,80,20,0,toggle_button,"Toggle");c_default(1);
-     property(NULL,default_font,flat_color(0),WINCOLOR);
-  define(60,20,25,180,10,3,input_line,255);
-   property(&ctl,default_font,flat_color(0),WINCOLOR);set_default("Vstupn¡ linka");
+  gui_define(10,30,30,80,20,0,button,"Novï¿½ okno");
+     gui_property(NULL,default_font,flat_color(0000),WINCOLOR);
+     gui_on_change(open_next);
+  gui_define(20,120,30,80,20,0,button,"Konec");
+     gui_property(NULL,default_font,flat_color(0000),WINCOLOR);
+     gui_on_change(gui_terminate);
+  gui_define(30,60,60,90,12,0,check_box,"Check box");
+     gui_property(NULL,default_font,flat_color(0),WINCOLOR);c_default(0);
+  gui_define(40,60,80,4*15,4*15,0,radio_butts,4,"Test 1","Test 2","Test 3","Test 4");
+     gui_property(NULL,default_font,flat_color(0),WINCOLOR);c_default(1);
+  gui_define(50,170,80,80,20,0,toggle_button,"Toggle");c_default(1);
+     gui_property(NULL,default_font,flat_color(0),WINCOLOR);
+  gui_define(60,20,25,180,10,3,input_line,255);
+   gui_property(&ctl,default_font,flat_color(0),WINCOLOR);set_default("Vstupnï¿½ linka");
 
 
   }
@@ -184,7 +184,7 @@ void Simple_window(void)
 void main()
   {
   init();
-  def_window(300,200,"Prvn¡ okno");
+  def_window(300,200,"Prvnï¿½ okno");
   Simple_window();
   redraw_desktop();
   escape();

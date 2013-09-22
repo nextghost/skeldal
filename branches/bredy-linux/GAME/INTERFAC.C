@@ -241,16 +241,16 @@ void open_message_win(int pocet_textu,char **texts)
   y=10;
   while (text[0])
      {
-     define(-1,10,y,1,1,0,label,text);
+     gui_define(-1,10,y,1,1,0,label,text);
      y+=text_height(text);
      text=strchr(text,0)+1;
      }
   wsx=(maxxs-wscelk)>>1;
   for(i=1;i<pocet_textu;i++)
      {
-     define(i-1,wsx+10,wsy,maxws+10,wsys+10,3,button,texts[i]);
-     property(def_border(5,BAR_COLOR),curfont,flat_color(MSG_COLOR1),BAR_COLOR);
-     on_change(terminate);
+     gui_define(i-1,wsx+10,wsy,maxws+10,wsys+10,3,button,texts[i]);
+     gui_property(def_border(5,BAR_COLOR),curfont,flat_color(MSG_COLOR1),BAR_COLOR);
+     gui_on_change(gui_terminate);
      wsx+=maxws+20;
      }
   redraw_window();
@@ -284,7 +284,7 @@ EVENT_PROC(message_keyboard)
                  if (key!=-1)
                     {
                     goto_control(key);
-                    terminate();
+                    gui_terminate();
                     }
                  }
      }
@@ -760,7 +760,7 @@ void start_check()
   get_mem_info(&memory);
   concat(c,pathtable[SR_TEMP],TEMP_FILE);
 //  if (!access(c,F_OK))
-//     if (ask_test("Skeldal nebyl spr vnˆ ukon‡en. Mˆl bys provest kontrolu disku\n\rMam spustit SCANDISK?",'A'))
+//     if (ask_test("Skeldal nebyl sprï¿½vnï¿½ ukonï¿½en. Mï¿½l bys provest kontrolu disku\n\rMam spustit SCANDISK?",'A'))
 //        system("SCANDISK /NOSUMMARY");
   if (pathtable[SR_TEMP][1]==':') drv=pathtable[SR_TEMP][0];else
         {
@@ -773,14 +773,14 @@ void start_check()
   c=alloca(1024);
   if (siz<1024)
      {
-     sprintf(c,"Na disku %c: nen¡ pot©ebn‚ 1 MB pro ukl d n¡ pozic. Hroz¡ ‘e pozice nebude kam ukl dat\n\rP©esto spustit?",drv);
+     sprintf(c,"Na disku %c: nenï¿½ potï¿½ebnï¿½ 1 MB pro uklï¿½dï¿½nï¿½ pozic. Hrozï¿½ ï¿½e pozice nebude kam uklï¿½dat\n\rPï¿½esto spustit?",drv);
      if (!ask_test(c,'N')) exit(1);
      }
   else if (siz<50000 && level_preload==1 && memory.LargestBlockAvail<50000000)
      {
-     sprintf(c,"Na disku %c: neni nutn˜ch 50 MB pro odkl d n¡ dat. Skeldal bude ¨et©it\n\r"
-               "s pamˆt¡ a nahr vat jen pot©ebn  data. Hra se m–‘e rapidnˆ zpomalit!\n\r"
-               "Mam to udˆlat?",drv);
+     sprintf(c,"Na disku %c: neni nutnï¿½ch 50 MB pro odklï¿½dï¿½nï¿½ dat. Skeldal bude ï¿½etï¿½it\n\r"
+               "s pamï¿½tï¿½ a nahrï¿½vat jen potï¿½ebnï¿½ data. Hra se mï¿½ï¿½e rapidnï¿½ zpomalit!\n\r"
+               "Mam to udï¿½lat?",drv);
      if (ask_test(c,'A')) level_preload=0;
      }
      */
@@ -1029,7 +1029,7 @@ static void setup_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   z[1]=pic;
   }
 
-static void setup_button_event(EVENT_MSG *msg,OBJREC *o)
+static void setup_buttgui_on_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
 
@@ -1066,7 +1066,7 @@ void setup_ok_button(OBJREC *o)
   {
   o->runs[0]=setup_button_init;
   o->runs[1]=setup_button_draw;
-  o->runs[2]=setup_button_event;
+  o->runs[2]=setup_buttgui_on_event;
   o->runs[3]=setup_button_done;
   o->datasize=1;
   }
@@ -1503,8 +1503,8 @@ static smlouvat_enter(EVENT_MSG *msg,OBJREC *o)
     {
     switch( *(char *)msg->data)
       {
-      case 13:goto_control(30);terminate();break;
-      case 27:goto_control(20);terminate();break;
+      case 13:goto_control(30);gui_terminate();break;
+      case 27:goto_control(20);gui_terminate();break;
       }
     }
   }
@@ -1518,14 +1518,14 @@ int smlouvat(int cena,int puvod,int pocet,int money,char mode)
 
   cena,puvod,pocet,money;text[0]=0;text[1]=0;
   add_window(170,130,300,150,H_IDESKA,3,20,20);
-  define(-1,10,15,1,1,0,label,texty[241]);
-  set_font(H_FBOLD,RGB555(31,31,31));define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
+  gui_define(-1,10,15,1,1,0,label,texty[241]);
+  set_font(H_FBOLD,RGB555(31,31,31));gui_define(-1,150,15,100,13,0,label,itoa(cena,buffer,10));
   set_font(H_FBOLD,MSG_COLOR1);
-  define(-1,10,30,1,1,0,label,texty[238]);
-  define(10,150,30,100,13,0,input_line,8);property(def_border(5,BAR_COLOR),NULL,NULL,0);set_default("");
-    on_event(smlouvat_enter);
-  define(20,20,20,80,20,2,button,texty[239]);property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);on_change(terminate);
-  define(30,110,20,80,20,2,button,texty[230]);property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);on_change(terminate);
+  gui_define(-1,10,30,1,1,0,label,texty[238]);
+  gui_define(10,150,30,100,13,0,input_line,8);gui_property(def_border(5,BAR_COLOR),NULL,NULL,0);set_default("");
+    gui_on_event(smlouvat_enter);
+  gui_define(20,20,20,80,20,2,button,texty[239]);gui_property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);gui_on_change(gui_terminate);
+  gui_define(30,110,20,80,20,2,button,texty[230]);gui_property(def_border(5,BAR_COLOR),NULL,NULL,BAR_COLOR);gui_on_change(gui_terminate);
   do
     {
     redraw_window();

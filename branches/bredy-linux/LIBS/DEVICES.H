@@ -23,8 +23,8 @@
 #ifndef __DEVICES_H
 #define __DEVICES_H
 
-#include "types.h"
-#include "event.h"
+#include "TYPES.H"
+#include "EVENT.H"
 typedef struct tms_basic_info
   {
         int mouse_event;

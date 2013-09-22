@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// PodlaháøDlg.cpp : implementation file
+// Podlahï¿½ï¿½Dlg.cpp : implementation file
 //
 
 #include "stdafx.h"

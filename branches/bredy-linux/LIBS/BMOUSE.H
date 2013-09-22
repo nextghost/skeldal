@@ -23,8 +23,8 @@
 #ifndef __BMOUSE_H
 #define __BMOUSE_H
 
-#include "event.h"
-#include "devices.h"
+#include "EVENT.H"
+#include "DEVICES.H"
 
 
 #define get_mouse(info) ((MS_EVENT *)(*(long *) info->data))

@@ -89,7 +89,7 @@ extern char mman_patch;    //jednicka zapina moznost pouziti patchu
 void *getmem(long size);        //alokace pameti pres memman. alokovat pomoci malloc lze ale hrozi nebezpeci ze vrati NULL
 void *grealloc(void *m,long size); //realokace pameti pres memman
 void *load_file(char *filename); //obycejne natahne soubor do pameti a vrati ukazatel.
-void init_manager(char *filename,char *swp); //inicializuje manager. Jmeno filename i swapname nejsou povinne (musi byt NULL kdyz nejsou pouzity)
+void init_manager(const char *filename,const char *swp); //inicializuje manager. Jmeno filename i swapname nejsou povinne (musi byt NULL kdyz nejsou pouzity)
 THANDLE_DATA *def_handle(int handle,char *filename,void *decompress,char path); //deklaruje rukojet. promenna decompress je ukazatel na funkci ktera upravi data pred vracenim ukazatele
 void *ablock(int handle);             //vraci ukazatel bloku spojeneho s handlem
 void alock(int handle);               //zamyka blok

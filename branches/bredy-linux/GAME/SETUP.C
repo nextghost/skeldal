@@ -177,25 +177,25 @@ void new_setup()
   w=create_window(0,SCREEN_OFFLINE,639,359,0,&ctl);
   w->draw_event=show_setup_desktop;
   desktop_add_window(w);
-  define(10,50,270,190,20,0,skeldal_checkbox);  c_default(get_snd_effect(SND_SWAP));   on_change(do_setup_change);
+  gui_define(10,50,270,190,20,0,skeldal_checkbox);  c_default(get_snd_effect(SND_SWAP));   gui_on_change(do_setup_change);
   if (check_snd_effect(SND_OUTFILTER))
      {
-     define(20,50,300,190,20,0,skeldal_checkbox);c_default(get_snd_effect(SND_OUTFILTER));
-        on_change(do_setup_change);
+     gui_define(20,50,300,190,20,0,skeldal_checkbox);c_default(get_snd_effect(SND_OUTFILTER));
+        gui_on_change(do_setup_change);
      }
 
-  define(30,410,60,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==0);
-  on_change(change_zoom);
-  define(40,410,90,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==1);on_change(change_zoom);
-  define(50,410,120,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==2);on_change(change_zoom);
+  gui_define(30,410,60,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==0);
+  gui_on_change(change_zoom);
+  gui_define(40,410,90,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==1);gui_on_change(change_zoom);
+  gui_define(50,410,120,90,20,0,skeldal_checkbox);c_default(zoom_speed(-1)==2);gui_on_change(change_zoom);
 
-  define(60,510,60,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==0);on_change(change_turn);
-  define(70,510,90,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==1);on_change(change_turn);
-  define(80,510,120,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==2);on_change(change_turn);
+  gui_define(60,510,60,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==0);gui_on_change(change_turn);
+  gui_define(70,510,90,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==1);gui_on_change(change_turn);
+  gui_define(80,510,120,90,20,0,skeldal_checkbox);c_default(turn_speed(-1)==2);gui_on_change(change_turn);
 
   for(i=0;i<5;i++)
      {
-     define((i+9)*10,410,180+i*30,190,20,0,skeldal_checkbox);
+     gui_define((i+9)*10,410,180+i*30,190,20,0,skeldal_checkbox);
      switch(i)
         {
         case 0:c_default(show_names);break;
@@ -207,16 +207,16 @@ void new_setup()
      }
 
   for(i=0;i<sizeof(textc)/sizeof(int);i++)
-     define(-1,textxp[i],textyp[i]-1,1,1,0,label,texty[textc[i]]);
+     gui_define(-1,textxp[i],textyp[i]-1,1,1,0,label,texty[textc[i]]);
 
   for(i=0;i<sizeof(effects)/sizeof(int);i++)
      if (check_snd_effect(effects[i]))
        {
-       define(200+i*10,50+i*60,30,30,200,0,skeldal_soupak,effects[i]==SND_MUSIC?127:255);c_default(get_snd_effect(effects[i]));
-       on_change(do_setup_change);
+       gui_define(200+i*10,50+i*60,30,30,200,0,skeldal_soupak,effects[i]==SND_MUSIC?127:255);c_default(get_snd_effect(effects[i]));
+       gui_on_change(do_setup_change);
        }
-  define(300,559,336,81,21,0,setup_ok_button,texty[174]);on_change(unwire_setup);
-  property(NULL,ablock(H_FTINY),&color_topbar,0);
+  gui_define(300,559,336,81,21,0,setup_ok_button,texty[174]);gui_on_change(unwire_setup);
+  gui_property(NULL,ablock(H_FTINY),&color_topbar,0);
   redraw_window();
   add_to_timer(TM_CHECKBOX,4,-1,checkbox_animator);
   }

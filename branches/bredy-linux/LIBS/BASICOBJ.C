@@ -36,7 +36,7 @@
 #include "gui.h"
 #include "basicobj.h"
 
-#define MEMTEXT "Pamˆt: "
+#define MEMTEXT "Pamï¿½t: "
 
 #define E_STATUS_LINE 60
 
@@ -164,7 +164,7 @@ void button_draw2(int x1,int y1,int x2,int y2,OBJREC *o)
   }
 
 
-void button_event(EVENT_MSG *msg,OBJREC *o)
+void buttgui_on_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
 
@@ -200,7 +200,7 @@ void button(OBJREC *o)
   {
   o->runs[0]=button_init;
   o->runs[1]=button_draw;
-  o->runs[2]=button_event;
+  o->runs[2]=buttgui_on_event;
   //o->runs[3]=button_done;
   o->datasize=1;
   }
@@ -209,7 +209,7 @@ void button2(OBJREC *o)
   {
   o->runs[0]=button_init;
   o->runs[1]=button_draw2;
-  o->runs[2]=button_event;
+  o->runs[2]=buttgui_on_event;
   //o->runs[3]=button_done;
   o->datasize=1;
   }
@@ -459,7 +459,7 @@ void win_label_move(EVENT_MSG *msg,OBJREC *o)
            xref=ms->x-waktual->x;
            yref=ms->y-waktual->y;
            send_message(E_ADD,E_MOUSE,win_label_move);
-           freeze_on_exit=1;
+           freeze_gui_on_exit=1;
            }
      }
   if (msg->msg==E_LOST_FOCUS && run)
@@ -657,7 +657,7 @@ void radio_butts(OBJREC *o)
 
 
 
-void toggle_button_event(EVENT_MSG *msg,OBJREC *o)
+void toggle_buttgui_on_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
   static char toggle_exit=0;
@@ -695,7 +695,7 @@ void toggle_button(OBJREC *o)
   {
   o->runs[0]=button_init;
   o->runs[1]=button_draw;
-  o->runs[2]=toggle_button_event;
+  o->runs[2]=toggle_buttgui_on_event;
   o->datasize=1;
   }
 
@@ -901,7 +901,7 @@ void scroll_button_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   outtext(param->title);
   }
 
-void scroll_button_event(EVENT_MSG *msg,OBJREC *o)
+void scroll_buttgui_on_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
 
@@ -937,7 +937,7 @@ void scroll_button(OBJREC *o)
   {
   o->runs[0]=scroll_button_init;
   o->runs[1]=scroll_button_draw;
-  o->runs[2]=scroll_button_event;
+  o->runs[2]=scroll_buttgui_on_event;
   o->datasize=1;
   }
 
@@ -1193,10 +1193,10 @@ int msg_box(char *title, char icone, char *text, ... )
   desktop_add_window(create_window(0,0,winx,300,MSG_COLOR,ctl));
   buf[1]='\0';buf[0]=icone;
   xp=text_width(buf);
-  define(-1,(MSG_R_MARGIN>>1)-(xp>>1),20,xp,text_height(buf),1,label,buf);
+  gui_define(-1,(MSG_R_MARGIN>>1)-(xp>>1),20,xp,text_height(buf),1,label,buf);
   cl[1]=ctl->light;
   cl[0]=ctl->shadow;
-  property(NULL,msg_icn_font,&cl,MSG_COLOR);
+  gui_property(NULL,msg_icn_font,&cl,MSG_COLOR);
   curfont=msg_box_font;
   default_font=curfont;
   if (winx>MSG_SIZE) winx=MSG_SIZE;
@@ -1216,8 +1216,8 @@ int msg_box(char *title, char icone, char *text, ... )
      if (*text=='\n') text++;
      *p='\0';
      txt_h=text_height(buf);
-     define(-1,MSG_L_MARGIN,winy,txt_max,txt_h,0,label,&buf);
-     property(NULL,NULL,flat_color(MSG_F_COLOR),MSG_COLOR);
+     gui_define(-1,MSG_L_MARGIN,winy,txt_max,txt_h,0,label,&buf);
+     gui_property(NULL,NULL,flat_color(MSG_F_COLOR),MSG_COLOR);
      o_end->f_color[0]=0;
      winy+=txt_h;
      }
@@ -1225,9 +1225,9 @@ int msg_box(char *title, char icone, char *text, ... )
   xp=(SCR_WIDTH_X>>1)-(winx>>1);
   yp=(SCR_WIDTH_Y>>1)-(winy>>1);
   waktual->x=xp;waktual->y=yp;waktual->xs=winx;waktual->ys=winy;
-  define(0,1,1,winx-2,text_height(title)+2,0,win_label,title);
+  gui_define(0,1,1,winx-2,text_height(title)+2,0,win_label,title);
   ctl=def_border(5,MSG_COLOR);
-  property(ctl,NULL,flat_color(MSG_F_COLOR),0x10);
+  gui_property(ctl,NULL,flat_color(MSG_F_COLOR),0x10);
   ctl=def_border(1,0);
   c=&text;c++;
   for (i=1;i<=temp2;i++)
@@ -1236,8 +1236,8 @@ int msg_box(char *title, char icone, char *text, ... )
 
      sz=(winx/(temp2+1))>>1;
      if (sz<text_width(*c)) sz=text_width(*c);
-   define((i),i*winx/(temp2+1)-(sz>>1),10,sz+5,20,3,button,*c);
-   property(ctl,NULL,flat_color(0),RGB555(24,24,24));on_change(terminate);
+   gui_define((i),i*winx/(temp2+1)-(sz>>1),10,sz+5,20,3,button,*c);
+   gui_property(ctl,NULL,flat_color(0),RGB555(24,24,24));gui_on_change(gui_terminate);
      c++;
      }
   set_window_modal();
@@ -1330,7 +1330,7 @@ void resizer_event(EVENT_MSG *msg,OBJREC *o)
            xref=waktual->xs-(ms->x-waktual->x);
            yref=waktual->ys-(ms->y-waktual->y);
            send_message(E_ADD,E_MOUSE,resizer_event);
-           freeze_on_exit=1;
+           freeze_gui_on_exit=1;
            }
      }
   if (msg->msg==E_LOST_FOCUS && run)

@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include "types.h"
+#include "TYPES.H"
 #define line line32
 #define hor_line hor_line32
 #define ver_line ver_line32
@@ -38,7 +38,8 @@ extern word curcolor,charcolors[7];
 extern long scr_linelen;
 extern long scr_linelen2;
 extern long dx_linelen;
-extern word *curfont,*writepos,writeposx;
+extern const word *curfont;
+extern word *writepos,writeposx;
 extern byte fontdsize;
 extern byte *palmem,*xlatmem;
 extern void (*showview)(word,word,word,word);
@@ -136,7 +137,7 @@ void line32(word x1,word y1, word x2, word y2);
 void position(word x,word y);
 void outtext(char *text);
 void show_ms_cursor(integer x,integer y);
-void *register_ms_cursor(void *cursor);
+void *register_ms_cursor(const void *cursor);
 void move_ms_cursor(integer newx,integer newy,char nodraw);
 void hide_ms_cursor();
 int text_height(char *text);

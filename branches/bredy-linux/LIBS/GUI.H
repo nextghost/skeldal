@@ -29,7 +29,7 @@
 #define E_CURSOR_TICK 56
 #define E_REDRAW 57 //redraw desktop
 #define E_GUI 58    //direct enter to gui system
-#define E_CONTROL 59 //User defined feature, enables direct controling desktop objects
+#define E_CONTROL 59 //User gui_defined feature, enables direct controling desktop objects
 
 #define CURSOR_SPEED 5;
 #define get_title(title) (char *)*(long *)(title);
@@ -131,7 +131,7 @@ extern CTL3D noneborder;
 extern FC_TABLE f_default;
 extern word desktop_y_size;
 //extern char change_flag;
-extern word *default_font;
+extern const word *default_font;
 extern void *gui_background;
 
 
@@ -144,9 +144,9 @@ void select_window(long id);
 WINDOW *find_window(long id);
 void redraw_object(OBJREC *o);
 void redraw_window();
-void define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC *),...);
+void gui_define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC *),...);
 CTL3D *border(word light,word shadow, word bsize, word btype);
-void property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color);
+void gui_property(CTL3D *ctl,const word *font,FC_TABLE *fcolor,word color);
 FC_TABLE *flat_color(word color);
 void aktivate_window(MS_EVENT *ms);
 void redraw_desktop();
@@ -155,11 +155,11 @@ void close_current();
 void check_window(WINDOW *w);
 void install_gui(void);
 void uninstall_gui(void);
-void on_change(void (*proc)());
-void on_enter(void (*proc)());
-void on_exit(void (*proc)());
-void on_event(void (*proc)());
-void terminate(void);
+void gui_on_change(void (*proc)());
+void gui_on_enter(void (*proc)());
+void gui_on_exit(void (*proc)());
+void gui_on_event(void (*proc)());
+void gui_terminate(void);
 void set_change(void);
 void set_value(int win_id,int obj_id,void *value);
 void set_default(void *value);

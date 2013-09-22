@@ -704,7 +704,7 @@ char call_mob_event(int event_number,int event_type,TMOB *m)
   {
   if (!event_number) return 0;
   if (event_number>=SP_MOB_TAB_SIZE)
-     event_error("Nestv–ra pou‘¡va neplatnou specproc.",event_number);
+     event_error("Nestvï¿½ra pouï¿½ï¿½va neplatnou specproc.",event_number);
   cur_event_number=event_number;
   return sp_mob_table[event_number](event_type,m);
   }
@@ -713,7 +713,7 @@ char call_item_event(int event_number,int event_type,short *ptr,THUMAN *p)
   {
   if (!event_number) return 0;
   if (event_number>=SP_ITEM_TAB_SIZE)
-     event_error("€¡slo ud losti u vˆci je neplatn‚. Specproc nen¡ definov na.",event_number);
+     event_error("ï¿½ï¿½slo udï¿½losti u vï¿½ci je neplatnï¿½. Specproc nenï¿½ definovï¿½na.",event_number);
   cur_event_number=event_number;
   return sp_item_table[event_number](event_type,ptr,p);
   }
@@ -722,7 +722,7 @@ char call_map_event(int event_number,int sector,int side,int value,int event)
   {
   if (!event_number) return 0;
   if (event_number>=SP_MAP_TAB_SIZE)
-     event_error("Neplatn‚ ‡¡slo ud losti na stˆnˆ. Specproc s t¡mto ‡¡slem nen¡ definov na.",event_number);
+     event_error("Neplatnï¿½ ï¿½ï¿½slo udï¿½losti na stï¿½nï¿½. Specproc s tï¿½mto ï¿½ï¿½slem nenï¿½ definovï¿½na.",event_number);
   cur_event_number=event_number;
   return sp_map_table[event_number](sector,side,value,event);
   }

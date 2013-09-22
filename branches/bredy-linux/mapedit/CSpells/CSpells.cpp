@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// CSpells.cpp : Defines the entry point for the console application.
+// CSpells.cpp : gui_defines the entry point for the console application.
 //
 
 #include "stdafx.h"

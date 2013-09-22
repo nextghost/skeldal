@@ -24,7 +24,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_WAVEOUT_H__1390C856_FA5C_4E84_B98D_4CC05086733D__INCLUDED_)
+#if !gui_defined(AFX_WAVEOUT_H__1390C856_FA5C_4E84_B98D_4CC05086733D__INCLUDED_)
 #define AFX_WAVEOUT_H__1390C856_FA5C_4E84_B98D_4CC05086733D__INCLUDED_
 
 #if _MSC_VER > 1000
@@ -71,4 +71,4 @@ public:
 
 
 
-#endif // !defined(AFX_WAVEOUT_H__1390C856_FA5C_4E84_B98D_4CC05086733D__INCLUDED_)
+#endif // !gui_defined(AFX_WAVEOUT_H__1390C856_FA5C_4E84_B98D_4CC05086733D__INCLUDED_)

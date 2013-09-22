@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// Podlaháø.cpp : Defines the class behaviors for the application.
+// Podlahï¿½ï¿½.cpp : gui_defines the class behaviors for the application.
 //
 
 #include "stdafx.h"

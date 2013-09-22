@@ -61,7 +61,7 @@ static jmp_buf jmpenv;
 
 char exit_wait=0;
 T_EVENT_ROOT *ev_tree=NULL;
-char freeze_on_exit=0;
+char freeze_gui_on_exit=0;
 long ev_buff_msg[EVENT_BUFF_SIZE]={0};
 void *ev_buff_dta[EVENT_BUFF_SIZE]={NULL};
 int ev_poz=0;

@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// Lex_Lib.cpp : Defines the entry point for the console application.
+// Lex_Lib.cpp : gui_defines the entry point for the console application.
 //
 
 #include "stdafx.h"

@@ -23,7 +23,7 @@
 // ColEditDlg.h : header file
 //
 
-#if !defined(AFX_COLEDITDLG_H__2FF53390_ECD2_468E_B1C9_60F1718D1470__INCLUDED_)
+#if !gui_defined(AFX_COLEDITDLG_H__2FF53390_ECD2_468E_B1C9_60F1718D1470__INCLUDED_)
 #define AFX_COLEDITDLG_H__2FF53390_ECD2_468E_B1C9_60F1718D1470__INCLUDED_
 
 #if _MSC_VER > 1000
@@ -98,4 +98,4 @@ protected:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_COLEDITDLG_H__2FF53390_ECD2_468E_B1C9_60F1718D1470__INCLUDED_)
+#endif // !gui_defined(AFX_COLEDITDLG_H__2FF53390_ECD2_468E_B1C9_60F1718D1470__INCLUDED_)

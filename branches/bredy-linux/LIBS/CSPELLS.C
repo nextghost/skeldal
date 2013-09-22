@@ -171,8 +171,8 @@ main(int argc,char *argv[])
      exit(0);
      }
   puts("");
-  puts("Prob¡h  kompilace:");
-  puts("   Spouçt¡m program LEX_LIB.EXE\n");
+  puts("Probï¿½hï¿½ kompilace:");
+  puts("   Spouï¿½tï¿½m program LEX_LIB.EXE\n");
   putenv("DOS4G=QUIET");
   z=(char *)malloc(strlen(argv[1])+10);
   sprintf(z,"\"%s\"",argv[1]);
@@ -184,8 +184,8 @@ main(int argc,char *argv[])
      puts("Nemohu spustit program lex_lib.exe");
      exit(1);
      }
-  puts("Byla kompilov na tato kouzla:");
-  puts("¬¡slo, zaŸ tek, jmeno:");
+  puts("Byla kompilovï¿½na tato kouzla:");
+  puts("ï¿½ï¿½slo, zaï¿½ï¿½tek, jmeno:");
   puts("======================");
   memset(kouzla_tab,0,sizeof(kouzla_tab));
   init("temp.$$$");
@@ -194,8 +194,8 @@ main(int argc,char *argv[])
   fclose(source);
   save_tab("kouzla.dat");
   remove("temp.$$$");
-  puts("Kompilace £spØçn ...");
-  printf("D‚lka k¢du: %d (+%d)",codesize,sizeof(kouzla_tab));
+  puts("Kompilace ï¿½spï¿½ï¿½nï¿½...");
+  printf("Dï¿½lka kï¿½du: %d (+%d)",codesize,sizeof(kouzla_tab));
   }
 
 

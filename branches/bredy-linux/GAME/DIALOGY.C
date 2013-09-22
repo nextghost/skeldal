@@ -263,7 +263,7 @@ static T_PARAGRAPH *find_paragraph(int num)
   {
   char s[80];
 
-  sprintf(s,"Odstavec %d neexistuje! Odkaz byl vyvol n",num);
+  sprintf(s,"Odstavec %d neexistuje! Odkaz byl vyvolï¿½n",num);
   error(s);
   return (T_PARAGRAPH *)pp;
   }
@@ -414,7 +414,7 @@ static char *Get_string()
      if (i<=0) c=conv_text(texty[abs(i)]);else c=conv_text(level_texts[i]);
      return string_buffer;
      }
-  error("O‡ek v  se ©etˆzec nebo index do tabulky ©etˆzc–");
+  error("Oï¿½ekï¿½vï¿½ se ï¿½etï¿½zec nebo index do tabulky ï¿½etï¿½zcï¿½");
   exit(0);
   return NULL;
   }
@@ -436,7 +436,7 @@ static short Get_short()
      pc+=2;
      return varibles[p];
      }
-  error("O‡ek v  se ‡¡slo");
+  error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo");
   exit(0);
   return 0;
   }
@@ -1116,7 +1116,7 @@ static char oper_balance(int val1,int val2,int oper)
      case OPER_BIGEQ:return val1>=val2;
      case OPER_LOWEQ:return val1<=val2;
      case OPER_NOEQ:return val1!=val2;
-     default:error("Chybn˜ operator porovn v n¡");
+     default:error("Chybnï¿½ operator porovnï¿½vï¿½nï¿½");
      }
   return 0;
   }
@@ -1306,7 +1306,7 @@ void do_dialog()
      default:
         {
         char s[80];
-        sprintf(s,"Nezn m  instrukce: %d",i);
+        sprintf(s,"Neznï¿½mï¿½ instrukce: %d",i);
         error(s);
         }
         break;

@@ -15,7 +15,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Czech resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_CSY)
 #ifdef _WIN32
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 #pragma code_page(1250)
@@ -45,7 +45,7 @@ BEGIN
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
     "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
     "\r\n"
-    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)\r\n"
     "#ifdef _WIN32\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
@@ -123,7 +123,7 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
@@ -248,8 +248,8 @@ BEGIN
     IDS_COLFILTER           "Skeldal palette list (*.col)|*.col||"
     IDS_LOADFAILED          "Load failed."
     IDS_PALFILTER           "JASC Palette (ex: IrfanView)|*.pal|All files|*.*|"
-    IDS_NOVAPALETA          "<nové>"
-    IDS_SAVEFAILED          "Nemohu soubor uložit"
+    IDS_NOVAPALETA          "<novï¿½>"
+    IDS_SAVEFAILED          "Nemohu soubor uloï¿½it"
 END
 
 #endif    // English (U.S.) resources
@@ -267,7 +267,7 @@ END
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)
 #ifdef _WIN32
 LANGUAGE 9, 1
 #pragma code_page(1252)

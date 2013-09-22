@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-// ColEdit.cpp : Defines the class behaviors for the application.
+// ColEdit.cpp : gui_defines the class behaviors for the application.
 //
 
 #include "stdafx.h"

@@ -341,7 +341,7 @@ void add_to_idlist(OBJREC *o)
   }
 
 
-void define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC *),...)
+void gui_define(int id,int x,int y,int xs,int ys,char align,void (*initproc)(OBJREC *),...)
   {
   OBJREC *o;
   long *p;
@@ -396,7 +396,7 @@ CTL3D *border(word light,word shadow, word bsize, word btype)
   return &p;
   }
 
-void property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color)
+void gui_property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color)
   {
   if (ctl!=NULL) memcpy(&o_end->border3d,ctl,sizeof(CTL3D));
   if (font!=NULL) o_end->font=font;
@@ -748,24 +748,24 @@ void uninstall_gui(void)
 //send_message(E_GUI,cislo,E_UDALOST,data....)
 
 
-void on_change(void (*proc)())
+void gui_on_change(void (*proc)())
   {
   o_end->events[3]=proc;
   }
 
-void on_enter(void (*proc)())
+void gui_on_enter(void (*proc)())
   {
   o_end->events[1]=proc;
   }
-void on_exit(void (*proc)())
+void gui_on_exit(void (*proc)())
 {
   o_end->events[2]=proc;
   }
-void on_event(void (*proc)())
+void gui_on_event(void (*proc)())
 {
   o_end->events[0]=proc;
   }
-void terminate(void)
+void gui_terminate(void)
   {
   exit_wait=1;
   }

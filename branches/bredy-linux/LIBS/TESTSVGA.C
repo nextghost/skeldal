@@ -49,7 +49,7 @@ static void help(void)
 
 extern word sada7;
 
-#define TEXT_OK "Stiskni ENTER pokud re‘im vyhovuje"
+#define TEXT_OK "Stiskni ENTER pokud reï¿½im vyhovuje"
 
 void testovaci_obrazec(char *name)
   {

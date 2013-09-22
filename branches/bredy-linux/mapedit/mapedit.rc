@@ -15,7 +15,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Czech resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_CSY)
 #ifdef _WIN32
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 #pragma code_page(1250)
@@ -69,7 +69,7 @@ CAPTION "Mapedit Editor"
 MENU IDR_EDITORMENU
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Uložit",IDOK,548,397,50,14
+    DEFPUSHBUTTON   "Uloï¿½it",IDOK,548,397,50,14
     EDITTEXT        IDC_EDIT,44,0,553,395,ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_AUTOHSCROLL | ES_WANTRETURN | NOT WS_BORDER | 
                     WS_VSCROLL | WS_HSCROLL,WS_EX_STATICEDGE
@@ -79,7 +79,7 @@ IDD_OPENDIALOG DIALOGEX 0, 0, 165, 167
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 EXSTYLE WS_EX_CLIENTEDGE
-CAPTION "Otevøít mapu"
+CAPTION "Otevï¿½ï¿½t mapu"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,117,0,48,23,0,WS_EX_CLIENTEDGE
@@ -136,17 +136,17 @@ IDR_EDITORMENU MENU
 BEGIN
     POPUP "Soubor"
     BEGIN
-        MENUITEM "Uložit",                      IDOK
+        MENUITEM "Uloï¿½it",                      IDOK
         MENUITEM SEPARATOR
         MENUITEM "Konec",                       IDCANCEL
     END
-    POPUP "Úpravy"
+    POPUP "ï¿½pravy"
     BEGIN
-        MENUITEM "Zpìt",                        ID_PRAVY_UNDO
+        MENUITEM "Zpï¿½t",                        ID_PRAVY_UNDO
         MENUITEM SEPARATOR
-        MENUITEM "Kopírovat",                   ID_UPRAVY_COPY
+        MENUITEM "Kopï¿½rovat",                   ID_UPRAVY_COPY
         MENUITEM "Vyjmout",                     ID_UPRAVY_VYJMOUT
-        MENUITEM "Vložit",                      ID_UPRAVY_VLOZIT
+        MENUITEM "Vloï¿½it",                      ID_UPRAVY_VLOZIT
         MENUITEM "Vymazat",                     ID_UPRAVY_VYMAZAT
     END
 END
@@ -160,8 +160,8 @@ END
 STRINGTABLE 
 BEGIN
     IDS_WINTITLE            "MapEdit 2000"
-    IDC_EDITORSAVEERROR     "Nelze uložit soubor %s"
-    IDS_SKELDALTITLE        "Brány Skeldalu Windows verze"
+    IDC_EDITORSAVEERROR     "Nelze uloï¿½it soubor %s"
+    IDS_SKELDALTITLE        "Brï¿½ny Skeldalu Windows verze"
 END
 
 #endif    // Czech resources

@@ -20,12 +20,12 @@
  *  
  *  Last commit made by: $Id$
  */
-#define MEMTEXT "Pamˆt: "
+#define MEMTEXT "Pamï¿½t: "
 
 #define E_STATUS_LINE 60
 
-extern word *msg_box_font;
-extern word *msg_icn_font;
+extern const word *msg_box_font;
+extern const word *msg_icn_font;
 
 int msg_box(char *title, char icone, char *text, ... );
 

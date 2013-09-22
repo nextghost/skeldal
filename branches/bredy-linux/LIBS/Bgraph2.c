@@ -39,7 +39,8 @@ word curcolor,charcolors[7] = {0x0000,RGB555(0,31,0),RGB555(0,28,0),RGB555(0,24,
 long scr_linelen;
 long scr_linelen2;
 long dx_linelen;
-word *curfont,*writepos,writeposx;
+const word *curfont;
+word *writepos,writeposx;
 byte fontdsize=0;
 byte *palmem=NULL,*xlatmem=NULL;
 void (*showview)(word,word,word,word);
@@ -538,7 +539,7 @@ void hide_ms_cursor()
   put_picture(mscuroldx,mscuroldy,mssavebuffer);
   }
 
-void *register_ms_cursor(void *cursor)
+void *register_ms_cursor(const void *cursor)
   {
   integer xs,ys;
 

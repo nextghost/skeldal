@@ -30,7 +30,7 @@
 static bool IsModal=false;
 
 static DWORD CALLBACK RtfViewerCallback(
-  DWORD dwCookie, // application-defined value
+  DWORD dwCookie, // application-gui_defined value
   LPBYTE pbBuff,  // pointer to a buffer
   LONG cb,        // number of bytes to read or write
   LONG *pcb       // pointer to number of bytes transferred

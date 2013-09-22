@@ -570,7 +570,7 @@ static char display_game_status(void)
   s=map_sides+viewsector*4+viewdir;
   wzprintf("Sector: (%d) Podlaha %d Strop %d Cil akce %d Smer akce %d Akce %d\r\n",
          ss->sector_type, ss->floor,ss->ceil,ss->sector_tag,ss->side_tag,ss->action);
-  wzprintf("        Vychody: Sev %d Vych %d Jih %d Z p %d\r\n",ss->step_next[0],ss->step_next[1],ss->step_next[2],ss->step_next[3]);
+  wzprintf("        Vychody: Sev %d Vych %d Jih %d Zï¿½p %d\r\n",ss->step_next[0],ss->step_next[1],ss->step_next[2],ss->step_next[3]);
   wzprintf("        Vlajky: %02X %02X ",ss->flags,map_coord[viewsector].flags);show_flags(map_coord[viewsector].flags,mc_flags,12);
   wzputs("\r\n");
   wzprintf("Stena: Prim %d Sec %d Obl %d Anim_prim %d/%d Anim_sec %d/%d\r\n",

@@ -118,7 +118,7 @@ void resize(void **p,int newsize)
      }
   if (q==NULL)
      {
-     puts("Nedostatek pamØti");
+     puts("Nedostatek pamï¿½ti");
      exit(1);
      }
   *p=q;
@@ -209,7 +209,7 @@ void decode_pgf1(char *c) //c je text bez vykricniku
      }
   i=sscanf(c,"%d",&pn);
   if (relative) pn+=abs_num;else abs_num=pn;
-  if (i!=1) error("Chybn‚ pou§it¡ znaku \"!\"");
+  if (i!=1) error("Chybnï¿½ pouï¿½itï¿½ znaku \"!\"");
   last_pgf=pn;
   c=strchr(c,',');
   if (c==NULL) an=pn;
@@ -217,7 +217,7 @@ void decode_pgf1(char *c) //c je text bez vykricniku
      {
      c++;
      i=sscanf(c,"%d",&an);
-     if (i!=1) error("OŸek v  se Ÿ¡slo alternativn¡ho odstavce");
+     if (i!=1) error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo alternativnï¿½ho odstavce");
      }
   p.num=pn;
   p.alt=an;
@@ -409,7 +409,7 @@ void add_else()
   {
   int psave,c;
   get_command(f,&c);
-  if (c!=-2) error("Chybn  syntaxe pý¡kazu else. OŸek v  se '{'");
+  if (c!=-2) error("Chybnï¿½ syntaxe pï¿½kazu else. Oï¿½ekï¿½vï¿½ se '{'");
   was_sub=0;
   if (get_last_level()!=open_level) error("Else bez if");
   add_short(171);
@@ -491,7 +491,7 @@ void decode_program(FILE *f)
                     iff_mode=IF_NOT_JUMP;break;
            case 170:if (iff_mode!=IF_NOT_JUMP) error("NOT bez IF"); //modifikator not
                     iff_mode=IF_JUMP;break;
-           case 171:if (iff_mode) error("Chybn‚ pou§it¡ pý¡kazu ELSE"); //prikaz else
+           case 171:if (iff_mode) error("Chybnï¿½ pouï¿½itï¿½ pï¿½kazu ELSE"); //prikaz else
                     add_else();break;
            case 173:set_alternative(f);break;
            default: add_short(cislo);break;
@@ -578,8 +578,8 @@ main(int argc,char *argv[])
      exit(0);
      }
   puts("");
-  puts("Prob¡h  kompilace:");
-  puts("   Spouçt¡m program LEX_LIB.EXE\n");
+  puts("Probï¿½hï¿½ kompilace:");
+  puts("   Spouï¿½tï¿½m program LEX_LIB.EXE\n");
   putenv("DOS4G=QUIET");
   create_include_list(argv[1]);
   if (spawnlp(P_WAIT,GetLexLibPath(),"lex_lib.exe",TEMP_NAME1,"temp.$$$",NULL))
@@ -599,8 +599,8 @@ main(int argc,char *argv[])
   fclose(f);
   remove("temp.$$$");
   remove(TEMP_NAME1);
-  puts("Kompilace £spØçn ...");
-  printf("Vytvoreno odstavcu: %d\nCelkem knihoven: %d\nCelkem Sentenci: %d\nD‚lka k¢du: %d\n",pgf_count,libs,sentencs,prog_pos);
+  puts("Kompilace ï¿½spï¿½ï¿½nï¿½...");
+  printf("Vytvoreno odstavcu: %d\nCelkem knihoven: %d\nCelkem Sentenci: %d\nDï¿½lka kï¿½du: %d\n",pgf_count,libs,sentencs,prog_pos);
   save_program();
   fclose(mlist);
   }

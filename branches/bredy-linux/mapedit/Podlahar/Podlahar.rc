@@ -15,7 +15,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Czech resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_CSY)
 #ifdef _WIN32
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 #pragma code_page(1250)
@@ -45,7 +45,7 @@ BEGIN
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
     "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
     "\r\n"
-    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1250)\r\n"
     "\r\n"
@@ -72,7 +72,7 @@ IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Podlahar.ico"
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
@@ -85,11 +85,11 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About Podlaháø"
+CAPTION "About Podlahï¿½ï¿½"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
-    LTEXT           "Podlaháø Version 1.0",IDC_STATIC,40,10,119,8,
+    LTEXT           "Podlahï¿½ï¿½ Version 1.0",IDC_STATIC,40,10,119,8,
                     SS_NOPREFIX
     LTEXT           "Copyright (C) 2005",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "OK",IDOK,178,7,50,16,WS_GROUP
@@ -98,19 +98,19 @@ END
 IDD_PODLAH_DIALOG DIALOGEX 0, 0, 455, 426
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
-CAPTION "Podlaháø"
+CAPTION "Podlahï¿½ï¿½"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    LTEXT           "Hlavní textura:",IDC_STATIC,7,7,49,8
+    LTEXT           "Hlavnï¿½ textura:",IDC_STATIC,7,7,49,8
     EDITTEXT        IDC_HLTEXTURA,60,7,314,12,ES_AUTOHSCROLL | WS_GROUP
     PUSHBUTTON      "Browse",IDC_BROWSE1,378,7,70,12,WS_GROUP
-    LTEXT           "Vedlejší textura:",IDC_STATIC,7,20,54,8
+    LTEXT           "Vedlejï¿½ï¿½ textura:",IDC_STATIC,7,20,54,8
     EDITTEXT        IDC_VDTEXTURA,60,21,314,12,ES_AUTOHSCROLL | WS_GROUP
     PUSHBUTTON      "Browse",IDC_BROWSE2,378,21,70,12,WS_GROUP
     LTEXT           "Barva mlhy",IDC_STATIC,7,41,36,8
     CONTROL         "Button4",IDC_COLOR,"Button",BS_OWNERDRAW | WS_GROUP | 
                     WS_TABSTOP,59,38,44,14
-    LTEXT           "Cílový soubor:",IDC_STATIC,7,72,47,8
+    LTEXT           "Cï¿½lovï¿½ soubor:",IDC_STATIC,7,72,47,8
     EDITTEXT        IDC_CILOVYSOUBOR,60,71,314,12,ES_AUTOHSCROLL | WS_GROUP
     PUSHBUTTON      "Browse",IDC_BROWSE3,378,71,70,12,WS_GROUP
     DEFPUSHBUTTON   "Preview",IDC_PREVIEW,7,111,50,14,WS_GROUP
@@ -118,7 +118,7 @@ BEGIN
                     WS_TABSTOP,280,89,41,10
     CONTROL         "Strop",IDC_TYP2,"Button",BS_AUTORADIOBUTTON,336,89,33,
                     10
-    PUSHBUTTON      "Ulož obrázek",IDC_SAVEPIC,377,88,71,14,WS_GROUP
+    PUSHBUTTON      "Uloï¿½ obrï¿½zek",IDC_SAVEPIC,377,88,71,14,WS_GROUP
     CONTROL         "",IDC_IMAGE,"Static",SS_BLACKFRAME | WS_GROUP,7,133,441,
                     286
     CONTROL         "Generuj mlhu",IDC_GENMLHU,"Button",BS_AUTOCHECKBOX | 
@@ -152,9 +152,9 @@ BEGIN
             VALUE "CompanyName", "TODO: <Company name>\0"
             VALUE "FileDescription", "TODO: <File description>\0"
             VALUE "FileVersion", "1.0.0.1\0"
-            VALUE "InternalName", "Podlaháø.exe\0"
+            VALUE "InternalName", "Podlahï¿½ï¿½.exe\0"
             VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved.\0"
-            VALUE "OriginalFilename", "Podlaháø.exe\0"
+            VALUE "OriginalFilename", "Podlahï¿½ï¿½.exe\0"
             VALUE "ProductName", "TODO: <Product name>\0"
             VALUE "ProductVersion", "1.0.0.1\0"
         END
@@ -202,10 +202,10 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_ABOUTBOX            "&About Podlaháø..."
+    IDS_ABOUTBOX            "&About Podlahï¿½ï¿½..."
     IDS_PCXFILTER           "PCX images|*.pcx||"
     IDS_BROWSEPCX           "Vyber PCX soubor 500x320"
-    IDS_ERRORPCX            "PCX je neplatný. Povolen je pouze obrázek ve formátu PCX 8-bit velikosti pøesnì 500x320."
+    IDS_ERRORPCX            "PCX je neplatnï¿½. Povolen je pouze obrï¿½zek ve formï¿½tu PCX 8-bit velikosti pï¿½esnï¿½ 500x320."
 END
 
 #endif    // English (U.S.) resources
@@ -223,7 +223,7 @@ END
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !gui_defined(AFX_RESOURCE_DLL) || gui_defined(AFX_TARG_ENU)
 LANGUAGE 9, 1
 #pragma code_page(1250)
 

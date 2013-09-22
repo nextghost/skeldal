@@ -905,7 +905,7 @@ char add_patch_file(char *filename)
 void free(void *c)
   {
   if (c==NULL) return;
-  SEND_LOG("(ALLOC)úúú Dealloc: %p size %d",c,*((long *)c-1));
+  SEND_LOG("(ALLOC)ï¿½ï¿½ï¿½ Dealloc: %p size %d",c,*((long *)c-1));
   free(c);
   }
 */

@@ -56,7 +56,7 @@ static void done_bar_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   bar(x1,y1,x3,y2);
   }
 
-void done_bar(OBJREC *o) //define(...done_bar,max);
+void done_bar(OBJREC *o) //gui_define(...done_bar,max);
   {
   o->runs[0]=done_bar_init;
   o->runs[1]=done_bar_draw;
@@ -74,7 +74,7 @@ static void pic_view_draw(int x1,int y1,int x2,int y2,OBJREC *o)
      put_picture(x1,y1,pic);
   }
 
-void pic_viewer(OBJREC *o) //define(...pic_view);set_value(ptr)
+void pic_viewer(OBJREC *o) //gui_define(...pic_view);set_value(ptr)
   {
   o->runs[1]=pic_view_draw;
   o->datasize=4;

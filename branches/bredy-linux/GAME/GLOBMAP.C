@@ -61,7 +61,7 @@ typedef struct index_def
    {
    char mapname[13];
    char *text;
-   char defined;
+   char gui_defined;
    }INDEX_DEF;
 
 static INDEX_DEF *index_tab=NULL;
@@ -246,7 +246,7 @@ static char test_kriterii(void)
         case OP_SEKTOR:
                       {
                       int c;
-                      if (cti_int_num(&c)) error("O‡ek v  se ‡¡slo");
+                      if (cti_int_num(&c)) error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo");
                       hodn=c==enter_sector;
                       }
                       break;
@@ -255,16 +255,16 @@ static char test_kriterii(void)
                        break;
         case OP_ISDEF:{
                        int c;
-                       if (cti_int_num(&c)) error("O‡ek v  se ‡¡slo");
-                       hodn=index_tab[c].defined;
+                       if (cti_int_num(&c)) error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo");
+                       hodn=index_tab[c].gui_defined;
                       }
                       break;
         case OP_FLG:
                 {
                 int flag_num;
 
-                if (cti_int_num(&flag_num)) error("Za FLG mus¡ b˜t ‡¡slo!");
-                if (flag_num>255) error("€¡slo vlajky (FLG) mus¡ b˜t v rozsahu 0-255!");
+                if (cti_int_num(&flag_num)) error("Za FLG musï¿½ bï¿½t ï¿½ï¿½slo!");
+                if (flag_num>255) error("ï¿½ï¿½slo vlajky (FLG) musï¿½ bï¿½t v rozsahu 0-255!");
                 hodn=(test_flag(flag_num)!=0);
                 }
                 break;
@@ -296,7 +296,7 @@ static char proved_prikaz()
   do
      {
      while (ODD==OD_NEWLINE || ODD==OD_COMMAND) ODD=cti_oddelovac();
-     if (ODD!=0) error("O‡ek v  se jm‚no definice (p©¡klad: INDX=)");
+     if (ODD!=0) error("Oï¿½ekï¿½vï¿½ se jmï¿½no definice (pï¿½ï¿½klad: INDX=)");
      cti_retezec(20,prikaz,1,1);
      op=get_symbol(prikaz);
      if (op==OP_BREAK) return 1;
@@ -307,7 +307,7 @@ static char proved_prikaz()
         case OP_INDX:
                 if (cti_int_num(&c)) error("INDX=?");
                 if (c<0 || c>255) error("INDX=<0,255>");
-                index_tab[last_index=c].defined=1;
+                index_tab[last_index=c].gui_defined=1;
                 break;
         case OP_TEXT:
                 cti_retezec(128,text,0,0);
@@ -325,9 +325,9 @@ static char proved_prikaz()
 
                 cti_retezec(20,file,1,1);
                 ODD=cti_oddelovac();if (ODD!=OD_COMMA)ex_error(OD_COMMA);
-                if (cti_int_num(&xp)) error("O‡ek v  se ‡¡slo xp");
+                if (cti_int_num(&xp)) error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo xp");
                 ODD=cti_oddelovac();if (ODD!=OD_COMMA)ex_error(OD_COMMA);
-                if (cti_int_num(&yp)) error("O‡ek v  se ‡¡slo yp");
+                if (cti_int_num(&yp)) error("Oï¿½ekï¿½vï¿½ se ï¿½ï¿½slo yp");
                 h=find_handle(file,pcx_8bit_decomp);
                 if (h==-1) def_handle(h=end_ptr++,file,pcx_8bit_decomp,SR_DIALOGS);
                 put_picture(xp,yp+SCREEN_OFFLINE,ablock(h));
@@ -336,7 +336,7 @@ static char proved_prikaz()
         case OP_UNDEF:
                 if (cti_int_num(&c)) error("UNDEF=?");
                 if (c<0 || c>255) error("UNDEF=<0,255>");
-                index_tab[c].defined=0;
+                index_tab[c].gui_defined=0;
                 break;
         case OP_USEMAP:
                 {
@@ -399,7 +399,7 @@ static void do_script(void)
   linecounter=0;
   glbm=fopen(s,"r");
 	free(s);
-  if (glbm==NULL) error("Chyb¡ uveden˜ soubor...");
+  if (glbm==NULL) error("Chybï¿½ uvedenï¿½ soubor...");
   ODD=cti_oddelovac();
   do
     {
@@ -554,7 +554,7 @@ EVENT_PROC(global_map_point)
            {
            free(fly_background);
            last_index=i;
-           if (index_tab[i].defined)
+           if (index_tab[i].gui_defined)
               {
               fly_text=index_tab[i].text;
               mouse_set_default(H_MS_ZARE);
@@ -593,7 +593,7 @@ EVENT_PROC(global_map_point)
         }
      if (ms->event_type & 0x2 && ms->y>SCREEN_OFFLINE && ms->y<378)
         {
-        if (last_index && index_tab[last_index].defined) if (load_index_map(last_index)) return;
+        if (last_index && index_tab[last_index].gui_defined) if (load_index_map(last_index)) return;
         else;else return;
         unwire_proc();
         wire_proc();

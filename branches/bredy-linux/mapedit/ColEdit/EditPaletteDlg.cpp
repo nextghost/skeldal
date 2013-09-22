@@ -73,13 +73,13 @@ END_MESSAGE_MAP()
 /*
 RGB to HSV & HSV to RGB
 
-The Hue/Saturation/Value model was created by A. R. Smith in 1978. It is based on such intuitive color characteristics as tint, shade and tone (or family, purety and intensity). The coordinate system is cylindrical, and the colors are defined inside a hexcone. The hue value H runs from 0 to 360o. The saturation S is the degree of strength or purity and is from 0 to 1. Purity is how much white is added to the color, so S=1 makes the purest color (no white). Brightness V also ranges from 0 to 1, where 0 is the black.
+The Hue/Saturation/Value model was created by A. R. Smith in 1978. It is based on such intuitive color characteristics as tint, shade and tone (or family, purety and intensity). The coordinate system is cylindrical, and the colors are gui_defined inside a hexcone. The hue value H runs from 0 to 360o. The saturation S is the degree of strength or purity and is from 0 to 1. Purity is how much white is added to the color, so S=1 makes the purest color (no white). Brightness V also ranges from 0 to 1, where 0 is the black.
 
 There is no transformation matrix for RGB/HSV conversion, but the algorithm follows:
 */
 // r,g,b values are from 0 to 1
 // h = [0,360], s = [0,1], v = [0,1]
-//		if s == 0, then h = -1 (undefined)
+//		if s == 0, then h = -1 (ungui_defined)
 static void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
 {
 	float min, max, delta;
@@ -90,7 +90,7 @@ static void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
 	if( max != 0 )
 		*s = delta / max;		// s
 	else {
-		// r = g = b = 0		// s = 0, v is undefined
+		// r = g = b = 0		// s = 0, v is ungui_defined
 		*s = 0;
 		*h = -1;
 		return;

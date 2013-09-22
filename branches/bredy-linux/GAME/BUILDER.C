@@ -1331,7 +1331,7 @@ void play_fx_at(int where)
 
 void display_ver(int x,int y,int ax,int ay)
   {
-  char *ver="Br ny Skeldalu version "VERSION" (C)1998";
+  char *ver="Brï¿½ny Skeldalu version "VERSION" (C)1998";
   set_font(H_FTINY,RGB555(31,31,31));set_aligned_position(x,y,ax,ay,ver);
   outtext(ver);showview(0,0,0,0);
   }
