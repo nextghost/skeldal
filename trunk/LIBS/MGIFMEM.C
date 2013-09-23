@@ -122,6 +122,15 @@ void close_mgif()           //dealokuje buffery pro prehravani
 
 int input_code(void *source,long *bitepos,int bitsize,int mask)
   {
+	  unsigned char *p = (unsigned char *)source;
+	  long a1 = *bitepos >> 3;
+	  long a2 = p[a1] | (p[a1+1]<<8) | (p[a1+2] << 16) | (p[a1+3] << 24);
+	  long sf = *bitepos & 0x7;
+	  int res = (a2 >> sf) & mask;
+	  *bitepos+=bitsize;
+	  return res;
+	
+/*
   __asm
     {
     mov esi,source
@@ -137,7 +146,7 @@ int input_code(void *source,long *bitepos,int bitsize,int mask)
     shr     eax,cl
     and     eax,edx
     add     [edi],ebx
-    }
+    }*/
   }
 //#pragma aux input_code parm [esi][edi][ebx][edx]=\    value[eax] modify [ecx];
 
@@ -160,6 +169,47 @@ int de_add_code(int group,int chr,int mask)
 char fast_expand_code(int code,char **target)
 //#pragma aux fast_expand_code parm[eax][edi] modify [esi ecx] value [bl]
   {
+
+	dword	eax = code;
+	char **edi = target;
+
+	if (eax < 256) {
+		char *esi = *edi;
+		char bl = (char)eax;
+		char al = bl + old_value;
+		++(*edi);
+		*esi = al;
+		old_value = al;
+		return bl;
+	}	else {
+		char al;
+		char bl;
+		DOUBLE_S *d = compress_dic + code;
+		dword ta;
+		short first = d->first;
+		char *esi;
+		(*edi) += d->first;
+		esi = *edi;
+		do {
+			ta = d->chr;
+			*esi-- = (char)ta;
+			ta = d->group;
+			d = compress_dic +ta;
+		} while (ta >= 256);
+		al = bl = (char)ta;
+		al += old_value;
+		*esi = al;
+		(*edi)++;
+		while (first > 0) {
+			esi++;
+			al += *esi;
+			*esi =  al;
+			first--;
+		}
+		old_value = al;
+		return bl;
+	}
+/*
   _asm
     {
      mov     eax,code
@@ -201,7 +251,7 @@ elp2:inc     esi
      mov     old_value,al
 end:
      movzx   eax,bl
-    }
+    }*/
   }
 
 

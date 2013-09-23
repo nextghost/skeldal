@@ -118,24 +118,21 @@ T_CLK_MAP clk_main_menu[]=
 void rozdily(void *orign,void *obr,void *hicolor,void *xtab,int pocet)
 //#pragma aux rozdily parm[EDX][ESI][EDI][EBX][ECX]=
 {
-__asm
-  {
-  mov edx,orign
-  mov esi,obr
-  mov edi,hicolor
-  mov ebx,xtab
-  mov ecx,pocet
+	unsigned char *o = orign;
+	unsigned char *p = obr;
+	unsigned short *out = hicolor;
+	unsigned short *xt = xtab;
 
-jp1:lodsb 
-  xor  al,[edx]
-  movzx eax,al
-  inc   edx
-  movzx eax,short ptr[ebx+eax*2]
-  stosw
-  dec  ecx
-  jnz  jp1
-  }
+	while (pocet > 0) {
+
+		*out = xt[*o ^ *p];
+		out++;
+		p++;
+		o++;
+		pocet --;
+	}
 }
+
 
 static void nahraj_rozdilovy_pcx(void **pp,long *s)
   {
@@ -188,35 +185,28 @@ static void init_menu_entries(void)
 
 void zobraz_podle_masky_asm(char barva,void *scr,void *data, void *maska,int xs,int ys)
 //#pragma aux zobraz_podle_masky_asm parm[al][edi][esi][ebx][edx][ecx]=
-  {
-  __asm
-    {
-    mov  al,barva
-    mov  edi,scr
-    mov  esi,data
-    mov  ebx,maska
-    mov  edx,xs
-    mov  ecx,ys
-    push ebp
-    mov  ebp,edx
-    jp3: cmp  al,[ebx]
-    jnz  jp1
-    movsw   
-    jmp  jp2
-jp1: add  edi,2
-    add  esi,2
-jp2: inc  ebx
-    dec  edx
-    jnz  jp3
-    mov  edx,ebp
-    add  edi,scr_linelen
-    sub  edi,edx
-    sub  edi,edx
-    dec  ecx
-    jnz  jp3
-    pop  ebp
-    }
-  }
+{
+	unsigned short *spos = scr;
+	unsigned short *d = data;
+	unsigned char *m = maska;
+	int ycur = ys;
+	while (ycur > 0) {
+		int xcur = xs;
+		while (xcur > 0) {			
+			if (barva == *m) {
+				*spos++ = *d++;				
+			} else {
+				d++;
+				spos++;
+			}
+			m++;
+			xcur--;
+		}
+		spos = spos + scr_linelen2 - xs;
+		ycur--;
+
+	}
+}
 
 static void zobraz_podle_masky(char barva,char anim)
   {

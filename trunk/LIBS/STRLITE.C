@@ -43,7 +43,14 @@ TSTR_LIST create_list(int count)
 
 TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
   {
-  __asm
+	  char *p = (char *)_ptr;
+	  int i;
+	  for (i = 0; i < _size; i++) {
+		  if (source[i] == p) return source+i;
+	  }
+	  return source+_size;
+}
+  /*__asm
     {
     mov edi, source
     mov eax, _ptr
@@ -56,7 +63,7 @@ TSTR_LIST find_ptr(TSTR_LIST source,void *_ptr,int _size)
     skok:
     mov eax, edi
     }
-  }
+  }*/
     //parm [edi][eax][ecx] value[edi];
 
 const char *str_replace(TSTR_LIST *list,int line,const char *text)
