@@ -1127,7 +1127,7 @@ void draw_placed_texture(short *txtr,int celx,int cely,int posx,int posy,int pos
      x=0;
      }
   else clipl=0;
-  clipr=640-x;
+  clipr=1280-x;
   if (clipr>0)
      if (turn) enemy_draw_mirror(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);
      else enemy_draw(txtr,GetBuffer2nd()+x+(y+SCREEN_OFFLINE)*scr_linelen2,6+512*cely+(secnd_shade?SHADE_STEPS*512:0),last_scale,y,(clipr<<16)+clipl);

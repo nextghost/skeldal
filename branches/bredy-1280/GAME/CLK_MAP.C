@@ -114,7 +114,7 @@ char clk_touch_vyk(int sector,int side,int xr,int yr)
 
 char clk_touch(int id,int xa,int ya,int xr,int yr)
   {
-  int x1,y1,x2,y2;
+  int x1=0,y1=0,x2=0,y2=0;
   word *p;
   int ext=0;
 
@@ -469,16 +469,16 @@ T_CLK_MAP clk_main_view[]=
   {H_SIPKY_J,560,446,598,474,clk_step,2,H_MS_DEFAULT},
   {H_SIPKY_SV,599,387,628,418,clk_step,2,H_MS_DEFAULT},
   {H_SIPKY_V,605,420,632,454,clk_step,2,H_MS_DEFAULT},
-  {MS_GAME_WIN,0,17,639,377,clk_fly_cursor,8,-1},
-  {1,320,303,639,376,pick_item_,2,-1},//344
-  {0,0,303,320,376,pick_item_,2,-1},//344
-  {3,0,200,320,340,pick_item_,2,-1},//303
-  {2,320,200,639,340,pick_item_,2,-1},//303
-  {MS_GAME_WIN,0,17,639,377,clk_touch,2,-1},
-  {MS_GAME_WIN,0,17,639,377,clk_throw,2,-1},
-  {MS_GAME_WIN,0,17,639,250,clk_mob_alter,2,-1},
-  {-1,0,378,639,479,sing_song_clk,0xff,-1},
-  {-1,54,378,497,479,start_invetory,2+8,-1},
+  {MS_GAME_WIN,0,34,1279,754,clk_fly_cursor,8,-1},
+  {1,640,606,1279,752,pick_item_,2,-1},//344
+  {0,0,606,640,752,pick_item_,2,-1},//344
+  {3,0,400,640,680,pick_item_,2,-1},//303
+  {2,640,400,1279,680,pick_item_,2,-1},//303
+  {MS_GAME_WIN,0,34,1279,754,clk_touch,2,-1},
+  {MS_GAME_WIN,0,34,1279,754,clk_throw,2,-1},
+  {MS_GAME_WIN,0,34,1279,754,clk_mob_alter,2,-1},
+  {-1,0,756,1280,980,sing_song_clk,0xff,-1},
+  {-1,54,756,994,980,start_invetory,2+8,-1},
   {-1,315,0,335,14,spell_casting,2,-1},
   };
 

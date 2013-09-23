@@ -228,6 +228,56 @@ fcdraw_:mov     esi,[eax+12]
 }
 
 void klicovani_anm_back(void *target,void *source);
+
+static int scaleMatrix[] = {
+	0,0,1,0,
+	0,1,0,1,
+	320,0,321,321,
+	0,320,321,320
+};
+
+static int scaleMatrixBott[] = {
+	0,0,1,0,
+	0,1,0,1,
+	0,0,1,0,
+	0,1,0,1
+};
+
+
+static int scaleMatrixEnd[] = {
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0
+};
+
+static __inline void matrixPutPixel(word *addr, word pix) {
+	if (pix & 0x8000) return;
+	*addr = (pix & ~0x1F) + pix;
+}
+
+static __inline void putPointMatrix(word *source, word *target, int *matrix) {
+	matrixPutPixel(target+0,source[matrix[0]]);
+	matrixPutPixel(target+1,source[matrix[1]]);
+	matrixPutPixel(target+2,source[matrix[2]]);
+	matrixPutPixel(target+3,source[matrix[3]]);
+	target+=scr_linelen2;
+	matrixPutPixel(target+0,source[matrix[4]]);
+	matrixPutPixel(target+1,source[matrix[5]]);
+	matrixPutPixel(target+2,source[matrix[6]]);
+	matrixPutPixel(target+3,source[matrix[7]]);
+	target+=scr_linelen2;
+	matrixPutPixel(target+0,source[matrix[8]]);
+	matrixPutPixel(target+1,source[matrix[9]]);
+	matrixPutPixel(target+2,source[matrix[10]]);
+	matrixPutPixel(target+3,source[matrix[11]]);
+	target+=scr_linelen2;
+	matrixPutPixel(target+0,source[matrix[12]]);
+	matrixPutPixel(target+1,source[matrix[13]]);
+	matrixPutPixel(target+2,source[matrix[14]]);
+	matrixPutPixel(target+3,source[matrix[15]]);
+}
+
 void klicovani_anm(void *target,void *source,char mirror)
 //#pragma aux klicovani_anm parm [edi][esi][eax] modify [ecx edx ebx]
 {
@@ -236,45 +286,47 @@ void klicovani_anm(void *target,void *source,char mirror)
 	if (mirror) {
 		unsigned int l = 180;
 		while (l > 0) {
-			unsigned int c = 640;
-			while (c > 0) {
-				word p = *s++;
-				if ((p & 0x8000 ) == 0) {
-					p = p + (p & ~0x1F);
-					--c;
-					t[c] = p;
-					t[c+scr_linelen2] = p;
-					--c;
-					t[c] = p;
-					t[c+scr_linelen2] = p;
-				}  else {
-					c-=2;
+			unsigned int c = 320;
+			if (l == 1) {
+				while (c > 1) {
+					putPointMatrix(s,t+4*c,scaleMatrixBott);
+					s++;	
+					c--;
+				}
+				putPointMatrix(s,t,scaleMatrixEnd);
+			} else {
+				while (c > 0) {
+					putPointMatrix(s,t+4*c,scaleMatrix);
+					s++;
+					c--;
 				}
 			}
-			t+=2*scr_linelen2;
+			t+=4*scr_linelen2;
 			--l;
 		}
+		
 	} else {
-
 		unsigned int l = 180;
+		int *matrix = scaleMatrix;
 		while (l > 0) {
 			unsigned int c = 320;
-			while (c > 0) {
-				word p = *s++;
-				if ((p & 0x8000 ) == 0) {
-					p = p + (p & ~0x1F);
-					t[0] = p;
-					t[scr_linelen2] = p;
-					++t;
-					t[0] = p;
-					t[scr_linelen2] = p;
-					++t;					
-				} else {
-					t+=2;
+			if (l == 1) {
+				while (c > 1) {
+					putPointMatrix(s,t,scaleMatrixBott);
+					s++;			
+					t+=4;
+					c--;
 				}
-				--c;
+				putPointMatrix(s,t,scaleMatrixEnd);
+			} else {
+				while (c > 0) {
+					putPointMatrix(s,t,scaleMatrix);
+					s++;				
+					t+=4;
+					c--;
+				}
 			}
-			t+=scr_linelen2;
+			t+=3*scr_linelen2;
 			--l;
 		}
 
