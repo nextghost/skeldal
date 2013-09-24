@@ -21,6 +21,7 @@
  *  Last commit made by: $Id$
  */
 #include <stdio.h>
+#include "swaper.h"
 
 #define SWAP_FREE_LIST 8192
 
@@ -29,11 +30,11 @@ typedef struct sw_free_block
   long size,seek;
   }SW_FREE_BLOCK;
 
-SW_FREE_BLOCK swp_list[SWAP_FREE_LIST];
-int swp_ptr;
-int swp_fnot_used=-1;
-int swp_unuseds=0;
-int swpl_overruns=0;
+static SW_FREE_BLOCK swp_list[SWAP_FREE_LIST];
+static int swp_ptr;
+static int swp_fnot_used=-1;
+static int swp_unuseds=0;
+static int swpl_overruns=0;
 
 void swap_init(void)
   {
@@ -164,6 +165,7 @@ void swap_free_block(long seek,long size)
   i2=swap_add_block(250);
   i3=swap_add_block(1024);
   i4=swap_add_block(1024);
+
   swap_free_block(i1,1024);
   swap_free_block(i3,1024);
   swap_free_block(i2,250);

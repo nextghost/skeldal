@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include "TYPES.H"
+#include "types.h"
 #define line line32
 #define hor_line hor_line32
 #define ver_line ver_line32
@@ -70,11 +70,11 @@ void ver_line_xor(int x1,int y1,int y2);
 //#pragma aux ver_line_xor parm [eSi] [eAX] [eCX] modify [eDX];
 void line_32(int x,int y,int xs,int ys);
 //#pragma aux line_32 parm [esi] [eax] [ecx] [ebx] modify [edx edi]
-void char_32(word *posit,word *font,char znak);
+void char_32(word *posit,const word *font,char znak);
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
-void char2_32(word *posit,word *font,char znak);
+void char2_32(word *posit,const word *font,char znak);
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
-word charsize(word *font,char znak);
+word charsize(const word *font,char znak);
 //#pragma aux charsize parm [esi] [eax]
 void put_picture(word x,word y,void *p);
 //#pragma aux put_picture parm [esi] [eax] [edi] modify [ebx ecx edx]

@@ -20,17 +20,15 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include "types.h"
 //#include <vesa.h>
 //#include <dpmi.h>
 //#include <i86.h>
-#include <mem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 //#include <graph.h>
-#include <conio.h>
 #include "bgraph.h"
 #include "memman.h"
 
@@ -153,7 +151,7 @@ void write_vesa_info(int mode)
   delay(300);
   }
 */
-void showview_dx(word x,word y,word xs,word ys);
+static void showview_dx(word x,word y,word xs,word ys);
 //void showview64b(word x,word y,word xs,word ys);
 /*void showview32b(word x,word y,word xs,word ys)
   {

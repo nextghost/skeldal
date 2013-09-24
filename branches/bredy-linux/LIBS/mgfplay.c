@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 // MOTION GIF - LZW komprimovana animace v rozliseni 320x180 256 barev avsak
 // upravena pro prehravani v HICOLOR pro konkretni rezim (32768 barev)
 
@@ -87,21 +87,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <types.h>
-#include <bgraph.h>
-#include <memman.h>
-#include <mem.h>
-#include <zvuk.h>
-#include <bios.h>
-//#include <vesa.h>
-//#include <i86.h>
-#include <io.h>
-#include <mgifmem.h>
-#include <strlite.h>
-//#include <sys\types.h>
-//#include <sys\stat.h>
+#include "types.h"
+#include "bgraph.h"
+#include "memman.h"
+#include "zvuk.h"
+#include "mgifmem.h"
+#include "strlite.h""
 #include <fcntl.h>
-#include "lzwc.h"
 
 
 static  char konec=0;

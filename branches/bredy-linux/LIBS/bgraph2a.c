@@ -137,7 +137,7 @@ void line_32(int x,int y,int xs,int ys)
   }
 
 
-void char_32(word *posit,word *font,char znak)
+void char_32(word *posit,const word *font,char znak)
 //#pragma aux char_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
 
@@ -228,7 +228,7 @@ chrend:                 ;konec
     }
 */
   }
-void char2_32(word *posit,word *font,char znak)
+void char2_32(word *posit,const word *font,char znak)
 //#pragma aux char2_32 parm [edi] [esi] [eax] modify [eax ebx ecx edx]
   {
 

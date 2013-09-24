@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 // toto je include soubor, jenz je pouzit v knihovne GUI.C
 
 #include "types.h"
@@ -36,7 +36,7 @@
 #include "gui.h"
 #include "basicobj.h"
 
-#define MEMTEXT "Pam�t: "
+#define MEMTEXT "Pamet: "
 
 #define E_STATUS_LINE 60
 

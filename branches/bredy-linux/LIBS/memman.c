@@ -23,17 +23,15 @@
 #include <skeldal_win.h>
 #include "types.h"
 #include <mem.h>
-#include <dos.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include "memman.h"
 #include <time.h>
 //#include <i86.h>
-#include "swaper.c"
+#include "swaper.h"
 #include <fcntl.h>
-#include <io.h>
-#include <SYS\STAT.H>
+#include <sys/stat.h>
 
 #define DPMI_INT 0x31
 #define LOAD_BUFFER 4096
@@ -901,34 +899,7 @@ char add_patch_file(char *filename)
 	}
 
 #ifdef LOGFILE
-/*
-void free(void *c)
-  {
-  if (c==NULL) return;
-  SEND_LOG("(ALLOC)��� Dealloc: %p size %d",c,*((long *)c-1));
-  free(c);
-  }
-*/
-/*
-int get_time_macro();
-#pragma aux get_time_macro parm[]=\
-  "mov  ah,02"\
-  "int  1ah"\
-  "mov  al,dh"\
-  "shl  eax,16"\
-  "mov  ax,cx"\
-  modify[eax ecx edx ebx esi edi]
 
-char get_bcd(char bcd);
-#pragma aux get_bcd parm[al]=\
-  "mov  bl,al"\
-  "shr  al,4"\
-  "mov  ah,10"\
-  "mul  ah"\
-  "and  bl,0fh"\
-  "add  al,bl"\
-  value[al] modify [eax ebx]
-*/
 char *get_time_str()
   {
   time_t long_time;

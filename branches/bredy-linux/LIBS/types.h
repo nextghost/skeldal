@@ -20,9 +20,16 @@
  *  
  *  Last commit made by: $Id$
  */
-main()
- {
- printf("%08X\n",102533234);
- getchar();
- return 0;
- }
+
+#include <stdint.h>
+
+#define byte char
+#define integer signed short
+#define word unsigned short
+#define longint long 
+
+#ifdef _WIN32
+typedef unsigned __int32 dword;
+#else
+typedef uint32_t dword;
+#endif

@@ -44,6 +44,9 @@ size_t _msize(void *ptr);
 const void *LoadResourceFont(const char *name);
 
 void DxSetInitResolution(int x, int y);
+int DXInit64(char inwindow, char zoom, char monitor, int refresh);
+void DXCloseMode();
+void DXCopyRects64(int x,int y,int xs,int ys);
 int _access(const char *fname, int mode);
 
 #endif /* SKELDAL_LIN_H_ */

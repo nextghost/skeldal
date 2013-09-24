@@ -20,32 +20,23 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <stdio.h>
-#include <event.h>
+#ifndef __BMOUSE_H
+#define __BMOUSE_H
 
-#define LOAD_BUFFER 4096
+#include "event.h"
+#include "devices.h"
 
-int _fast_load(char *ptr,long size,FILE *f)
-  {
-  if (size>LOAD_BUFFER) size=4096;
-  return fread(ptr,1,size,f);
-  }
 
-size_t fread(void *ptr,size_t i,size_t j,FILE *f)
-  {
-  long s,z,celk=0;
-  char *c;
+#define get_mouse(info) ((MS_EVENT *)(*(long *) info->data))
 
-  c=ptr;
-  s=i*j;
-  do
-     {
-     z=_fast_load(c,s,f);
-     s-=z;
-     c+=z;
-     celk+=z;
-     do_events();
-     }
-  while(s || !z);
-  return z;
-  }
+extern MS_EVENT ms_last_event;
+
+short init_mysky();
+short done_mysky();
+void ukaz_mysku();
+void schovej_mysku();
+void zobraz_mysku();
+void set_ms_finger(int x,int y);
+void update_mysky(void);
+char je_myska_zobrazena();
+#endif

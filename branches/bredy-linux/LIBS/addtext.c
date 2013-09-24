@@ -22,8 +22,7 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include "memman.c"
-#include "strlite.c"
+#include "strlite.h"
 
 
 TSTR_LIST ls_origin=NULL;
