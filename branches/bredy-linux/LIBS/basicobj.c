@@ -25,7 +25,7 @@
 
 #include "types.h"
 #include <stdio.h>
-#include <mem.h>
+
 #include <malloc.h>
 #include <time.h>
 #include "memman.h"
@@ -36,7 +36,7 @@
 #include "gui.h"
 #include "basicobj.h"
 
-#define MEMTEXT "Pamet: "
+//#define MEMTEXT "Pamet: "
 
 #define E_STATUS_LINE 60
 
@@ -83,14 +83,14 @@ void sample_init(OBJREC *o,char *title)
 
 void sample_draw(int x1,int y1,int x2,int y2,OBJREC *o)
   {
-  x2;y2;
+  (void)x2;(void)y2;
   position(x1,y1);
   outtext((char *)o->userptr);
   }
 
 void mid_label_draw(int x1,int y1,int x2, int y2,OBJREC *o)
   {
-  x2;y2;
+  (void)x2;(void)y2;
   set_aligned_position((x1+x2)/2,y1,1,0,(char *)o->userptr);
   outtext((char *)o->userptr);
   }
@@ -100,7 +100,7 @@ void sample_event(EVENT_MSG *msg,OBJREC *o)
   {
   MS_EVENT *ms;
 
-  o;
+  (void)o;
   if (msg->msg==E_MOUSE)
       {
       ms=get_mouse(msg);
@@ -219,7 +219,7 @@ void button2(OBJREC *o)
 
 void draw_status_line(char *c)
   {
-  static word *font;
+  static const word *font;
   static FC_TABLE color;
   static word backgr;
   static word ysmax=0,y;
@@ -255,7 +255,7 @@ void draw_status_line(char *c)
 
      p=strchr(c,'\0');
      *(--p)='\0';
-     if (p=c) break;
+     if (p==c) break;
      }
   position(5,y);outtext(c);
   ukaz_mysku();
@@ -264,6 +264,7 @@ void draw_status_line(char *c)
 
 void *status_mem_info(EVENT_MSG *msg)
   {
+	/*
   char *c;
   unsigned long long l;
   static char memtext[]=MEMTEXT;
@@ -279,6 +280,7 @@ void *status_mem_info(EVENT_MSG *msg)
   sprintf(c,"%u KB ",l/1024);
   c=strchr(c,'\0');
   msg->data=(void *)c;
+  */
   return NULL;
   }
 
@@ -296,7 +298,7 @@ void status_line(EVENT_MSG *msg,T_EVENT_ROOT **user_data)
   EVENT_MSG tg;
   static char recurse=1;
 
-  if(msg->msg==E_INIT)
+  if(msg->msg==E_INIT) {
      if (recurse)
      {
       T_EVENT_ROOT *p;
@@ -309,7 +311,9 @@ void status_line(EVENT_MSG *msg,T_EVENT_ROOT **user_data)
       recurse=1;
       return;
       }
-     else return;
+     else
+    	 return;
+  }
   shift_msg(msg,tg);
        if (tg.msg==E_REDRAW)
         {
@@ -403,15 +407,15 @@ void win_label_move(EVENT_MSG *msg,OBJREC *o)
   static char run=0;
   static word xref,yref;
   static WINDOW w;
-  static moved=0;
-  static drawed=0;
+  static int moved=0;
+  static int drawed=0;
 
-  o;
+  (void)o;
   if (msg->msg==E_INIT) return;
   if (msg->msg==E_TIMER)
      {
      send_message(E_TIMER);
-     if (!drawed)
+     if (!drawed) {
      if (!moved)
      {
      drawed=1;
@@ -422,6 +426,7 @@ void win_label_move(EVENT_MSG *msg,OBJREC *o)
      {
      drawed=0;
      moved=0;
+     }
      }
      }
   if (msg->msg==E_MOUSE)
@@ -737,7 +742,7 @@ void input_line_draw(int x1,int y1, int x2, int y2, OBJREC *o)
 
 void input_line_event(EVENT_MSG *msg,OBJREC *o)
   {
-   static cursor=0;
+   static int cursor=0;
    int *len,*start,slen;
    char *c;
    static char *save;
@@ -918,13 +923,14 @@ void scroll_buttgui_on_event(EVENT_MSG *msg,OBJREC *o)
            }
         }
      }
-  if (msg->msg==E_TIMER && *(char *)o->data )
+  if (msg->msg==E_TIMER && *(char *)o->data ) {
       if (ms_last_event.tl1) set_change();
       else if (!ms_last_event.tl2)
              {
               *(char *)o->data=0;
                redraw_object(o);
              }
+  }
 
   if (msg->msg==E_GET_FOCUS || msg->msg==E_LOST_FOCUS)
      {
@@ -1172,8 +1178,8 @@ void scroll_bar_h_event(EVENT_MSG *msg,OBJREC *o)
 #define MSG_COLOR RGB555(15,0,0)
 #define MSG_F_COLOR RGB555(31,31,0)
 
-word *msg_box_font;
-word *msg_icn_font;
+const word *msg_box_font;
+const word *msg_icn_font;
 
 
 int msg_box(char *title, char icone, char *text, ... )
@@ -1277,12 +1283,12 @@ void resizer_event(EVENT_MSG *msg,OBJREC *o)
   static char run=0;
   static word xref,yref;
   static WINDOW w;
-  static moved=0;
-  static drawed=0;
+  static int moved=0;
+  static int drawed=0;
 
-  o;
+  (void)o;
   if (msg->msg==E_INIT) return;
-  if (msg->msg==E_TIMER && !drawed)
+  if (msg->msg==E_TIMER && !drawed) {
      if (!moved)
      {
      drawed=1;
@@ -1294,6 +1300,7 @@ void resizer_event(EVENT_MSG *msg,OBJREC *o)
      drawed=0;
      moved=0;
      }
+  }
   if (msg->msg==E_MOUSE)
      {
         ms=get_mouse(msg);

@@ -20,10 +20,10 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include "types.h"
 #include "bgraph.h"
-#include <debug.h>
+
 
 
 void bar32(int x1,int y1, int x2, int y2)
@@ -142,7 +142,7 @@ void char_32(word *posit,const word *font,char znak)
   {
 
 	word *edi = posit;
-	unsigned char *esi = font;
+	const unsigned char *esi = (const unsigned char *)font;
 	int al = znak;
 	unsigned char dl,cl,ch,dh;
 	word *ebx;
@@ -290,10 +290,10 @@ chr2end:              ;konec
 */
   }
 
-word charsize(word *font,char znak)
+word charsize(const word *font,char znak)
   {
 
-	  unsigned char *esi = font;
+	  const unsigned char *esi = (const unsigned char *)font;
 	  int al = znak;
 	  unsigned char cl,ch;
 
@@ -427,14 +427,14 @@ void put_image(word *image,word *target,int start_line,int sizex,int sizey)
 
 	word *esi = image;
 	word *edi = target;
-	int eax = start_line;
+//	int eax = start_line;
 	int ebx = sizex;
 	int edx = sizey;
 	int ecx = esi[0];	
 	esi = esi + 3 + start_line * ecx;
 
 	while (edx) {
-		memcpy(edi,esi,ecx*2);	
+		memcpy(edi,esi,ebx*2);
 		esi += ecx;
 		edi += scr_linelen2;
 		edx--;

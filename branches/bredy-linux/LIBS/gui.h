@@ -84,7 +84,7 @@ typedef struct objrec
   long datasize;
   void *data;
   FC_TABLE f_color;
-  word *font;
+  const word *font;
   void *userptr;
   RUN_ROUTS runs;
   RUN_ROUTS events;

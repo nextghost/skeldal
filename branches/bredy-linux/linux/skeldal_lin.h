@@ -12,6 +12,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+
 
 typedef struct _tag_MEMORYSTATUS {
 
@@ -26,10 +31,12 @@ typedef struct _tag_MEMORYSTATUS {
 #define RGB(r,g,b) (((r)>>3)*2048+((g)>>3)*64+((b)>>3))
 
 #define _A_NORMAL 0
+#define O_BINARY 0
 
 #define _KEYBRD_READY 0
 #define _KEYBRD_READ 1
 unsigned long _bios_keybrd(int mode);
+void CheckMessageQueue();
 unsigned char isKeyCTRLPressed();
 void Beep(int freq, int delay);
 
@@ -39,6 +46,7 @@ int DxGetResY();
 
 void strupr(char *txt);
 char *itoa(int value, char *buffer, int base);
+size_t filelength(int fd);
 
 size_t _msize(void *ptr);
 const void *LoadResourceFont(const char *name);
@@ -48,5 +56,15 @@ int DXInit64(char inwindow, char zoom, char monitor, int refresh);
 void DXCloseMode();
 void DXCopyRects64(int x,int y,int xs,int ys);
 int _access(const char *fname, int mode);
+
+unsigned long GetTickCount();
+unsigned long GetTicksPerSec();
+void ShareCPU();
+void ShowError(const char *errorText);
+#define TIMERSPEED GetTicksPerSec()
+
+void *mapFileToMemory(const char *filename);
+void unmapMappedFile(void *ptr);
+
 
 #endif /* SKELDAL_LIN_H_ */

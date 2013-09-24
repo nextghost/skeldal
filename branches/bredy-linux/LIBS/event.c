@@ -20,24 +20,17 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "types.h"
 #include "event.h"
 #include "devices.h"
-#include <mem.h>
-//#include <dpmi.h>
 #include <malloc.h>
-#include <bios.h>
-//#include <i86.h>
 #include <time.h>
 #include "memman.h"
-#include <setjmp.h>
-#include <signal.h>
 #include <assert.h>
 
-static jmp_buf jmpenv;
 
 #define find_event_msg(where,what,res) \
      {\
@@ -200,7 +193,7 @@ void force_delete_curr (T_EVENT_ROOT **tree,T_EVENT_ROOT *r, T_EVENT_POINT *p)
      {
      r->list=p->next;
      free(p);
-     tree;
+     (void)tree;
      if (r->list==NULL) delete_event_msg(tree,r->event_msg);
      }
   else
@@ -417,7 +410,7 @@ void tasker(EVENT_MSG *msg,void **data)
   {
 
 
-  data;
+  (void)data;
   switch (msg->msg)
      {
      case E_INIT:

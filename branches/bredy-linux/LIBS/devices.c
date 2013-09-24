@@ -20,12 +20,9 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include "types.h"
 #include <stdio.h>
-#include <dos.h>
-//#include <i86.h>
-#include <bios.h>
 #include "event.h"
 #include "devices.h"
 #include <time.h>

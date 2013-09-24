@@ -20,7 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include "types.h"
 #include "bgraph.h"
 #include "event.h"

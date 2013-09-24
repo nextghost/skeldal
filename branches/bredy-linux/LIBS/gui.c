@@ -20,11 +20,10 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 //Gui system - object system + graphic
 #include "types.h"
 #include <stdio.h>
-#include <mem.h>
 #include <malloc.h>
 #include "memman.h"
 #include "event.h"
@@ -47,7 +46,7 @@ FC_TABLE f_default;
 word desktop_y_size;
 char force_redraw_desktop=0;
 static char change_flag=0,f_cancel_event=0;
-word *default_font;
+const word *default_font;
 void empty()
   {
   }
@@ -55,18 +54,18 @@ void empty()
 
 void empty1(OBJREC *o)
   {
-  o;
+  (void)o;
   }
 
 void empty3(EVENT_MSG *ms,OBJREC *o)
   {
-  o;ms;
+  (void)o;(void)ms;
   }
 
 
 void empty2(int x1,int y1,int x2,int y2,OBJREC *o)
   {
-  o;x1;y1;x2;y2;
+  (void)o;(void)x1;(void)y1;(void)x2;(void)y2;
   }
 
 
@@ -396,7 +395,7 @@ CTL3D *border(word light,word shadow, word bsize, word btype)
   return &p;
   }
 
-void gui_property(CTL3D *ctl,word *font,FC_TABLE *fcolor,word color)
+void gui_property(CTL3D *ctl,const word *font,FC_TABLE *fcolor,word color)
   {
   if (ctl!=NULL) memcpy(&o_end->border3d,ctl,sizeof(CTL3D));
   if (font!=NULL) o_end->font=font;
@@ -441,7 +440,7 @@ void redraw_desktop_call(EVENT_MSG *msg,void **data)
   WINDOW *w;
   char *oz;
 
-  data;
+  (void)data;
   if (msg->msg==E_INIT || msg->msg==E_DONE) return;
   if (!force_redraw_desktop) return;
   force_redraw_desktop=0;
@@ -616,7 +615,7 @@ void do_it_events(EVENT_MSG *msg,void **user_data)
   OBJREC *p;
   char *oz=otevri_zavoru;
 
-  user_data;
+  (void)user_data;
   if (msg->msg==E_INIT) return;
   if (desktop==NULL) {exit_wait=1;return;}
   change_flag=0;f_cancel_event=0;
@@ -884,10 +883,11 @@ void set_enable(int win_id,int obj_id,int condition)
 
  condition=(condition!=0);
  if ((o=find_object_desktop(win_id,obj_id,&w))==NULL) return;
- if (o==o_aktual)
+ if (o==o_aktual) {
      if (send_lost()) return;
      else
       o_aktual=NULL;
+ }
  if (o->enabled!=condition)
   {
   o->enabled=condition;
@@ -903,7 +903,7 @@ void close_current()
 void background_runner(EVENT_MSG *msg,void **prog)
   {
   register void (*p)();
-  char i=1;
+  //char i=1;
 
   if (msg->msg==E_INIT)
      {
@@ -917,7 +917,7 @@ void background_runner(EVENT_MSG *msg,void **prog)
      }
     p=*prog;
     p();
-    i=0;
+   // i=0;
   msg->msg=-2;
   }
 

@@ -20,18 +20,14 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include "skeldal_pch.h"
 #include "types.h"
-#include <mem.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include "memman.h"
 #include <time.h>
-//#include <i86.h>
 #include "swaper.h"
-#include <fcntl.h>
-#include <sys/stat.h>
 
 #define DPMI_INT 0x31
 #define LOAD_BUFFER 4096
@@ -56,8 +52,8 @@ void (*mman_action)(int action)=NULL;
 long last_load_size;
 void get_mem_info(MEMORYSTATUS *mem)
   {
-  mem->dwLength=sizeof(*mem);
-  GlobalMemoryStatus(mem);
+/*  mem->dwLength=sizeof(*mem);
+  GlobalMemoryStatus(mem); */
   }
 
 
@@ -66,8 +62,8 @@ void standard_mem_error(size_t size)
   char buff[256];
   SEND_LOG("(ERROR) Memory allocation error detected, %u bytes missing",size,0);
   DXCloseMode();
-  sprintf(buff,"Memory allocation error\n Application can't allocate %u bytes of memory (%xh)\n",size,memman_handle);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  sprintf(buff,"Memory allocation error\n Application can't allocate %lu bytes of memory (%xh)\n",size,memman_handle);
+  ShowError(buff);
   exit(1);
   }
 
@@ -80,7 +76,7 @@ void load_error(char *filename)
   #endif
   DXCloseMode();
   sprintf(buff,"Load error while loading file: %s", filename);
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  ShowError(buff);
   exit(1);
   }
 
@@ -89,7 +85,7 @@ void standard_swap_error()
   char buff[256];
   DXCloseMode();
   sprintf(buff,"Swap error. Maybe disk is full");
-  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
+  ShowError(buff);
   exit(1);
   }
 
@@ -249,8 +245,7 @@ int swap_block(THANDLE_DATA *h)
   if (mman_action!=NULL) mman_action(MMA_SWAP);
   if (swap==-1) return -1;
   if (h->flags & BK_HSWAP) pos=h->seekpos; else pos=swap_add_block(h->size);
-  lseek(swap,0,SEEK_END);
-  wsize=tell(swap);
+  wsize = lseek(swap,0,SEEK_END);
   if (wsize<pos) write(swap,NULL,pos-wsize);
   lseek(swap,pos,SEEK_SET);
   SEND_LOG("(SWAP) Swaping block '%-.12hs'",h->src_file,0);
@@ -290,13 +285,13 @@ THANDLE_DATA *get_handle(int handle)
 void heap_error(size_t size) //heap system
   {
   int i,j;
-  char swaped=0;
+//  char swaped=0;
   unsigned long maxcounter=0;
   THANDLE_DATA *sh;
   char repeat=0,did=0;
   THANDLE_DATA *lastblock=NULL;
   char *last_free=NULL;
-  int num;
+//  int num;
   do
   {
   maxcounter=0;
@@ -312,19 +307,20 @@ void heap_error(size_t size) //heap system
 
            h=((THANDLE_DATA *)_handles[i]+j);
            c=bk_global_counter-h->counter;
-           if (h->status==BK_PRESENT && ~h->flags & BK_LOCKED)
+           if (h->status==BK_PRESENT && ~h->flags & BK_LOCKED) {
               if (last_free!=NULL)
                  {
                  d=(char *)h->blockdata-last_free;
-                 if (d<max) sh=h,max=d,did=1,num=i*BK_MINOR_HANDLES+j;
+                 if (d<max) sh=h,max=d,did=1;//,num=i*BK_MINOR_HANDLES+j;
                  }
               else if (c>maxcounter)
                  {
                  maxcounter=c;
                  sh=h;
                  did=1;
-                 num=i*BK_MINOR_HANDLES+j;
+                 //num=i*BK_MINOR_HANDLES+j;
                  }
+           	   }
            }
          }
   if (lastblock==sh)
@@ -346,7 +342,7 @@ void heap_error(size_t size) //heap system
            {
            free(sh->blockdata);
            sh->status=BK_SWAPED;
-           swaped=1;
+  //         swaped=1;
            }
         }
      else
@@ -395,7 +391,7 @@ THANDLE_DATA *zneplatnit_block(int handle)
   return h;
   }
 
-void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru nebo NULL pak
+void init_manager(const char *filename,const char *swp) // filename= Jmeno datoveho souboru nebo NULL pak
                                   // se pouzije DOS
                                             // swp je cesta do TEMP adresare
   {
@@ -420,7 +416,7 @@ void init_manager(char *filename,char *swp) // filename= Jmeno datoveho souboru 
   mem_error=heap_error;
   if (swp!=NULL)
      {
-     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,_S_IREAD | _S_IWRITE);
+     swap=open(swp,O_BINARY | O_RDWR | O_CREAT | O_TRUNC,0777);
      swap_init();
      }
   else
@@ -446,7 +442,7 @@ int find_same(char *name,void *decomp)
   THANDLE_DATA *p;
   int i,j;
 
-  decomp;
+  (void)decomp;
   if (name[0]==0) return -1;
   for(i=0;i<BK_MAJOR_HANDLES;i++)
      if (_handles[i]!=NULL)
@@ -760,7 +756,7 @@ void close_manager()
 //------------------------------------------------------------
 /*static void block()
   {
-/*  static MEMINFO inf;
+  static MEMINFO inf;
   void *c;
   static counter=0;
 
@@ -783,7 +779,7 @@ void display_status()
   char nname[14];
   long total_data=0;
   long total_mem=0;
-  MEMORYSTATUS mem;
+//  MEMORYSTATUS mem;
   int ln=0;
 
   //block();
@@ -822,8 +818,8 @@ void display_status()
         }
 
      }
-  get_mem_info(&mem);
-  printf("Data: %7d KB, Loaded: %7d KB, Largest free: %7d KB",total_data/1024,total_mem/1024,mem.dwAvailPageFile/1024);
+//  get_mem_info(&mem);
+  printf("Data: %7d KB, Loaded: %7d KB, Largest free: %7d KB",total_data/1024,total_mem/1024,0);
   while (getchar()!='\n');
   }
 
