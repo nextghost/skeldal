@@ -278,9 +278,19 @@ char if_lock(int side,int key_id,int level,TMA_LOCK *lk)
   return 0;
   }
 
-void xchg_block(void *b1,void *b2,int leng)
+void xchg_block(void *b1,void *b2,int len)
 //#pragma aux xchg_block parm[edi][esi][ecx]=
 {
+	unsigned char *a1 = (unsigned char *)b1;
+	unsigned char *a2 = (unsigned char *)b2;
+	int i;
+	for (i = 0; i < len; i++) {
+		unsigned char c=a2[i];
+		a2[i]=a1[i];
+		a1[i]=c;
+	}
+
+	/*
 __asm
   {
      mov edi,b1
@@ -294,7 +304,7 @@ __asm
      inc  esi
      dec  ecx
      jnz  lp1
-  }
+  }*/
 }
 
 static void propadnout(int sector)

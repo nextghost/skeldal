@@ -564,14 +564,6 @@ void restore_current_map() //pouze obnovuje ulozeny stav aktualni mapy
   for(i=1;i<mapsize*4;i++) call_macro(i,MC_STARTLEV);
   }
 
-_inline char rotate(char c)
-  {
-  __asm
-    {
-    mov al,c
-    rol al,1;
-    }
-  }
 
 //#pragma aux rotate parm [al] value [al]="rol al,1";
 

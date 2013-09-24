@@ -114,7 +114,7 @@ char clk_touch_vyk(int sector,int side,int xr,int yr)
 
 char clk_touch(int id,int xa,int ya,int xr,int yr)
   {
-  int x1,y1,x2,y2;
+  int x1=0,y1=0,x2=0,y2=0;
   word *p;
   int ext=0;
 

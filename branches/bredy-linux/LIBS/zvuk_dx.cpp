@@ -56,7 +56,7 @@ class CheckRes
      int id=MessageBox(NULL,buff,NULL,MB_SYSTEMMODAL|MB_ABORTRETRYIGNORE);
      if (id==IDRETRY) 
        {
-       __asm int 3;
+       DebugBreak();
        return other;
        }
      if (id==IDIGNORE) return other;
@@ -819,7 +819,10 @@ char LoadNextVideoFrame(void *buffer, char *data, int size, short *xlat,short *a
   ds_music->GetCurrentPosition(&play,NULL);
   long remain=play-*writepos;
   if (remain<0) remain+=caps.dwBufferBytes;
-  if (remain<size*2) return 0;
+  if (remain<size*2) {
+	  Sleep(20);
+	  return 0;
+  }
   char curchan=0;
 
   DWORD lockSizes[2];
