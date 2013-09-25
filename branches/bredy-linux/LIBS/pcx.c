@@ -20,13 +20,13 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include <malloc.h>
-#include <mem.h>
 #include <stdio.h>
 /*#include "..\types.h"*/
 #include "pcx.h"
 #include "memman.h"
+#include <stdarg.h>
 /*#include "..\bgraph.h"*/
 
 #define SHADE_STEPS 5
@@ -166,10 +166,14 @@ int load_pcx(char *pcx,long fsize,int conv_type,char **buffer, ... )
      }
   if (conv_type==A_FADE_PAL)
      {
-     int *i,tr,tg,tb;
+	  va_list alist;
+	  int tr,tg,tb;
+	  va_start(alist,buffer);
+      tr = va_arg(alist,int);
+      tg = va_arg(alist,int);
+      tb = va_arg(alist,int);
+      va_end(alist);
 
-     i=(int *)&buffer;i++;
-     tr=*i++;tg=*i++;tb=*i++;
      palette_shadow(paleta1,(unsigned short (*)[256])ptr1,tr,tg,tb);
      ptr1+=SHADE_PAL;
      }

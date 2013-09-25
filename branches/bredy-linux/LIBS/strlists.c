@@ -20,8 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <debug.h>
+#include <skeldal_pch.h>
 #include "strlite.c"
 
 #include "devices.h"
@@ -39,81 +38,7 @@
 #define MONTH(t) (((t)>>5)& 0x0f)
 #define YEAR(t) ((t)>>9)
 
-TSTR_LIST read_directory(char *mask,int view_type,int attrs)
-  {
-  TSTR_LIST flist;
-  int index=0;
-  char c[2*MAX_PATH];
-  WIN32_FIND_DATA s;
-  HANDLE h;
-  char rc;
-
-  flist=create_list(256);
-  if (flist==NULL) return flist;
-  h=FindFirstFile(mask,&s);
-  if (h!=INVALID_HANDLE_VALUE)
-	{
-    do 
-     {
-     char d[MAX_PATH],*p;
-     int i=0;
-
-     if (attrs==_A_NORMAL || s.dwFileAttributes & attrs)
-        {
-        p=d;d[MAX_PATH-1]=0;
-/*        if (view_type!=DIR_NAMES)
-           {
-           while (s.cFileName[i]!='.' && s.cFileName[i]!='\0' ) *p++=s.cFileName[i++];
-           if (s.cFileName[i]!='\0') j=i+1;else j=i;
-           while (i<8)
-              {
-              *p++=32;i++;
-              }
-           i=3;
-           *p++='.';
-           while (s.name[j]!='\0')
-              {
-              *p++=s.name[j++];
-              i--;
-              }
-           while (i>0)
-              {
-              *p++=32;
-              i--;
-              }
-           }
-        else */strncpy(d,s.cFileName,MAX_PATH-1);
-       switch (view_type)
-          {
-       case DIR_FULL:sprintf(c,"%s %10d",
-                            d,
-                            s.nFileSizeLow
-                            );
-                 break;
-        case DIR_SHORT:sprintf(c,"%s %10d",d,s.nFileSizeLow);break;
-        case DIR_NAMES:
-        case DIR_BREIF:sprintf(c,"%s",d);break;
-        }
-     if (str_replace(&flist,index++,c)==NULL)
-        {
-        release_list(flist);
-        return NULL;
-        }
-        }
-     rc=FindNextFile(h,&s);
-     }
-	while (rc);
-	}
-  FindClose(h);
-  if (flist[0]==NULL)
-     {
-     release_list(flist);
-     return NULL;
-     }
-  sort_list(flist,-1);
-  str_delfreelines(&flist);
-  return flist;
-  }
+TSTR_LIST read_directory(char *mask,int view_type,int attrs);
 
 void name_conv(char *c)
   {

@@ -20,13 +20,11 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include "strlite.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <mem.h>
 #include <malloc.h>
-#include <dos.h>
 #include "types.h"
 #include "memman.h"
 

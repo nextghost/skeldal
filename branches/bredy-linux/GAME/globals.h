@@ -742,7 +742,7 @@ void a_touch(int sector,int dir);
 int do_action(int action_numb,int sector,int direct,int flags,int nosend);
 void delay_action(int action_numb,int sector,int direct,int flags,int nosend,int delay);
 long load_section(FILE *f,void **section, int *sct_type,long *sect_size);
-void prepare_graphics(int *ofs,char *names,long size,void *decomp,int class);
+void prepare_graphics(int *ofs,char *names,long size,void *decomp,int clss);
 void show_automap(char full);
 void draw_medium_map();
 void anim_sipky(int h,int mode);

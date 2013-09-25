@@ -20,24 +20,7 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <math.h>
-#include <bios.h>
-#include <mem.h>
-#include <types.h>
-#include <event.h>
-#include <memman.h>
-#include <devices.h>
-#include <bmouse.h>
-#include <bgraph.h>
-#include <zvuk.h>
-#include <strlite.h>
-#include "engine1.h"
-#include <pcx.h>
-#include "globals.h"
+#include <skeldal_pch.h>
 
 #define AUTOMAP_BACK RGB555(8,4,0)
 #define AUTOMAP_VODA RGB555(0,15,31)

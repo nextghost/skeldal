@@ -20,11 +20,10 @@
  *  
  *  Last commit made by: $Id$
  */
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include <stdio.h>
 #include "types.h"
 #include "memman.h"
-#include "mem.h"
 #include "mgifmem.h"
 
 #define MGIF "MGIF"

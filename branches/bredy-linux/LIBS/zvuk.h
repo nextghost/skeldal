@@ -39,6 +39,7 @@ extern "C" {
 #define DEV_DAC 7
 #define DEV_PCSPEAKER 8
 #define DEV_DIRECTSOUND 9     //only valid device for this module
+#define DEV_DEFAULT 9		  //default sound card available for OS
 
 extern int bvolume;
 extern void (*konec_skladby)(char **jmeno);

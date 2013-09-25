@@ -21,7 +21,7 @@
  *  Last commit made by: $Id$
  */
 //CHARACTER GENERATOR
-#include <skeldal_win.h>
+#include <skeldal_pch.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>

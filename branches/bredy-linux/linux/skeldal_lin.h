@@ -65,6 +65,7 @@ void ShowError(const char *errorText);
 
 void *mapFileToMemory(const char *filename);
 void unmapMappedFile(void *ptr);
+char ** read_directory(char *mask,int view_type,int attrs);
 
 
 #endif /* SKELDAL_LIN_H_ */
