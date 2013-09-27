@@ -39,6 +39,7 @@
 #include "globals.h"
 #include <gui.h>
 #include <basicobj.h>
+#include <string.h>
 
 extern char enable_sort;
 extern char autoattack;

@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "resource.h"
 #include <devices.h>
+#include <crtdbg.h>
 
 void DXMouseTransform(unsigned short *x, unsigned short *y);
 void DxLockBuffers(BOOL lock);

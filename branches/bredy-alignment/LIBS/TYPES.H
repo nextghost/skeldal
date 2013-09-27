@@ -24,4 +24,6 @@
 #define integer signed short
 #define word unsigned short
 #define longint long 
-typedef unsigned __int32 dword;
+
+#include <stdint.h>
+

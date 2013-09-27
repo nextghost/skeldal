@@ -120,7 +120,6 @@ int dmzhit=0;
 int dsee=0;
 char show_debug=0;
 char *debug_text;
-char marker=0;
 
 
 SPECTXT_ARR spectxtr;
@@ -290,7 +289,7 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet)
 	phase++;
   put_8bit_clipped(ablock(H_KREVMIN+block-1),adr,i,120,102);
 	set_font(H_FTINY,RGB555(31,31,31));
-	itoa(dostal,s,10);
+	_itoa(dostal,s,10);
 	set_aligned_position(60+520,51+378,1,1,s);outtext(s);
 	}
 

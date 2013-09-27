@@ -117,7 +117,7 @@ TMA_LOADLEV loadlevel;
 
 typedef struct inis
   {
-  char heslo[15];
+  char heslo[20];
   char parmtype;
   }INIS;
 
@@ -153,6 +153,7 @@ void pcx_15bit_decomp(void **p,long *s);
 void pcx_15bit_autofade(void **p,long *s);
 void pcx_15bit_backgrnd(void **p,long *s);
 void pcx_8bit_decomp(void **p,long *s);
+void load_kouzla_fixalign(void **p, long *s);
 
 char *texty_knihy;
 static char *patch_file=NULL;
@@ -201,7 +202,7 @@ TDREGISTERS registred[]=
     {H_PZASAH,"pzasah.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_BATTLE_CLICK,"souboje2.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_SIPKY_END,"sipky.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
-    {H_KOUZLA,"kouzla.dat",NULL,SR_MAP},
+    {H_KOUZLA,"kouzla.dat",load_kouzla_fixalign,SR_MAP},
     {H_LEBKA,"death.pcx",pcx_8bit_decomp,SR_BGRAFIKA},
     {H_KOSTRA,"bones.pcx",pcx_fade_decomp,SR_BGRAFIKA},
     {H_RUNEHOLE,"runehole.pcx",pcx_8bit_decomp,SR_BGRAFIKA},

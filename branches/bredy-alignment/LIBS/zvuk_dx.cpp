@@ -39,6 +39,7 @@ extern "C" {
 #define FADELENGTH 3000
 #define MUS_ERRORWAIT 5000
 #include "Music.h"
+#include <string.h>
 
 
 static int cur_device=0;

@@ -34,6 +34,7 @@
 #include <memman.h>
 #include <math.h>
 #include "globals.h"
+#include "align.h"
 
 #define PRG_COLOR RGB555(0,31,31)
 #define PRG_HELP_COLOR RGB555(31,31,0)
@@ -2307,7 +2308,7 @@ void send_experience(TMOB *p,int dostal)
         player_check_death(postavy+select_player,0);
         }
      }
-  if (dostal>0) postavy[select_player].exp+=(long)((float)p->experience*(float)dostal/p->vlastnosti[VLS_MAXHIT]);
+  if (dostal>0) postavy[select_player].exp+=(long)((float)uaGetInt(p->experience)*(float)dostal/p->vlastnosti[VLS_MAXHIT]);
   check_player_new_level(&postavy[select_player]);
   }
 

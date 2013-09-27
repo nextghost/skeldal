@@ -34,6 +34,7 @@
 //#include <i86.h>  //Sound and Nosound
 #include <strlite.h>
 #include <io.h>
+#include <string.h>
 
 #define PL_RANDOM 1
 #define PL_FORWARD 2
@@ -222,8 +223,8 @@ int calcul_volume(int chan,int x,int y,int side,int volume)
 void wav_load(void **p,long *s)
   {
   char *sr;
-  long *d;
-  char *c;
+//  long *d;
+//  char *c;
   char *tg;
   void *tgr;
   size_t siz;
@@ -287,7 +288,7 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
   track->ypos=yd;
   track->side=sided;
   track_state[p->soundid]=-1;
-  if (p->bit16 & 0x8)
+  if (p->header.pflags & 0x8)
      {
      int vol=SND_EFF_MAXVOL*p->volume/100;
      if (rnd(100)>50) set_channel_volume(chan,rnd(vol),vol);
@@ -311,7 +312,7 @@ void play_effekt(int x,int y,int xd,int yd,int side,int sided,TMA_SOUND *p)
   alock(blockid);
   s=ablock(blockid);
   s+=p->offset+sizeof(struct t_wave)+4;
-  play_sample(chan,s,p->end_loop-p->offset,p->start_loop-p->offset,p->freq,1+(p->bit16 & 1));
+  play_sample(chan,s,p->end_loop-p->offset,p->start_loop-p->offset,p->freq,1+(p->header.pflags & 1));
   playings[chan].data=p;
   playings[chan].xpos=xd;
   playings[chan].ypos=yd;

@@ -179,7 +179,7 @@ static void dialog_anim(va_list args)
   void *aptr;
   char *ch;
   char hid;
-  int spdc=0,cntr=rep,tm,tm2;
+  int spdc=0,cntr=rep,tm = 0,tm2 = 0;
 
   loc_anim_render_buffer=PIC_Y*scr_linelen2+PIC_X;
   mgif_install_proc(animace_kouzla);

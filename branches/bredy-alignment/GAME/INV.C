@@ -2463,7 +2463,7 @@ static void rebuild_shops(void)
 
 void load_shops(void)
   {
-  char *c;
+//  char *c;
   int *d;  
   int i,j;
   const void *origShop,*rd, *rd2;
@@ -2485,7 +2485,7 @@ void load_shops(void)
   //calculate required size;
   reqsize = sizeof(int)+max_shops*sizeof(TSHOP);
   for (i = 0; i < max_shops; i++) {
-	  void *productCount = rd;	  
+	  const void *productCount = rd;	  
 	  int cnt;
 	  //count of products is stored at offset 33;
 	  uaSeekPtr(&productCount,33);

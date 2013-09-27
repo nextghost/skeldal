@@ -454,7 +454,8 @@ MOB_PROC(mob_open_door_battle)
   {
   if (event==SMPR_ATTACK)
      {
-     m->specproc=5;
+     m->specproc[0]=5;
+	 m->specproc[1]=0;
      }
   return 0;
   }

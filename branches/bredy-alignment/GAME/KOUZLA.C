@@ -150,18 +150,19 @@ static TTELEPLOCATION TelepLocation;
 
 typedef struct tkouzlo
   {
-  word num,um,mge;
-  word pc;
-  short owner,accnum;     //accnum = akumulacni cislo, owner = kdo kouzlo seslal
-  int start;
-  short cil;    //kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
-  char povaha;
-  word backfire; //backfire / 1 = demon , 0 = bez demona
-  word wait;   //wait - cekani pocet animaci
-  word delay;  //delay - cekani pocet kol
-  char traceon;    //jinak noanim - neprehravaji se animace a zvuky
-  char spellname[28];
-  word teleport_target;
+  uint16_t num,um,mge;		//6
+  uint16_t pc;				//8
+  uint16_t owner,accnum;    //12 accnum = akumulacni cislo, owner = kdo kouzlo seslal
+  int32_t start;			//16
+  int16_t cil;				//18 kladna cisla jsou postavy zaporna potvory (0 je bez urceni postavy)
+  //char povaha
+  uint16_t backfire;		//20 backfire / 1 = demon , 0 = bez demona
+  uint16_t wait;			//22 wait - cekani pocet animaci
+  uint16_t delay;			//24 delay - cekani pocet kol
+  uint8_t povaha;			//26
+  uint8_t traceon;			//25 jinak noanim - neprehravaji se animace a zvuky
+  char spellname[28];		//54
+  uint16_t teleport_target; //56
   }TKOUZLO;
 
 TKOUZLO *spell_table[MAX_SPELLS];
@@ -173,6 +174,18 @@ static long _flag_map[MAX_SPELLS];      //tabulka nastavenych priznaku pro kouzl
 
 short parm1,parm2;
 char twins;
+
+void load_kouzla_fixalign(void **p, long *s) {
+	int cnt = *s / sizeof(TKOUZLO);
+	TKOUZLO *k = (TKOUZLO *)*p;
+	int i;
+	for (i = 0; i < cnt; i++) {
+		uint8_t oldpovaha = k->backfire & 0xFF;
+		memcpy(&k->backfire,(char *)(&k->backfire)+1,6);
+		k->povaha = oldpovaha;
+		k++;
+	}
+}
 
 static short rand_value;
 

@@ -171,7 +171,7 @@ char fast_expand_code(int code,char **target)
 //#pragma aux fast_expand_code parm[eax][edi] modify [esi ecx] value [bl]
   {
 
-	dword	eax = code;
+	uint32_t eax = code;
 	char **edi = target;
 
 	if (eax < 256) {
@@ -186,7 +186,7 @@ char fast_expand_code(int code,char **target)
 		char al;
 		char bl;
 		DOUBLE_S *d = compress_dic + code;
-		dword ta;
+		uint32_t ta;
 		short first = d->first;
 		char *esi;
 		(*edi) += d->first;

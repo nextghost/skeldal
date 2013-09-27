@@ -455,7 +455,7 @@ int get_leaving_place(char *level_name)
 void leave_current_map()
   {
   int i;
-  TFLY *p;
+//  TFLY *p;
   SEND_LOG("(GAME) Leaving current map ... start",0,0);
   add_leaving_place(viewsector);
   kill_all_sounds();
@@ -1369,8 +1369,8 @@ char chod_s_postavama(char sekupit)
         {
         if (postavy[i].groupnum==cur_group)
            {
-           int wh;
-           int wf;
+//           int wh;
+//           int wf;
            lastsec=postavy[i].sektor;
            postavy[i].sektor=viewsector;
            postavy[i].direction=viewdir;

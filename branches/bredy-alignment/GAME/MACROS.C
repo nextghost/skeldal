@@ -39,6 +39,7 @@
 #include <pcx.h>
 #include "globals.h"
 #include "specproc.h"
+#include "align.h"
 
 int **macros=NULL;
 void *macro_block;
@@ -67,24 +68,138 @@ char save_load_trigger(short load)
   return trig_group;
   }
 
+
+static int getRequiredTMASize(const void **ptr);
+
 void load_macros(int size,void *data)
   {
-  int *r;
+//  int *r;
+  const void *p = data;
+  unsigned int reqsize = 0;
 
-  if (macros!=NULL) free(macros);
+  if (macros!=NULL) {
+	  free(macros);
+	  free(macro_block);
+  }
   macros=(int **)getmem(mapsize*sizeof(int *)*4);
   memset(macros,0,mapsize*sizeof(char *)*4);
   memset(codelock_memory,0,sizeof(codelock_memory));
-  r=data;
-  while (*r)
-     {
-     macros[*r]=r+1;
-     r++;
-     while(*r) r=(int *)((char *)r+*r+4);
-     r++;
-     }
-  macro_block=data;
-  macro_block_size=size;
+    
+  while (uaReadInt(&p)) { //read side (and ignore)
+	  int x = uaReadInt(&p); //read size 
+	  reqsize += 2*sizeof(int);
+	  while (x) {
+		const TMA_GEN *g = (const TMA_GEN *)p;
+		p = (const char *)p + x;
+		switch (g->action) {
+			default:{
+				int xx = (x + sizeof(int)-1) / sizeof(int);
+				xx = xx * sizeof(int);
+				reqsize+=xx;
+				break;
+					}
+			case MA_LOADL: //TMA_LOADLEV
+			case MA_WBOOK: //TMA_LOADLEV
+			case MA_PLAYA: //TMA_LOADLEV
+			case MA_DROPI: //TMA_DROPITM
+			case MA_CREAT: //TMA_DROPITM
+			case MA_FIREB: //TMA_FIREBALL
+			case MA_LOCK: //TMA_LOCK			
+			case MA_CUNIQ: //TMA_UNIQUE
+			case MA_GUNIQ: //TMA_UNIQUE
+			case MA_IFJMP: //TMA_TWOP
+			case MA_HAVIT: //TMA_TWOP
+			case MA_RANDJ: //TMA_TWOP
+			case MA_IFACT: //TMA_TWOP
+			case MA_ISFLG: //TMA_TWOP
+			case MA_PICKI: //TMA_TWOP
+			case MA_MONEY: //TMA_TWOP
+			case MA_SNDEX: //TMA_TWOP
+			case MA_CALLS: //TMA_TWOP
+			case MA_MOVEG: //TMA_TWOP
+			case MA_CHFLG: //TMA_TWOP
+			case MA_GOMOB: //TMA_TWOP
+			case MA_SHRMA: //TMA_TWOP 
+				{
+					int xx = (1 + x + sizeof(int)-1) / sizeof(int);
+					xx = xx * sizeof(int);
+					reqsize+=xx;
+				}
+
+		}
+		 x = uaReadInt(&p); //read size 
+		 reqsize += sizeof(int);
+	  }	  
+  }
+  reqsize += sizeof(int);
+
+  {
+	  void *convtma = getmem(reqsize);
+	  int *wr = (int *)convtma;
+	  int a;
+	  p = data;
+	  a = uaReadInt(&p);
+	  while (a) {
+		  int x;
+		  *wr = a;
+		  wr++;
+		  macros[a] = wr;
+		  x = uaReadInt(&p);
+		  while (x) {
+			  int xx;
+			  const TMA_GEN *g = (const TMA_GEN *)p;
+			  p = (const char *)p + x;
+			  switch (g->action) {
+				  default: {
+					  xx = (x + sizeof(int)-1) / sizeof(int);
+					  xx = xx * sizeof(int);
+					  memcpy(wr+1,g,x);					  
+						   }
+						   break;
+				  case MA_LOADL: //TMA_LOADLEV
+				  case MA_WBOOK: //TMA_LOADLEV
+				  case MA_PLAYA: //TMA_LOADLEV
+				  case MA_DROPI: //TMA_DROPITM
+				  case MA_CREAT: //TMA_DROPITM
+				  case MA_FIREB: //TMA_FIREBALL
+				  case MA_LOCK: //TMA_LOCK			
+				  case MA_CUNIQ: //TMA_UNIQUE
+				  case MA_GUNIQ: //TMA_UNIQUE
+				  case MA_IFJMP: //TMA_TWOP
+				  case MA_HAVIT: //TMA_TWOP
+				  case MA_RANDJ: //TMA_TWOP
+				  case MA_IFACT: //TMA_TWOP
+				  case MA_ISFLG: //TMA_TWOP
+				  case MA_PICKI: //TMA_TWOP
+				  case MA_MONEY: //TMA_TWOP
+				  case MA_SNDEX: //TMA_TWOP
+				  case MA_CALLS: //TMA_TWOP
+				  case MA_MOVEG: //TMA_TWOP
+				  case MA_CHFLG: //TMA_TWOP
+				  case MA_GOMOB: //TMA_TWOP
+				  case MA_SHRMA: //TMA_TWOP
+					  xx = (1 + x + sizeof(int)-1) / sizeof(int);
+					  xx = xx * sizeof(int);
+					  memcpy(wr+1,g,3);
+					  memcpy(wr+2,(char *)g+3,x-3);
+					  break;
+			  }
+			  *wr = xx;
+			  wr++;
+			  wr += xx/sizeof(int);
+			  x = uaReadInt(&p);
+
+		  }
+		  a = uaReadInt(&p);
+		  *wr++= 0;
+	  }
+	  *wr++= 0;
+	  a = (unsigned char *)wr - (unsigned char *)convtma;
+	  macro_block=convtma;
+	  macro_block_size=reqsize;
+  }
+ 
+
   }
 
 void macro_disp_text(int text,char glob)
@@ -122,7 +237,7 @@ void macro_sound(TMA_SOUND *p,int psect,int pdir,int sect,int dir)
   {
   char up=4;
   if (sound_side_flags & SD_PRIM_FORV) up=2;
-  if (~(p->bit16) & up)
+  if (~(p->header.pflags) & up)
      if (psect)
        play_effekt(map_coord[sect].x,map_coord[sect].y,map_coord[psect].x,map_coord[psect].y,dir,pdir,p);
      else
@@ -131,7 +246,7 @@ void macro_sound(TMA_SOUND *p,int psect,int pdir,int sect,int dir)
 
 void macro_send_act(TMA_SEND_ACTION *p)
   {
-  delay_action(p->s_action,p->sector,p->side,p->change_bits<<24,0,p->delay);
+  delay_action(p->s_action,p->sector,p->side,(uint32_t)p->header.pflags<<24,0,p->delay);
   }
 
 void macro_load_another_map(TMA_LOADLEV *z)
@@ -352,7 +467,7 @@ static void swap_sectors(TMA_SWAPS *sws)
 
 static void hit_1_player(int postava,TMA_WOUND *w,int chaos)
   {
-  int mode=w->pflags>>1;
+  int mode=w->header.pflags>>1;
   int zivel=mode-2;
   int dostal;
   THUMAN *h=postavy+postava;
@@ -389,7 +504,7 @@ static void hit_player(TMA_WOUND *w,int sector)
 
   for(i=0,pocet=0;i<POCET_POSTAV;i++) if (get_player_triggered(i)) pocet++;
   if (!pocet) return;
-  if (~w->pflags & 1)
+  if (~w->header.pflags & 1)
      {
      r=rnd(pocet)+1;
      for(i=0;i<POCET_POSTAV && r>0;i++) if (get_player_triggered(i)) r--;
@@ -656,21 +771,22 @@ void macro_change_music(int textindex)
 
 void macro_register_global_event(TMULTI_ACTION *q)
 {
-  GlobEventList[q->globe.event].cancel=q->globe.cancel;
-  GlobEventList[q->globe.event].sector=q->globe.sector;
-  GlobEventList[q->globe.event].side=q->globe.side;
-  GlobEventList[q->globe.event].param=q->globe.param;
-  if (q->globe.event>=MAGLOB_ONTIMER1 && q->globe.event<=MAGLOB_ONTIMER4)
+int event = q->globe.header.pflags;
+  GlobEventList[event].cancel=q->globe.cancel;
+  GlobEventList[event].sector=q->globe.sector;
+  GlobEventList[event].side=q->globe.side;
+  GlobEventList[event].param=q->globe.param;
+  if (event>=MAGLOB_ONTIMER1 && event<=MAGLOB_ONTIMER4)
   {
-    if (GlobEventList[q->globe.event].param>0)
-      GlobEventList[q->globe.event].param+=game_time;
+    if (GlobEventList[event].param>0)
+      GlobEventList[event].param+=game_time;
     else
     {      
       long den=24*60*6;
-      long cas=((-GlobEventList[q->globe.event].param/100)*60+(-GlobEventList[q->globe.event].param%100))*6;
+      long cas=((-GlobEventList[event].param/100)*60+(-GlobEventList[event].param%100))*6;
       long curtm=game_time % den;
       if (cas<=curtm) cas+=den;
-      GlobEventList[q->globe.event].param=game_time-curtm+cas;
+      GlobEventList[event].param=game_time-curtm+cas;
     }    
   }
 }
@@ -732,7 +848,7 @@ void call_macro_ex(int side,int flags, int runatside)
           case MA_CREAT:macro_create_item(z->dropi.item);break;
           case MA_DIALG:start_dialog(z->text.textindex,-1);break;
           case MA_SSHOP:enter_shop(z->text.textindex);break;
-          case MA_CLOCK:z->general.cancel=decode_lock(z->clock.znak,z->clock.string,z->clock.codenum);break;
+          case MA_CLOCK:z->general.cancel=decode_lock(z->clock.header.pflags,z->clock.string,z->clock.codenum);break;
           case MA_CACTN:cancel_action(z->cactn.sector,z->cactn.dir);break;
           case MA_LOCK :z->general.cancel=if_lock(side,z->lock.key_id,z->lock.thieflevel,&z->lock);break;
           case MA_SWAPS:swap_sectors(&z->swaps);break;

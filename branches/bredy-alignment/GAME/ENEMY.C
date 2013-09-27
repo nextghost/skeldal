@@ -34,6 +34,7 @@
 #include "engine1.h"
 #include "globals.h"
 #include "specproc.h"
+#include "align.h"
 
 #define MOB_ZNAKY "FLBLCH"
 #define MOB_START 1
@@ -831,7 +832,7 @@ void rozhodni_o_smeru(TMOB *p)
      stop_mob(p);
      goto end1;
      }
-  if (call_mob_event(p->specproc,SMPR_WALK,p)) goto end1;
+  if (call_mob_event(uaGetShort(p->specproc),SMPR_WALK,p)) goto end1;
   oldwalk=p->walk_data;
   if (mob_test_na_bitvu(p)) return;
   p->vlajky&=~MOB_IN_BATTLE;
@@ -1904,7 +1905,7 @@ char akce_moba_zac(TMOB *m)
         if (flee_monster_zac(m)) return 1;
         m->dostal=0;
         }
-  if (call_mob_event(m->specproc,SMPR_ATTACK,m))
+  if (call_mob_event(uaGetShort(m->specproc),SMPR_ATTACK,m))
      {
      mob_walk_sound(m);
      return 0;
@@ -2040,7 +2041,7 @@ static void knock_mob_back(TMOB *mm,int dir)
   char chk;
   int i,sek,mnum,mms;
 
-  if (call_mob_event(mm->specproc,SMPR_KNOCK,mm)) return;
+  if (call_mob_event(uaGetShort(mm->specproc),SMPR_KNOCK,mm)) return;
   mms=mm->sector;mnum=mm-mobs+MOB_START;
   chk=mob_check_next_sector(mms,dir,mm->stay_strategy,mm->vlajky);
   if (chk) return;

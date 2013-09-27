@@ -454,7 +454,7 @@ static __inline int rangrnd(int a, int b) {return rnd(b-a+1)+a;}
                      case 6:\
                      case 7
 
-typedef struct tdregisters
+typedef struct tdregisters  //< not subject of data loading
   {
   int h_num;
   char name[13];
@@ -464,27 +464,27 @@ typedef struct tdregisters
 
 typedef struct tstena
   {
-  char prim,sec,oblouk,side_tag;
-  unsigned short sector_tag;
-  char xsec,ysec;
-  unsigned long flags;
-  char prim_anim,sec_anim,lclip,action;
+  uint8_t prim,sec,oblouk,side_tag;    //offset 0 (aligned)
+  uint16_t sector_tag;				   //offset 4 (aligned)
+  uint8_t xsec,ysec;                   //offset 6 (aligned)
+  uint32_t flags;                      //offset 8 (aligned)
+  uint8_t prim_anim,sec_anim,lclip,action; //offset 12 (aligned)
   }TSTENA;
 
 typedef struct tsector
   {
-  char floor,ceil;
-  char flags,sector_type; //sector_type = 0 - sector not used;
-  char action,side_tag;
-  unsigned short step_next[4];
-  unsigned short sector_tag;
+  uint8_t floor,ceil;					//offset 0 (a)
+  uint8_t flags,sector_type; //sector_type = 0 - sector not used;
+  uint8_t action,side_tag;				//offset 4 (a)
+  uint16_t step_next[4];          //offset 6 (a)
+  uint16_t sector_tag;            //offset 14
   }TSECTOR;
 
-typedef struct tvyklenek
+typedef struct tvyklenek				//structure is aligned
   {
-  short sector,dir,xpos,ypos,xs,ys;
-  short items[9];
-  short reserved;
+  int16_t sector,dir,xpos,ypos,xs,ys;    
+  int16_t items[9];
+  int16_t reserved;
   }TVYKLENEK;
 
 
@@ -494,7 +494,7 @@ typedef TSECTOR TSECTORDEF[];
 
 typedef struct tmap_edit_info
   {
-  short x,y,layer,flags;
+  int16_t x,y,layer,flags;             //structure is aligned
   }TMAP_EDIT_INFO;
 
 typedef TMAP_EDIT_INFO TMAP_EDIT[];
@@ -502,17 +502,17 @@ typedef TMAP_EDIT_INFO TMAP_EDIT[];
 typedef
    struct mapglobal
    {
-   char back_fnames[4][13];
-   int fade_r,fade_g,fade_b;
-   int start_sector;
-   int direction;
+   char back_fnames[4][13];				
+   int32_t fade_r,fade_g,fade_b;			//offset 52 (aligned)
+   int32_t start_sector;					//offset 64 (aligned)
+   int32_t direction;
    char mapname[30];
    char map_effector;
    char local_monsters;
    char map_autofadefc;
    }MAPGLOBAL;
 
-typedef struct the_timer
+typedef struct the_timer					//not in data
   {
   int zero;
   int id;
@@ -523,7 +523,7 @@ typedef struct the_timer
   char zavora;
   }THE_TIMER;
 
-typedef struct d_action
+typedef struct d_action						//not in data
   {
   unsigned short action,sector,side,flags,nocopy,delay;
   struct d_action *next;
@@ -618,15 +618,6 @@ extern char show_debug;
 extern char *debug_text;
 extern char map_with_password;
 extern int debug_enabled;
-extern char marker; //tato promenna je 0, jen v pripade ze je 1 probehne assert
-#define MARKER_SET() {SEND_LOG("(MARKER) Marker Sets",0,0);marker=1;}
-#define MARKER_RESET() {SEND_LOG("(MARKER) Marker Resets",0,0);marker=0;}
-#define MARKER_HIT(action) if (marker) \
-                       {                \
-                       SEND_LOG("(MARKER) Marker hit!",0,0);\
-                       action;\
-                       MARKER_RESET();\
-                       }
 
 //builder - skeldal
 
@@ -695,7 +686,7 @@ extern int vmode;
 extern char runes[5];
 
 
-typedef struct spectxtr
+typedef struct spectxtr			//not part of data
   {
   word sector;
   word handle;
@@ -722,8 +713,6 @@ void draw_blood(char mode,int mob_dostal,int mob_dostal_pocet);
 #define FX_MAGIC 0
 #define FX_BOOK 1
 #define FX_MONEY 2
-
-
 
 
 #define BOTT_NORMAL 0
@@ -885,27 +874,28 @@ typedef struct titem
   {
   char jmeno[32];   //32        Jmeno predmetu
   char popis[32];   //64
-  short zmeny[24];  //112       Tabulka, jakych zmen ma na hracovy vlastnosti
-  short podminky[4];//120       Tabulka, jake vlastnosti musi mit hrac k pouziti predmetu
-  short hmotnost,nosnost,druh; //126  druh = Typ predmetu
-  short umisteni;              //128  Kam se predmet umisti?
-  word flags;                  //130  ruzne vlajky
-  short spell,magie,sound_handle;//136  specialni kouzla / rukojet zvuku
-  short use_event;             //140  specialni udalost
-  unsigned short ikona,vzhled; //144  ikony a vzhled
-  short user_value;            //146  uzivatelska hodnota
-  short keynum;                //148 cislo klice
-  short polohy[2][2];          //156 souradnice poloh pro zobrazeni v inv
-  char typ_zbrane;              //160 Typ zbrane
-  char unused;
-  short sound;                  //cislo zvuku
-  short v_letu[16];             //192
-  int cena;
-  char weapon_attack;           //relativni handle k souboru s animaci utok
-  char hitpos;                  //pozice zasahu animace
-  char shiftup;
-  char byteres;
-  short rezerva[12];           //224 rezervovane
+  int16_t zmeny[24];  //112       Tabulka, jakych zmen ma na hracovy vlastnosti
+  int16_t podminky[4];//120       Tabulka, jake vlastnosti musi mit hrac k pouziti predmetu
+  int16_t hmotnost,nosnost,druh; //126  druh = Typ predmetu
+  int16_t umisteni;              //128  Kam se predmet umisti?
+  uint16_t flags;                  //130  ruzne vlajky
+  int16_t spell,magie,sound_handle;//136  specialni kouzla / rukojet zvuku
+  int16_t use_event;             //138  specialni udalost
+  uint16_t ikona,vzhled;		//142  ikony a vzhled
+  int16_t user_value;            //144  uzivatelska hodnota
+  int16_t keynum;                //146 cislo klice
+  int16_t polohy[2][2];          //154 souradnice poloh pro zobrazeni v inv
+  int8_t typ_zbrane;              //155 Typ zbrane
+  int8_t unused;                  //156
+  int16_t sound;                  //158 cislo zvuku
+  int16_t v_letu[16];             //190
+  int16_t cena;						//192 (cena je unaligned)
+  int16_t unused2;				  //194 hi value of cena - i hope that no price goes above 32767
+  int8_t weapon_attack;           //195 relativni handle k souboru s animaci utok
+  int8_t hitpos;                  //196pozice zasahu animace
+  int8_t shiftup;                 //197
+  int8_t byteres;                 //198
+  int16_t rezerva[12];            //222 rezervovane
   }TITEM;
 
 #define PLAYER_MAX_LEVEL 40
@@ -920,39 +910,39 @@ typedef struct hum_action
 
 typedef struct thuman
   {
-  char used;                    //1 kdyz je pozice pouzita
-  char spell;                   //1 kdyz postava ma na sobe aspon 1 kouzlo.
-  char groupnum;                //cislo skupiny 0-6
-  signed char xicht;                   //cislo obliceje 0-5
-  char direction;               //smer otoceni
-  short sektor;                 //sektor postaveni
-  short vlastnosti[VLS_MAX];    //mapa aktualnich vlastnosti po korekcich
-  short bonus_zbrani[TPW_MAX];  //bonusy za zbrane
-  short lives;                  //pocet zraneni
-  short mana;                   //mnozstvi many
-  short kondice;                //kondice postavy
-  short actions;                //aktualni pocet AP
-  short mana_battery;           //udaj po nabyti nakouzlene many
-  short stare_vls[VLS_MAX];     //mapa vlastnosti pred korekcemi
-  short wearing[HUMAN_PLACES];  //nosene predmety
-  short prsteny[HUMAN_RINGS];   //nosene prsteny
-  short sipy;                   //pocet sipu v toulci
-  short inv_size;               //velikost inventare 6-30
-  short inv[MAX_INV];           //inventar
-  short level;                  //uroven
-  short weapon_expy[TPW_MAX];    //zkusenosti za zbrane
-  long exp;                     //zkusenost
-  char female;                  //1 kdyz zena
-  char utek;                    //hodnota udavajici pocet kroku pri uteku
+  uint8_t used;                    //1 kdyz je pozice pouzita
+  uint8_t spell;                   //1 kdyz postava ma na sobe aspon 1 kouzlo.
+  uint8_t groupnum;                //cislo skupiny 0-6
+  int8_t xicht;                   //cislo obliceje 0-5
+  uint8_t direction;               //smer otoceni
+  uint8_t female;                  //1 kdyz zena
+  int16_t sektor;                 //sektor postaveni
+  int16_t vlastnosti[VLS_MAX];    //mapa aktualnich vlastnosti po korekcich
+  int16_t bonus_zbrani[TPW_MAX];  //bonusy za zbrane
+  int16_t lives;                  //pocet zraneni
+  int16_t mana;                   //mnozstvi many
+  int16_t kondice;                //kondice postavy
+  int16_t actions;                //aktualni pocet AP
+  int16_t mana_battery;           //udaj po nabyti nakouzlene many
+  int16_t stare_vls[VLS_MAX];     //mapa vlastnosti pred korekcemi
+  int16_t wearing[HUMAN_PLACES];  //nosene predmety
+  int16_t prsteny[HUMAN_RINGS];   //nosene prsteny
+  int16_t sipy;                   //pocet sipu v toulci
+  int16_t inv_size;               //velikost inventare 6-30
+  int16_t inv[MAX_INV];           //inventar
+  int16_t level;                  //uroven
+  int16_t weapon_expy[TPW_MAX];    //zkusenosti za zbrane
+  int32_t exp;                     //zkusenost
+  uint8_t utek;                    //hodnota udavajici pocet kroku pri uteku
+  uint8_t programovano;            //pocet programovanych akci
   HUM_ACTION *zvolene_akce;     //ukazatel na tabulku zvolenych akci
   HUM_ACTION *provadena_akce;   //ukazatel na aktualni akci
-  char programovano;            //pocet programovanych akci
-  char jmeno[15];               //jmeno
-  short zasah;                   //posledni zasah postavy ???
-  short dostal;                  //cislo ktere se ukazuje na obrazku s postavou jako zasah
-  short bonus;                  //bonus pro rozdeleni vlastnosti
-  int jidlo;   //max 25000      //pocet kol o hladu zbyvajicich
-  int voda;    //max 20000      //pocet kol o zizny zbyvajicich
+  char jmeno[20];               //jmeno
+  int16_t zasah;                   //posledni zasah postavy ???
+  int16_t dostal;                  //cislo ktere se ukazuje na obrazku s postavou jako zasah
+  int16_t bonus;                  //bonus pro rozdeleni vlastnosti
+  int32_t jidlo;   //max 25000      //pocet kol o hladu zbyvajicich
+  int32_t voda;    //max 20000      //pocet kol o zizny zbyvajicich
   struct thuman *demon_save;    //ukazatel na postavu ulozenou behem kouzla demon
   }THUMAN;
 
@@ -1007,22 +997,22 @@ int weigth_defect(THUMAN *p);
 
 typedef struct tproduct
   {
-  unsigned short item;          //cislo predmetu ktere nabizi
-  unsigned short trade_flags;    //vlajky
-  int cena;           //cena za jeden
-  int pocet;           //pocet predmetu na sklade
-  int max_pocet;
+  uint16_t item;          //cislo predmetu ktere nabizi
+  uint16_t trade_flags;    //vlajky
+  int32_t cena;           //cena za jeden
+  int32_t pocet;           //pocet predmetu na sklade
+  int32_t max_pocet;
   }TPRODUCT;
 
 typedef struct tshop
   {
-  char keeper[16];
+  char keeper[19];
   char picture[13];  
   int koef;
   int products;
   int shop_id;
   int list_size;
-  short spec_max;     //maximalni pocet specialnich predmetu
+  int spec_max;     //maximalni pocet specialnich predmetu
   TPRODUCT list[1];
   }TSHOP;
 
@@ -1152,48 +1142,48 @@ char load_saved_shops();
 
 typedef struct tma_gen
  {
- unsigned action : 6;
- unsigned cancel : 1;
- unsigned once   : 1;
- unsigned flags  : 16;
+ uint32_t action : 6;
+ uint32_t cancel : 1;
+ uint32_t once   : 1;
+ uint32_t flags  : 16;
+ uint32_t pflags : 8;
  }TMA_GEN;
 
 typedef struct tma_sound
   {
-  char action,flags,eflags; //3
-  char bit16;
-  char volume;             //5
-  char soundid;            //6
-  unsigned short freq;     //8
-  long start_loop,end_loop,offset;//20
-  char filename[12];       //32
+  TMA_GEN header;			//4 (16bit flag is part of header as pflags)
+  uint8_t volume;           //5
+  uint8_t soundid;          //6
+  uint16_t freq;			//8
+  uint32_t start_loop,end_loop,offset;//20
+  char filename[12];        //32
   }TMA_SOUND;
 
 
 typedef struct tma_text
   {
-  char action,flags,eflags,pflags;
-  long textindex;
+  TMA_GEN header;			//4
+  long textindex;			//
   }TMA_TEXT;
 
 typedef struct tma_send_action
   {
-  char action,flags,eflags,change_bits;
-  unsigned short sector,side,s_action;
-  char delay;
+  TMA_GEN header;
+  uint16_t sector,side,s_action;
+  uint8_t delay;
   }TMA_SEND_ACTION;
 
 typedef struct tma_fireball
   {
-  char action,flags,eflags;
-  short xpos,ypos,zpos,speed,item;
+  TMA_GEN header;
+  int16_t xpos,ypos,zpos,speed,item;
   }TMA_FIREBALL;
 
 typedef struct tma_loadlev
   {
-  char action,flags,eflags;
-  short start_pos;
-  char dir;
+  TMA_GEN header;
+  uint16_t start_pos;
+  uint8_t dir;
   char name[13];
   }TMA_LOADLEV;
 
@@ -1201,76 +1191,75 @@ typedef struct tma_loadlev
 
 typedef struct tma_dropitm
   {
-  char action,flags,eflags;
-  short item;
+  TMA_GEN header;
+  uint16_t item;
   }TMA_DROPITM;
 
 typedef struct tma_codelock
   {
-  char action,flags,eflags;
-  char znak;
+  TMA_GEN header; //znak is mapped to pflags
   char string[8];
-  char codenum;
+  uint8_t codenum;
   }TMA_CODELOCK;
 
 typedef struct tma_cancelaction
   {
-  char action,flags,eflags,pflags;
-  short sector,dir;
+  TMA_GEN header;
+  uint16_t sector,dir;
   }TMA_ACTN;
 
 typedef struct tma_swapsectors
   {
-  char action,flags,eflags,pflags;
+  TMA_GEN header;
   short sector1,sector2;
   }TMA_SWAPS;
 
 typedef struct tma_wound
   {
-  char action,flags,eflags,pflags;
-  short minor,major;
+  TMA_GEN header;
+  uint16_t minor,major;
   }TMA_WOUND;
 
 
 
 typedef struct tma_lock
   {
-  char action,flags,eflags;
-  short key_id;
-  short thieflevel;
+  TMA_GEN header;
+  uint16_t key_id;
+  uint16_t thieflevel;
   }TMA_LOCK;
 
 typedef struct tma_two_parms
   {
-  char action,flags,eflags;
-  short parm1,parm2;
+  TMA_GEN header;
+  int16_t parm1,parm2;
   }TMA_TWOP;
 
 typedef struct tma_create_unique
   {
-  char action,flags,eflags;
+  TMA_GEN header;
   TITEM item;
   }TMA_UNIQUE;
 
 typedef struct tma_globe
   { 
-  char action,flags,eflags,event; //event - MAGLOB_XXXX
-  unsigned short sector;	  //sektor of action target, when event occured
-  unsigned char side;		  //side of action target, when event occured
-  unsigned char cancel;		  //1 - cancel event
-  unsigned long param;		  //event depend param - zero is default
+  TMA_GEN header;
+  uint16_t sector;	  //sektor of action target, when event occured
+  uint8_t side;		  //side of action target, when event occured
+  uint8_t cancel;		  //1 - cancel event
+  uint32_t param;		  //event depend param - zero is default
   }TMA_GLOBE;
 
-
+/*
 typedef struct tma_ifsec
 {
-  char action,flags,eflags;
-  unsigned char side;		  //side of action target, when event occured
-  unsigned short sector;	  //sektor of action target, when event occured
-  short line;		  //jump line
-  char invert;				  //invert condition
+  TMA_GEN header;
+  uint16_t sector;	  //sektor of action target, when event occured
+  uint8_t side;		  //side of action target, when event occured
+  uint8_t invert;				  //invert condition
+  int16_t line;		  //jump line
 }TMA_IFSEC;
-
+*/
 
 
 extern TMA_LOADLEV loadlevel;
@@ -1292,7 +1281,7 @@ typedef union tmulti_action
   struct tma_two_parms twop;
   struct tma_create_unique uniq;
   struct tma_globe globe;
-  struct tma_ifsec ifsec;
+//  struct tma_ifsec ifsec;
   }TMULTI_ACTION;
 
 extern int **macros;                  //tabulka maker
@@ -1448,44 +1437,44 @@ char enable_sound(char enbl);
 
 typedef struct tmob
   {
-  char name[30];           //jmeno moba
-  short casting;
-  short adjusting[6*16];     //volba stredu pro animace
-  word sector,dir;        //pozice
-  char locx,locy;         //presna pozice
-  char headx,heady;        //pozice kam mob miri
-  short anim_counter;        //citac animaci
-  short vlastnosti[24];     //zakladni vlastnosti potvory
-  short inv[MOBS_INV];      //batoh potvory
-  short lives;              //pocet zivotu potvory
-  short cislo_vzoru;         //informace urcujici ze ktereho vzoru byl mob vytvoren
-  short speed;             //rychlost pohybu
-  short dohled;            //kam dohl‚dne
-  short dosah;             //okam‘ik za‡ tku souboje
-  char stay_strategy;      //chovani moba ve statickem modu (nepronasleduje)
-  char walk_data;           //cislo potrebne pro pohyb moba v bludisti
-  word bonus;              //bonus za zabiti
-  char flee_num;             //pravdepodobnost uteku
-  char anim_counts[6];     //pocet animacnich policek pro kazdy pohyb
-  char mobs_name[7];       //zaklad jmena souboru pro moba
-  long experience;          //zkusenost
-  char vlajky;             //BIT0 - 1 v boji
-  char anim_phase;            //cinnost kterou mob dela
-  short csektor;            //Cilovy sektor
-  short home_pos;          //domaci pozice
-  short next;              //Cislo dalsiho moba, ktery stoji na jeho pozici
-  char actions;            //pocet akci ktere muze potvora provest v kole
-  char hit_pos;           //animacni pozice, kdy potvora zasahne
-  word sounds[4];          //zvuky z listu
-  signed char palette;           // pocet pouzitelnych palet / cislo palety
-  char mode;              //akce potvory
-  short dialog;           //cislo dialogu, -1 kdyz neni;
-  char dialog_flags;      //vlajky mapovane do dialogu;
-  word money;             //penize
-  word specproc;          //specproc
-  word dostal;             //pocet zivotu, ktere mu byly ubrany poslednim zasahem
-  char user_data;         //data uzivatelem definovane - treba pro spec.
-  }TMOB;
+  char name[30];             //30 jmeno moba
+  int16_t casting;		     //32
+  int16_t adjusting[6*16];   //224 volba stredu pro animace
+  uint16_t sector,dir;       //228   pozice
+  int8_t locx,locy;          //230 presna pozice
+  int8_t headx,heady;        //232 pozice kam mob miri
+  int16_t  anim_counter;     //234 citac animaci
+  int16_t  vlastnosti[24];   //282 zakladni vlastnosti potvory
+  int16_t inv[MOBS_INV];     //314 batoh potvory
+  int16_t lives;             //316 pocet zivotu potvory
+  int16_t cislo_vzoru;       //318 informace urcujici ze ktereho vzoru byl mob vytvoren
+  int16_t speed;             //320 rychlost pohybu
+  int16_t dohled;            //323 kam dohl‚dne
+  int16_t dosah;             //324 okam‘ik za‡ tku souboje
+  uint8_t stay_strategy;     //325 chovani moba ve statickem modu (nepronasleduje)
+  uint8_t walk_data;         //326 cislo potrebne pro pohyb moba v bludisti
+  int16_t bonus;             //328 bonus za zabiti
+  uint8_t flee_num;          //329 pravdepodobnost uteku
+  uint8_t anim_counts[6];    //335 pocet animacnich policek pro kazdy pohyb
+  char mobs_name[7];         //342 zaklad jmena souboru pro moba
+  uint16_t experience[2];    //346 zkusenost
+  uint8_t vlajky;            //347 BIT0 - 1 v boji
+  uint8_t anim_phase;        //348 cinnost kterou mob dela
+  uint16_t csektor;          //350 Cilovy sektor
+  uint16_t home_pos;         //352 domaci pozice
+  uint16_t next;             //354 Cislo dalsiho moba, ktery stoji na jeho pozici
+  uint8_t actions;           //355 pocet akci ktere muze potvora provest v kole
+  uint8_t hit_pos;           //356 animacni pozice, kdy potvora zasahne
+  uint16_t sounds[4];        //358 zvuky z listu
+  int8_t palette;            //359 pocet pouzitelnych palet / cislo palety
+  uint8_t mode;              //360 akce potvory
+  uint16_t dialog;           //362 cislo dialogu, -1 kdyz neni;
+  uint8_t dialog_flags;      //363 vlajky mapovane do dialogu;
+  uint8_t money[2];          //365 penize
+  uint8_t specproc[2];       //367 specproc
+  uint8_t user_data;	     //368 data uzivatelem definovane - treba pro spec.
+  uint16_t dostal;			 //370 pocet zivotu, ktere mu byly ubrany poslednim zasahem
+}TMOB;
 
 
 extern TMOB mobs[MAX_MOBS];
@@ -1709,10 +1698,10 @@ void PodporaStitu(THUMAN *h, short *vlastnosti);
 
 typedef struct _tag_globalEventDef
 {
-  unsigned short sector;	  //sektor of action target, when event occured
-  unsigned char side;		  //side of action target, when event occured
-  unsigned char cancel;		  //
-  long param;		  //event depend param - zero is default
+  uint16_t sector;	  //sektor of action target, when event occured
+  uint8_t side;		  //side of action target, when event occured
+  uint8_t cancel;		  //
+  int32_t param;		  //event depend param - zero is default
 }SGlobalEventDef;
 
 extern SGlobalEventDef GlobEventList[MAGLOB_NEXTID];
