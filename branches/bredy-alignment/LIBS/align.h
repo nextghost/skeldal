@@ -13,12 +13,12 @@ extern "C" {
 
 	static __inline int uaGetInt(const void *ptr) {
 		unsigned char *c = (unsigned char *)ptr;
-		return (int) (c[0] | (c[1] << 8) | (c[2] << 16) | (c[2] << 24));
+		return (int) (c[0] | (c[1] << 8) | (c[2] << 16) | (c[3] << 24));
 	}
 
 	static __inline unsigned int uaGetUInt(const void *ptr) {
 		unsigned char *c = (unsigned char *)ptr;
-		return (unsigned int) (c[0] | (c[1] << 8) | (c[2] << 16) | (c[2] << 24));
+		return (unsigned int) (c[0] | (c[1] << 8) | (c[2] << 16) | (c[3] << 24));
 	}
 
 
