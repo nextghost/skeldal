@@ -791,7 +791,8 @@ char clk_sleep(int id,int xa,int ya,int xr,int yr);
 
 //inventory viewer - items
 
-#define IT_ICONE_SIZE (2+2+2+2*256+55*45)
+#define IT_ICONE_SIZE_MISALIGN (2+2+2+2*256+55*45)
+#define IT_ICONE_SIZE (2+2+2+2*256+55*45+1)
 #define MAX_INV 30
 #define HUMAN_PLACES 9
 #define HUMAN_RINGS 4

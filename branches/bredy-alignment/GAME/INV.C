@@ -164,19 +164,30 @@ void item_sound_event(int item,int sector)
 static void items_15to16_correct(void **p,long *s)
   {
   int i,j;
+  int newsize = *s+(IT_ICONE_SIZE - IT_ICONE_SIZE_MISALIGN)*IT_LIB_SIZE;
+  void *newblock = getmem(newsize);
   char *cur=(char *)(*p);
+  char *nx = (char *)(newblock);
   for (i=0;i<IT_LIB_SIZE;i++)
     {
-    int pos=IT_ICONE_SIZE*i;
-    word *pal;
+    int pos=IT_ICONE_SIZE_MISALIGN*i;
+	int newpos = IT_ICONE_SIZE*i;
+	word *pal;
+
+	if (pos>=*s) return;
+
+	memcpy(nx+newpos,cur+pos,IT_ICONE_SIZE_MISALIGN);
+
     
-    if (pos>=*s) return;
-    pal=((word *)(cur+pos))+3;
+    pal=((word *)(nx+newpos))+3;
     for (j=0;j<256;j++,pal++)
       {
       *pal=RGB555(*pal>>10,(*pal>>5)& 0x1F,(*pal & 0x1F));
       }
     }
+  free(*p);
+  *p = newblock;
+  *s = newsize;
   }
 
 void load_items()
