@@ -174,7 +174,8 @@ static void items_15to16_correct(void **p,long *s)
 	int newpos = IT_ICONE_SIZE*i;
 	word *pal;
 
-	if (pos>=*s) return;
+	if (pos+IT_ICONE_SIZE_MISALIGN>*s) 
+		break;
 
 	memcpy(nx+newpos,cur+pos,IT_ICONE_SIZE_MISALIGN);
 
