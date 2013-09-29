@@ -54,6 +54,7 @@
 #include "wizard.h"
 #include "version.h"
 #include <uvodni.h>
+#include "memfile.h"
 
 #define CONFIG_NAME SKELDALINI
 
@@ -598,28 +599,9 @@ void clrscr()
 
 void purge_temps(char z)
   {
-  HANDLE rc;
-  WIN32_FIND_DATA fi;
   char c[200];
 
-
-     strcpy(c,SWAPPATH);
-     strcat(c,"*.TMP");
-     rc=FindFirstFile(c,&fi);
-     if (rc!=INVALID_HANDLE_VALUE)
-       do
-         {
-         strcpy(c,SWAPPATH);
-         strcat(c,fi.cFileName);
-         if (fi.cFileName[0]!='~')
-          {
-          SEND_LOG("(PURGE) Purging temp '%s'",c,0);
-          remove(c);
-          }
-         }
-       while (FindNextFile(rc,&fi));
-    FindClose(rc);
-
+	deleteAllMemFiles();
     if (z)
      {
      strcpy(c,SWAPPATH);

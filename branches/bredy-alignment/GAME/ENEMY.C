@@ -35,6 +35,7 @@
 #include "globals.h"
 #include "specproc.h"
 #include "align.h"
+#include "memfile.h"
 
 #define MOB_ZNAKY "FLBLCH"
 #define MOB_START 1
@@ -129,38 +130,38 @@ void smeruj_moba(TMOB *m,int smer)
     }
   }
 
-void save_enemy_paths(FILE *f)
+void save_enemy_paths(PMEMFILE *fsta)
   {
   int i,s;
   word *w;
 
   for(i=0;i<MAX_MOBS;i++) if (mob_paths[i]!=NULL)
     {
-    fwrite(&i,2,1,f);
+    writeMemFile(fsta,&i,2);
     w=mob_path_ptr[i];
     s=1;while(*w++) s++;
-    fwrite(&s,1,sizeof(s),f);
-    fwrite(mob_path_ptr[i],s,2,f);
+    writeMemFile(fsta,&s,sizeof(s));
+    writeMemFile(fsta,mob_path_ptr[i],s*2);
     }
   s=-1;
-  fwrite(&s,1,2,f);
+  writeMemFile(fsta,&s,2);
   }
 
-int load_enemy_paths(FILE *f)
+int load_enemy_paths(PMEMFILE fsta, int *seekPos)
   {
   short i=-1;
   int s;
   word *w;
 
   for(i=0;i<MAX_MOBS;i++) free_path(i);
-  fread(&i,2,1,f);
+  readMemFile(fsta,seekPos,&i,2);
   while(i!=-1)
     {
-    fread(&s,1,sizeof(s),f);
+    readMemFile(fsta,seekPos,&s,sizeof(s));
     w=NewArr(word,s);
-    fread(w,s,2,f);
+    readMemFile(fsta,seekPos,w,s*2);
     register_mob_path(i,w);
-    if (fread(&i,2,1,f)==0) return 1;
+    if (readMemFile(fsta,seekPos,&i,2)==0) return 1;
     }
   return 0;
   }

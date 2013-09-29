@@ -1007,8 +1007,8 @@ typedef struct tproduct
 
 typedef struct tshop
   {
-  char keeper[19];
-  char picture[13];  
+  char keeper[16];
+  char picture[16];  
   int koef;
   int products;
   int shop_id;
@@ -1294,8 +1294,6 @@ void call_macro(int side,int flags);
 void call_macro_ex(int side,int flags, int runatsect);
 char get_player_triggered(int p);  //zjistuje zda hrac s cislem p byl makrem zasazen;
 char save_load_trigger(short load); //uklada/obnovuje trigger vlajky. -1 uklada, jinak hodnota ulozeneho triggeru
-char save_codelocks(FILE *fsta); //uklada do savegame nastaveni kodovych zamku (128 bytu);
-char load_codelocks(FILE *fsta); //obnovuje ze savegame nastaveni kodovych zamku (128 bytu);
 
 
 typedef struct letici_vec
@@ -1504,8 +1502,6 @@ int vyber_potvoru(int sect,int dir,int *chaos); //vybere potvoru ze sektoru a sm
 void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize);
 char mob_test_na_bitvu(TMOB *p);  //nastavi p->vlajky|MOB_INBATTLE pokud potvora muze vstoupit do bitvy;
 void send_mob_to(int m,word *path);
-void save_enemy_paths(FILE *f);
-int load_enemy_paths(FILE *f);
 void regen_all_mobs();
 
 
@@ -1586,8 +1582,6 @@ void display_spell_in_icone(int handle,int xicht);
 void reinit_kouzla_full();
 char get_rune_enable(THUMAN *p,int strnum);
 void remove_all_mob_spells();
-int save_spells(FILE *f);
-int load_spells(FILE *f);
 char get_spell_track(int num);
 void mob_cast(int num,TMOB *m,int mob_num);
 void thing_cast(int num,int postava,int sector,TMOB *victim,char noanim);//vyvolavaji veci
@@ -1660,8 +1654,6 @@ void show_jrc_logo(char *filename);
 
 //dialogy
 void call_dialog(int entr,int mob);
-char save_dialog_info(FILE *f);
-char load_dialog_info(FILE *f);
 short *q_item_one(int i,int itnum); //test zda postava i ma vec itnum
 short *q_item(int itnum,int sector); //test zda-li aspon jeden na sectoru ma vec itnum
 void change_flag(int flag,char mode); //meni vlajku = 0 - reset, 1 - set, 2 - neg

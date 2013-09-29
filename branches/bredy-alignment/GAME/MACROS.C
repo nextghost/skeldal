@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "specproc.h"
 #include "align.h"
+#include <LIBS/memfile.h>
 
 int **macros=NULL;
 void *macro_block;
@@ -902,7 +903,7 @@ static char lock_saved=255;
 static char lock_empty=254;
 
 
-char save_codelocks(FILE *fsta)
+char save_codelocks(PMEMFILE *fsta)
   {
   char *c;
   int i;
@@ -913,30 +914,27 @@ char save_codelocks(FILE *fsta)
   if (!i)
      {
      SEND_LOG("(SAVELOAD) Codelocks wasn't used in this map... not saved",0,0);
-     return !fwrite(&lock_empty,sizeof(lock_empty),1,fsta);
+	 writeMemFile(fsta,&lock_empty,sizeof(lock_empty));
+     return 0;
      }
   SEND_LOG("(SAVELOAD) Storing code-locks...",0,0);
-  if (!fwrite(&lock_saved,sizeof(lock_saved),1,fsta)) return 1;
-  return !fwrite(codelock_memory,sizeof(codelock_memory),1,fsta);
+  writeMemFile(&fsta,&lock_saved,sizeof(lock_saved));
+  writeMemFile(&fsta,codelock_memory,sizeof(codelock_memory));
+  return 0;
   }
 
 
-char load_codelocks(FILE *fsta)
+char load_codelocks(PMEMFILE fsta,unsigned int *fpos)
   {
   char c;
 
-  if (!fread(&c,sizeof(lock_empty),1,fsta)) return 1;
+  readMemFile(fsta,fpos,&c,sizeof(lock_empty));
   if (c!=lock_saved)
      {
-     if (c!=lock_empty)
-        {
-        fseek(fsta,-1,SEEK_CUR); //uprav pripadne stare verze savegamu ktere nemaji codelocky
-        SEND_LOG("(ERROR) Invalid value for codelocks... may be it's old version of savegame",0,0);
-        }
      memset(codelock_memory,0,sizeof(codelock_memory));
      return 0;
      }
   SEND_LOG("(SAVELOAD) Restoring code-locks for this map...",0,0);
-  return !fread(codelock_memory,sizeof(codelock_memory),1,fsta);
+  return readMemFile(fsta,fpos,codelock_memory,sizeof(codelock_memory));
   }
 

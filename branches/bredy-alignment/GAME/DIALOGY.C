@@ -40,6 +40,7 @@
 #include "engine1.h"
 #include <pcx.h>
 #include "globals.h"
+#include "memfile.h"
 
 typedef struct t_paragraph
   {
@@ -1370,7 +1371,7 @@ void call_dialog(int entr,int mob)
   do_dialog();  
   }
 
-char save_dialog_info(FILE *f)
+char save_dialog_info(PMEMFILE *fsta)
   {
   int pgf_pocet;
   int *p,i;
@@ -1381,7 +1382,7 @@ char save_dialog_info(FILE *f)
   SEND_LOG("(DIALOGS)(SAVELOAD) Saving dialogs info...",0,0);
   p=ablock(H_DIALOGY_DAT);
   pgf_pocet=*p;
-  fwrite(&pgf_pocet,1,4,f);
+  writeMemFile(fsta,&pgf_pocet,4);
   siz=(pgf_pocet+3)/4;
   if (siz)
      {
@@ -1394,15 +1395,15 @@ char save_dialog_info(FILE *f)
        int j=(i & 3)<<1;
        c[i>>2]|=(q[i].visited<<j) | (q[i].first<<(j+1));
        }
-     res|=fwrite(c,1,siz,f)!=siz;
+     writeMemFile(fsta,c,siz);
      free(c);
      }
-  res|=(fwrite(_flag_map,1,sizeof(_flag_map),f)!=sizeof(_flag_map));
+  writeMemFile(fsta,_flag_map,sizeof(_flag_map));
   SEND_LOG("(DIALOGS)(SAVELOAD) Done...",0,0);
   return res;
   }
 
-char load_dialog_info(FILE *f)
+char load_dialog_info(PMEMFILE fsta, int *seekPos)
   {
   int pgf_pocet;
   int *p,i;
@@ -1413,18 +1414,18 @@ char load_dialog_info(FILE *f)
   SEND_LOG("(DIALOGS)(SAVELOAD) Loading dialogs info...",0,0);
   p=ablock(H_DIALOGY_DAT);
   aswap(H_DIALOGY_DAT);
-  fread(&pgf_pocet,1,4,f);
+  readMemFile(fsta,seekPos,&pgf_pocet,4);
   siz=(pgf_pocet+3)/4;
   if (pgf_pocet!=*p)
      {
      SEND_LOG("(ERROR) Dialogs has different sizes %d!=%d (can be skipped)",pgf_pocet,*p);
-     fseek(f,siz+sizeof(_flag_map),SEEK_CUR);
+	 (*seekPos)+=siz+sizeof(_flag_map);
      return 0;
      }
   if (siz)
      {
      c=getmem(siz);
-     res|=(fread(c,1,siz,f)!=siz);
+     readMemFile(fsta,seekPos,c,siz);
      p=ablock(H_DIALOGY_DAT);
      q=(T_PARAGRAPH *)(p+2);
      for(i=0;i<pgf_pocet;i++)
@@ -1435,7 +1436,7 @@ char load_dialog_info(FILE *f)
        }
      free(c);
      }
-  res|=(fread(_flag_map,1,sizeof(_flag_map),f)!=sizeof(_flag_map));
+  readMemFile(fsta,seekPos,_flag_map,sizeof(_flag_map));
   SEND_LOG("(DIALOGS)(SAVELOAD) Done...",0,0);
   return res;
   }

@@ -43,6 +43,8 @@
 #include <zvuk.h>
 #include <SYS\STAT.H>
 #include "globals.h"
+#include <libs/memfile.h>
+#include "gamesave.h"
 
 #define STATE_CUR_VER 1
 
@@ -60,9 +62,10 @@
 
 #define SSAVE_VERSION 0
 
-static FILE *story=NULL;
+static PMEMFILE story =NULL;
 static char load_another;
 char reset_mobiles=0;
+
 
 typedef struct s_save
   {
@@ -101,50 +104,7 @@ typedef struct s_save
 
 static int get_list_count();
 
-static word vypocet_crc(char *data,long delka)
-  {
-  unsigned long l=0;
-  do
-     {
-     l=(l<<8)|(delka>0?*data++:0);delka--;
-     l=(l<<8)|(delka>0?*data++:0);delka--;
-     l%=ZAKLAD_CRC;
-     }
-  while(delka>-1);
-  return l & 0xffff;
-  }
-static unable_open_temp(char *c)
-  {
-  char d[]="Unable to open the file : ",*e;
 
-  concat(e,d,c);
-  closemode();
-  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
-  SEND_LOG("(SAVELOAD) Open temp error detected (%s)",c,0);
-  exit(1);
-  }
-
-static unable_write_temp(char *c)
-  {
-  char d[]="Unable to write to the temp file : ",*e;
-
-  concat(e,d,c);
-  closemode();
-  MessageBox(NULL,e,NULL,MB_OK|MB_ICONSTOP);
-  SEND_LOG("(SAVELOAD) Open temp error detected (%s)",c,0);
-  exit(1);
-  }
-
-void expand_map_file_name(char *s) //prepise *.map na fullpath\*.TMP
-  {
-  char *c;
-  char *st;
-  c=strchr(s,0);
-  while (c!=s && *c!='.' && *c!='\\') c--;
-  if (*c=='.') strcpy(c,".TMP");
-  concat(st,pathtable[SR_TEMP],s);
-  strcpy(s,st);
-  }
 
 int load_org_map(char *filename,void **sides,void **sectors,void **coords,int *mapsize)
   {
@@ -196,18 +156,19 @@ int load_org_map(char *filename,void **sides,void **sectors,void **coords,int *m
   return 0;
   }
 
-void save_daction(FILE *f,int count,D_ACTION *ptr)
+void save_daction(PMEMFILE *f,int count,D_ACTION *ptr)
   {
   if (ptr!=NULL)
      {
      save_daction(f,count+1,ptr->next);
-     fwrite(ptr,1,sizeof(D_ACTION),f);
+     writeMemFile(f,ptr,sizeof(D_ACTION));
      }
-  else
-     fwrite(&count,1,2,f);
+  else {
+	  writeMemFile(f,&count,2);
   }
+}
 
-void load_daction(FILE *fsta)
+void load_daction(PMEMFILE f, int *seekPos)
   {
   int i,j;
   i=0;
@@ -216,19 +177,20 @@ void load_daction(FILE *fsta)
      D_ACTION *p;
      p=d_action; d_action=p->next;free(p);
      }
-  fread(&i,1,2,fsta);d_action=NULL;
+  readMemFile(f,seekPos,&i,2);
+  d_action=NULL;
   for(j=0;j<i;j++)
      {
      D_ACTION *p;
 
      p=(D_ACTION *)getmem(sizeof(D_ACTION));
-     fread(p,1,sizeof(D_ACTION),fsta);
+     readMemFile(f,seekPos,p,sizeof(D_ACTION));
      p->next=d_action;
      d_action=p;
      }
   }
 
-void save_items(FILE *f)
+void save_items(PMEMFILE *f)
   {
   int i,j;
   short *c;
@@ -237,55 +199,55 @@ void save_items(FILE *f)
      if (map_items[i]!=NULL)
         {
         for(j=1,c=map_items[i];*c;c++,j++);
-        fwrite(&i,1,2,f);
-        fwrite(&j,1,2,f);
-        fwrite(map_items[i],2,j,f);
+		writeMemFile(f,&i,2);
+		writeMemFile(f,&j,2);
+		writeMemFile(f,map_items[i],j*2);
         }
   i=-1;
-  fwrite(&i,1,2,f);
+  writeMemFile(f,&i,2);
   }
 
-void restore_items(FILE *f)
+void restore_items(PMEMFILE f, int *seekPos)
   {
   short i,j;
 
   for(i=0;i<mapsize*4;i++) if (map_items[i]!=NULL) free(map_items[i]);
   memset(map_items,0,mapsize*16);
-  while(fread(&i,1,2,f) && i!=-1)
+  while(readMemFile(f,seekPos,&i,2) && i!=-1)
      {
-     fread(&j,1,2,f);
-     map_items[i]=(short *)getmem(j*2);
-     fread(map_items[i],2,j,f);
+		readMemFile(f,seekPos,&j,2);
+	    map_items[i]=(short *)getmem(j*2);
+		readMemFile(f,seekPos,map_items[i],2*j);
      }
   }
 
 extern TSTR_LIST texty_v_mape;
 
-void save_map_description(FILE *f)
+void save_map_description(PMEMFILE *f)
   {
   int count,max;
   int i;
 
   if (texty_v_mape==NULL) max=0;else max=str_count(texty_v_mape);
   for(i=0,count=0;i<max;i++) if (texty_v_mape[i]!=NULL) count++;
-  fwrite(&count,1,sizeof(count),f);
+  writeMemFile(f,&count,sizeof(count));
   for(i=0;i<max;i++) if (texty_v_mape[i]!=NULL)
      {
      int len;
      len=strlen(texty_v_mape[i]+12)+12+1;
-     fwrite(&len,1,2,f);
-     fwrite(texty_v_mape[i],1,len,f);
+     writeMemFile(f,&len,2);
+     writeMemFile(f,texty_v_mape[i],len);
      }
   }
 
-void load_map_description(FILE *f)
+void load_map_description(PMEMFILE f, unsigned int *seekPos)
   {
   int count;
   int i;
   word len;
 
   if (texty_v_mape!=NULL)release_list(texty_v_mape);
-  fread(&count,1,sizeof(count),f);
+  readMemFile(f,seekPos,&count,sizeof(count));
   if (!count)
      {
      texty_v_mape=NULL;
@@ -294,7 +256,8 @@ void load_map_description(FILE *f)
   texty_v_mape=create_list(count);
   for(i=0;i<count;i++)
      {
-     fread(&len,1,2,f);
+     readMemFile(f,seekPos,&len,2);
+
         {
         char *s;
         s=(char *)alloca(len);
@@ -302,57 +265,57 @@ void load_map_description(FILE *f)
         s[len-1]=0;
         str_replace(&texty_v_mape,i,s);
         }
-     fread(texty_v_mape[i],1,len,f);
+     readMemFile(f,seekPos,texty_v_mape[i],len);
      }
   }
 
-void save_vyklenky(FILE *fsta)
+void save_vyklenky(PMEMFILE *fsta)
   {
-  fwrite(&vyk_max,1,sizeof(vyk_max),fsta);
+  writeMemFile(fsta,&vyk_max,sizeof(vyk_max));
   if (vyk_max)
-     fwrite(map_vyk,vyk_max,sizeof(TVYKLENEK),fsta);
+     writeMemFile(fsta,map_vyk,vyk_max*sizeof(TVYKLENEK));
   }
 
-int load_vyklenky(FILE *fsta)
+int load_vyklenky(PMEMFILE fsta, unsigned int *seekPos)
   {
   int i=0;
-  fread(&i,1,sizeof(vyk_max),fsta);
+  readMemFile(fsta,seekPos,&i,sizeof(vyk_max));
   if (vyk_max)
      {
      if (i>vyk_max) return -2;
-     fread(map_vyk,vyk_max,sizeof(TVYKLENEK),fsta);
+     readMemFile(fsta,seekPos,map_vyk,vyk_max*sizeof(TVYKLENEK));
      }
   return 0;
   }
 
 
-void save_all_fly(FILE *fsta)
+void save_all_fly(PMEMFILE *fsta)
   {
   LETICI_VEC *f;
 
   f=letici_veci;
-  fwrite(&f,1,sizeof(f),fsta);
+  writeMemFile(fsta,&f,sizeof(f));
   while (f!=NULL)
      {
      short *c;
-     fwrite(f,1,sizeof(*f),fsta);
+     writeMemFile(fsta,f,sizeof(*f));
      c=f->items;
-     if (c!=NULL) do fwrite(c,1,2,fsta); while (*c++);
+     if (c!=NULL) do writeMemFile(fsta,c,2); while (*c++);
      f=f->next;
      }
   }
 
-int load_all_fly(FILE *fsta)
+int load_all_fly(PMEMFILE fsta, int *seekPos)
   {
   LETICI_VEC *f=NULL,*n,*p;
-  fread(&f,1,sizeof(f),fsta);
+  readMemFile(fsta,seekPos,&f,sizeof(f));
   p=letici_veci;
   while (f!=NULL)
      {
      short items[100],*c;
      n=New(LETICI_VEC);
      c=items;memset(items,0,sizeof(items));
-     if (fread(n,1,sizeof(*n),fsta)!=sizeof(*n))
+     if (readMemFile(fsta,seekPos,n,sizeof(*n))!=sizeof(*n))
         {
         free(n);
         if (p!=NULL) p->next=NULL;
@@ -361,7 +324,7 @@ int load_all_fly(FILE *fsta)
      if (n->items!=NULL)
         {
         do
-          fread(c,1,2,fsta);
+          readMemFile(fsta,seekPos,c,2);
         while (*c++);
         n->items=NewArr(short,c-items);
         memcpy(n->items,items,(c-items)*sizeof(short));
@@ -375,13 +338,11 @@ int load_all_fly(FILE *fsta)
   }
 
 
-
-
 int save_map_state() //uklada stav mapy pro savegame (neuklada aktualni pozici);
   {
   char sta[200];
   char *bf;
-  FILE *fsta;
+  PMEMFILE fsta;
   int i;
   long siz;
  TSTENA *org_sides;
@@ -391,160 +352,170 @@ int save_map_state() //uklada stav mapy pro savegame (neuklada aktualni pozici);
 
   restore_sound_names();
   strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"wb");if (fsta==NULL) unable_open_temp(sta);
+  fsta=createMemFile(sta,16);
   SEND_LOG("(SAVELOAD) Saving map state for current map",0,0);
   if (load_org_map(level_fname,&org_sides,&org_sectors,NULL,NULL)) goto err;
   siz=(mapsize+7)/8;
   bf=(char *)getmem(siz);
   ver=0;
-  fwrite(&ver,sizeof(ver),1,fsta);  //<-------------------------
+  writeMemFile(&fsta,&ver,sizeof(ver));  //<-------------------------
   ver=STATE_CUR_VER;
-  fwrite(&ver,sizeof(ver),1,fsta);  //<-------------------------
-  fwrite(&mapsize,sizeof(mapsize),1,fsta);  //<-------------------------
+  writeMemFile(&fsta,&ver,sizeof(ver));  //<-------------------------
+  writeMemFile(&fsta,&mapsize,sizeof(mapsize));  //<-------------------------
   memset(bf,0,siz);
-  fwrite(&siz,1,sizeof(siz),fsta);          //<-------------------------
+  writeMemFile(&fsta,&siz,sizeof(siz));          //<-------------------------
   for(i=0;i<mapsize;i++)  //save automap
     if (map_coord[i].flags & MC_AUTOMAP) bf[i>>3]|=1<<(i & 7);
-  if (!fwrite(bf,siz,1,fsta)) goto err;     //<-------------------------
+  writeMemFile(&fsta,bf,siz);
   for(i=0;i<mapsize;i++)  //save disclosed
     if (map_coord[i].flags & MC_DISCLOSED) bf[i>>3]|=1<<(i & 7);
-  if (!fwrite(bf,siz,1,fsta)) goto err;     //<-------------------------
-  save_map_description(fsta);
+  writeMemFile(&fsta,bf,siz);
+  save_map_description(&fsta);
   for(i=0;i<mapsize*4;i++)  //save changed sides
      if (memcmp(map_sides+i,org_sides+i,sizeof(TSTENA)))
         {
-        fwrite(&i,1,2,fsta);
-        if (fwrite(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
+        writeMemFile(&fsta,&i,2);
+        writeMemFile(&fsta,map_sides+i,sizeof(TSTENA));
         }
   i=-1;
-  fwrite(&i,1,2,fsta);
+  writeMemFile(&fsta,&i,2);
   for(i=0;i<mapsize;i++)   //save changed sectors
      if (memcmp(map_sectors+i,org_sectors+i,sizeof(TSECTOR)))
         {
-        fwrite(&i,1,2,fsta);
-        if (fwrite(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
+        writeMemFile(&fsta,&i,2);
+        writeMemFile(&fsta,map_sectors+i,sizeof(TSECTOR));
         }
   i=-1;
-  fwrite(&i,1,2,fsta);
+  writeMemFile(&fsta,&i,2);
   for(i=0;i<MAX_MOBS;i++) if (mobs[i].vlajky & MOB_LIVE)
      {
-     fwrite(&i,1,2,fsta);
-     fwrite(mobs+i,1,sizeof(TMOB),fsta); //save_mobmap
+     writeMemFile(&fsta,&i,2);
+     writeMemFile(&fsta,mobs+i,sizeof(TMOB)); //save_mobmap
      }
   i=-1;
-  fwrite(&i,1,2,fsta);
+  writeMemFile(&fsta,&i,2);
   i=mapsize*4;
-  fwrite(&i,1,sizeof(i),fsta); //save flag maps //<-------------------------
-  if (fwrite(flag_map,1,i,fsta)!=(unsigned)i) goto err;   //<-------------------------
-  save_daction(fsta,0,d_action); //save dactions//<-------------------------
-  fwrite(&macro_block_size,1,sizeof(macro_block_size),fsta);
-  if (macro_block_size)fwrite(macro_block,1,macro_block_size,fsta);//save_macros
-  if (save_codelocks(fsta)) goto err;
-  save_items(fsta);
-  save_vyklenky(fsta);
-  save_all_fly(fsta);
-  save_enemy_paths(fsta);
+  writeMemFile(&fsta,&i,4); //save flag maps //<-------------------------
+  writeMemFile(&fsta,flag_map,i);
+  save_daction(&fsta,0,d_action); //save dactions//<-------------------------
+  writeMemFile(&fsta,&macro_block_size,4);
+  if (macro_block_size) writeMemFile(&fsta,macro_block,macro_block_size);//save_macros
+  if (save_codelocks(&fsta)) goto err;
+  save_items(&fsta);
+  save_vyklenky(&fsta);
+  save_all_fly(&fsta);
+  save_enemy_paths(&fsta);
   res=0;
-  err:
   SEND_LOG("(SAVELOAD) State of current map saved (err:%d)",res,0);
-  fclose(fsta);
+  commitMemFile(fsta);
   free(org_sectors);
   free(org_sides);
   free(bf);
-  if (res)
-     {
-     remove(sta);
-     unable_write_temp(sta);
-     }
   return res;
+err:
+  res = 1;
+  SEND_LOG("(SAVELOAD) Can't load original map to make difference (err:%d)",res,0);
+  return 1;
   }
 
 int load_map_state() //obnovuje stav mapy; nutno volat po zavolani load_map;
   {
-  char sta[200];
   char *bf;
-  FILE *fsta;
-  int i;
+  PMEMFILE fsta;
+  unsigned int fstaposaccu;
+  unsigned int *fstapos = &fstaposaccu;
+  int i = 0;
   long siz;
   short res=-2;
   int ver=0;
 
 
-  strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"rb");if (fsta==NULL) return -1;
-  i=0;fread(&i,sizeof(mapsize),1,fsta);
+  fsta=openMemFile(level_fname);
+  if (fsta==NULL) return -1;
+  *fstapos = 0;
+  i=0;
+  readMemFile(fsta,fstapos,&i,sizeof(mapsize));
   if (i==0)
   {
-    if (!fread(&ver,sizeof(ver),1,fsta)) goto err;
+    readMemFile(fsta,fstapos,&ver,sizeof(ver));
     if (ver>STATE_CUR_VER) goto err;
-    if (!fread(&i,sizeof(mapsize),1,fsta)) goto err;
+    readMemFile(fsta,fstapos,&i,sizeof(mapsize));
     if (mapsize!=i) goto err;
     SEND_LOG("(SAVELOAD) Loading map state for current map",0,0);
-    fread(&siz,1,sizeof(siz),fsta);
+    readMemFile(fsta,fstapos,&siz,sizeof(siz));
     bf=(char *)getmem(siz);
-    if (!fread(bf,siz,1,fsta)) goto err;
+    readMemFile(fsta,fstapos,bf,siz);
     for (i=0;i<mapsize;i++)
       if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_AUTOMAP;
-    if (!fread(bf,siz,1,fsta)) goto err;
+    if (!readMemFile(fsta,fstapos,bf,siz)) goto err;
     for (i=0;i<mapsize;i++)
       if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_DISCLOSED;
    }
   else
   {
-    if (mapsize!=i) return fclose(fsta);
+    if (mapsize!=i) goto err;
     SEND_LOG("(SAVELOAD) Loading map state for current map",0,0);
-    fread(&siz,1,sizeof(siz),fsta);
+    readMemFile(fsta,fstapos,&siz,sizeof(siz));
     bf=(char *)getmem(siz);
-    if (!fread(bf,siz,1,fsta)) goto err;
+    readMemFile(fsta,fstapos,bf,siz);
     for (i=0;i<mapsize;i++)
        map_coord[i].flags|=(bf[i>>3]>>(i & 7)) & 1;
   }
-  load_map_description(fsta);
-  while (fread(&i,1,2,fsta) && i<=mapsize*4)
-     if (fread(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
-  while (fread(&i,1,2,fsta) && i<=mapsize)
-     if (fread(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
+  load_map_description(fsta,fstapos);
+  readMemFile(fsta,fstapos,&i,2);
+  while (i != -1 && i<=mapsize*4) {
+      readMemFile(fsta,fstapos,map_sides+i,sizeof(TSTENA));
+	  readMemFile(fsta,fstapos,&i,2);
+  }
+  readMemFile(fsta,fstapos,&i,2);
+  while (i != -1 && i<=mapsize) {
+      readMemFile(fsta,fstapos,map_sectors+i,sizeof(TSECTOR));
+	  readMemFile(fsta,fstapos,&i,2);
+  
+  }
   if (reset_mobiles)  //reloads mobiles if flag present
     {
     char mm[MAX_MOBS];
     for(i=0;i<MAX_MOBS;mobs[i].vlajky &=~MOB_LIVE,i++)
       if (mobs[i].vlajky & MOB_LIVE) mm[i]=1;else mm[i]=0;
-    while (fread(&i,1,2,fsta) && i<=MAX_MOBS)
+	readMemFile(fsta,fstapos,&i,2);
+    while (i!=-1 && i<=MAX_MOBS)
       {
       if (mm[i]) mobs[i].vlajky |=MOB_LIVE;
-      fseek(fsta,sizeof(TMOB),SEEK_CUR);
+	  (*fstapos)+=sizeof(TMOB);
+	  readMemFile(fsta,fstapos,&i,2);
       }
     reset_mobiles=0;
     }
   else
     {
-    for(i=0;i<MAX_MOBS;(mobs[i].vlajky &=~MOB_LIVE),i++);
-    while (fread(&i,1,2,fsta) && i<=MAX_MOBS)
-       if (fread(mobs+i,1,sizeof(TMOB),fsta)!=sizeof(TMOB)) goto err;
-    }
+		for(i=0;i<MAX_MOBS;(mobs[i].vlajky &=~MOB_LIVE),i++);
+		readMemFile(fsta,fstapos,&i,2);
+		while (i!=-1 && i<=MAX_MOBS) {
+			readMemFile(fsta,fstapos,mobs+i,sizeof(TMOB));
+			readMemFile(fsta,fstapos,&i,2);
+		}
+	}
   for(i=0;i<MAX_MOBS;i++) mobs[i].vlajky &=~MOB_IN_BATTLE;
-  refresh_mob_map();
-  fread(&i,1,sizeof(i),fsta);
-  fread(flag_map,1,i,fsta);
-  load_daction(fsta);
-  fread(&i,1,sizeof(macro_block_size),fsta);
-  if (macro_block_size && i==macro_block_size)fread(macro_block,1,macro_block_size,fsta);
-  else
-     {
-     fseek(fsta,i,SEEK_CUR);
+  refresh_mob_map();  
+  readMemFile(fsta,fstapos,&i,4);
+  readMemFile(fsta,fstapos,flag_map,i);
+  load_daction(fsta,fstapos);
+  readMemFile(fsta,fstapos,&i,4);
+  if (macro_block_size && i==macro_block_size) {
+	  readMemFile(fsta,fstapos,macro_block,macro_block_size);
+  } else {
+     (*fstapos) += i;
      SEND_LOG("(ERROR) Multiaction: Sizes mismatch %d != %d",i,macro_block_size);
-     }
-  if (load_codelocks(fsta)) goto err;
-  restore_items(fsta);
+  }
+  if (load_codelocks(fsta,fstapos)) goto err;
+  restore_items(fsta,fstapos);
   res=0;
-  res|=load_vyklenky(fsta);
-  res|=load_all_fly(fsta);
-  res|=load_enemy_paths(fsta);
+  res|=load_vyklenky(fsta,fstapos);
+  res|=load_all_fly(fsta,fstapos);
+  res|=load_enemy_paths(fsta,fstapos);
   err:
   SEND_LOG("(SAVELOAD) State of current map loaded (err:%d)",res,0);
-  fclose(fsta);
   free(bf);
   return res;
   }
@@ -573,99 +544,65 @@ void restore_current_map() //pouze obnovuje ulozeny stav aktualni mapy
       2 internal error
       3 checksum error
  */
-int pack_status_file(FILE *f,char *status_name)
+int pack_status_file(FILE *f,PMEMFILE stt)
   {
-  int stt;
+  unsigned int sttpos = 0;
   char rcheck=0;
   long fsz;
-  char *buffer,*c,*fullnam;
-  word crc;
+  int nlen = strlen(stt->name);
 
-  SEND_LOG("(SAVELOAD) Packing status file '%s'",status_name,0);
-  fullnam=alloca(strlen(status_name)+strlen(pathtable[SR_TEMP])+1);
-  if (fullnam==NULL) return 2;
-  strcpy(fullnam,pathtable[SR_TEMP]);
-  strcat(fullnam,status_name);
-  stt=open(fullnam,O_RDONLY | O_BINARY);
-  fsz=filelength(stt);
-  c=buffer=getmem(fsz+12+4+2);
-  strcpy(c,status_name);c+=12;
-  *(long *)c=fsz+2;
-  c+=sizeof(long);
-  read(stt,c,fsz);
-  close(stt);
-  crc=vypocet_crc(c,fsz);
-  c+=fsz;
-  memcpy(c,&crc,sizeof(crc));
-  fsz+=12+4+2;
-  rcheck=(fwrite(buffer,1,fsz,f)!=(unsigned)fsz);
-  free(buffer);
-  return  rcheck;
+
+  SEND_LOG("(SAVELOAD) Packing status file '%s'",stt->name,0);
+  if (fwrite(&nlen,1,2,f) != 2) return 1;
+  if (fwrite(stt->name,1,nlen,f) != nlen) return 1;
+  fsz=stt->length;
+  if (fwrite(&fsz,1,4,f) != 4) return 1;
+  if (fwrite(stt->data,1,fsz,f) != fsz) return 1;
+  return  0;
   }
 
-int unpack_status_file(FILE *f)
+int unpack_status_file(FILE *f,PMEMFILE *spc)
   {
-  int stt;
-  char rcheck=0;
   long fsz;
-  char *buffer,*c,*fullnam;
-  char name[13];
-  word crc,crccheck;
+  int nlen = 0;
+  char *fullnam;
+  PMEMFILE mf;
 
-  name[12]=0;
-  name[11]=0;
-  fread(name,1,12,f);
-  SEND_LOG("(SAVELOAD) Unpacking status file '%s'",name,0);
-  if (name[0]==0) return -1;
-  fread(&fsz,1,4,f);
-  c=buffer=(char *)getmem(fsz);
-  if (fread(buffer,1,fsz,f)!=(unsigned)fsz) return 1;
-  fullnam=alloca(strlen(name)+strlen(pathtable[SR_TEMP])+2);
-  if (fullnam==NULL) return 2;
-  strcpy(fullnam,pathtable[SR_TEMP]);
-  strcat(fullnam,name);
-  fsz-=2;
-  crc=vypocet_crc(c,fsz);
-  c+=fsz;memcpy(&crccheck,c,sizeof(crccheck));
-  if (crc!=crccheck)
-     {
-     free(buffer);
-     return 3;
-     }
-  stt=open(fullnam,O_BINARY | O_RDWR | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
-  if (stt==-1)
-     {
-     free(buffer);
-     return 1;
-     }
-  rcheck=(write(stt,buffer,fsz)!=fsz) ;
-  free(buffer);
-  close(stt);
-  return rcheck;
+
+  if (fread(&nlen,1,2,f) != 2) return 1;
+  if (nlen == 0) return -1;
+  fullnam = (char *)alloca(nlen+1);
+  if (fread(fullnam,1,nlen,f) != nlen) return 1;
+  fullnam[nlen] = 0;
+  if (fread(&fsz,1,4,f) != 4) return 1;
+  SEND_LOG("(SAVELOAD) Unpacking status file '%s' (size: %ld)",fullnam,fsz);
+  if (spc) {
+	  reuseMemFile(fullnam,spc,fsz);
+	  mf = *spc;
+  } else {
+	  mf = createMemFile(fullnam,fsz);
+  }
+  if (fread(mf->data,1,fsz,f) != fsz) {
+	  free(mf);
+	  return 1;
+  }
+  mf->length =(unsigned int) fsz;
+  if (spc == 0) 
+	  commitMemFile(mf);
+  else 
+	  *spc = mf;
+
+  return 0;
   }
 
 int pack_all_status(FILE *f)
   {
-  char *c;
-  WIN32_FIND_DATA inf;
-  HANDLE res;
-
-  concat(c,pathtable[SR_TEMP],"*.TMP");
-  res=FindFirstFile(c,&inf);
-  if (res!=INVALID_HANDLE_VALUE)
-    do
-     {
-     int i;
-     if (inf.cFileName[0]!='~')
-        {
-        i=pack_status_file(f,inf.cFileName);
-        if (i) return i;
-        }
-     }
-    while (FindNextFile(res,&inf));     
-  FindClose(res);
-  c[0]=0;
-  fwrite(c,1,12,f);
+  PMEMFILE stt = getFirstMemFile();
+  while (stt != 0) {
+	  pack_status_file(f,stt);
+	  stt = getNextMemFile(stt);
+  }
+  fwrite(&stt,1,2,f);
   return 0;
   }
 
@@ -674,25 +611,24 @@ int unpack_all_status(FILE *f)
   int i;
 
   i=0;
-  while (!i) i=unpack_status_file(f);
+  while (!i) i=unpack_status_file(f,0);
   if (i==-1) i=0;
   return i;
   }
 
+
+
 int save_basic_info()
   {
-  FILE *f;
-  char *c;
+  PMEMFILE f;
   S_SAVE s;
   short *p;
   int i;
   char res=0;
   THUMAN *h;
-
-  concat(c,pathtable[SR_TEMP],_GAME_ST);
-  SEND_LOG("(SAVELOAD) Saving basic info for game (file:%s)",c,0);
-  f=fopen(c,"wb");
-  if (f==NULL) return 1;
+  
+  SEND_LOG("(SAVELOAD) Saving basic info for game ",_GAME_ST,0);
+  f=createMemFile(_GAME_ST,0);
   s.viewsector=viewsector;
   s.viewdir=viewdir;
   s.version=SSAVE_VERSION;
@@ -723,54 +659,55 @@ int save_basic_info()
      for(i=1,p=picked_item;*p;i++,p++);else i=0;
   s.picks=i;
   s.items_added=item_count-it_count_orgn;
-  res|=(fwrite(&s,1,sizeof(s),f)!=sizeof(s));
+  writeMemFile(&f,&s,sizeof(s));
   if (i)
-     res|=(fwrite(picked_item,2,i,f)!=(unsigned)i);
+     writeMemFile(&f,picked_item,2*i);
   if (s.items_added)
-     res|=(fwrite(glob_items+it_count_orgn,sizeof(TITEM),s.items_added,f)!=(unsigned)s.items_added);
-  res|=save_spells(f);
-  if (!res) res|=(fwrite(postavy,1,sizeof(postavy),f)!=sizeof(postavy));
+     writeMemFile(&f,glob_items+it_count_orgn,sizeof(TITEM)*s.items_added);
+  save_spells(&f);
+  writeMemFile(&f,postavy,sizeof(postavy));
   for(i=0,h=postavy;i<POCET_POSTAV;h++,i++) if (h->demon_save!=NULL)
-     fwrite(h->demon_save,sizeof(THUMAN),1,f);       //ulozeni polozek s demony
-  res|=save_dialog_info(f);
-  fclose(f);
+     writeMemFile(&f,h->demon_save,sizeof(THUMAN));       //ulozeni polozek s demony
+  save_dialog_info(&f);
+  commitMemFile(f);
   SEND_LOG("(SAVELOAD) Done... Result: %d",res,0);
   return res;
   }
 
 int load_basic_info()
   {
-  FILE *f;
-  char *c;
+  PMEMFILE f;
+  unsigned int fpos = 9;
   S_SAVE s;
   int i;
   char res=0;
   TITEM *itg;
   THUMAN *h;
 
-  concat(c,pathtable[SR_TEMP],_GAME_ST);
-  SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)",c,0);
-  f=fopen(c,"rb");
+  SEND_LOG("(SAVELOAD) Loading basic info for game (file:%s)",_GAME_ST,0);
+  f = openMemFile(_GAME_ST);
+  fpos =0;
   if (f==NULL) return 1;
-  res|=(fread(&s,1,sizeof(s),f)!=sizeof(s));
+  readMemFile(f,&fpos,&s,sizeof(s));
 	if (s.game_flags & GM_MAPENABLE) enable_glmap=1;else enable_glmap=0;
   i=s.picks;
   if (picked_item!=NULL) free(picked_item);
   if (i)
      {
      picked_item=NewArr(short,i);
-     res|=(fread(picked_item,2,i,f)!=(unsigned)i);
+     readMemFile(f,&fpos,picked_item,2*i);
      }
   else picked_item=NULL;
   itg=NewArr(TITEM,it_count_orgn+s.items_added);
   memcpy(itg,glob_items,it_count_orgn*sizeof(TITEM));
   free(glob_items);glob_items=itg;
   if (s.items_added)
-     res|=(fread(glob_items+it_count_orgn,sizeof(TITEM),s.items_added,f)!=(unsigned)s.items_added);
+     readMemFile(f,&fpos,glob_items+it_count_orgn,sizeof(TITEM)*s.items_added);
   item_count=it_count_orgn+s.items_added;
-  res|=load_spells(f);
-  for(i=0,h=postavy;i<POCET_POSTAV;h++,i++) if (h->demon_save!=NULL) free(h->demon_save);
-  if (!res) res|=(fread(postavy,1,sizeof(postavy),f)!=sizeof(postavy));
+  res|=load_spells(f,&fpos);
+  for(i=0,h=postavy;i<POCET_POSTAV;h++,i++) 
+	  if (h->demon_save!=NULL) free(h->demon_save);
+  readMemFile(f,&fpos,postavy,sizeof(postavy));
   for(i=0,h=postavy;i<POCET_POSTAV;h++,i++)
         {
         h->programovano=0;
@@ -779,11 +716,10 @@ int load_basic_info()
         if (h->demon_save!=NULL)
           {
           h->demon_save=New(THUMAN);
-          fread(h->demon_save,sizeof(THUMAN),1,f);//obnova polozek s demony
+          readMemFile(f,&fpos,h->demon_save,sizeof(THUMAN));
           }
         }
-  res|=load_dialog_info(f);
-  fclose(f);
+  load_dialog_info(f,&fpos);  
   viewsector=s.viewsector;
   viewdir=s.viewdir;
   cur_group=s.cur_group;
@@ -830,27 +766,23 @@ static void MakeSaveGameDir(const char *name)
 
 static int save_global_events()
 {
-  FILE *f;
-  char *c;
-  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-  f=fopen(c,"wb");
+  PMEMFILE f;
+  f = createMemFile(_GLOBAL_ST,sizeof(GlobEventList));
   if (f==NULL) return 1;
-  fwrite(GlobEventList,1,sizeof(GlobEventList),f);
-  fclose(f);
+  writeMemFile(&f,GlobEventList,sizeof(GlobEventList));
+  commitMemFile(f);
   return 0;
 }
 
 static int load_global_events()
 {
-  FILE *f;
-  char *c;
+  PMEMFILE f;
+  unsigned int fpos = 0;
   memset(GlobEventList,0,sizeof(GlobEventList));
 
-  concat(c,pathtable[SR_TEMP],_GLOBAL_ST );
-  f=fopen(c,"rb");
+  f = openMemFile(_GLOBAL_ST);
   if (f==NULL) return 1;
-  fread(GlobEventList,1,sizeof(GlobEventList),f);
-  fclose(f);
+  readMemFile(f,&fpos,GlobEventList,sizeof(GlobEventList));
   return 0;
 }
 
@@ -939,44 +871,34 @@ int load_game(int slotnum)
   return r;
   }
 
-static void load_specific_file(int slot_num,char *filename,void **out,long *size) //call it in task!
+static PMEMFILE load_specific_file(int slot_num,char *filename) //call it in task!
   {
   FILE *slot;
   char *c,*d;
   long siz;
   char fname[12];
   char succes=0;
+  PMEMFILE out;
+  
 
   concat(c,pathtable[SR_SAVES],_SLOT_SAV);
   d=alloca(strlen(c)+2);
   sprintf(d,c,slot_num);
   slot=fopen(d,"rb");
   if (slot==NULL)
-     {
-     *out=NULL;
-     return;
-     }
+     return 0;
+
   fseek(slot,SAVE_NAME_SIZE,SEEK_CUR);
-  fread(fname,1,12,slot);
-  while(fname[0] && !succes)
-     {
-     task_sleep(NULL);
-     if (task_quitmsg()) break;
-     fread(&siz,1,4,slot);
-     if (!strncmp(fname,filename,12)) succes=1; else
-           {
-           fseek(slot,siz,SEEK_CUR);
-           fread(fname,1,12,slot);
-           }
-     }
-  if (succes)
-     {
-     *out=getmem(siz);
-     fread(*out,1,siz,slot);
-     *size=siz;
-     }
-  else *out=NULL;
+  out = createMemFile("",0);
+   
+  while (unpack_status_file(slot,&out) == 0) {
+	  if (strcmp(out->name,filename) == 0) {
+		  fclose(slot);
+		  return out;
+	  }
+  }
   fclose(slot);
+  return 0;
   }
 
 //------------------------ SAVE LOAD DIALOG ----------------------------
@@ -1094,20 +1016,20 @@ static void redraw_story_bar(int pos)
   }
 
 //#pragma aux read_story_task parm []
-static read_story_task(va_list args)
+static read_story_task(int slot)
   {
-  int slot=va_arg(args,int);
 
   TSTR_LIST ls;
-  void *text_data;
   char *c,*d;
   long size;
+  PMEMFILE text_data;
 
-  load_specific_file(slot,STORY_BOOK,&text_data,&size);
+  text_data = load_specific_file(slot,STORY_BOOK);
   if (text_data!=NULL)
      {
+	 size = text_data->length;
      ls=create_list(2);
-     c=text_data;
+     c=text_data->data;
      set_font(H_FONT6,0);
      while (size>0)
        {
@@ -1131,7 +1053,7 @@ static read_story_task(va_list args)
        free(or);
        }
        }
-     free(text_data);
+     closeMemFile(text_data);
      }
   else ls=NULL;
   if (story_text!=NULL) release_list(story_text);
@@ -1142,11 +1064,7 @@ static read_story_task(va_list args)
 
 static void read_story(int slot)
   {
-  static task_num=-1;
-
-  if (task_num!=-1) term_task(task_num);
-  if (slot!=-1)
-     task_num=add_task(8196,read_story_task,slot);
+     read_story_task(slot);
   }
 
 
@@ -1519,62 +1437,85 @@ void wire_save_load(char save)
 void open_story_file()
   {
   char *c;
-  int err;
 
-  concat(c,pathtable[SR_TEMP],STORY_BOOK);
-  story=fopen(c,"a");
-  err=GetLastError();
-  if (story==NULL) story=fopen(c,"w");
-  if (story==NULL)
-     unable_open_temp(c);
+  story = openMemFile(STORY_BOOK);
+  if (story == NULL) {
+	  story = createMemFile(STORY_BOOK,0);
+	  commitMemFile(story);
+  }
   SEND_LOG("(STORY) Story temp file is opened....",0,0);
   }
 
 
 void write_story_text(char *text)
   {
-  if (fputs(text,story)==EOF)
-     unable_write_temp(STORY_BOOK);
-  if (fputs("\n",story)==EOF)
-     unable_write_temp(STORY_BOOK);
+	  writeMemFile(&story,text,strlen(text));
+	  writeMemFile(&story,"\n",1);
   }
 
 void close_story_file()
   {
-  if (story!=NULL)  fclose(story);
   story=NULL;
   SEND_LOG("(STORY) Story temp file is closed...",0,0);
   }
 
 static int load_map_state_partial(char *level_fname,int mapsize) //obnovuje stav mapy; castecne
   {
-  char sta[200];
-  char *bf;
-  FILE *fsta;
+  char *bf = 0;
+  PMEMFILE fsta;
+  unsigned int fpos = 0;
   int i;
   long siz;
   short res=-2;
+  int ver = 0;
 
 
-  strcpy(sta,level_fname);
-  expand_map_file_name(sta);
-  fsta=fopen(sta,"rb");if (fsta==NULL) return -1;
-  i=0;fread(&i,sizeof(mapsize),1,fsta);if (mapsize!=i)goto err;
-  SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)",level_fname,"START");
-  fread(&siz,1,sizeof(siz),fsta);
-  bf=(char *)getmem(siz);
-  if (!fread(bf,siz,1,fsta)) goto err;
-  for (i=0;i<mapsize;i++)
-     map_coord[i].flags|=(bf[i>>3]>>(i & 7)) & 1;
-  load_map_description(fsta);
-  while (fread(&i,1,2,fsta) && i<=mapsize*4)
-     if (fread(map_sides+i,1,sizeof(TSTENA),fsta)!=sizeof(TSTENA)) goto err;
-  while (fread(&i,1,2,fsta) && i<=mapsize)
-     if (fread(map_sectors+i,1,sizeof(TSECTOR),fsta)!=sizeof(TSECTOR)) goto err;
+  fsta=openMemFile(level_fname);
+  if (fsta==NULL) return -1;
+  i=0;
+  readMemFile(fsta,&fpos,&i,sizeof(mapsize));
+  if (i==0)
+  {
+	  readMemFile(fsta,&fpos,&ver,sizeof(ver));
+	  if (ver>STATE_CUR_VER) goto err;
+	  readMemFile(fsta,&fpos,&i,sizeof(mapsize));
+	  if (mapsize!=i) goto err;
+	  SEND_LOG("(SAVELOAD) Loading map state for current map",0,0);
+	  readMemFile(fsta,&fpos,&siz,sizeof(siz));
+	  bf=(char *)getmem(siz);
+	  readMemFile(fsta,&fpos,bf,siz);
+	  for (i=0;i<mapsize;i++)
+		  if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_AUTOMAP;
+	  if (!readMemFile(fsta,&fpos,bf,siz)) goto err;
+	  for (i=0;i<mapsize;i++)
+		  if ((bf[i>>3]>>(i & 7)) & 1) map_coord[i].flags|=MC_DISCLOSED;
+  }
+  else
+  {
+	  if (mapsize!=i) goto err;
+	  SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)",level_fname,"START");
+	  readMemFile(fsta,&fpos,&siz,sizeof(siz));
+	  bf=(char *)getmem(siz);
+	  readMemFile(fsta,&fpos,bf,siz);
+
+	  for (i=0;i<mapsize;i++)
+		 map_coord[i].flags|=(bf[i>>3]>>(i & 7)) & 1;
+  }
+  load_map_description(fsta,&fpos);
+  readMemFile(fsta,&fpos,&i,2);
+  while (i != -1 && i<=mapsize*4) {
+	  readMemFile(fsta,&fpos,map_sides+i,sizeof(TSTENA));
+	  readMemFile(fsta,&fpos,&i,2);
+  }
+  readMemFile(fsta,&fpos,&i,2);
+  while (i != -1 && i<=mapsize) {
+	  readMemFile(fsta,&fpos,map_sectors+i,sizeof(TSECTOR));
+	  readMemFile(fsta,&fpos,&i,2);
+
+  }
   res=0;
   err:
   free(bf);
-  fclose(fsta);
   SEND_LOG("(SAVELOAD) Partial restore for map: %s (%s)",level_fname,"DONE");
   return res;
   }

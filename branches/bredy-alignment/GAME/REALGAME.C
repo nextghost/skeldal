@@ -39,6 +39,7 @@
 #include <pcx.h>
 #include "globals.h"
 #include "inicfg.h"
+#include "memfile.h"
 
 
 
@@ -410,26 +411,20 @@ int load_map(char *filename)
 
 void add_leaving_place(int sector)
   {
-  if (leaving_places==NULL) leaving_places=create_list(16);
-  add_field_num(&leaving_places,level_fname,sector);
+	  char *c;
+	  PMEMFILE f;
+	  concat(c,"LP~",level_fname);
+	  f = createMemFile(c,sizeof(sector));
+	  writeMemFile(&f,&sector,sizeof(sector));
+	  commitMemFile(f);
   }
 
 void save_leaving_places(void)
   {
-  char *s;
-
-  if (leaving_places==NULL) return;
-  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
-  save_config(leaving_places,s);
   }
 
 void load_leaving_places(void)
   {
-  char *s;
-
-  if (leaving_places!=NULL) release_list(leaving_places);
-  concat(s,pathtable[SR_TEMP],"_LPLACES.TMP");
-  leaving_places=read_config(s);
   }
 
 int set_leaving_place(void)
@@ -439,16 +434,15 @@ int set_leaving_place(void)
 
 int get_leaving_place(char *level_name)
   {
-  int s=0,i;
-  if (leaving_places==NULL) return 0;
-  if (get_num_field(leaving_places,level_name,&s) ||
-    ~map_coord[s].flags & 1 || map_sectors[s].sector_type!=S_LEAVE || s==0)
-      {
-      for (i=1;i<mapsize;i++) if (map_sectors[i].sector_type==S_LEAVE && map_coord[i].flags & 0x1)
-        return i;
-      return s;
-      }
-  return s;
+	  char *c;
+	  int sector;
+	  PMEMFILE f;
+	  unsigned int fpos = 0;
+	  concat(c,"LP~",level_fname);
+	  f = openMemFile(c);
+	  if (f == 0) return 0;
+	  readMemFile(f,&fpos,&sector,sizeof(sector));
+	  return sector;
   }
 
 

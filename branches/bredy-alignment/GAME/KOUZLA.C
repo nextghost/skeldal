@@ -34,6 +34,7 @@
 #include <bmouse.h>
 #include "engine1.h"
 #include "globals.h"
+#include "memfile.h"
 
 
 #define S_jmeno 128
@@ -1899,7 +1900,7 @@ void remove_all_mob_spells()
   }
 
 
-int save_spells(FILE *f)
+int save_spells(PMEMFILE *fsta)
   {
   char res=0;
 
@@ -1908,18 +1909,18 @@ int save_spells(FILE *f)
   SEND_LOG("(SPELLS) Saving spell table...",0,0);
   for(i=0,s=0;i<MAX_SPELLS;i++)
      if (spell_table[i]!=NULL) s++;
-  res|=(fwrite(&s,1,sizeof(s),f)!=sizeof(s));
+  writeMemFile(fsta,&s,sizeof(s));
   for(i=0;i<MAX_SPELLS && !res;i++)
      if (spell_table[i]!=NULL)
         {
-        res|=(fwrite(spell_table[i],1,sizeof(TKOUZLO),f)!=sizeof(TKOUZLO));
-        res|=(fwrite(vls_table[i],1,2*24,f)!=2*24);
-        res|=(fwrite(_flag_map+i,1,4,f)!=4);
+        writeMemFile(fsta,spell_table[i],sizeof(TKOUZLO));
+        writeMemFile(fsta,vls_table[i],2*24);
+        writeMemFile(fsta,_flag_map+i,4);
         }
   return res;
   }
 
-int load_spells(FILE *f)
+int load_spells(PMEMFILE fsta, int *seekPos)
   {
   char res=0;
 
@@ -1927,14 +1928,14 @@ int load_spells(FILE *f)
 
   SEND_LOG("(SPELLS) Loading saved spell table...",0,0);
   reinit_kouzla_full();
-  res|=(fread(&s,1,sizeof(s),f)!=sizeof(s));
+  readMemFile(fsta,seekPos,&s,sizeof(s));
   for(i=0;i<s && !res;i++)
      {
      spell_table[i]=New(TKOUZLO);
      vls_table[i]=NewArr(short,24);
-     res|=(fread(spell_table[i],1,sizeof(TKOUZLO),f)!=sizeof(TKOUZLO));
-     res|=(fread(vls_table[i],1,2*24,f)!=2*24);
-     res|=(fread(_flag_map+i,1,4,f)!=4);
+     readMemFile(fsta,seekPos,spell_table[i],sizeof(TKOUZLO));
+     readMemFile(fsta,seekPos,vls_table[i],2*24);
+	 readMemFile(fsta,seekPos,_flag_map+i,4);;
      }
  true_seeing=1;
  hlubina_level=2;
