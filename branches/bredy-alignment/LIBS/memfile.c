@@ -33,6 +33,7 @@ PMEMFILE createMemFile(const char *name, int initialSize) {
 
 
 PMEMFILE replaceMemFile(PMEMFILE old, PMEMFILE nw) {
+	if (old == nw) return nw;
 	if (old->next != 0 || old->prev != 0)  {
 		nw->next = old->next;
 		nw->prev = old->prev;
