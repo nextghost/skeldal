@@ -40,6 +40,7 @@
 #include "engine1.h"
 #include <pcx.h>
 #include "globals.h"
+#include "align.h"
 #include "memfile.h"
 
 typedef struct t_paragraph
@@ -297,7 +298,8 @@ static void goto_paragraph(int prgf)
      if (z->visited) z->first=1;
      if (z->alt==z->num || !z->visited)
         {
-        pc=((char *)ablock(H_DIALOGY_DAT))+*((int *)ablock(H_DIALOGY_DAT))*sizeof(T_PARAGRAPH)+8+z->position;
+		void *hdlg = ablock(H_DIALOGY_DAT); 
+        pc=(char *)hdlg+*((int *)hdlg)*sizeof(T_PARAGRAPH)+8+z->position;
         last_pgf=prgf;
         z->visited=1;
         return;
@@ -411,7 +413,7 @@ static char *Get_string()
      {
      short i;
      pc++;
-     i=*(short *)pc;pc+=2;
+     i=uaReadShort(&pc);
      if (i<=0) c=conv_text(texty[abs(i)]);else c=conv_text(level_texts[i]);
      return string_buffer;
      }
@@ -423,18 +425,15 @@ static char *Get_string()
 static short Get_short()
   {
   short p;
-  if (*pc==P_SHORT)
+  char t = *pc++;
+  if (t==P_SHORT)
      {
-     pc++;
-     p=*(short *)pc;
-     pc+=2;
+     p=uaGetShort(&pc);
      return p;
      }
-  if (*pc==P_VAR)
+  if (t==P_VAR)
      {
-     pc++;
-     p=*(short *)pc;
-     pc+=2;
+	 p=uaGetShort(&pc);
      return varibles[p];
      }
   error("O‡ek v  se ‡¡slo");

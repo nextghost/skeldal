@@ -34,6 +34,7 @@
 #include <bmouse.h>
 #include "engine1.h"
 #include "globals.h"
+#include "align.h"
 #include "memfile.h"
 
 
@@ -127,6 +128,7 @@
 #define FLG_HALUCINACE 0x100000 // zapne halucinaci
 
 #define GET_WORD(c) *(word *)c;c+=2
+#define GET_WORD(c) uaReadShort(&c)
 
 #define MAX_SPELLS 500
 
@@ -177,14 +179,17 @@ short parm1,parm2;
 char twins;
 
 void load_kouzla_fixalign(void **p, long *s) {
-	int cnt = *s / sizeof(TKOUZLO);
-	TKOUZLO *k = (TKOUZLO *)*p;
-	int i;
-	for (i = 0; i < cnt; i++) {
+	TKOUZLO *k = (TKOUZLO *)*p;	
+	int i = 0;
+	long minpc = *s;
+	long ofs = sizeof(TKOUZLO);
+	while (ofs < minpc) {
 		uint8_t oldpovaha = k->backfire & 0xFF;
 		memcpy(&k->backfire,(char *)(&k->backfire)+1,6);
 		k->povaha = oldpovaha;
+		if (k->start && minpc > k->start) minpc = k->start;
 		k++;
+		ofs += sizeof(TKOUZLO);
 	}
 }
 
@@ -1436,8 +1441,12 @@ void call_spell(int i)
   c=(char *)ablock(H_KOUZLA);
   c+=p->start;
   twins=0;
-  do
-  switch (twins=twins==3?0:twins,*c++)
+  do {
+	  int v = *c;
+	  c++;
+	  twins=twins==3?0:twins;
+
+	switch (v)
      {
      case S_zivel:p->pc=GET_WORD(c);
 	   if (p->owner>=0 && !GlobEvent(MAGLOB_ONFIREMAGIC+p->pc,postavy[p->owner].sektor,postavy[p->owner].direction))
@@ -1488,7 +1497,7 @@ void call_spell(int i)
             {
             char *d="Chyba v popisu kouzel: Program narazil na neznamou instrukci %d (%02X) pri zpracovani kouzla s cislem %d. Kouzlo bylo ukon‡eno";
             c=alloca(strlen(d)+20);
-            sprintf(c,d,*(c-1),*(c-1),p->num);
+            sprintf(c,d,v,v,p->num);
             bott_disp_text(c);
             spell_end(i,p->cil,p->owner);
             return;
@@ -1496,6 +1505,7 @@ void call_spell(int i)
 
 
      }
+  }
   while(!ext);
   p->start=c-(char *)ablock(H_KOUZLA);
   }
