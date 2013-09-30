@@ -875,8 +875,8 @@ static PMEMFILE load_specific_file(int slot_num,char *filename) //call it in tas
   {
   FILE *slot;
   char *c,*d;
-  long siz;
-  char fname[12];
+//  long siz;
+//  char fname[12];
   char succes=0;
   PMEMFILE out;
   
@@ -1436,7 +1436,7 @@ void wire_save_load(char save)
 
 void open_story_file()
   {
-  char *c;
+//  char *c;
 
   story = openMemFile(STORY_BOOK);
   if (story == NULL) {

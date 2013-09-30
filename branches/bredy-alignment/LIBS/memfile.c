@@ -20,7 +20,7 @@ PMEMFILE openMemFile(const char *name) {
 	return 0;
 }
 
-PMEMFILE createMemFile(const char *name, int initialSize) {
+PMEMFILE createMemFile(const char *name,unsigned int initialSize) {
 	PMEMFILE f = getmem(sizeof(TMEMFILE)+initialSize);
 	f->next = 0;
 	f->prev = 0;
@@ -104,7 +104,7 @@ char eraseMemFile( const char *name)
 	if (f->next != 0) f->next->prev = f->prev;
 	if (f->prev != 0) f->prev->next = f->next;
 	free(f);
-	
+	return 0;
 }
 
 PMEMFILE getFirstMemFile()
@@ -118,7 +118,7 @@ PMEMFILE truncateMemFile( PMEMFILE f )
 	return f;
 }
 
-PMEMFILE reuseMemFile( const char *name, PMEMFILE *f, int reserveSize)
+PMEMFILE reuseMemFile( const char *name, PMEMFILE *f, unsigned int reserveSize)
 {
 	if (reserveSize > (*f)->length) {
 		PMEMFILE old = *f;
@@ -137,7 +137,7 @@ PMEMFILE renameMemFile( PMEMFILE f, const char *name )
 {
 	strncpy(f->name,name,24);
 	f->name[23] = 0;
-
+	return f;
 
 }
 

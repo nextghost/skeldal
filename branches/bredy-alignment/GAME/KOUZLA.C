@@ -127,7 +127,6 @@
 #define FLG_SCORE      0x80000 //zapnute ukazovani score nad potvorama.
 #define FLG_HALUCINACE 0x100000 // zapne halucinaci
 
-#define GET_WORD(c) *(word *)c;c+=2
 #define GET_WORD(c) uaReadShort(&c)
 
 #define MAX_SPELLS 500
@@ -993,7 +992,7 @@ void spell_teleport_sector(int cil,int owner)
     if (TelepLocation.map)
     {
       destroy_player_map();
-      if (stricmp(TelepLocation.map,level_fname)!=0)
+      if (_stricmp(TelepLocation.map,level_fname)!=0)
       {
         int sector=postavy[cil].sektor;
         int i;

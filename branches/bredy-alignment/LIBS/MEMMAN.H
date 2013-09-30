@@ -102,6 +102,7 @@ void close_manager();                 //uzavre manager a uvolni veskerou pamet
 void undef_handle(int handle);        //uvolni hadle k dalsimu pouziti
 THANDLE_DATA *zneplatnit_block(int handle); //zneplatni data bloku
 THANDLE_DATA *get_handle(int handle); //vraci informace o rukojeti
+THANDLE_DATA *kill_block(int handle);
 int find_handle(char *name,void *decomp);   //hleda mezi rukojeti stejnou definici
 int test_file_exist(int group,char *filename); //testuje zda soubor existuje v ramci mmanageru
 void *afile(char *filename,int group,long *blocksize); //nahraje do pameti soubor registrovany v ramci mmanageru

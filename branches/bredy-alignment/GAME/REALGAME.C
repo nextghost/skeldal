@@ -254,7 +254,7 @@ int load_map(char *filename)
   level_fname=(char *)getmem(strlen(filename)+1);
   strcpy(level_fname,filename);
   SEND_LOG("(GAME) Loading map: '%s'",level_fname,0);
-  strupr(level_fname);
+  _strupr(level_fname);
   mob_template=NULL;
   mob_size=0;
   if (f==NULL) return -1;

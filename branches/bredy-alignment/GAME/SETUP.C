@@ -50,7 +50,7 @@ char q_runsetup(char *parm)
   char c[6];
 
   strncpy(c,parm,6);
-  strupr(c);
+  _strupr(c);
   return !strncmp(c,"/SETUP",6);
   }
 

@@ -398,7 +398,7 @@ static int insert_next_line(int ztrata)
      if (title_mode!=TITLE_KONEC) c=get_next_title(0,NULL);else c[0]=0;
      if (c[0]=='*')
         {
-        strupr(c);
+        _strupr(c);
         if (!strcmp(c+1,"HEAD"))
            {
            title_mode=TITLE_HEAD;

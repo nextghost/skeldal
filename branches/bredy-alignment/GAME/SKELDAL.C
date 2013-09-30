@@ -1137,7 +1137,7 @@ void *map_keyboard(EVENT_MSG *msg,void **usr);
 
 char doNotLoadMapState=0;
 
-static reload_map_handler(EVENT_MSG *msg,void **usr)
+static void reload_map_handler(EVENT_MSG *msg,void **usr)
 {
 extern char running_battle;
   if (msg->msg==E_RELOADMAP)
@@ -1253,7 +1253,7 @@ static int do_config_skeldal(int num,int numdata,char *txt)
   }
 
 
-static void config_skeldal(char *line)
+static void config_skeldal(const char *line)
   {
   int ndata=0,i,maxi;
 

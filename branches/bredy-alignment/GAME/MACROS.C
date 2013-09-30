@@ -918,8 +918,8 @@ char save_codelocks(PMEMFILE *fsta)
      return 0;
      }
   SEND_LOG("(SAVELOAD) Storing code-locks...",0,0);
-  writeMemFile(&fsta,&lock_saved,sizeof(lock_saved));
-  writeMemFile(&fsta,codelock_memory,sizeof(codelock_memory));
+  writeMemFile(fsta,&lock_saved,sizeof(lock_saved));
+  writeMemFile(fsta,codelock_memory,sizeof(codelock_memory));
   return 0;
   }
 

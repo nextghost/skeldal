@@ -1440,8 +1440,8 @@ typedef struct tmob
   int16_t casting;		     //32
   int16_t adjusting[6*16];   //224 volba stredu pro animace
   uint16_t sector,dir;       //228   pozice
-  int8_t locx,locy;          //230 presna pozice
-  int8_t headx,heady;        //232 pozice kam mob miri
+  uint8_t locx,locy;          //230 presna pozice
+  uint8_t headx,heady;        //232 pozice kam mob miri
   int16_t  anim_counter;     //234 citac animaci
   int16_t  vlastnosti[24];   //282 zakladni vlastnosti potvory
   int16_t inv[MOBS_INV];     //314 batoh potvory
@@ -1467,7 +1467,7 @@ typedef struct tmob
   uint16_t sounds[4];        //358 zvuky z listu
   int8_t palette;            //359 pocet pouzitelnych palet / cislo palety
   uint8_t mode;              //360 akce potvory
-  uint16_t dialog;           //362 cislo dialogu, -1 kdyz neni;
+  int16_t dialog;           //362 cislo dialogu, -1 kdyz neni;
   uint8_t dialog_flags;      //363 vlajky mapovane do dialogu;
   uint8_t money[2];          //365 penize
   uint8_t specproc[2];       //367 specproc

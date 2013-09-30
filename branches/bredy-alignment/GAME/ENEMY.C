@@ -368,7 +368,7 @@ static void mob_sound_event(TMOB *m,int event)
      play_sample_at_sector(m->cislo_vzoru+16*6+event+monster_block,viewsector,m->sector,0,0);
   }
 
-void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize)
+void load_enemies(short *data,int size,int *grptr,TMOB *templ,long tsize)
   {
   int i;
   short cisla[256];
@@ -383,7 +383,7 @@ void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize)
      int j,c,cnt;
      TMOB *b;
 
-     b=template;
+     b=templ;
      cnt=tsize/sizeof(TMOB);
      c=data[1] & 0xfff;
      for(j=0;j<cnt && b[j].cislo_vzoru!=c;j++);
@@ -396,6 +396,8 @@ void load_enemies(short *data,int size,int *grptr,TMOB *template,long tsize)
         mobs[i].dir=(data[1]>>14)&0x3;
         mobs[i].home_pos=data[0];
         mobs[i].vlajky|=MOB_LIVE;
+		mobs[i].locx = 64;
+		mobs[i].locy = 64;
         if (mobs[i].speed<1)
           {
   	      char buff[256];

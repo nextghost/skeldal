@@ -39,7 +39,7 @@ PMEMFILE openMemFile(const char *name);
 
   @note Pro vlozeni souboru do filesystemu je treba zavolat commitMemFile.
 */
-PMEMFILE createMemFile(const char *name, int initialSize);
+PMEMFILE createMemFile(const char *name,unsigned int initialSize);
 
 ///Prepise existujici soubor zaroven ho prejmenuje
 /**
@@ -48,7 +48,7 @@ PMEMFILE createMemFile(const char *name, int initialSize);
   @param reserveSize kolik ma byt v souboru rezervovano pro rozsirovani
   Funkce vraci pripadne novy handle souboru
 */
-PMEMFILE reuseMemFile(const char *name, PMEMFILE *f, int reserveSize);
+PMEMFILE reuseMemFile(const char *name, PMEMFILE *f,unsigned int reserveSize);
 
 ///Zmensi velikost souboru na nulu
 /**
