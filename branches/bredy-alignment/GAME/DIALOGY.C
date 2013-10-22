@@ -428,12 +428,12 @@ static short Get_short()
   char t = *pc++;
   if (t==P_SHORT)
      {
-     p=uaGetShort(&pc);
+     p=uaReadShort(&pc);
      return p;
      }
   if (t==P_VAR)
      {
-	 p=uaGetShort(&pc);
+	 p=uaReadShort(&pc);
      return varibles[p];
      }
   error("O‡ek v  se ‡¡slo");
@@ -1328,10 +1328,18 @@ static void create_back_pic()
   for(yp=0;yp<200;yp++)
     {
     s2=s;
+	skpx = 0;
     for(xp=0;xp<340;xp++)
       {
-      *p++=*s2++;
-      if (!skpx) skpx=8;else s2++,skpx--;
+	  if (skpx) {
+		*p++=((s2[0] & 0xF7DE) + (s2[1] & 0xF7DE)) >> 1;
+		s2+=2;
+		skpx--;
+	  } else {
+		*p++=s2[0];
+		s2++;
+		skpx = 8;
+	  }
       }
     s+=scr_linelen2;
     if (!skpy) skpy=4;else s+=scr_linelen2,skpy--;
