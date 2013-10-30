@@ -25,7 +25,7 @@
 #include <mgfplay.h>
 #include <bgraph.h>
 
-
+/*
 
 void show_full_interl_lfb(void *source,void *target,void *palette, long linelen)
   {  
@@ -124,9 +124,21 @@ konec:
     }
   }
 //#pragma aux show_delta_interl_lfb parm [esi][edi][ebx] modify [eax ecx edx]
-
+*/
 void show_full_lfb12e(void *target,void *buff,void *paleta)
   {
+	word *edi = (word *)target;
+	byte *esi = (byte *)buff;
+	word *ebx = (word *)paleta;
+	int dl;
+	int ecx;
+
+	for (dl = 180; dl > 0; dl--) {
+		for (ecx = 320; ecx > 0; ecx--) {
+			*edi++=ebx[*esi++];
+		}
+	}
+/*
   __asm
     {
         mov     edi,target
@@ -151,11 +163,42 @@ shfl1:  lodsw
         dec     dl
         jnz     shfl2
         pop     ebp
-    }
+    }*/
   }   
 //#pragma aux show_full_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 void show_delta_lfb12e(void *target,void *buff,void *paleta)
   {
+
+	word *t = (word *)target;
+	word *pal = (word *)paleta;
+	unsigned long *deltastart = (unsigned long *)buff;
+	unsigned long ofs = *deltastart++;
+	unsigned char *control = (unsigned char *)deltastart;
+	unsigned char *pixels = control + ofs;
+	int y;
+
+	for (y = 0; y < 180; y++) {		
+		word *tp = t;
+		do {
+			unsigned char c = *control++;
+			if (c >= 0xc0) {
+				//skip line
+				unsigned char d = c -  0xc0;
+				y+=d;
+				t+=(d+1)*320;
+				break;
+			} else {				
+				tp+=2*c;
+				c = *control++;
+				while (c) {
+					*tp++ = pal[*pixels++];
+					*tp++ = pal[*pixels++];
+					c--;
+				}
+			}
+		} while (1);
+	}
+/*
   __asm
     {
         mov     edi,target
@@ -209,6 +252,7 @@ shdl7: add     edi,640        ;preskoc radek
 shdl5: pop     ebp
 konec:
     }
+	*/
   }
 //#pragma aux show_delta_lfb12e parm[edi][esi][ebx] modify [eax ecx]
 
