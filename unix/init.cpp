@@ -127,7 +127,7 @@ void Sys_Mkdir(const char *path) {
 	struct stat tmp;
 
 	strncpy(buf, path, PATH_MAX);
-	buf[PATH_MAX] = '\0';
+	buf[PATH_MAX - 1] = '\0';
 
 	for (length = strlen(buf); length > 1 && buf[length - 1] == '/'; length--);
 

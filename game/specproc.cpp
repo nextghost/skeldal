@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <inttypes.h>
+#include <cmath>
 #include "libs/event.h"
 #include "libs/strlite.h"
 #include "libs/bgraph.h"
@@ -32,7 +33,6 @@
 #include "game/specproc.h"
 #include "libs/bmouse.h"
 #include "libs/system.h"
-#include <cmath>
 
 #define MOB_GO(m) if (m->dir & 1)m->headx=mob_go_x[m->dir];else m->heady=mob_go_y[m->dir]
 

@@ -57,5 +57,5 @@ char call_mob_event(int event_number,int event_type,TMOB *m);
 //funkce z enemy.c
 char mob_check_next_sector(int sect,int dir,char alone,char passable);
                                 //alone = MOB_BIG, passable= 1 je-li pruchozi
-extern char mob_go_x[];
-extern char mob_go_y[];
+extern uint8_t mob_go_x[];
+extern uint8_t mob_go_y[];

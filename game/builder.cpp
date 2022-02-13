@@ -1643,7 +1643,7 @@ void play_fx_at(int where)
   }
 
 void display_ver(int x, int y, int ax, int ay) {
-	const char *ver = "Br ny Skeldalu version "VERSION" (C)1998";
+	const char *ver = "Br ny Skeldalu version " VERSION " (C)1998";
 	const Font *font = dynamic_cast<const Font*>(ablock(H_FTINY));
 
 	renderer->setFont(font, 1, 255, 255, 255);

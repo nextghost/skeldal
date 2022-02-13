@@ -673,22 +673,22 @@ void register_basic_data() {
 	def_handle(H_BOTTBAR, "", bott_draw_proc, 0);
 
 	for (i = 0; i < H_TELEP_CNT; i++) {
-		sprintf(xname, "TELEP%02d.PCX", i);
+		sprintf(xname, "TELEP%02d.PCX", (int)i);
 		def_handle(H_TELEP_PCX + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
 	}
 
 	for (i = 0; i < H_ARMA_CNT; i++) {
-		sprintf(xname, "ARMA%02d.PCX", i);
+		sprintf(xname, "ARMA%02d.PCX", (int)i);
 		def_handle(H_ARMAGED + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
 	}
 
 	for (i = 0; i < H_KILL_MAX; i++) {
-		sprintf(xname, "KILL%02d.PCX", i);
+		sprintf(xname, "KILL%02d.PCX", (int)i);
 		def_handle(H_KILL + i, xname, pcx_fade_decomp, SR_BGRAFIKA);
 	}
 
 	for (i = 0; i < H_FLETNA_CNT; i++) {
-		sprintf(xname, "FLETNA%02d.WAV", i);
+		sprintf(xname, "FLETNA%02d.WAV", (int)i);
 		def_handle(H_FLETNA + i, xname, wav_load, SR_ZVUKY);
 	}
 }

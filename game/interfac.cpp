@@ -1089,13 +1089,16 @@ static char smery[4][13]=
   "CIGILI"
   };
 
-void fletna_pridej_notu(char note)
-  {
-  note+=65;
-  fletna_str[pos]=note;
-  if (pos==13) memcpy(fletna_str,fletna_str+1,pos);
-  else pos++;
-  }
+void fletna_pridej_notu(char note) {
+	note += 65;
+	fletna_str[pos]=note;
+
+	if (pos == 13) {
+		memmove(fletna_str, fletna_str + 1, pos - 1);
+	} else {
+		pos++;
+	}
+}
 
 static void play_wav(int wav,int sector)
   {

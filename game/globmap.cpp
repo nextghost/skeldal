@@ -189,7 +189,7 @@ static void error(const char *text)
   {
   char popis[300];
 
-  sprintf(popis,"Chyba v souboru "GLOBMAP" na radce %d.\r\n%s",linecounter,text);
+  sprintf(popis,"Chyba v souboru " GLOBMAP " na radce %d.\r\n%s",linecounter,text);
   SEND_LOG("(ERROR) %s : %s",popis,text);
   closemode();
   Sys_ErrorBox(popis);

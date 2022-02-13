@@ -61,10 +61,10 @@ int mob_dostal_pocet;
 char folow_mode=0;
 char folow_mob;
 
-char mob_go_x[]={128,255,128,0};
-char mob_go_y[]={0,128,255,128};
-char mob_batt_x[]={128,128+MOB_DIST,128,128-MOB_DIST};
-char mob_batt_y[]={128-MOB_DIST,128,128+MOB_DIST,128};
+uint8_t mob_go_x[]={128,255,128,0};
+uint8_t mob_go_y[]={0,128,255,128};
+uint8_t mob_batt_x[]={128,128+MOB_DIST,128,128-MOB_DIST};
+uint8_t mob_batt_y[]={128-MOB_DIST,128,128+MOB_DIST,128};
 short konv_x[]={1,1,-1,-1};
 short konv_y[]={-1,1,1,-1};
 char going[]={0,0,1,0,1,1};
@@ -365,7 +365,13 @@ static char seber_predmet(TMOB *m)
   short *p=NULL,*q;
   int i,j,c,z;
 
-  for(j=0,c=0;j<MOBS_INV;j++,c+=(m->inv[j]==0));
+	// Count empty inventory slots
+	for (j = 0, c = 0; j < MOBS_INV; j++) {
+		if (!m->inv[j]) {
+			c++;
+		}
+	}
+
   i=0;
   do
      {
@@ -1477,7 +1483,7 @@ void vymaz_zasahy(THE_TIMER *q)
   bott_draw(0);
   }
 
-static int drop_inventory(TMOB *p)
+static void drop_inventory(TMOB *p)
   {
   int i,x,y,pl;
   short c[]={0,0};

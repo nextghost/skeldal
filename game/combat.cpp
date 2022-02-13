@@ -25,12 +25,12 @@
 #include <cassert>
 #include <cstring>
 #include <inttypes.h>
+#include <cmath>
 #include "libs/event.h"
 #include "libs/sound.h"
 #include "libs/bgraph.h"
 #include "libs/bmouse.h"
 #include "libs/memman.h"
-#include <cmath>
 #include "game/globals.h"
 #include "libs/system.h"
 
@@ -2591,7 +2591,7 @@ static void rozdelit_skryte_bonusy(THUMAN *hu)
   short *vls,*vls2;
   short p[]={VLS_SILA,VLS_SMAGIE,VLS_OBRAT};
   short h[3];
-  register int i;
+  int i;
 
   vls=hu->vlastnosti;
   vls2=hu->stare_vls;

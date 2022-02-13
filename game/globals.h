@@ -865,7 +865,7 @@ typedef struct t_clk_map
   {
   int32_t id,xlu,ylu,xrb,yrb;
   char (*proc)(int id,int xa,int ya,int xr,int yr);
-  int8_t mask;
+  uint8_t mask;
   int32_t cursor;
   }T_CLK_MAP;
 

@@ -1476,7 +1476,7 @@ struct t_inv_script
   int16_t col,line;
   const char *text;
   int16_t parm1,parm2;
-  int8_t lenght;
+  uint8_t lenght;
   int8_t align;
   };
 

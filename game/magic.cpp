@@ -24,12 +24,12 @@
 #include <cstdlib>
 #include <cassert>
 #include <inttypes.h>
-#include "libs/bgraph.h"
 #include <cstring>
+#include <cmath>
+#include "libs/bgraph.h"
 #include "libs/memman.h"
 #include "libs/mgifmem.h"
 #include "libs/event.h"
-#include <cmath>
 #include "libs/bmouse.h"
 #include "game/engine1.h"
 #include "game/globals.h"

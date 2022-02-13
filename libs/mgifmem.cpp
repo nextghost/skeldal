@@ -149,7 +149,7 @@ char fast_expand_code(int code, uint8_t **target) {
 }
 
 void lzw_decode(ReadStream &source, uint8_t *target) {
-	register int code;
+	int code;
 	int old, i;
 	//int group,chr;
 	int old_first;

@@ -26,12 +26,12 @@
 #include <cstring>
 #include <inttypes.h>
 #include <cassert>
+#include <cmath>
 #include "libs/memman.h"
 #include "libs/sound.h"
 #include "libs/wav_mem.h"
 #include "libs/event.h"
 #include "game/globals.h"
-#include <cmath>
 #include "libs/strlite.h"
 #include "libs/system.h"
 
@@ -557,7 +557,7 @@ void stop_play_flute() {
 
 char enable_sound(char enbl)
   {
-  register char save;
+  char save;
 
   save=sound_enabled;
   sound_enabled=enbl;

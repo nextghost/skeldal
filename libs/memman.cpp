@@ -68,7 +68,7 @@ void standard_mem_error(size_t size)
   SEND_LOG("(ERROR) Memory allocation error detected, %u bytes missing",size,0);
   Sys_Shutdown();
 //  DXCloseMode();
-  sprintf(buff,"Memory allocation error\n Application can't allocate %u bytes of memory (%xh)\n",size,memman_handle);
+  sprintf(buff,"Memory allocation error\n Application can't allocate %zu bytes of memory (%xh)\n",size,memman_handle);
   Sys_ErrorBox(buff);
 //  MessageBox(NULL,buff,NULL,MB_OK|MB_ICONSTOP);  
   exit(1);
