@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([Skeldal], [0.1], [http://sourceforge.net/tracker/?group_id=214343&atid=1029299])
+AC_INIT([Skeldal], [0.1], [next_ghost@quick.cz])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([cztable.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -29,12 +29,13 @@ AC_CHECK_TYPES([int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t], [], AC_M
 AC_FUNC_ALLOCA
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
-AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([atexit floor getcwd memmove memset mkdir munmap pow setenv sqrt strcasecmp strchr strrchr], [], AC_MSG_ERROR(Standard functions not found))
 
 AC_C_BIGENDIAN()
 
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([tools/Makefile])
+AC_CONFIG_FILES([
+	Makefile
+	tools/Makefile
+	])
 AC_OUTPUT
